@@ -34,9 +34,7 @@ function Login() {
           <button type="submit" className="bg-blue-700 hover:bg-blue-600 p-3 rounded font-semibold">Entrar</button>
         </form>
         {erro && <p className="text-red-400 mt-3">{erro}</p>}
-        <p className="mt-4 text-sm text-gray-400">
-          Não tem uma conta? <Link to="/cadastro" className="text-blue-400 hover:underline">Criar Conta</Link>
-        </p>
+        <p className="mt-4 text-sm text-gray-400">Não tem uma conta? <Link to="/cadastro" className="text-blue-400 hover:underline">Criar Conta</Link></p>
       </div>
     </div>
   );
@@ -75,9 +73,7 @@ function Cadastro() {
           <button type="submit" className="bg-green-700 hover:bg-green-600 p-3 rounded font-semibold">Cadastrar</button>
         </form>
         {erro && <p className="text-red-400 mt-3">{erro}</p>}
-        <p className="mt-4 text-sm text-gray-400">
-          Já tem uma conta? <Link to="/login" className="text-blue-400 hover:underline">Fazer Login</Link>
-        </p>
+        <p className="mt-4 text-sm text-gray-400">Já tem uma conta? <Link to="/login" className="text-blue-400 hover:underline">Fazer Login</Link></p>
       </div>
     </div>
   );
@@ -163,7 +159,7 @@ function Home() {
 }
 
 // =========================
-// SIMULADO PROVA
+// SIMULADO PROVA (com imagens inline no enunciado e alternativas)
 // =========================
 function SimuladoProva() {
   const { id_prova, id_tema } = useParams();
@@ -172,16 +168,14 @@ function SimuladoProva() {
   const [atual, setAtual] = useState(0);
   const [resposta, setResposta] = useState(null);
   const [respondendo, setRespondendo] = useState(false);
-  const [tempoRestante, setTempoRestante] = useState(4 * 60 * 60); // 4h
+  const [tempoRestante, setTempoRestante] = useState(4 * 60 * 60);
   const [acertos, setAcertos] = useState(0);
   const [finalizado, setFinalizado] = useState(false);
   const [resumo, setResumo] = useState(null);
   const inicioProvaRef = useRef(Date.now());
   const inicioQuestaoRef = useRef(Date.now());
 
-  // =========================
-  // Carregar questões
-  // =========================
+  // carregar questões
   useEffect(() => {
     const carregarQuestoes = async () => {
       try {
@@ -207,7 +201,6 @@ function SimuladoProva() {
 
         const idsQuestoes = data.map((q) => q.id_questao);
         let imagensQuestoes = [];
-
         if (idsQuestoes.length) {
           const { data: imgQ } = await supabase
             .from('imagens')
@@ -226,52 +219,25 @@ function SimuladoProva() {
         setQuestoes(formatadas);
       } catch (err) {
         console.error('Erro ao carregar questões:', err);
-        alert('Erro ao carregar questões. Verifique as tabelas no Supabase.');
       }
     };
-
     carregarQuestoes();
   }, [id_prova, id_tema]);
 
-  // =========================
-  // Timer
-  // =========================
-  useEffect(() => {
-    if (tempoRestante <= 0) {
-      finalizarProva();
-      return;
-    }
-    const intervalo = setInterval(() => setTempoRestante((s) => s - 1), 1000);
-    return () => clearInterval(intervalo);
-  }, [tempoRestante]);
-
-  const formatarTempo = (s) => {
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const seg = s % 60;
-    return `${h}:${String(m).padStart(2, '0')}:${String(seg).padStart(2, '0')}`;
+  const renderizarTextoComImagens = (texto) => {
+    const partes = texto.split(/(https?:\/\/\S+\.(?:png|jpe?g|gif|webp))/gi);
+    return partes.map((parte, i) => {
+      if (/^https?:\/\/\S+\.(png|jpe?g|gif|webp)$/i.test(parte)) {
+        return <img key={i} src={parte} alt="imagem" className="mx-auto my-4 max-h-96 rounded-lg shadow" />;
+      }
+      return <span key={i}>{parte}</span>;
+    });
   };
 
-  // =========================
-  // Navegação
-  // =========================
-  const handleAnterior = () => {
-    if (atual > 0) setAtual(atual - 1);
-  };
+  const handleAnterior = () => atual > 0 && setAtual(atual - 1);
+  const handleProxima = () => atual < questoes.length - 1 && setAtual(atual + 1);
+  const handleFinalizar = () => window.confirm('Finalizar a prova?') && finalizarProva();
 
-  const handleProxima = () => {
-    if (atual < questoes.length - 1) setAtual(atual + 1);
-  };
-
-  const handleFinalizar = () => {
-    if (window.confirm('Deseja realmente finalizar a prova?')) {
-      finalizarProva();
-    }
-  };
-
-  // =========================
-  // Responder questão
-  // =========================
   const responder = async (letra) => {
     if (respondendo || !questoes[atual]) return;
     setRespondendo(true);
@@ -280,8 +246,8 @@ function SimuladoProva() {
     const questao = questoes[atual];
     const correta = letra === questao.correta;
     if (correta) setAcertos((a) => a + 1);
-    const tempoMs = Date.now() - inicioQuestaoRef.current;
 
+    const tempoMs = Date.now() - inicioQuestaoRef.current;
     try {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
@@ -310,15 +276,12 @@ function SimuladoProva() {
     }, 1000);
   };
 
-  // =========================
-  // Finalizar prova
-  // =========================
   const finalizarProva = async () => {
     if (finalizado) return;
     const total = questoes.length;
     const erros = total - acertos;
-    const tempoTotalSeg = Math.floor((Date.now() - inicioProvaRef.current) / 1000);
     const percentual = total ? (acertos / total) * 100 : 0;
+    const tempoTotalSeg = Math.floor((Date.now() - inicioProvaRef.current) / 1000);
 
     try {
       const { data } = await supabase.auth.getUser();
@@ -330,27 +293,17 @@ function SimuladoProva() {
           total_acertos: acertos,
           total_erros: erros,
           percentual_acertos: percentual,
-          tempo_medio_resposta_ms: total ? Math.round((tempoTotalSeg * 1000) / total) : null,
           data_ultima_atualizacao: new Date().toISOString(),
         });
       }
     } catch (e) {
-      console.error('Erro ao salvar resultado final:', e);
+      console.error('Erro ao salvar resultado:', e);
     }
 
-    setResumo({
-      total,
-      acertos,
-      erros,
-      percentual: percentual.toFixed(2),
-      tempoTotalSeg,
-    });
+    setResumo({ total, acertos, erros, percentual: percentual.toFixed(2), tempoTotalSeg });
     setFinalizado(true);
   };
 
-  // =========================
-  // Renderizações
-  // =========================
   if (!questoes.length)
     return <div className="text-center text-gray-400 p-10">Carregando questões...</div>;
 
@@ -358,20 +311,12 @@ function SimuladoProva() {
     return (
       <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center justify-center p-10">
         <div className="bg-gray-900 p-10 rounded-3xl max-w-lg w-full text-center">
-          <h1 className="text-3xl font-bold mb-6 text-green-400">🎯 Prova Finalizada!</h1>
-          <p>Total de questões: <b>{resumo.total}</b></p>
-          <p className="text-green-400">Acertos: <b>{resumo.acertos}</b></p>
-          <p className="text-red-400">Erros: <b>{resumo.erros}</b></p>
-          <p>Aproveitamento: <b>{resumo.percentual}%</b></p>
-          <p>Tempo Total: <b>{formatarTempo(resumo.tempoTotalSeg)}</b></p>
-          <div className="flex gap-3 justify-center mt-8">
-            <button onClick={() => navigate('/')} className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-xl">
-              Voltar ao início
-            </button>
-            <button onClick={() => navigate('/ranking')} className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl">
-              Ver Ranking
-            </button>
-          </div>
+          <h1 className="text-3xl font-bold text-green-400 mb-4">🎯 Prova Finalizada!</h1>
+          <p>Total: {resumo.total}</p>
+          <p className="text-green-400">Acertos: {resumo.acertos}</p>
+          <p className="text-red-400">Erros: {resumo.erros}</p>
+          <p>Aproveitamento: {resumo.percentual}%</p>
+          <button onClick={() => navigate('/')} className="bg-blue-700 hover:bg-blue-600 px-6 py-3 mt-6 rounded-xl">Voltar</button>
         </div>
       </div>
     );
@@ -384,22 +329,12 @@ function SimuladoProva() {
       <div className="bg-gray-900 p-8 rounded-3xl max-w-3xl w-full shadow-2xl">
         <div className="flex justify-between mb-6 text-sm text-gray-400">
           <span>Questão {atual + 1} / {questoes.length}</span>
-          <span className="text-yellow-400 font-semibold">⏱ {formatarTempo(tempoRestante)}</span>
         </div>
 
-        <p className="text-lg text-gray-200 mb-4 whitespace-pre-line">{questao.enunciado}</p>
+        <div className="text-lg text-gray-200 mb-4 whitespace-pre-line">
+          {renderizarTextoComImagens(questao.enunciado)}
+        </div>
 
-        {/* imagens da questão */}
-        {questao.imagensQuestao?.map((img) => (
-          <img
-            key={img.id_entidade}
-            src={img.caminho_arquivo}
-            alt={img.descricao || 'Imagem da questão'}
-            className="mx-auto mb-6 max-h-96 rounded-lg shadow"
-          />
-        ))}
-
-        {/* alternativas */}
         <div className="grid grid-cols-1 gap-3">
           {questao.alternativas.map((alt) => (
             <button
@@ -416,38 +351,20 @@ function SimuladoProva() {
                   : 'bg-blue-700 hover:bg-blue-600'
               }`}
             >
-              {alt.letra}. {alt.texto}
+              {renderizarTextoComImagens(`${alt.letra}. ${alt.texto}`)}
             </button>
           ))}
         </div>
 
         <div className="flex justify-between mt-8">
-          <button
-            onClick={handleAnterior}
-            disabled={atual === 0}
-            className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl disabled:opacity-50"
-          >
-            ⬅ Anterior
-          </button>
-          <button
-            onClick={handleProxima}
-            disabled={atual === questoes.length - 1}
-            className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-xl disabled:opacity-50"
-          >
-            Próxima ➡
-          </button>
-          <button
-            onClick={handleFinalizar}
-            className="bg-green-700 hover:bg-green-600 px-6 py-3 rounded-xl"
-          >
-            ✅ Finalizar Prova
-          </button>
+          <button onClick={handleAnterior} disabled={atual === 0} className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl disabled:opacity-50">⬅ Anterior</button>
+          <button onClick={handleProxima} disabled={atual === questoes.length - 1} className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-xl disabled:opacity-50">Próxima ➡</button>
+          <button onClick={handleFinalizar} className="bg-green-700 hover:bg-green-600 px-6 py-3 rounded-xl">✅ Finalizar Prova</button>
         </div>
       </div>
     </div>
   );
 }
-
 
 // =========================
 // RANKING
@@ -508,13 +425,7 @@ function Estatisticas() {
         <div className="bg-gray-900 p-6 rounded-2xl shadow-xl">
           <h2 className="text-lg mb-3">Desempenho por Tema</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dados.temas}>
-              <XAxis dataKey="id_tema" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="percentual" fill="#3b82f6" />
-            </BarChart>
+            <BarChart data={dados.temas}><XAxis dataKey="id_tema" /><YAxis /><Tooltip /><Legend /><Bar dataKey="percentual" fill="#3b82f6" /></BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-gray-900 p-6 rounded-2xl shadow-xl">
@@ -522,25 +433,16 @@ function Estatisticas() {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie data={dados.dificuldade} dataKey="percentual" nameKey="dificuldade" cx="50%" cy="50%" outerRadius={100}>
-                {dados.dificuldade.map((_, i) => (
-                  <Cell key={i} fill={["#22c55e", "#eab308", "#ef4444"][i % 3]} />
-                ))}
+                {dados.dificuldade.map((_, i) => <Cell key={i} fill={["#22c55e", "#eab308", "#ef4444"][i % 3]} />)}
               </Pie>
-              <Tooltip />
-              <Legend />
+              <Tooltip /><Legend />
             </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="col-span-2 bg-gray-900 p-6 rounded-2xl shadow-xl">
           <h2 className="text-lg mb-3">Desempenho por Hora</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dados.horas}>
-              <XAxis dataKey="hora" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="percentual" fill="#6366f1" />
-            </BarChart>
+            <BarChart data={dados.horas}><XAxis dataKey="hora" /><YAxis /><Tooltip /><Legend /><Bar dataKey="percentual" fill="#6366f1" /></BarChart>
           </ResponsiveContainer>
         </div>
       </div>
