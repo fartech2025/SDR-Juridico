@@ -1,576 +1,568 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactElement } from "react";
-import { BrowserRouter, Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import type { Session } from "@supabase/supabase-js";
-import { Bar, BarChart, Tooltip, XAxis, YAxis } from "recharts";
+﻿import { useEffect, useState, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, Link, Navigate } from 'react-router-dom';
+import { createClient } from '@supabase/supabase-js';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-import { supabase } from "./lib/supabaseClient";
-import LegendCompat from "./components/LegendCompat";
-import { ExamProvider, useExam } from "./contexts/ExamContext";
-import SelecionarProva from "./pages/SelecionarProva";
-import "./App.css";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-type MaybeSession = Session | null;
-
-type Questao = {
-  id_questao: number;
-  enunciado: string;
-  alternativa_a: string;
-  alternativa_b: string;
-  alternativa_c: string;
-  alternativa_d: string;
-  alternativa_e: string;
-  alternativa_correta: string;
-};
-
-function Navbar({ onLogout }: { onLogout: () => Promise<void> | void }) {
-  const { selectedExam } = useExam();
-
-  return (
-    <nav className="bg-blue-700 text-white p-4 flex flex-wrap gap-4 items-center justify-between rounded-b-2xl">
-      <h1 className="font-bold text-xl">ENEM App</h1>
-      <div className="flex flex-wrap gap-4 items-center">
-        {selectedExam ? (
-          <span className="text-sm bg-blue-500/70 px-3 py-1 rounded-full">
-            Prova: {selectedExam.nome}
-          </span>
-        ) : null}
-        <Link to="/provas" className="hover:underline">
-          Selecionar Prova
-        </Link>
-        <Link to="/questoes" className="hover:underline">
-          Questoes
-        </Link>
-        <Link to="/resultado" className="hover:underline">
-          Resultado
-        </Link>
-        <Link to="/solucionario" className="hover:underline">
-          Solucionario
-        </Link>
-        <button
-          onClick={onLogout}
-          className="bg-white text-blue-700 px-3 py-1 rounded-md font-semibold hover:bg-blue-100 transition"
-        >
-          Sair
-        </button>
-      </div>
-    </nav>
-  );
-}
-
-function Login({ session }: { session: MaybeSession }) {
+// =========================
+// LOGIN
+// =========================
+function Login() {
   const navigate = useNavigate();
-  const { selectedExam, clearExam } = useExam();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
 
-  useEffect(() => {
-    if (session?.user) {
-      navigate(selectedExam ? "/questoes" : "/provas", { replace: true });
-    }
-  }, [session, selectedExam, navigate]);
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      alert("Informe e-mail e senha para continuar.");
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-
-    if (error) {
-      alert(error.message);
-    } else {
-      clearExam();
-      navigate("/provas", { replace: true });
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!email) {
-      alert("Informe o e-mail para receber o link de recuperacao.");
-      return;
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/`,
-    });
-
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("Um link de recuperacao foi enviado para o e-mail informado.");
-    }
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setErro('');
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) setErro('Credenciais inválidas.');
+    else navigate('/');
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-blue-200">
-      <div className="bg-white p-10 rounded-2xl shadow-2xl text-center w-96">
-        <h2 className="text-2xl font-bold mb-6 text-blue-700">Entrar no Sistema ENEM</h2>
-        <div className="flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder="Digite seu e-mail"
-            className="border p-3 w-full rounded"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="email"
-          />
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Digite sua senha"
-              className="border p-3 w-full rounded pr-12"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute inset-y-0 right-2 flex items-center text-sm text-blue-600 hover:underline"
-            >
-              {showPassword ? "Ocultar" : "Mostrar"}
-            </button>
-          </div>
-          <button
-            onClick={handleLogin}
-            className="bg-blue-700 text-white w-full py-2 rounded hover:bg-blue-800 transition disabled:bg-blue-300"
-            disabled={loading}
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-          <button
-            type="button"
-            onClick={handleResetPassword}
-            className="text-blue-600 hover:underline"
-          >
-            Esqueci minha senha
-          </button>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">
+      <div className="bg-gray-900 p-10 rounded-3xl shadow-xl w-full max-w-md text-center">
+        <h1 className="text-3xl font-bold mb-6 text-blue-400">Login</h1>
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3 rounded bg-gray-800 text-gray-100" required />
+          <input type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} className="p-3 rounded bg-gray-800 text-gray-100" required />
+          <button type="submit" className="bg-blue-700 hover:bg-blue-600 p-3 rounded font-semibold">Entrar</button>
+        </form>
+        {erro && <p className="text-red-400 mt-3">{erro}</p>}
+        <p className="mt-4 text-sm text-gray-400">
+          Não tem uma conta? <Link to="/cadastro" className="text-blue-400 hover:underline">Criar Conta</Link>
+        </p>
       </div>
     </div>
   );
 }
 
-function Questoes() {
+// =========================
+// CADASTRO
+// =========================
+function Cadastro() {
   const navigate = useNavigate();
-  const { selectedExam } = useExam();
-  const tempoPadrao = selectedExam?.tempo_por_questao ?? 60;
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
 
-  const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const handleCadastro = async (e) => {
+    e.preventDefault();
+    setErro('');
+    const { error, data } = await supabase.auth.signUp({ email, password: senha, options: { data: { nome } } });
+    if (error) setErro(error.message);
+    else {
+      const uid = data?.user?.id;
+      await supabase.from('usuarios').upsert({ id_usuario: uid, nome, email });
+      navigate('/');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">
+      <div className="bg-gray-900 p-10 rounded-3xl shadow-xl w-full max-w-md text-center">
+        <h1 className="text-3xl font-bold mb-6 text-blue-400">Criar Conta</h1>
+        <form onSubmit={handleCadastro} className="flex flex-col gap-4">
+          <input type="text" placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} className="p-3 rounded bg-gray-800 text-gray-100" required />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3 rounded bg-gray-800 text-gray-100" required />
+          <input type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} className="p-3 rounded bg-gray-800 text-gray-100" required />
+          <button type="submit" className="bg-green-700 hover:bg-green-600 p-3 rounded font-semibold">Cadastrar</button>
+        </form>
+        {erro && <p className="text-red-400 mt-3">{erro}</p>}
+        <p className="mt-4 text-sm text-gray-400">
+          Já tem uma conta? <Link to="/login" className="text-blue-400 hover:underline">Fazer Login</Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// =========================
+// PROTECTED ROUTE
+// =========================
+function ProtectedRoute({ children }) {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(tempoPadrao);
-  const [isFinished, setIsFinished] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [questionStart, setQuestionStart] = useState<number>(Date.now());
-  const timeoutHandledRef = useRef(false);
-
   useEffect(() => {
-    if (!selectedExam) return;
-    const examId = selectedExam.id_prova;
-    let cancelled = false;
-
-    async function fetchQuestoes() {
-      setLoading(true);
-      setError(null);
-      const { data, error: fetchError } = await supabase
-        .from("questoes")
-        .select("*")
-        .eq("id_prova", examId)
-        .order("id_questao", { ascending: true });
-
-      if (!cancelled) {
-        if (fetchError) {
-          console.error(fetchError);
-          setError("Nao foi possivel carregar as questoes da prova selecionada.");
-        } else {
-          setQuestoes((data ?? []) as Questao[]);
-          setCurrentIndex(0);
-          setSelectedOption(null);
-          setTimeLeft(tempoPadrao);
-          setQuestionStart(Date.now());
-          setIsFinished(false);
-        }
-        setLoading(false);
-      }
-    }
-
-    fetchQuestoes();
-
-    return () => {
-      cancelled = true;
+    const load = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data?.user || null);
+      setLoading(false);
     };
-  }, [selectedExam?.id_prova, tempoPadrao]);
-
-  const currentQuestion = questoes[currentIndex];
-
-  useEffect(() => {
-    timeoutHandledRef.current = false;
-    setTimeLeft(tempoPadrao);
-    setSelectedOption(null);
-    setQuestionStart(Date.now());
-  }, [currentQuestion?.id_questao, tempoPadrao]);
-
-  useEffect(() => {
-    if (!currentQuestion || isFinished) return;
-    const timer = window.setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : prev));
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [currentQuestion?.id_questao, isFinished]);
-
-  const goToNextQuestion = useCallback(() => {
-    if (currentIndex + 1 >= questoes.length) {
-      setIsFinished(true);
-    } else {
-      setCurrentIndex((prev) => prev + 1);
-    }
-    setTimeLeft(tempoPadrao);
-    setSelectedOption(null);
-    setQuestionStart(Date.now());
-    timeoutHandledRef.current = false;
-  }, [currentIndex, questoes.length, tempoPadrao]);
-
-  useEffect(() => {
-    if (!currentQuestion || isFinished) return;
-    if (timeLeft === 0 && !timeoutHandledRef.current) {
-      timeoutHandledRef.current = true;
-      goToNextQuestion();
-    }
-  }, [timeLeft, currentQuestion, isFinished, goToNextQuestion]);
-
-  const saveAnswer = useCallback(
-    async (alternative: string | null) => {
-      if (!currentQuestion || !alternative) return;
-      setSaving(true);
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData.user;
-        if (!user) {
-          alert("Sessao expirada. Entre novamente.");
-          return;
-        }
-        const tempoRespostaMs = Date.now() - questionStart;
-        await supabase.from("respostas_usuarios").insert({
-          id_usuario: user.id,
-          id_questao: currentQuestion.id_questao,
-          alternativa_marcada: alternative,
-          correta: alternative === currentQuestion.alternativa_correta,
-          tempo_resposta_ms: Math.max(tempoRespostaMs, 0),
-        });
-      } catch (err) {
-        console.error(err);
-        alert("Nao foi possivel salvar sua resposta. Tente novamente.");
-      } finally {
-        setSaving(false);
-      }
-    },
-    [currentQuestion, questionStart]
-  );
-
-  const handleConfirm = async () => {
-    if (!selectedOption) {
-      alert("Selecione uma alternativa para continuar.");
-      return;
-    }
-    await saveAnswer(selectedOption);
-    goToNextQuestion();
-  };
-
-  const handleSkip = () => {
-    goToNextQuestion();
-  };
-
-  const handleFinish = () => {
-    setIsFinished(true);
-  };
-
-  if (loading) {
-    return <p className="p-6">Carregando questoes...</p>;
-  }
-
-  if (error) {
-    return <p className="p-6 text-red-600">{error}</p>;
-  }
-
-  if (questoes.length === 0) {
-    return <div className="p-6 text-gray-600">Nao ha questoes cadastradas para esta prova.</div>;
-  }
-
-  if (!currentQuestion || isFinished) {
-    return (
-      <div className="p-6 flex flex-col items-center gap-4">
-        <h2 className="text-2xl font-bold text-blue-700">Prova concluida!</h2>
-        <p className="text-gray-600">Parabens por finalizar a prova selecionada.</p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => navigate("/resultado")}
-            className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition"
-          >
-            Ver desempenho
-          </button>
-          <button
-            onClick={() => navigate("/provas")}
-            className="bg-gray-200 text-blue-700 px-4 py-2 rounded hover:bg-gray-300 transition"
-          >
-            Escolher outra prova
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm text-gray-600">
-          Questao {currentIndex + 1} de {questoes.length}
-        </span>
-        <span className="text-sm font-semibold text-blue-700">
-          Tempo restante: {timeLeft}s
-        </span>
-      </div>
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <p className="font-semibold mb-4 text-lg">{currentQuestion.enunciado}</p>
-        <div className="space-y-3">
-          {["A", "B", "C", "D", "E"].map((alt) => (
-            <label
-              key={alt}
-              className="flex items-center gap-3 border border-gray-200 rounded-lg p-3 hover:border-blue-400 transition"
-            >
-              <input
-                type="radio"
-                name={`questao-${currentQuestion.id_questao}`}
-                value={alt}
-                checked={selectedOption === alt}
-                onChange={() => setSelectedOption(alt)}
-              />
-              <span className="text-gray-700 font-medium">{alt})</span>
-              <span className="text-gray-700">
-                {currentQuestion[`alternativa_${alt.toLowerCase() as "a" | "b" | "c" | "d" | "e"}`]}
-              </span>
-            </label>
-          ))}
-        </div>
-        <div className="mt-6 flex flex-wrap gap-3 justify-end">
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="px-4 py-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
-            disabled={saving}
-          >
-            Pular
-          </button>
-          <button
-            type="button"
-            onClick={handleFinish}
-            className="px-4 py-2 rounded border border-amber-500 text-amber-600 hover:bg-amber-50 transition"
-          >
-            Finalizar prova
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="px-4 py-2 rounded bg-blue-700 text-white hover:bg-blue-800 transition disabled:bg-blue-400"
-            disabled={saving}
-          >
-            {saving ? "Salvando..." : "Confirmar resposta"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Resultado() {
-  const [dados, setDados] = useState<any[]>([]);
-
-  useEffect(() => {
-    carregarResultados();
+    load();
   }, []);
-
-  async function carregarResultados() {
-    const usuario = (await supabase.auth.getUser()).data.user;
-    if (!usuario) return;
-    const { data } = await supabase
-      .from("vw_resultados_calculados")
-      .select("*")
-      .eq("id_usuario", usuario.id);
-    setDados(data ?? []);
-  }
-
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4 text-blue-700">Desempenho do Usuario</h2>
-      {dados.length > 0 ? (
-        <BarChart width={500} height={300} data={dados} className="bg-white rounded-xl shadow-md p-4">
-          <XAxis dataKey="id_usuario" />
-          <YAxis />
-          <Tooltip />
-          <LegendCompat />
-          <Bar dataKey="total_acertos" fill="#22c55e" name="Acertos" />
-          <Bar dataKey="total_erros" fill="#ef4444" name="Erros" />
-        </BarChart>
-      ) : (
-        <p>Nenhum resultado disponivel ainda.</p>
-      )}
-    </div>
-  );
-}
-
-function Solucionario() {
-  const [solucoes, setSolucoes] = useState<any[]>([]);
-
-  useEffect(() => {
-    carregarSolucoes();
-  }, []);
-
-  async function carregarSolucoes() {
-    const { data } = await supabase.from("solucoes_questoes").select("*, questoes(enunciado)");
-    setSolucoes(data ?? []);
-  }
-
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4 text-blue-700">Solucionario</h2>
-      {solucoes.map((s: any) => (
-        <div key={s.id_solucao} className="bg-white p-4 rounded-xl shadow-md mb-4">
-          <h3 className="font-semibold mb-2">{s.questoes?.enunciado}</h3>
-          <p>{s.texto_solucao}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ProtectedRoute({
-  isAuthenticated,
-  requireExam = false,
-  children,
-}: {
-  isAuthenticated: boolean;
-  requireExam?: boolean;
-  children: ReactElement;
-}) {
-  const { selectedExam } = useExam();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (requireExam && !selectedExam) {
-    return <Navigate to="/provas" replace />;
-  }
-
+  if (loading) return <div className="text-center text-gray-400 p-10">Carregando...</div>;
+  if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
-function AppInner() {
-  const [session, setSession] = useState<MaybeSession>(null);
-  const [loadingSession, setLoadingSession] = useState(true);
-  const { clearExam, selectedExam } = useExam();
+// =========================
+// HOME
+// =========================
+function Home() {
+  const navigate = useNavigate();
+  const [provas, setProvas] = useState([]);
+  const [temas, setTemas] = useState([]);
+  const [provaSelecionada, setProvaSelecionada] = useState('');
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session ?? null);
-      setLoadingSession(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => {
-      subscription.unsubscribe();
+    const carregarDados = async () => {
+      const { data: provasData } = await supabase.from('provas').select('id_prova, ano, descricao');
+      const { data: temasData } = await supabase.from('temas').select('id_tema, nome_tema');
+      setProvas(provasData || []);
+      setTemas(temasData || []);
     };
+    carregarDados();
   }, []);
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    clearExam();
-    if (error) {
-      alert(error.message);
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-gray-100 p-10">
+      <div className="bg-gray-900 p-10 rounded-3xl shadow-xl w-full max-w-2xl text-center relative">
+        <button onClick={logout} className="absolute top-4 right-4 text-sm bg-red-600 hover:bg-red-500 px-3 py-1 rounded-md">Sair</button>
+        <h1 className="text-3xl font-bold mb-2 text-blue-400">🎓 Simulados ENEM</h1>
+        <p className="text-gray-400 mb-6">Escolha a prova e como deseja resolver.</p>
+
+        <div className="flex items-center gap-3 mb-4">
+          <Link to="/ranking" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md">🏆 Ranking</Link>
+          <Link to="/estatisticas" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md">📊 Estatísticas</Link>
+        </div>
+
+        <h2 className="text-lg mb-3">Selecione uma prova</h2>
+        <select onChange={(e) => setProvaSelecionada(e.target.value)} className="p-3 rounded-lg bg-gray-800 text-gray-100 mb-6 w-full">
+          <option value="">Escolha...</option>
+          {provas.map((p) => (
+            <option key={p.id_prova} value={p.id_prova}>{p.ano} - {p.descricao}</option>
+          ))}
+        </select>
+
+        {provaSelecionada && (
+          <div>
+            <h3 className="text-lg mb-3">Selecione um tema</h3>
+            <div className="grid grid-cols-1 gap-3">
+              <Link to={`/simulado/${provaSelecionada}/completa`} className="bg-blue-700 hover:bg-blue-600 py-3 rounded-xl font-semibold">Prova Completa</Link>
+              {temas.map((t) => (
+                <Link key={t.id_tema} to={`/simulado/${provaSelecionada}/${t.id_tema}`} className="bg-gray-700 hover:bg-gray-600 py-3 rounded-xl font-semibold">{t.nome_tema}</Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// =========================
+// SIMULADO PROVA
+// =========================
+function SimuladoProva() {
+  const { id_prova, id_tema } = useParams();
+  const navigate = useNavigate();
+  const [questoes, setQuestoes] = useState([]);
+  const [atual, setAtual] = useState(0);
+  const [resposta, setResposta] = useState(null);
+  const [respondendo, setRespondendo] = useState(false);
+  const [tempoRestante, setTempoRestante] = useState(4 * 60 * 60); // 4h
+  const [acertos, setAcertos] = useState(0);
+  const [finalizado, setFinalizado] = useState(false);
+  const [resumo, setResumo] = useState(null);
+  const inicioProvaRef = useRef(Date.now());
+  const inicioQuestaoRef = useRef(Date.now());
+
+  // =========================
+  // Carregar questões
+  // =========================
+  useEffect(() => {
+    const carregarQuestoes = async () => {
+      try {
+        let query = supabase
+          .from('questoes')
+          .select(`
+            id_questao,
+            enunciado,
+            id_tema,
+            id_prova,
+            alternativas(id_alternativa, letra, texto),
+            solucoes_questoes(alternativa_correta)
+          `)
+          .eq('id_prova', id_prova)
+          .order('id_questao', { ascending: true });
+
+        if (id_tema !== 'completa' && !isNaN(parseInt(id_tema))) {
+          query = query.eq('id_tema', parseInt(id_tema));
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const idsQuestoes = data.map((q) => q.id_questao);
+        let imagensQuestoes = [];
+
+        if (idsQuestoes.length) {
+          const { data: imgQ } = await supabase
+            .from('imagens')
+            .select('id_entidade, caminho_arquivo, tipo_entidade, descricao')
+            .eq('tipo_entidade', 'questao')
+            .in('id_entidade', idsQuestoes);
+          imagensQuestoes = imgQ || [];
+        }
+
+        const formatadas = data.map((q) => ({
+          ...q,
+          imagensQuestao: imagensQuestoes.filter((img) => img.id_entidade === q.id_questao),
+          correta: q.solucoes_questoes?.[0]?.alternativa_correta || null,
+        }));
+
+        setQuestoes(formatadas);
+      } catch (err) {
+        console.error('Erro ao carregar questões:', err);
+        alert('Erro ao carregar questões. Verifique as tabelas no Supabase.');
+      }
+    };
+
+    carregarQuestoes();
+  }, [id_prova, id_tema]);
+
+  // =========================
+  // Timer
+  // =========================
+  useEffect(() => {
+    if (tempoRestante <= 0) {
+      finalizarProva();
+      return;
+    }
+    const intervalo = setInterval(() => setTempoRestante((s) => s - 1), 1000);
+    return () => clearInterval(intervalo);
+  }, [tempoRestante]);
+
+  const formatarTempo = (s) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const seg = s % 60;
+    return `${h}:${String(m).padStart(2, '0')}:${String(seg).padStart(2, '0')}`;
+  };
+
+  // =========================
+  // Navegação
+  // =========================
+  const handleAnterior = () => {
+    if (atual > 0) setAtual(atual - 1);
+  };
+
+  const handleProxima = () => {
+    if (atual < questoes.length - 1) setAtual(atual + 1);
+  };
+
+  const handleFinalizar = () => {
+    if (window.confirm('Deseja realmente finalizar a prova?')) {
+      finalizarProva();
     }
   };
 
-  const isAuthenticated = useMemo(() => !!session?.user, [session]);
+  // =========================
+  // Responder questão
+  // =========================
+  const responder = async (letra) => {
+    if (respondendo || !questoes[atual]) return;
+    setRespondendo(true);
+    setResposta(letra);
 
-  if (loadingSession) {
+    const questao = questoes[atual];
+    const correta = letra === questao.correta;
+    if (correta) setAcertos((a) => a + 1);
+    const tempoMs = Date.now() - inicioQuestaoRef.current;
+
+    try {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      if (user) {
+        const alt = questao.alternativas.find((a) => a.letra === letra);
+        await supabase.from('respostas_usuarios').insert({
+          id_usuario: user.id,
+          id_questao: questao.id_questao,
+          id_alternativa: alt?.id_alternativa || null,
+          alternativa_marcada: letra,
+          correta,
+          tempo_resposta_ms: tempoMs,
+          data_resposta: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao salvar resposta:', err);
+    }
+
+    setTimeout(() => {
+      setResposta(null);
+      setRespondendo(false);
+      inicioQuestaoRef.current = Date.now();
+      if (atual + 1 < questoes.length) setAtual(atual + 1);
+      else finalizarProva();
+    }, 1000);
+  };
+
+  // =========================
+  // Finalizar prova
+  // =========================
+  const finalizarProva = async () => {
+    if (finalizado) return;
+    const total = questoes.length;
+    const erros = total - acertos;
+    const tempoTotalSeg = Math.floor((Date.now() - inicioProvaRef.current) / 1000);
+    const percentual = total ? (acertos / total) * 100 : 0;
+
+    try {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      if (user) {
+        await supabase.from('resultados_usuarios').upsert({
+          id_usuario: user.id,
+          total_questoes: total,
+          total_acertos: acertos,
+          total_erros: erros,
+          percentual_acertos: percentual,
+          tempo_medio_resposta_ms: total ? Math.round((tempoTotalSeg * 1000) / total) : null,
+          data_ultima_atualizacao: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      console.error('Erro ao salvar resultado final:', e);
+    }
+
+    setResumo({
+      total,
+      acertos,
+      erros,
+      percentual: percentual.toFixed(2),
+      tempoTotalSeg,
+    });
+    setFinalizado(true);
+  };
+
+  // =========================
+  // Renderizações
+  // =========================
+  if (!questoes.length)
+    return <div className="text-center text-gray-400 p-10">Carregando questões...</div>;
+
+  if (finalizado && resumo) {
     return (
-      <div className="flex items-center justify-center h-screen bg-blue-50 text-blue-700 font-semibold">
-        Carregando...
+      <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center justify-center p-10">
+        <div className="bg-gray-900 p-10 rounded-3xl max-w-lg w-full text-center">
+          <h1 className="text-3xl font-bold mb-6 text-green-400">🎯 Prova Finalizada!</h1>
+          <p>Total de questões: <b>{resumo.total}</b></p>
+          <p className="text-green-400">Acertos: <b>{resumo.acertos}</b></p>
+          <p className="text-red-400">Erros: <b>{resumo.erros}</b></p>
+          <p>Aproveitamento: <b>{resumo.percentual}%</b></p>
+          <p>Tempo Total: <b>{formatarTempo(resumo.tempoTotalSeg)}</b></p>
+          <div className="flex gap-3 justify-center mt-8">
+            <button onClick={() => navigate('/')} className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-xl">
+              Voltar ao início
+            </button>
+            <button onClick={() => navigate('/ranking')} className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl">
+              Ver Ranking
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
+  const questao = questoes[atual];
+
   return (
-    <>
-      {isAuthenticated && <Navbar onLogout={handleLogout} />}
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center justify-center p-10">
+      <div className="bg-gray-900 p-8 rounded-3xl max-w-3xl w-full shadow-2xl">
+        <div className="flex justify-between mb-6 text-sm text-gray-400">
+          <span>Questão {atual + 1} / {questoes.length}</span>
+          <span className="text-yellow-400 font-semibold">⏱ {formatarTempo(tempoRestante)}</span>
+        </div>
+
+        <p className="text-lg text-gray-200 mb-4 whitespace-pre-line">{questao.enunciado}</p>
+
+        {/* imagens da questão */}
+        {questao.imagensQuestao?.map((img) => (
+          <img
+            key={img.id_entidade}
+            src={img.caminho_arquivo}
+            alt={img.descricao || 'Imagem da questão'}
+            className="mx-auto mb-6 max-h-96 rounded-lg shadow"
+          />
+        ))}
+
+        {/* alternativas */}
+        <div className="grid grid-cols-1 gap-3">
+          {questao.alternativas.map((alt) => (
+            <button
+              key={alt.id_alternativa}
+              onClick={() => responder(alt.letra)}
+              disabled={respondendo}
+              className={`p-3 rounded-xl font-semibold transition-all ${
+                resposta
+                  ? alt.letra === questao.correta
+                    ? 'bg-green-700'
+                    : alt.letra === resposta
+                    ? 'bg-red-700'
+                    : 'bg-gray-800'
+                  : 'bg-blue-700 hover:bg-blue-600'
+              }`}
+            >
+              {alt.letra}. {alt.texto}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex justify-between mt-8">
+          <button
+            onClick={handleAnterior}
+            disabled={atual === 0}
+            className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl disabled:opacity-50"
+          >
+            ⬅ Anterior
+          </button>
+          <button
+            onClick={handleProxima}
+            disabled={atual === questoes.length - 1}
+            className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-xl disabled:opacity-50"
+          >
+            Próxima ➡
+          </button>
+          <button
+            onClick={handleFinalizar}
+            className="bg-green-700 hover:bg-green-600 px-6 py-3 rounded-xl"
+          >
+            ✅ Finalizar Prova
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =========================
+// RANKING
+// =========================
+function Ranking() {
+  const [ranking, setRanking] = useState([]);
+  useEffect(() => {
+    const carregarRanking = async () => {
+      const { data } = await supabase
+        .from('resultados_usuarios')
+        .select('id_usuario, percentual_acertos, total_questoes')
+        .order('percentual_acertos', { ascending: false })
+        .limit(10);
+      setRanking(data || []);
+    };
+    carregarRanking();
+  }, []);
+  return (
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center p-10">
+      <h1 className="text-3xl text-blue-400 font-bold mb-6">🏆 Ranking de Usuários</h1>
+      <table className="w-full max-w-2xl text-left border border-gray-700 rounded-xl overflow-hidden">
+        <thead className="bg-gray-800 text-gray-300">
+          <tr><th className="p-3">Usuário</th><th className="p-3">Percentual</th><th className="p-3">Questões</th></tr>
+        </thead>
+        <tbody>
+          {ranking.map((r, i) => (
+            <tr key={i} className="border-t border-gray-700">
+              <td className="p-3">Usuário #{r.id_usuario}</td>
+              <td className="p-3">{Number(r.percentual_acertos)?.toFixed(2)}%</td>
+              <td className="p-3">{r.total_questoes}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <Link to="/" className="mt-6 bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-xl">Voltar</Link>
+    </div>
+  );
+}
+
+// =========================
+// ESTATÍSTICAS
+// =========================
+function Estatisticas() {
+  const [dados, setDados] = useState({ temas: [], dificuldade: [], horas: [] });
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      const { data: temaData } = await supabase.from('resultados_por_tema').select('id_tema, percentual');
+      const { data: difData } = await supabase.from('resultados_por_dificuldade').select('dificuldade, percentual');
+      const { data: horaData } = await supabase.from('resultados_por_hora').select('hora, percentual');
+      setDados({ temas: temaData || [], dificuldade: difData || [], horas: horaData || [] });
+    };
+    carregarEstatisticas();
+  }, []);
+  return (
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center p-10">
+      <h1 className="text-3xl text-blue-400 font-bold mb-6">📊 Estatísticas de Desempenho</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl">
+        <div className="bg-gray-900 p-6 rounded-2xl shadow-xl">
+          <h2 className="text-lg mb-3">Desempenho por Tema</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={dados.temas}>
+              <XAxis dataKey="id_tema" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="percentual" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-gray-900 p-6 rounded-2xl shadow-xl">
+          <h2 className="text-lg mb-3">Por Dificuldade</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={dados.dificuldade} dataKey="percentual" nameKey="dificuldade" cx="50%" cy="50%" outerRadius={100}>
+                {dados.dificuldade.map((_, i) => (
+                  <Cell key={i} fill={["#22c55e", "#eab308", "#ef4444"][i % 3]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="col-span-2 bg-gray-900 p-6 rounded-2xl shadow-xl">
+          <h2 className="text-lg mb-3">Desempenho por Hora</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={dados.horas}>
+              <XAxis dataKey="hora" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="percentual" fill="#6366f1" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <Link to="/" className="mt-8 bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-xl">Voltar</Link>
+    </div>
+  );
+}
+
+// =========================
+// ROUTER
+// =========================
+export default function AppWrapper() {
+  return (
+    <Router>
       <Routes>
-        <Route path="/" element={<Login session={session} />} />
-        <Route
-          path="/provas"
-          element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <SelecionarProva />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/questoes"
-          element={
-            <ProtectedRoute isAuthenticated={isAuthenticated} requireExam>
-              <Questoes />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/resultado"
-          element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Resultado />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/solucionario"
-          element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Solucionario />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to={isAuthenticated ? (selectedExam ? "/questoes" : "/provas") : "/"}
-              replace
-            />
-          }
-        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/simulado/:id_prova/:id_tema" element={<ProtectedRoute><SimuladoProva /></ProtectedRoute>} />
+        <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
+        <Route path="/estatisticas" element={<ProtectedRoute><Estatisticas /></ProtectedRoute>} />
       </Routes>
-    </>
+    </Router>
   );
 }
-
-export default function App() {
-  return (
-    <ExamProvider>
-      <BrowserRouter>
-        <AppInner />
-      </BrowserRouter>
-    </ExamProvider>
-  );
-}
-
