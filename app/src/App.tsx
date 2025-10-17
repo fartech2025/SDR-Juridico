@@ -2,6 +2,9 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, Link, Navigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+// NOVOS PAINÉIS
+import DashboardAluno_dark from "./components/DashboardAluno_dark_supabase";
+import DashboardGestor_dark from "./components/DashboardGestor_dark_supabase";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -129,10 +132,12 @@ function Home() {
         <h1 className="text-3xl font-bold mb-2 text-blue-400">🎓 Simulados ENEM</h1>
         <p className="text-gray-400 mb-6">Escolha a prova e como deseja resolver.</p>
 
-        <div className="flex items-center gap-3 mb-4">
-          <Link to="/ranking" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md">🏆 Ranking</Link>
-          <Link to="/estatisticas" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md">📊 Estatísticas</Link>
-        </div>
+      <div className="flex items-center gap-3 mb-4 flex-wrap justify-center">
+        <Link to="/ranking" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md">🏆 Ranking</Link>
+        <Link to="/estatisticas" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md">📊 Estatísticas</Link>
+        <Link to="/painel-aluno" className="text-sm bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded-md">🎓 Painel do Aluno</Link>
+        <Link to="/painel-gestor" className="text-sm bg-green-700 hover:bg-green-600 px-3 py-1 rounded-md">🧑‍🏫 Painel do Gestor</Link>
+      </div>
 
         <h2 className="text-lg mb-3">Selecione uma prova</h2>
         <select onChange={(e) => setProvaSelecionada(e.target.value)} className="p-3 rounded-lg bg-gray-800 text-gray-100 mb-6 w-full">
@@ -464,6 +469,9 @@ export default function AppWrapper() {
         <Route path="/simulado/:id_prova/:id_tema" element={<ProtectedRoute><SimuladoProva /></ProtectedRoute>} />
         <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
         <Route path="/estatisticas" element={<ProtectedRoute><Estatisticas /></ProtectedRoute>} />
+        {/* NOVAS ROTAS DE PAINÉIS */}
+        <Route path="/painel-aluno" element={<ProtectedRoute><DashboardAluno_dark /></ProtectedRoute>} />
+        <Route path="/painel-gestor" element={<ProtectedRoute><DashboardGestor_dark /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
