@@ -1,5 +1,68 @@
 # React + TypeScript + Vite
 
+## Segurança e variáveis de ambiente
+
+## Scripts e DevOps
+
+### Instalação
+
+```sh
+cd app
+npm install
+```
+
+### Rodar em modo desenvolvimento
+
+```sh
+npm run dev
+```
+
+### Build de produção
+
+```sh
+npm run build
+```
+
+### Rodar seed/reset do banco Supabase (local)
+
+```sh
+cd ..
+npx supabase@latest db reset
+```
+
+### Deploy
+
+O deploy pode ser feito em qualquer serviço que suporte apps React/Vite (Vercel, Netlify, etc). Configure as variáveis de ambiente de produção no painel do serviço.
+
+Para rodar preview local do build:
+
+```sh
+npm run preview
+```
+
+**Nunca suba seu arquivo `.env.local` para o repositório!**
+O arquivo `.env.local` já está no `.gitignore` por padrão.
+
+Exemplo de `.env.local` para desenvolvimento:
+
+```
+VITE_SUPABASE_URL=http://localhost:54321
+VITE_SUPABASE_ANON_KEY=chave-local-ou-de-teste
+VITE_DEV_MODE=true
+```
+
+Para produção, utilize as chaves reais do seu projeto Supabase:
+
+```
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-anon-key
+VITE_DEV_MODE=false
+```
+
+**Importante:** Nunca exponha a chave de serviço do Supabase no frontend. Use apenas a anon key.
+
+Recomenda-se também configurar variáveis de ambiente no serviço de deploy (Vercel, Netlify, etc) e nunca hardcodear segredos no código.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -1,45 +1,107 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Supabase: Start",
-      "type": "shell",
-      "command": "npx.cmd",
-      "args": ["supabase@latest", "start"],
-      "presentation": { "reveal": "always", "panel": "dedicated" }
-    },
-    {
-      "label": "Supabase: Stop",
-      "type": "shell",
-      "command": "npx.cmd",
-      "args": ["supabase@latest", "stop"],
-      "presentation": { "reveal": "always", "panel": "dedicated" }
-    },
-    {
-      "label": "DB: Reset + Seed",
-      "type": "shell",
-      "command": "npx.cmd",
-      "args": ["supabase@latest", "db", "reset"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "presentation": { "reveal": "always", "panel": "dedicated" }
-    },
-    {
-      "label": "Types: Generate",
-      "type": "shell",
-      "command": "powershell",
-      "args": ["-NoProfile","-Command", "npx.cmd supabase@latest gen types typescript --local ^| Set-Content -Encoding UTF8 app/src/lib/database.types.ts"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "presentation": { "reveal": "silent", "panel": "dedicated" }
-    },
-    {
-      "label": "Web: Dev",
-      "type": "shell",
-      "command": "npm.cmd",
-      "args": ["run", "dev"],
-      "options": { "cwd": "${workspaceFolder}/app" },
-      "isBackground": true,
-      "problemMatcher": { "owner": "vite", "pattern": [ { "regexp": "." } ], "background": { "activeOnStart": true, "beginsPattern": "VITE v", "endsPattern": "Local:" } },
-      "presentation": { "reveal": "always", "panel": "shared" }
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Supabase: Start",
+			"type": "shell",
+			"command": "npx.cmd",
+			"args": [
+				"supabase@latest",
+				"start"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Supabase: Stop",
+			"type": "shell",
+			"command": "npx.cmd",
+			"args": [
+				"supabase@latest",
+				"stop"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "DB: Reset + Seed",
+			"type": "shell",
+			"command": "npx.cmd",
+			"args": [
+				"supabase@latest",
+				"db",
+				"reset"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Types: Generate",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"npx.cmd supabase@latest gen types typescript --local ^| Set-Content -Encoding UTF8 app/src/lib/database.types.ts"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"reveal": "silent",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Web: Dev",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"run",
+				"dev"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "vite",
+				"pattern": [
+					{
+						"regexp": "."
+					}
+				],
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "VITE v",
+					"endsPattern": "Local:"
+				}
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Seed: Supabase DB",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"supabase@latest",
+				"db",
+				"reset"
+			],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
 }
