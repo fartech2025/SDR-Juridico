@@ -92,7 +92,14 @@ def run_tests():
     print("="*50)
     
     if os.path.exists("test_project.py"):
-        return run_command("python test_project.py", "Validação do projeto")
+        # Tentar python3 primeiro, depois python
+        for python_cmd in ["python3", "python"]:
+            result = subprocess.run(f"which {python_cmd}", shell=True, capture_output=True)
+            if result.returncode == 0:
+                return run_command(f"{python_cmd} test_project.py", "Validação do projeto")
+        
+        print("❌ Nenhum interpretador Python encontrado")
+        return False
     else:
         print("⚠️  Script de teste não encontrado")
         return True
@@ -110,7 +117,13 @@ def update_project():
         print("📄 PDF encontrado mas saída não existe")
         response = input("Deseja executar a extração? (s/N): ").lower()
         if response == 's':
-            return run_command("python main.py", "Executando extração")
+            # Tentar python3 primeiro, depois python
+            for python_cmd in ["python3", "python"]:
+                result = subprocess.run(f"which {python_cmd}", shell=True, capture_output=True)
+                if result.returncode == 0:
+                    return run_command(f"{python_cmd} main.py", "Executando extração")
+            print("❌ Nenhum interpretador Python encontrado")
+            return False
     elif pdf_exists and output_exists:
         print("✅ PDF e saída já existem")
         pdf_time = os.path.getmtime("2024_PV_impresso_D1_CD1.pdf")
@@ -120,7 +133,13 @@ def update_project():
             print("📄 PDF é mais recente que a saída")
             response = input("Deseja re-executar a extração? (s/N): ").lower()
             if response == 's':
-                return run_command("python main.py", "Re-executando extração")
+                # Tentar python3 primeiro, depois python
+                for python_cmd in ["python3", "python"]:
+                    result = subprocess.run(f"which {python_cmd}", shell=True, capture_output=True)
+                    if result.returncode == 0:
+                        return run_command(f"{python_cmd} main.py", "Re-executando extração")
+                print("❌ Nenhum interpretador Python encontrado")
+                return False
         else:
             print("✅ Saída está atualizada")
     else:
