@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-10-28T08:55:09.133952",
+  "duration_seconds": 5.451847,
+  "test_results": {
+    "memory_test": {
+      "success": false,
+      "initial_mb": 17.484375,
+      "peak_mb": 55.515625,
+      "final_mb": 55.5625,
+      "increase_mb": 38.03125,
+      "recovered_mb": -0.046875
+    },
+    "concurrency_test": {
+      "success": true,
+      "successful_workers": 10,
+      "total_workers": 10,
+      "duration_seconds": 0.09516286849975586,
+      "operations_per_second": 31524.900912457222,
+      "total_operations": 3000
+    },
+    "large_data_test": {
+      "success": true,
+      "processed_records": 1900,
+      "duration_seconds": 0.062294721603393555,
+      "records_per_second": 30500.17643704336
+    },
+    "filesystem_test": {
+      "success": true,
+      "files_created": 1000,
+      "files_read": 1000,
+      "duration_seconds": 0.133925199508667,
+      "total_size_mb": 1.2292861938476562
+    },
+    "error_recovery_test": {
+      "success": true,
+      "errors_handled": 3,
+      "total_tests": 3,
+      "success_rate": 1.0
+    }
+  },
+  "summary": {
+    "total_tests": 5,
+    "passed_tests": 4,
+    "overall_status": "ATTENTION_NEEDED"
+  }
+}

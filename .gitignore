@@ -3,9 +3,12 @@
 *.env
 .env.local
 .env.production
+*.key
+*.secret
 
 # Supabase backups
 backup_supabase*.json
+backup_*
 create_table.sql
 
 # Python
