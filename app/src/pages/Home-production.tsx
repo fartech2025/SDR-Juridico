@@ -44,7 +44,7 @@ export default function Home() {
         console.log('🔧 VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL)
         console.log('🔧 VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '***definida***' : 'indefinida')
         
-        if (!hasSupabase) {
+        if (!hasSupabase || !supabase) {
           throw new Error('Supabase não configurado - verifique as variáveis de ambiente')
         }        // Buscar dados reais do usuário
         console.log('👤 Buscando dados do usuário ID:', CURRENT_USER_ID)
@@ -63,7 +63,8 @@ export default function Home() {
             .from('usuarios')
             .insert([{ 
               nome: 'Usuário Demo',
-              email: 'demo@exemplo.com'
+              email: 'demo@exemplo.com',
+              senha_hash: 'demo_hash_placeholder' // Campo obrigatório
             }])
             .select('id_usuario, nome')
             .limit(1)
@@ -418,7 +419,10 @@ export default function Home() {
               {provaSelecionada && temaSelecionado ? (
                 <Link 
                   to={`/simulado/${provaSelecionada}/${temaSelecionado}`}
-                  onClick={() => console.log('🔗 Navegando para tema específico:', `/simulado/${provaSelecionada}/${temaSelecionado}`)} 
+                  onClick={() => {
+                    console.log('� Tema selecionado:', temaSelecionado)
+                    console.log('�🔗 Navegando para tema específico:', `/simulado/${provaSelecionada}/${temaSelecionado}`)
+                  }} 
                   className="group relative overflow-hidden bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-500 hover:to-pink-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-purple-400 focus:outline-none"
                   tabIndex={0}
                   aria-label="Estudar tema específico"

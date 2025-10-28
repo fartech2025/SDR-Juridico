@@ -17,11 +17,17 @@ export default function SimuladoProva() {
       try {
         console.log(`Carregando questões para prova ${id_prova}, tema ${id_tema}`);
         const temaId = id_tema === 'completa' ? undefined : Number(id_tema);
+        console.log(`🔍 Filtros aplicados - Prova ID: ${Number(id_prova)}, Tema ID: ${temaId}`);
+        
         const { data, error } = await fetchQuestoesPorProvaTema(Number(id_prova), temaId);
         if (error) {
           console.error('Erro ao carregar questões:', error);
           setQuestoes([]);
         } else {
+          console.log(`✅ Questões carregadas: ${data?.length || 0} questões`);
+          if (data && data.length > 0) {
+            console.log(`📋 Primeira questão: ID ${data[0].id_questao}, Tema ${data[0].id_tema}`);
+          }
           setQuestoes(data || []);
         }
       } catch (error) {
