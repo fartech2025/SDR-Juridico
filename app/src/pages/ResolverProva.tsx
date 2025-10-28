@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ZoomIn } from "lucide-react";
 
 // -------------------- INSTÂNCIA SUPABASE --------------------
 const supabase = createClient(
@@ -19,6 +19,7 @@ export default function ResolverProva() {
   const [tempoRestante, setTempoRestante] = useState(19800); // 5h30min
   const [respostas, setRespostas] = useState<Record<number, boolean | null>>({});
   const [selecionadas, setSelecionadas] = useState<Record<number, number | null>>({});
+  const [zoomImagem, setZoomImagem] = useState<string | null>(null);
   const userId = Number(import.meta.env.VITE_USER_ID || 1);
 
   // -------------------- TIMER --------------------
@@ -42,7 +43,6 @@ export default function ResolverProva() {
     const carregar = async () => {
       if (!ano) return;
 
-      // Busca prova pelo ano
       const { data: prova } = await supabase
         .from("provas")
         .select("id_prova")
@@ -54,7 +54,6 @@ export default function ResolverProva() {
         return;
       }
 
-      // Busca questões
       const { data: qs, error } = await supabase
         .from("questoes")
         .select("*")
@@ -70,7 +69,6 @@ export default function ResolverProva() {
         return;
       }
 
-      // Busca alternativas e imagens (somente para alternativas)
       const qIds = qs.map((q) => q.id_questao);
       const { data: alts } = await supabase
         .from("alternativas")
@@ -83,7 +81,7 @@ export default function ResolverProva() {
         .in("id_entidade", qIds)
         .in("tipo_entidade", ["alternativa"]);
 
-      // 🔹 NOVO FLUXO: gera URLs públicas das imagens renderizadas do bucket
+      // 🔹 Cria URLs públicas do bucket rendered-questions
       const fullQuestoes = await Promise.all(
         qs.map(async (q) => {
           const alternativas = alts
@@ -100,15 +98,12 @@ export default function ResolverProva() {
               };
             });
 
-          // Caminho dentro do bucket (apenas P1)
+          // Caminho da imagem P1
           const caminho = `questao_${q.nr_questao}/enunciado_questao_${q.nr_questao}_p1.png`;
 
-          // Bucket público → gera URL fixa
           const { data: publicUrl } = supabase.storage
             .from("rendered-questions")
             .getPublicUrl(caminho);
-
-          console.log("Questão:", q.nr_questao, "→", publicUrl.publicUrl);
 
           return {
             ...q,
@@ -128,14 +123,6 @@ export default function ResolverProva() {
   const finalizarProva = () => {
     navigate("/provas");
   };
-
-  // -------------------- CASO ESTEJA CARREGANDO --------------------
-  if (!questoes.length)
-    return <div className="p-6 text-slate-300">Carregando questões...</div>;
-
-  // Proteção contra índices inválidos
-  const safeIndex = Math.min(index, questoes.length - 1);
-  const current = questoes[safeIndex];
 
   // -------------------- REGISTRAR RESPOSTA --------------------
   const responder = async (idAlternativa: number) => {
@@ -161,20 +148,25 @@ export default function ResolverProva() {
       tempo_resposta_ms: Date.now() - inicio,
     });
 
-    // Atualiza estados locais
     setRespostas((prev) => ({ ...prev, [current.id_questao]: acertou }));
     setSelecionadas((prev) => ({ ...prev, [current.id_questao]: idAlternativa }));
 
-    // Avança automaticamente após pequena pausa
     setTimeout(() => {
       if (safeIndex < questoes.length - 1) setIndex((i) => i + 1);
       else finalizarProva();
     }, 800);
   };
 
-  // -------------------- RENDERIZAÇÃO --------------------
+  // -------------------- SEGURANÇA E VARIÁVEIS --------------------
+  if (!questoes.length)
+    return <div className="p-6 text-slate-300">Carregando questões...</div>;
+
+  const safeIndex = Math.min(index, questoes.length - 1);
+  const current = questoes[safeIndex];
+
+  // -------------------- RENDER --------------------
   return (
-    <div className="p-6 grid grid-cols-[300px_1fr] gap-6">
+    <div className="p-6 grid grid-cols-[300px_1fr] gap-6 relative">
       {/* Lateral com numeração das questões */}
       <div className="bg-slate-900/70 rounded-xl p-3 overflow-y-auto h-[calc(100vh-100px)] border border-slate-800">
         <div className="grid grid-cols-5 gap-2">
@@ -201,8 +193,8 @@ export default function ResolverProva() {
         </div>
       </div>
 
-      {/* Corpo da questão atual */}
-      <div className="bg-slate-900/70 rounded-xl p-6 border border-slate-800">
+      {/* Corpo da questão */}
+      <div className="bg-slate-900/70 rounded-xl p-6 border border-slate-800 relative">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-slate-100">
             Prova ENEM {ano}
@@ -214,13 +206,23 @@ export default function ResolverProva() {
           Questão {safeIndex + 1} de {questoes.length}
         </h3>
 
-        {/* Enunciado como imagem do bucket público */}
+        {/* Enunciado como imagem com zoom */}
         {current.enunciadoImagem ? (
-          <img
-            src={current.enunciadoImagem}
-            alt={`Questão ${current.nr_questao}`}
-            className="mb-5 max-w-full rounded-lg border border-slate-700 shadow-md"
-          />
+          <div className="relative mb-5">
+            <img
+              src={current.enunciadoImagem}
+              alt={`Questão ${current.nr_questao}`}
+              className="max-w-full max-h-[70vh] object-contain rounded-lg border border-slate-700 shadow-md mx-auto cursor-zoom-in"
+              onClick={() => setZoomImagem(current.enunciadoImagem)}
+            />
+            <button
+              className="absolute top-2 right-2 bg-slate-800/80 p-2 rounded-full hover:bg-slate-700 transition"
+              onClick={() => setZoomImagem(current.enunciadoImagem)}
+              title="Ampliar imagem"
+            >
+              <ZoomIn className="text-slate-200" size={18} />
+            </button>
+          </div>
         ) : (
           <p className="text-red-400 text-sm mb-5">
             Imagem não encontrada para {current.nr_questao}
@@ -293,6 +295,20 @@ export default function ResolverProva() {
           </button>
         </div>
       </div>
+
+      {/* Modal de Zoom */}
+      {zoomImagem && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 cursor-zoom-out"
+          onClick={() => setZoomImagem(null)}
+        >
+          <img
+            src={zoomImagem}
+            alt="Zoom Questão"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   );
 }
