@@ -47,17 +47,19 @@ export default function ResolverProva() {
         .from("provas")
         .select("id_prova")
         .eq("ano", parseInt(ano))
-        .single();
+        .limit(1);
 
-      if (!prova) {
+      if (!prova || prova.length === 0) {
         console.error("Prova não encontrada para o ano:", ano);
         return;
       }
 
+      const provaData = prova[0]; // Pegar primeiro resultado do array
+
       const { data: qs, error } = await supabase
         .from("questoes")
         .select("*")
-        .eq("id_prova", prova.id_prova);
+        .eq("id_prova", provaData.id_prova);
 
       if (error) {
         console.error("Erro ao buscar questões:", error);
@@ -135,9 +137,9 @@ export default function ResolverProva() {
       .from("alternativas")
       .select("correta")
       .eq("id_alternativa", idAlternativa)
-      .single();
+      .limit(1);
 
-    const acertou = correta?.correta ?? false;
+    const acertou = correta?.[0]?.correta ?? false;
 
     await supabase.from("respostas_usuarios").upsert({
       id_usuario: userId,

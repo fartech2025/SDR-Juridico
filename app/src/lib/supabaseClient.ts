@@ -12,18 +12,29 @@ const key = envKey || fallbackAnonKey
 
 export const hasSupabase = Boolean(url && key)
 
-// Singleton pattern para evitar múltiplas instâncias
+// Singleton pattern mais robusto para evitar múltiplas instâncias
 let supabaseInstance: SupabaseClient | null = null
 
-const createSupabaseClient = () => {
+const createSupabaseClient = (): SupabaseClient | null => {
+  // Verificar se já existe uma instância global
+  if (typeof window !== 'undefined' && (window as any).__supabase_client) {
+    return (window as any).__supabase_client
+  }
+  
   if (!supabaseInstance && hasSupabase) {
     supabaseInstance = createClient(url, key, {
       auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: false
+        persistSession: false, // Desabilitar persistência para evitar conflitos
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storage: undefined // Usar storage em memória
       }
     })
+    
+    // Salvar instância globalmente para evitar duplicação
+    if (typeof window !== 'undefined') {
+      (window as any).__supabase_client = supabaseInstance
+    }
   }
   return supabaseInstance
 }

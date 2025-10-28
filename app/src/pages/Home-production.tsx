@@ -62,11 +62,11 @@ export default function Home() {
           const { data: newUser, error: createError } = await supabase
             .from('usuarios')
             .insert([{ 
-              id_usuario: CURRENT_USER_ID, 
               nome: 'Usuário Demo',
               email: 'demo@exemplo.com'
             }])
             .select('id_usuario, nome')
+            .limit(1)
 
           if (createError) {
             console.error('❌ Erro ao criar usuário:', createError)
@@ -88,9 +88,9 @@ export default function Home() {
           .from('resultados_usuarios')
           .select('*')
           .eq('id_usuario', CURRENT_USER_ID)
-          .single()
+          .limit(1)
 
-        if (statsError) {
+        if (statsError || !statsData || statsData.length === 0) {
           console.log('⚠️ Usuário sem estatísticas registradas, iniciando perfil...')
           // Criar estatísticas iniciais se não existir
           setResumo({
@@ -105,7 +105,8 @@ export default function Home() {
             pontosFracos: ['Faça sua primeira prova']
           })
         } else {
-          console.log('✅ Estatísticas encontradas:', statsData)
+          const userStats = statsData[0] // Pegar primeiro resultado do array
+          console.log('✅ Estatísticas encontradas:', userStats)
           
           // Buscar pontos fortes e fracos reais baseados nos temas
           console.log('🎯 Buscando performance por temas...')
@@ -123,10 +124,10 @@ export default function Home() {
           setResumo({
             id_usuario: finalUserData.id_usuario,
             nome: finalUserData.nome,
-            total_questoes: statsData.total_questoes || 0,
-            total_acertos: statsData.total_acertos || 0,
-            total_erros: (statsData.total_questoes || 0) - (statsData.total_acertos || 0),
-            percentual_acertos: statsData.percentual_acertos || 0,
+            total_questoes: userStats.total_questoes || 0,
+            total_acertos: userStats.total_acertos || 0,
+            total_erros: (userStats.total_questoes || 0) - (userStats.total_acertos || 0),
+            percentual_acertos: userStats.percentual_acertos || 0,
             tempo_medio_resposta_ms: 145000, // Valor padrão
             pontosFortes: pontosFortes.length ? pontosFortes : ['Continue praticando!'],
             pontosFracos: pontosFracos.length ? pontosFracos : ['Explore novos temas']
