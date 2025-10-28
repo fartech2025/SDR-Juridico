@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-// Instância única do Supabase
+// -------------------- INSTÂNCIA SUPABASE --------------------
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -12,6 +12,8 @@ const supabase = createClient(
 export default function ResolverProva() {
   const { ano } = useParams();
   const navigate = useNavigate();
+
+  // -------------------- ESTADOS --------------------
   const [questoes, setQuestoes] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
   const [tempoRestante, setTempoRestante] = useState(19800); // 5h30min
@@ -19,7 +21,7 @@ export default function ResolverProva() {
   const [selecionadas, setSelecionadas] = useState<Record<number, number | null>>({});
   const userId = Number(import.meta.env.VITE_USER_ID || 1);
 
-  // ----------------- TIMER DIGITAL -----------------
+  // -------------------- TIMER --------------------
   useEffect(() => {
     const interval = setInterval(() => {
       setTempoRestante((t) => (t > 0 ? t - 1 : 0));
@@ -29,24 +31,18 @@ export default function ResolverProva() {
   }, [tempoRestante]);
 
   const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600)
-      .toString()
-      .padStart(2, "0");
-    const m = Math.floor((seconds % 3600) / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
+    const h = Math.floor(seconds / 3600).toString().padStart(2, "0");
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, "0");
+    const s = Math.floor(seconds % 60).toString().padStart(2, "0");
     return `${h}:${m}:${s}`;
   };
 
-  // ----------------- CARREGAR QUESTÕES -----------------
+  // -------------------- CARREGAR QUESTÕES --------------------
   useEffect(() => {
     const carregar = async () => {
       if (!ano) return;
 
-      // Busca a prova pelo ano
+      // Busca prova pelo ano
       const { data: prova } = await supabase
         .from("provas")
         .select("id_prova")
@@ -58,7 +54,7 @@ export default function ResolverProva() {
         return;
       }
 
-      // Busca as questões da prova
+      // Busca questões
       const { data: qs, error } = await supabase
         .from("questoes")
         .select("*")
@@ -74,7 +70,7 @@ export default function ResolverProva() {
         return;
       }
 
-      // Busca alternativas e imagens relacionadas
+      // Busca alternativas e imagens (somente para alternativas)
       const qIds = qs.map((q) => q.id_questao);
       const { data: alts } = await supabase
         .from("alternativas")
@@ -85,32 +81,42 @@ export default function ResolverProva() {
         .from("imagens")
         .select("tipo_entidade,id_entidade,caminho_arquivo")
         .in("id_entidade", qIds)
-        .in("tipo_entidade", ["questao", "alternativa"]);
+        .in("tipo_entidade", ["alternativa"]);
 
-      const fullQuestoes = qs.map((q) => {
-        const alternativas = alts
-          ?.filter((a) => a.id_questao === q.id_questao)
-          .map((a) => {
-            const imgAlt = imgs?.find(
-              (i) =>
-                i.tipo_entidade === "alternativa" &&
-                i.id_entidade === a.id_alternativa
-            );
-            return {
-              ...a,
-              imagem: imgAlt ? imgAlt.caminho_arquivo : null,
-            };
-          });
-        const imgQ = imgs?.find(
-          (i) =>
-            i.tipo_entidade === "questao" && i.id_entidade === q.id_questao
-        );
-        return {
-          ...q,
-          enunciadoImagem: imgQ ? imgQ.caminho_arquivo : null,
-          alternativas,
-        };
-      });
+      // 🔹 NOVO FLUXO: gera URLs públicas das imagens renderizadas do bucket
+      const fullQuestoes = await Promise.all(
+        qs.map(async (q) => {
+          const alternativas = alts
+            ?.filter((a) => a.id_questao === q.id_questao)
+            .map((a) => {
+              const imgAlt = imgs?.find(
+                (i) =>
+                  i.tipo_entidade === "alternativa" &&
+                  i.id_entidade === a.id_alternativa
+              );
+              return {
+                ...a,
+                imagem: imgAlt ? imgAlt.caminho_arquivo : null,
+              };
+            });
+
+          // Caminho dentro do bucket (apenas P1)
+          const caminho = `questao_${q.nr_questao}/enunciado_questao_${q.nr_questao}_p1.png`;
+
+          // Bucket público → gera URL fixa
+          const { data: publicUrl } = supabase.storage
+            .from("rendered-questions")
+            .getPublicUrl(caminho);
+
+          console.log("Questão:", q.nr_questao, "→", publicUrl.publicUrl);
+
+          return {
+            ...q,
+            enunciadoImagem: publicUrl.publicUrl || null,
+            alternativas,
+          };
+        })
+      );
 
       setQuestoes(fullQuestoes);
     };
@@ -118,22 +124,20 @@ export default function ResolverProva() {
     carregar();
   }, [ano]);
 
-  // ----------------- FINALIZAR PROVA -----------------
+  // -------------------- FINALIZAR PROVA --------------------
   const finalizarProva = () => {
     navigate("/provas");
   };
 
-  // ----------------- SE CARREGANDO -----------------
+  // -------------------- CASO ESTEJA CARREGANDO --------------------
   if (!questoes.length)
-    return (
-      <div className="p-6 text-slate-300">Carregando questões...</div>
-    );
+    return <div className="p-6 text-slate-300">Carregando questões...</div>;
 
-  // Proteção contra índice inválido
+  // Proteção contra índices inválidos
   const safeIndex = Math.min(index, questoes.length - 1);
   const current = questoes[safeIndex];
 
-  // ----------------- REGISTRAR RESPOSTA -----------------
+  // -------------------- REGISTRAR RESPOSTA --------------------
   const responder = async (idAlternativa: number) => {
     const inicio = Date.now();
     const alt = current.alternativas.find(
@@ -161,17 +165,17 @@ export default function ResolverProva() {
     setRespostas((prev) => ({ ...prev, [current.id_questao]: acertou }));
     setSelecionadas((prev) => ({ ...prev, [current.id_questao]: idAlternativa }));
 
-    // Avança automaticamente após leve pausa
+    // Avança automaticamente após pequena pausa
     setTimeout(() => {
       if (safeIndex < questoes.length - 1) setIndex((i) => i + 1);
       else finalizarProva();
     }, 800);
   };
 
-  // ----------------- RENDERIZAÇÃO -----------------
+  // -------------------- RENDERIZAÇÃO --------------------
   return (
     <div className="p-6 grid grid-cols-[300px_1fr] gap-6">
-      {/* Lateral numerada */}
+      {/* Lateral com numeração das questões */}
       <div className="bg-slate-900/70 rounded-xl p-3 overflow-y-auto h-[calc(100vh-100px)] border border-slate-800">
         <div className="grid grid-cols-5 gap-2">
           {questoes.map((q, i) => {
@@ -197,43 +201,31 @@ export default function ResolverProva() {
         </div>
       </div>
 
-      {/* Questão atual */}
+      {/* Corpo da questão atual */}
       <div className="bg-slate-900/70 rounded-xl p-6 border border-slate-800">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-slate-100">
             Prova ENEM {ano}
           </h2>
-          <div className="text-blue-400 font-mono">
-            {formatTime(tempoRestante)}
-          </div>
+          <div className="text-blue-400 font-mono">{formatTime(tempoRestante)}</div>
         </div>
 
         <h3 className="text-slate-200 mb-3">
           Questão {safeIndex + 1} de {questoes.length}
         </h3>
 
-        {/* Enunciado */}
-        <div className="bg-slate-800/60 p-4 rounded-lg border border-slate-700 mb-5">
-          <p className="whitespace-pre-wrap text-slate-100">
-            {current.enunciado}
+        {/* Enunciado como imagem do bucket público */}
+        {current.enunciadoImagem ? (
+          <img
+            src={current.enunciadoImagem}
+            alt={`Questão ${current.nr_questao}`}
+            className="mb-5 max-w-full rounded-lg border border-slate-700 shadow-md"
+          />
+        ) : (
+          <p className="text-red-400 text-sm mb-5">
+            Imagem não encontrada para {current.nr_questao}
           </p>
-
-          {current.enunciado?.match(/\.(png|jpg|jpeg|gif|webp)$/i) && (
-            <img
-              src={current.enunciado}
-              alt="Imagem da questão"
-              className="mt-3 max-w-full rounded-lg border border-slate-700 shadow-md"
-            />
-          )}
-
-          {current.enunciadoImagem && (
-            <img
-              src={current.enunciadoImagem}
-              alt="Imagem da questão"
-              className="mt-3 max-w-full rounded-lg border border-slate-700 shadow-md"
-            />
-          )}
-        </div>
+        )}
 
         {/* Alternativas */}
         <div className="space-y-3">
@@ -264,9 +256,7 @@ export default function ResolverProva() {
                       {a.letra}.
                     </span>
                     {!isImageText && (
-                      <span className="text-sm text-slate-200">
-                        {a.texto}
-                      </span>
+                      <span className="text-sm text-slate-200">{a.texto}</span>
                     )}
                   </div>
                   {imageUrl && (
@@ -282,21 +272,14 @@ export default function ResolverProva() {
           })}
         </div>
 
-        {/* Navegação manual */}
+        {/* Navegação */}
         <div className="flex justify-between items-center mt-6">
-          <button
-            onClick={() => setIndex((i) => Math.max(i - 1, 0))}
-            className="btn"
-          >
+          <button onClick={() => setIndex((i) => Math.max(i - 1, 0))} className="btn">
             <ArrowLeft size={16} /> Anterior
           </button>
           <div className="flex gap-2">
             <button
-              onClick={() =>
-                setIndex((i) =>
-                  i < questoes.length - 1 ? i + 1 : i
-                )
-              }
+              onClick={() => setIndex((i) => (i < questoes.length - 1 ? i + 1 : i))}
               className="btn"
             >
               Próxima <ArrowRight size={16} />
