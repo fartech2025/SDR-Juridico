@@ -88,19 +88,18 @@ export default function SimuladoProva() {
 
   const questao = questoes[questaoAtual];
   let alternativas: string[] = [];
+  
   if (questao.alternativas && questao.alternativas.length > 0) {
-    const altObj = questao.alternativas[0];
-    alternativas = [
-      altObj.alternativa_a,
-      altObj.alternativa_b,
-      altObj.alternativa_c,
-      altObj.alternativa_d,
-      altObj.alternativa_e
-    ].filter(Boolean);
+    // Nova estrutura: array de objetos com letra, texto, correta
+    alternativas = questao.alternativas
+      .sort((a, b) => a.letra.localeCompare(b.letra)) // Ordenar por letra (A, B, C, D, E)
+      .map(alt => alt.texto)
+      .filter(Boolean);
   } else {
+    // Fallback se não houver alternativas
     alternativas = [
       'Alternativa A não disponível',
-      'Alternativa B não disponível',
+      'Alternativa B não disponível', 
       'Alternativa C não disponível',
       'Alternativa D não disponível',
       'Alternativa E não disponível'

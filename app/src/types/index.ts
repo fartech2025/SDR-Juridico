@@ -17,6 +17,15 @@ export interface Tema {
 }
 
 export interface Alternativa {
+  id_alternativa: number;
+  id_questao: number;
+  letra: string;
+  texto: string;
+  correta: boolean;
+}
+
+// Manter interface antiga para compatibilidade com componentes existentes
+export interface AlternativaLegacy {
   alternativa_a: string;
   alternativa_b: string;
   alternativa_c: string;
@@ -33,7 +42,8 @@ export interface Questao {
   imagem_url?: string;
   created_at?: string;
   peso_dificuldade?: number;
-  alternativas?: Alternativa[];
+  alternativas?: Alternativa[]; // Nova estrutura
+  alternativasLegacy?: AlternativaLegacy[]; // Estrutura antiga para compatibilidade
 }
 
 export interface ProtectedRouteProps {

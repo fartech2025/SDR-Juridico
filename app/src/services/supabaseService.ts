@@ -8,7 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export async function fetchQuestoesPorProvaTema(id_prova: number, id_tema?: number) {
   let query = supabase
     .from('questoes')
-    .select(`*, alternativas (alternativa_a, alternativa_b, alternativa_c, alternativa_d, alternativa_e, alternativa_correta)`)
+    .select(`*, alternativas (id_alternativa, id_questao, letra, texto, correta)`)
     .eq('id_prova', id_prova);
   if (id_tema && id_tema !== -1) {
     query = query.eq('id_tema', id_tema);
