@@ -11,6 +11,11 @@ backup_supabase*.json
 backup_*
 create_table.sql
 
+# Test reports and temporary files
+*_test_report_*.json
+*_report_*.json
+banco_inexistente.db
+
 # Python
 __pycache__/
 *.py[cod]
