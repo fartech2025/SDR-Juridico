@@ -1,3 +1,13 @@
+# Environment variables and configuration
+.env
+*.env
+.env.local
+.env.production
+
+# Supabase backups
+backup_supabase*.json
+create_table.sql
+
 # Python
 __pycache__/
 *.py[cod]
