@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
-import { supabase } from "../lib/supabaseClient";
+import { hasSupabase, supabase, CURRENT_USER_ID } from "../lib/supabaseClient";
 
 type TemaRow = { id_tema: number; percentual: number };
 type DifRow = { dificuldade: string; percentual: number };
@@ -8,16 +8,96 @@ type DifRow = { dificuldade: string; percentual: number };
 export default function Estatisticas() {
   const [temas, setTemas] = useState<TemaRow[]>([]);
   const [dificuldade, setDificuldade] = useState<DifRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const carregar = async () => {
-      const { data: temaData } = await supabase.from("resultados_por_tema").select("id_tema, percentual");
-      const { data: difData } = await supabase.from("resultados_por_dificuldade").select("dificuldade, percentual");
-      setTemas(temaData || []);
-      setDificuldade(difData || []);
+      try {
+        if (!hasSupabase) {
+          // Dados de demonstração se Supabase não estiver configurado
+          setTemas([
+            { id_tema: 1, percentual: 85 },
+            { id_tema: 2, percentual: 72 },
+            { id_tema: 3, percentual: 68 },
+            { id_tema: 4, percentual: 45 },
+            { id_tema: 5, percentual: 38 }
+          ]);
+          setDificuldade([
+            { dificuldade: 'Fácil', percentual: 78 },
+            { dificuldade: 'Médio', percentual: 65 },
+            { dificuldade: 'Difícil', percentual: 42 }
+          ]);
+          return;
+        }
+
+        // Buscar dados reais do Supabase
+        const { data: temaData, error: temaError } = await supabase
+          .from("resultados_por_tema")
+          .select("id_tema, percentual")
+          .eq('id_usuario', CURRENT_USER_ID);
+
+        const { data: difData, error: difError } = await supabase
+          .from("resultados_por_dificuldade")
+          .select("dificuldade, percentual")
+          .eq('id_usuario', CURRENT_USER_ID);
+
+        if (temaError) throw temaError;
+        if (difError) throw difError;
+
+        // Se não houver dados, usar dados demo
+        if (!temaData || temaData.length === 0) {
+          setTemas([
+            { id_tema: 1, percentual: 0 },
+            { id_tema: 2, percentual: 0 },
+            { id_tema: 3, percentual: 0 }
+          ]);
+        } else {
+          setTemas(temaData);
+        }
+
+        if (!difData || difData.length === 0) {
+          setDificuldade([
+            { dificuldade: 'Fácil', percentual: 0 },
+            { dificuldade: 'Médio', percentual: 0 },
+            { dificuldade: 'Difícil', percentual: 0 }
+          ]);
+        } else {
+          setDificuldade(difData);
+        }
+
+      } catch (e: any) {
+        console.error('Erro ao carregar estatísticas:', e);
+        setError(e.message);
+        // Fallback para dados demo
+        setTemas([
+          { id_tema: 1, percentual: 85 },
+          { id_tema: 2, percentual: 72 },
+          { id_tema: 3, percentual: 68 }
+        ]);
+        setDificuldade([
+          { dificuldade: 'Fácil', percentual: 78 },
+          { dificuldade: 'Médio', percentual: 65 },
+          { dificuldade: 'Difícil', percentual: 42 }
+        ]);
+      } finally {
+        setLoading(false);
+      }
     };
     carregar();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse-glow">📊</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Carregando estatísticas...</h2>
+          <p className="text-slate-300">Aguarde enquanto buscamos seus dados de performance.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
@@ -33,6 +113,14 @@ export default function Estatisticas() {
           <p className="text-slate-300 text-lg">Análise completa do seu desempenho</p>
         </div>
       </div>
+
+      {error && (
+        <div className="max-w-6xl mx-auto mb-6">
+          <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 backdrop-blur-sm glass-card">
+            <p className="text-yellow-400 text-center">⚠️ Aviso: {error} (Exibindo dados de demonstração)</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-6xl mx-auto relative">
         {/* Desempenho por Tema */}

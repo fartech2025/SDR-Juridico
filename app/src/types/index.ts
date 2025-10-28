@@ -43,3 +43,45 @@ export interface ProtectedRouteProps {
 export interface AuthFormEvent {
   preventDefault: () => void;
 }
+
+export interface ProvaItem {
+  id_prova: number;
+  ano: number;
+  totalQuestoes: number;
+  respondidas: number;
+}
+
+export interface UsuarioResumo {
+  total_questoes: number;
+  total_acertos: number;
+  percentual_acertos: number;
+}
+
+export interface ResultadoPorTema {
+  nome_tema: string;
+  total_questoes: number;
+  total_acertos: number;
+  percentual_acertos: number;
+}
+
+export interface ResultadoPorDificuldade {
+  dificuldade: string;
+  total_questoes: number;
+  total_acertos: number;
+  percentual_acertos: number;
+}
+
+export interface Usuario {
+  id_usuario: number;
+  nome: string;
+  email: string;
+  data_criacao?: string;
+}
+
+export interface RankingItem {
+  pos: number;
+  nome: string;
+  percentual: number;
+  acertos: number;
+  total: number;
+}

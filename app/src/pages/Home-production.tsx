@@ -1,29 +1,182 @@
 import React, { useEffect, useState } from 'react'
-import { UsuarioResumo } from '@/types'
+import { UsuarioResumo, Prova, Tema } from '@/types'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts'
+import { hasSupabase, supabase, CURRENT_USER_ID } from '@/lib/supabaseClient'
+import { Link } from 'react-router-dom'
+
+const demoResumo: UsuarioResumo = {
+  id_usuario: 0,
+  nome: 'Estudante Demo',
+  total_questoes: 95,
+  total_acertos: 68,
+  total_erros: 27,
+  percentual_acertos: 71.6,
+  tempo_medio_resposta_ms: 145000,
+  pontosFortes: ['Literatura', 'Interpretação de texto', 'Gramática'],
+  pontosFracos: ['Matemática', 'Física', 'Química']
+}
+
+const demoProvas: Prova[] = [
+  { id_prova: 1, ano: 2024, descricao: 'Simulado ENEM 2024 - Linguagens' },
+  { id_prova: 2, ano: 2023, descricao: 'Simulado ENEM 2023 - Linguagens' }
+]
+
+const demoTemas: Tema[] = [
+  { id_tema: 1, nome_tema: 'Literatura' },
+  { id_tema: 2, nome_tema: 'Interpretação de texto' },
+  { id_tema: 3, nome_tema: 'Gramática' }
+]
 
 export default function Home() {
   const [resumo, setResumo] = useState<UsuarioResumo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [provas, setProvas] = useState<Prova[]>([])
+  const [temas, setTemas] = useState<Tema[]>([])
+  const [provaSelecionada, setProvaSelecionada] = useState('')
+  const [temaSelecionado, setTemaSelecionado] = useState('')
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        setResumo({
-          id_usuario: 1,
-          nome: 'Estudante Demo',
-          total_questoes: 95,
-          total_acertos: 68,
-          total_erros: 27,
-          percentual_acertos: 71.6,
-          tempo_medio_resposta_ms: 145000,
-          pontosFortes: ['Literatura', 'Interpretação de texto', 'Gramática'],
-          pontosFracos: ['Matemática', 'Física', 'Química']
-        })
+        console.log('🔄 Carregando dados reais do Supabase...')
+        console.log('🔧 hasSupabase:', hasSupabase)
+        console.log('🔧 VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL)
+        console.log('🔧 VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '***definida***' : 'indefinida')
+        
+        if (!hasSupabase) {
+          throw new Error('Supabase não configurado - verifique as variáveis de ambiente')
+        }        // Buscar dados reais do usuário
+        console.log('👤 Buscando dados do usuário ID:', CURRENT_USER_ID)
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('id_usuario, nome')
+          .eq('id_usuario', CURRENT_USER_ID)
+          .single()
+
+        if (userError) {
+          console.error('❌ Erro ao buscar usuário:', userError)
+          throw new Error(`Usuário não encontrado: ${userError.message}`)
+        }
+
+        console.log('✅ Usuário encontrado:', userData.nome)
+
+        // Buscar estatísticas do usuário
+        console.log('📊 Buscando estatísticas do usuário...')
+        const { data: statsData, error: statsError } = await supabase
+          .from('resultados_usuarios')
+          .select('*')
+          .eq('id_usuario', CURRENT_USER_ID)
+          .single()
+
+        if (statsError) {
+          console.log('⚠️ Usuário sem estatísticas registradas, iniciando perfil...')
+          // Criar estatísticas iniciais se não existir
+          setResumo({
+            id_usuario: userData.id_usuario,
+            nome: userData.nome,
+            total_questoes: 0,
+            total_acertos: 0,
+            total_erros: 0,
+            percentual_acertos: 0,
+            tempo_medio_resposta_ms: 0,
+            pontosFortes: ['Comece respondendo questões!'],
+            pontosFracos: ['Faça sua primeira prova']
+          })
+        } else {
+          console.log('✅ Estatísticas encontradas:', statsData)
+          
+          // Buscar pontos fortes e fracos reais baseados nos temas
+          console.log('🎯 Buscando performance por temas...')
+          const { data: temaData } = await supabase
+            .from('resultados_por_tema')
+            .select('nome_tema, percentual_acertos')
+            .eq('id_usuario', CURRENT_USER_ID)
+            .order('percentual_acertos', { ascending: false })
+
+          console.log('📈 Performance por temas:', temaData?.length || 0, 'temas encontrados')
+
+          const pontosFortes = (temaData?.slice(0, 3) || []).map((t: any) => t.nome_tema || 'Tema desconhecido')
+          const pontosFracos = (temaData?.slice(-3) || []).map((t: any) => t.nome_tema || 'Tema desconhecido')
+
+          setResumo({
+            id_usuario: userData.id_usuario,
+            nome: userData.nome,
+            total_questoes: statsData.total_questoes || 0,
+            total_acertos: statsData.total_acertos || 0,
+            total_erros: (statsData.total_questoes || 0) - (statsData.total_acertos || 0),
+            percentual_acertos: statsData.percentual_acertos || 0,
+            tempo_medio_resposta_ms: 145000, // Valor padrão
+            pontosFortes: pontosFortes.length ? pontosFortes : ['Continue praticando!'],
+            pontosFracos: pontosFracos.length ? pontosFracos : ['Explore novos temas']
+          })
+        }
+
+        // Carregar provas e temas diretamente do banco de dados
+        console.log('📚 Carregando provas e temas do banco de dados...')
+        
+        // Buscar todas as provas disponíveis
+        const { data: provasData, error: provasError } = await supabase
+          .from('provas')
+          .select('id_prova, ano, descricao')
+          .order('ano', { ascending: false })
+
+        if (provasError) {
+          console.error('Erro ao carregar provas:', provasError)
+        } else {
+          console.log('Provas carregadas:', provasData?.length || 0)
+        }
+
+        // Buscar todos os temas disponíveis
+        const { data: temasData, error: temasError } = await supabase
+          .from('temas')
+          .select('id_tema, nome_tema')
+          .order('nome_tema', { ascending: true })
+
+        if (temasError) {
+          console.error('Erro ao carregar temas:', temasError)
+        } else {
+          console.log('Temas carregados:', temasData?.length || 0)
+        }
+
+        // Verificar se existem questões para cada prova
+        if (provasData?.length) {
+          const { data: questoesCount } = await supabase
+            .from('questoes')
+            .select('id_prova', { count: 'exact' })
+            .in('id_prova', provasData.map((p: any) => p.id_prova))
+
+          console.log('Total de questões disponíveis:', questoesCount || 0)
+        }
+
+        // Atualizar estados com dados reais
+        setProvas(provasData || [])
+        setTemas(temasData || [])
+        
+        console.log('✅ Carregamento concluído!')
+        console.log('📊 Resumo final:')
+        console.log('  - Provas disponíveis:', provasData?.length || 0)
+        console.log('  - Temas disponíveis:', temasData?.length || 0)
+        
       } catch (e: any) {
-        console.error('Erro ao carregar dados:', e)
-        setError(e.message)
+        console.error('❌ Erro crítico ao carregar dados reais:', e)
+        setError(`Erro de conexão: ${e.message}`)
+        
+        // Não usar dados demo - deixar vazios e mostrar erro
+        setResumo({
+          id_usuario: 0,
+          nome: 'Erro de Conexão',
+          total_questoes: 0,
+          total_acertos: 0,
+          total_erros: 0,
+          percentual_acertos: 0,
+          tempo_medio_resposta_ms: 0,
+          pontosFortes: ['Erro ao carregar'],
+          pontosFracos: ['Verifique conexão']
+        })
+        
+        setProvas([])
+        setTemas([])
       } finally {
         setLoading(false)
       }
@@ -92,6 +245,156 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Indicador de Status dos Dados */}
+        {error ? (
+          <div className="bg-amber-500/10 border border-amber-400/30 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-amber-200">
+              <span className="text-xl">⚠️</span>
+              <span className="font-medium">
+                Usando dados de demonstração - Erro de conexão com o banco de dados
+              </span>
+            </div>
+          </div>
+        ) : hasSupabase ? (
+          <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-green-200">
+              <span className="text-xl">✅</span>
+              <span className="font-medium">
+                Conectado ao banco de dados - Dados atualizados ({provas.length} provas, {temas.length} temas)
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-blue-200">
+              <span className="text-xl">🔧</span>
+              <span className="font-medium">
+                Modo demonstração - Configure o Supabase para dados reais
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Seleção de Provas - Posição Destacada */}
+        <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-2xl">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <span className="text-3xl">📚</span>
+            Escolher Prova para Estudar
+          </h2>
+          
+          {/* Filtros lado a lado */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Filtro por Ano/Prova */}
+            <div className="space-y-3">
+              <label className="text-blue-200 text-base font-medium flex items-center gap-2">
+                <span className="text-xl">📅</span>
+                Filtrar por Ano:
+              </label>
+              <select 
+                onChange={(e) => setProvaSelecionada(e.target.value)} 
+                className="w-full p-4 rounded-xl bg-white/10 border border-blue-300/30 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-base"
+                value={provaSelecionada}
+                aria-label="Selecionar prova por ano"
+              >
+                <option value="" className="bg-slate-800 text-white">🎯 Todos os anos</option>
+                {provas.map((p) => (
+                  <option key={p.id_prova} value={p.id_prova} className="bg-slate-800 text-white">
+                    📝 ENEM {p.ano} {p.descricao ? `- ${p.descricao}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro por Tema */}
+            <div className="space-y-3">
+              <label className="text-purple-200 text-base font-medium flex items-center gap-2">
+                <span className="text-xl">🏷️</span>
+                Filtrar por Tema:
+              </label>
+              <select 
+                onChange={(e) => setTemaSelecionado(e.target.value)} 
+                className="w-full p-4 rounded-xl bg-white/10 border border-purple-300/30 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-base"
+                value={temaSelecionado}
+                aria-label="Selecionar tema"
+              >
+                <option value="" className="bg-slate-800 text-white">🎯 Todos os temas</option>
+                {temas.map((t) => (
+                  <option key={t.id_tema} value={t.id_tema} className="bg-slate-800 text-white">
+                    🏷️ {t.nome_tema}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Botões de Ação */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+              <span className="text-2xl">🎯</span>
+              Opções de Estudo:
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Prova Completa */}
+              <Link 
+                to={provaSelecionada ? `/simulado/${provaSelecionada}/completa` : `/provas`} 
+                className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                tabIndex={0}
+                aria-label={provaSelecionada ? "Prova completa do ano selecionado" : "Ver todas as provas"}
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                  📋 {provaSelecionada ? `Prova Completa ${provas.find(p => p.id_prova.toString() === provaSelecionada)?.ano || ''}` : 'Ver Todas as Provas'}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              </Link>
+
+              {/* Estudar por Tema */}
+              <Link 
+                to={provaSelecionada && temaSelecionado ? `/simulado/${provaSelecionada}/${temaSelecionado}` : `/estatisticas`} 
+                className="group relative overflow-hidden bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-500 hover:to-pink-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                tabIndex={0}
+                aria-label={provaSelecionada && temaSelecionado ? "Estudar tema específico" : "Ver estatísticas"}
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                  🏷️ {provaSelecionada && temaSelecionado ? 
+                    `Tema: ${temas.find(t => t.id_tema.toString() === temaSelecionado)?.nome_tema || 'Selecionado'}` : 
+                    'Ver Estatísticas'
+                  }
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              </Link>
+
+              {/* Ranking */}
+              <Link 
+                to="/ranking" 
+                className="group relative overflow-hidden bg-gradient-to-r from-amber-600/80 to-orange-600/80 hover:from-amber-500 hover:to-orange-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-amber-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                tabIndex={0}
+                aria-label="Ver ranking"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                  🏆 Ver Ranking
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              </Link>
+            </div>
+
+            {/* Informação sobre seleção */}
+            {(provaSelecionada || temaSelecionado) && (
+              <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4 animate-fade-in">
+                <div className="flex items-center gap-2 text-blue-200">
+                  <span className="text-xl">ℹ️</span>
+                  <span className="font-medium">
+                    Filtros ativos: 
+                    {provaSelecionada && ` Ano ${provas.find(p => p.id_prova.toString() === provaSelecionada)?.ano}`}
+                    {provaSelecionada && temaSelecionado && ' + '}
+                    {temaSelecionado && ` ${temas.find(t => t.id_tema.toString() === temaSelecionado)?.nome_tema}`}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
