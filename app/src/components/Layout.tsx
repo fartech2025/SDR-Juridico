@@ -23,7 +23,7 @@ export default function Layout() {
   }, [open])
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <TopBar onToggleSidebar={() => setOpen(o => !o)} />
       
       {/* Layout Desktop */}
@@ -49,7 +49,7 @@ export default function Layout() {
                 ? 'fixed left-0 top-14 z-50 w-64 h-[calc(100vh-56px)] transform translate-x-0' 
                 : 'relative'
               }
-              bg-slate-900 border-r border-slate-800 min-h-[calc(100vh-56px)]
+              bg-white/5 backdrop-blur-xl border-r border-white/10 min-h-[calc(100vh-56px)]
               transition-transform duration-300 ease-in-out
               ${isMobile && !open ? '-translate-x-full' : 'translate-x-0'}
             `}>
