@@ -32,3 +32,30 @@ export type RespostaLocal = {
   alternativaId?: number
   tempoMs?: number
 }
+
+// Novos tipos adicionados
+export type Prova = {
+  id_prova: number
+  ano: number
+  titulo?: string
+  descricao?: string
+}
+
+export type Tema = {
+  id_tema: number
+  nome_tema: string
+  descricao?: string
+}
+
+export type User = {
+  id: string
+  email: string
+  nome?: string
+}
+
+export interface AuthFormEvent extends React.FormEvent<HTMLFormElement> {}
+
+export interface ProtectedRouteProps {
+  children: React.ReactNode
+  requiredRole?: string
+}
