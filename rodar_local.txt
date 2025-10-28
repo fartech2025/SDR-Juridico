@@ -1,0 +1,24 @@
+No arquivo app/.env.local use os valores padrão da instância local do Supabase CLI:
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwOTI1MDM2NSwiZXhwIjoxOTI0NjA3MDM2fQ.C0V-2lt3nMtk0iDdi8m-7Y4Y5E0sJY9Z3rroWAt4EVI
+(é o token “anon” que a CLI gera por padrão).
+Se quiser confirmar a URL/keys que estão ativas na sua máquina, rode npx supabase status com o serviço iniciado; ele imprime a API URL e o anon key atuais.
+
+
+Instale/abra Node.js LTS e Docker Desktop antes de tudo; os scripts dependem deles.
+Na raiz do projeto (Projeto-ENEM), rode .\setup_enem_workspace.bat uma vez para preparar tudo 
+(instala dependências, inicializa Supabase local, cria .env.local, etc.). Se quiser já subir os serviços na sequência, use .\setup_enem_workspace.bat --start.
+Sempre que quiser trabalhar, execute .\start_enem_services.bat: ele chama npx supabase start e abre o Vite em outra janela. O app fica em http://localhost:5173 e o Supabase dashboard em http://localhost:54323.
+Para zerar o banco local e reaplicar supabase/seed.sql, use .\reset_enem_db.bat. Tenha o Supabase rodando antes.
+Se alterar o schema e precisar atualizar tipos TypeScript, rode .\gen_types_enem.bat (gera app\src\lib\database.types.ts).
+Ao encerrar, feche a janela do Vite e finalize o Supabase com npx supabase stop (ou encerre os containers via Docker Desktop).
+
+
+Abra supabase/seed.sql e, se quiser manter o guia extra sincronizado, app/supabase/seed.sql; edite os blocos INSERT
+(ex.: INSERT INTO public.provas, INSERT INTO public.questoes, INSERT INTO public.usuarios, INSERT INTO public.respostas_usuarios) para refletir os novos dados do banco local.
+
+-Salve os arquivos e confirme que o Docker Desktop e o Supabase CLI estão rodando (npx supabase --version para conferir).
+-Na raiz do projeto, aplique o seed atualizado com npx supabase db reset (ou use .\reset_enem_db.bat, que chama o mesmo comando).
+-Em seguida rode npx supabase start (ou .\start_enem_services.bat) para que o banco e o frontend subam já com os dados atualizados.
+Verifique o resultado abrindo http://localhost:54323 (dashboard local Supabase) ou rodando uma consulta rápida via npx supabase db remote commit/psql 
+apontando para o serviço local; a aplicação em http://localhost:5173 deve refletir as mudanças.
