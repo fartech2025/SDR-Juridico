@@ -52,14 +52,35 @@ export default function Home() {
           .from('usuarios')
           .select('id_usuario, nome')
           .eq('id_usuario', CURRENT_USER_ID)
-          .single()
+          .limit(1)
 
-        if (userError) {
+        if (userError || !userData || userData.length === 0) {
           console.error('❌ Erro ao buscar usuário:', userError)
-          throw new Error(`Usuário não encontrado: ${userError.message}`)
+          console.log('🔧 Criando usuário padrão...')
+          
+          // Tentar criar usuário padrão se não existir
+          const { data: newUser, error: createError } = await supabase
+            .from('usuarios')
+            .insert([{ 
+              id_usuario: CURRENT_USER_ID, 
+              nome: 'Usuário Demo',
+              email: 'demo@exemplo.com'
+            }])
+            .select('id_usuario, nome')
+
+          if (createError) {
+            console.error('❌ Erro ao criar usuário:', createError)
+            // Usar dados padrão sem falhar
+            const defaultUser = { id_usuario: CURRENT_USER_ID, nome: 'Usuário Demo' }
+            console.log('✅ Usando usuário padrão:', defaultUser.nome)
+          } else {
+            console.log('✅ Usuário criado:', newUser?.[0]?.nome)
+          }
+        } else {
+          console.log('✅ Usuário encontrado:', userData[0].nome)
         }
 
-        console.log('✅ Usuário encontrado:', userData.nome)
+        const finalUserData = userData?.[0] || { id_usuario: CURRENT_USER_ID, nome: 'Usuário Demo' }
 
         // Buscar estatísticas do usuário
         console.log('📊 Buscando estatísticas do usuário...')
@@ -73,8 +94,8 @@ export default function Home() {
           console.log('⚠️ Usuário sem estatísticas registradas, iniciando perfil...')
           // Criar estatísticas iniciais se não existir
           setResumo({
-            id_usuario: userData.id_usuario,
-            nome: userData.nome,
+            id_usuario: finalUserData.id_usuario,
+            nome: finalUserData.nome,
             total_questoes: 0,
             total_acertos: 0,
             total_erros: 0,
@@ -100,8 +121,8 @@ export default function Home() {
           const pontosFracos = (temaData?.slice(-3) || []).map((t: any) => t.nome_tema || 'Tema desconhecido')
 
           setResumo({
-            id_usuario: userData.id_usuario,
-            nome: userData.nome,
+            id_usuario: finalUserData.id_usuario,
+            nome: finalUserData.nome,
             total_questoes: statsData.total_questoes || 0,
             total_acertos: statsData.total_acertos || 0,
             total_erros: (statsData.total_questoes || 0) - (statsData.total_acertos || 0),

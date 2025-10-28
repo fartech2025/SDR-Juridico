@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const fallbackUrl = 'https://mskvucuaarutehslvhsp.supabase.co'
 const fallbackAnonKey =
@@ -11,7 +11,24 @@ const url = envUrl || fallbackUrl
 const key = envKey || fallbackAnonKey
 
 export const hasSupabase = Boolean(url && key)
-export const supabase = hasSupabase ? createClient(url, key) : (null as any)
+
+// Singleton pattern para evitar múltiplas instâncias
+let supabaseInstance: SupabaseClient | null = null
+
+const createSupabaseClient = () => {
+  if (!supabaseInstance && hasSupabase) {
+    supabaseInstance = createClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    })
+  }
+  return supabaseInstance
+}
+
+export const supabase = createSupabaseClient()
 
 export const CURRENT_USER_ID = Number(import.meta.env.VITE_USER_ID ?? 1)
 
