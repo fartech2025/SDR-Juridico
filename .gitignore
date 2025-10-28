@@ -16,6 +16,12 @@ create_table.sql
 *_report_*.json
 banco_inexistente.db
 
+# GitHub Pages - Keep these files for Pages
+# Remove the comment below to exclude from Pages if needed
+# index.html
+# _config.yml
+# .nojekyll
+
 # Python
 __pycache__/
 *.py[cod]
