@@ -10,18 +10,59 @@ html, body, #root {
   height: 100%;
 }
 
+/* Container responsivo */
 .container-max {
-  @apply max-w-7xl mx-auto px-4;
+  @apply max-w-7xl mx-auto px-3 sm:px-4 lg:px-6;
 }
 
+/* Cards responsivos */
 .card {
-  @apply bg-slate-900/70 border border-slate-800 rounded-2xl shadow-lg;
+  @apply bg-slate-900/70 border border-slate-800 rounded-xl sm:rounded-2xl shadow-lg backdrop-blur-sm;
 }
 
+/* Buttons responsivos */
 .btn {
-  @apply px-4 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-sm hover:bg-slate-700/80 transition-colors;
+  @apply px-3 py-2 sm:px-4 rounded-lg bg-slate-800/80 border border-slate-700 text-xs sm:text-sm hover:bg-slate-700/80 transition-colors;
 }
 
 .btn-primary {
   @apply bg-blue-600/90 border-blue-500 hover:bg-blue-500;
+}
+
+/* Classes utilitárias responsivas */
+@layer utilities {
+  .text-responsive {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .heading-responsive {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .padding-responsive {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+  
+  .margin-responsive {
+    @apply m-2 sm:m-3 lg:m-4;
+  }
+  
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+}
+
+/* Breakpoints personalizados */
+@screen xs {
+  .xs\:block {
+    display: block;
+  }
+  
+  .xs\:hidden {
+    display: none;
+  }
+  
+  .xs\:inline {
+    display: inline;
+  }
 }
