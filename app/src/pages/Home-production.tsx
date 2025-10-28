@@ -123,8 +123,11 @@ export default function Home() {
 
         if (provasError) {
           console.error('Erro ao carregar provas:', provasError)
+          throw new Error(`Erro ao carregar provas: ${provasError.message}`)
         } else {
-          console.log('Provas carregadas:', provasData?.length || 0)
+          console.log('✅ Provas carregadas:', provasData?.length || 0)
+          console.log('📋 Lista de provas:', provasData?.map(p => `${p.ano} (ID: ${p.id_prova})`))
+          setProvas(provasData || [])
         }
 
         // Buscar todos os temas disponíveis
@@ -135,8 +138,11 @@ export default function Home() {
 
         if (temasError) {
           console.error('Erro ao carregar temas:', temasError)
+          throw new Error(`Erro ao carregar temas: ${temasError.message}`)
         } else {
-          console.log('Temas carregados:', temasData?.length || 0)
+          console.log('✅ Temas carregados:', temasData?.length || 0)
+          console.log('🏷️ Lista de temas:', temasData?.slice(0, 5).map(t => `${t.nome_tema} (ID: ${t.id_tema})`))
+          setTemas(temasData || [])
         }
 
         // Verificar se existem questões para cada prova
@@ -278,6 +284,22 @@ export default function Home() {
           </div>
         )}
 
+        {/* Debug Info - apenas durante desenvolvimento */}
+        {import.meta.env.DEV && (
+          <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-xl p-4 mb-6">
+            <h3 className="text-yellow-200 font-medium mb-2">🔧 Debug Info:</h3>
+            <div className="text-sm text-yellow-100 space-y-1">
+              <p>hasSupabase: {hasSupabase ? '✅' : '❌'}</p>
+              <p>Provas carregadas: {provas.length}</p>
+              <p>Temas carregados: {temas.length}</p>
+              <p>Prova selecionada: {provaSelecionada || 'nenhuma'}</p>
+              <p>Tema selecionado: {temaSelecionado || 'nenhum'}</p>
+              <p>VITE_SUPABASE_URL: {import.meta.env.VITE_SUPABASE_URL ? '✅' : '❌'}</p>
+              <p>VITE_SUPABASE_ANON_KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅' : '❌'}</p>
+            </div>
+          </div>
+        )}
+
         {/* Seleção de Provas - Posição Destacada */}
         <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-2xl">
           <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
@@ -294,7 +316,10 @@ export default function Home() {
                 Filtrar por Ano:
               </label>
               <select 
-                onChange={(e) => setProvaSelecionada(e.target.value)} 
+                onChange={(e) => {
+                  console.log('🔧 Prova selecionada:', e.target.value);
+                  setProvaSelecionada(e.target.value);
+                }} 
                 className="w-full p-4 rounded-xl bg-white/10 border border-blue-300/30 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-base"
                 value={provaSelecionada}
                 aria-label="Selecionar prova por ano"
@@ -315,7 +340,10 @@ export default function Home() {
                 Filtrar por Tema:
               </label>
               <select 
-                onChange={(e) => setTemaSelecionado(e.target.value)} 
+                onChange={(e) => {
+                  console.log('🔧 Tema selecionado:', e.target.value);
+                  setTemaSelecionado(e.target.value);
+                }} 
                 className="w-full p-4 rounded-xl bg-white/10 border border-purple-300/30 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-base"
                 value={temaSelecionado}
                 aria-label="Selecionar tema"
@@ -339,33 +367,56 @@ export default function Home() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Prova Completa */}
-              <Link 
-                to={provaSelecionada ? `/simulado/${provaSelecionada}/completa` : `/provas`} 
-                className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                tabIndex={0}
-                aria-label={provaSelecionada ? "Prova completa do ano selecionado" : "Ver todas as provas"}
-              >
-                <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
-                  📋 {provaSelecionada ? `Prova Completa ${provas.find(p => p.id_prova.toString() === provaSelecionada)?.ano || ''}` : 'Ver Todas as Provas'}
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-              </Link>
+              {provaSelecionada ? (
+                <Link 
+                  to={`/simulado/${provaSelecionada}/completa`}
+                  onClick={() => console.log('🔗 Navegando para prova completa:', `/simulado/${provaSelecionada}/completa`)} 
+                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  tabIndex={0}
+                  aria-label="Prova completa do ano selecionado"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                    📋 Prova Completa {provas.find(p => p.id_prova.toString() === provaSelecionada)?.ano || ''}
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                </Link>
+              ) : (
+                <button 
+                  disabled
+                  className="group relative overflow-hidden bg-gradient-to-r from-gray-600 to-gray-700 p-5 rounded-xl font-bold text-gray-400 shadow-lg opacity-50 cursor-not-allowed"
+                  aria-label="Selecione um ano primeiro"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                    📋 Selecione um Ano Primeiro
+                  </span>
+                </button>
+              )}
 
               {/* Estudar por Tema */}
-              <Link 
-                to={provaSelecionada && temaSelecionado ? `/simulado/${provaSelecionada}/${temaSelecionado}` : `/estatisticas`} 
-                className="group relative overflow-hidden bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-500 hover:to-pink-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                tabIndex={0}
-                aria-label={provaSelecionada && temaSelecionado ? "Estudar tema específico" : "Ver estatísticas"}
-              >
-                <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
-                  🏷️ {provaSelecionada && temaSelecionado ? 
-                    `Tema: ${temas.find(t => t.id_tema.toString() === temaSelecionado)?.nome_tema || 'Selecionado'}` : 
-                    'Ver Estatísticas'
-                  }
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-              </Link>
+              {provaSelecionada && temaSelecionado ? (
+                <Link 
+                  to={`/simulado/${provaSelecionada}/${temaSelecionado}`}
+                  onClick={() => console.log('🔗 Navegando para tema específico:', `/simulado/${provaSelecionada}/${temaSelecionado}`)} 
+                  className="group relative overflow-hidden bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-500 hover:to-pink-500 p-5 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  tabIndex={0}
+                  aria-label="Estudar tema específico"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                    🏷️ {temas.find(t => t.id_tema.toString() === temaSelecionado)?.nome_tema || 'Tema Selecionado'}
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                </Link>
+              ) : (
+                <button 
+                  disabled
+                  className="group relative overflow-hidden bg-gradient-to-r from-gray-600 to-gray-700 p-5 rounded-xl font-bold text-gray-400 shadow-lg opacity-50 cursor-not-allowed"
+                  aria-label="Selecione ano e tema primeiro"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                    🏷️ Selecione Ano + Tema
+                  </span>
+                </button>
+              )}
 
               {/* Ranking */}
               <Link 
@@ -391,6 +442,28 @@ export default function Home() {
                     {provaSelecionada && ` Ano ${provas.find(p => p.id_prova.toString() === provaSelecionada)?.ano}`}
                     {provaSelecionada && temaSelecionado && ' + '}
                     {temaSelecionado && ` ${temas.find(t => t.id_tema.toString() === temaSelecionado)?.nome_tema}`}
+                  </span>
+                </div>
+                {provaSelecionada && (
+                  <div className="mt-2 text-sm text-blue-300">
+                    ✅ Prova Completa disponível
+                  </div>
+                )}
+                {provaSelecionada && temaSelecionado && (
+                  <div className="mt-1 text-sm text-purple-300">
+                    ✅ Estudo por Tema disponível
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Instruções quando não há seleção */}
+            {!provaSelecionada && !temaSelecionado && (
+              <div className="bg-amber-500/10 border border-amber-400/30 rounded-xl p-4">
+                <div className="flex items-center gap-2 text-amber-200">
+                  <span className="text-xl">💡</span>
+                  <span className="font-medium">
+                    Selecione um ano e/ou tema acima para começar a estudar!
                   </span>
                 </div>
               </div>
