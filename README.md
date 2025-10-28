@@ -14,6 +14,11 @@ Sistema automatizado para extração e processamento de questões do ENEM 2024, 
 ```
 BancoEnem/
 ├── main.py                              # Script principal de extração
+├── test_project.py                      # Script de validação e testes
+├── update_project.py                    # Script de atualização automática
+├── requirements.txt                     # Dependências do projeto
+├── README.md                            # Documentação
+├── .gitignore                           # Configuração Git
 ├── 2024_PV_impresso_D1_CD1.pdf         # PDF fonte do ENEM 2024
 ├── enem.db                              # Base de dados SQLite
 └── output/                              # Pasta de saída
@@ -29,12 +34,31 @@ pip install PyMuPDF Pillow pandas
 ```
 
 ## 📋 Como Usar
+
+### Instalação Inicial
+1. Clone ou baixe o projeto
+2. Instale as dependências:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Uso Básico
 1. Certifique-se que o arquivo `2024_PV_impresso_D1_CD1.pdf` está no diretório
 2. Execute o script:
    ```bash
    python main.py
    ```
 3. Os arquivos processados serão salvos na pasta `output/`
+
+### Scripts Auxiliares
+- **Validação do projeto:**
+  ```bash
+  python test_project.py
+  ```
+- **Atualização automática:**
+  ```bash
+  python update_project.py
+  ```
 
 ## 🎯 Categorias Temáticas Detectadas
 - Cultura popular (Parintins)
