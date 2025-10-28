@@ -1,8 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import HomeDebug from '@/pages/Home-debug';
-import LoginDebug from '@/pages/Login-debug';
+import HomeProduction from '@/pages/Home-production';
+import Login from '@/pages/Login';
 import Provas from '@/pages/Provas';
 import ResolverProva from '@/pages/ResolverProva';
 import Ranking from '@/pages/Ranking';
@@ -15,8 +15,8 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<HomeDebug />} />
-        <Route path="/login" element={<LoginDebug />} />
+        <Route path="/" element={<HomeProduction />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/provas" element={<Provas />} />
         <Route path="/provas/:ano" element={<ResolverProva />} />
