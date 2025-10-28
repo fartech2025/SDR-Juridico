@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchQuestoesPorProvaTema } from '../../services/supabaseService';
 import type { Questao } from '../../types';
+import { FormattedTextRenderer } from '../../components/text/FormattedTextRenderer';
 
 export default function SimuladoProva() {
   const { id_prova, id_tema } = useParams();
@@ -126,11 +127,14 @@ export default function SimuladoProva() {
         </div>
         <div className="bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl">
           <div className="mb-6">
-            <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-100">
-              {questao.enunciado}
-            </h2>
-            {questao.imagem_url && (
-              <img src={questao.imagem_url} alt="Imagem da questão" className="mx-auto mb-4 max-h-64 rounded-lg shadow" />
+            <FormattedTextRenderer 
+              text={questao.enunciado || "Enunciado não disponível"}
+              showSummary={false}
+              maxHeight={600}
+              className="text-base sm:text-lg text-gray-100 mb-4"
+            />
+            {(questao as any)?.imagem_url && (
+              <img src={(questao as any).imagem_url} alt="Imagem da questão" className="mx-auto mb-4 max-h-64 rounded-lg shadow" />
             )}
           </div>
           <div className="space-y-3 mb-8">
@@ -156,7 +160,10 @@ export default function SimuladoProva() {
                     className="sr-only"
                   />
                   <span className="font-semibold mr-3 text-blue-400">{letra})</span>
-                  <span>{alternativa}</span>
+                  <FormattedTextRenderer 
+                    text={alternativa}
+                    className="flex-1 text-gray-200"
+                  />
                 </label>
               );
             })}
