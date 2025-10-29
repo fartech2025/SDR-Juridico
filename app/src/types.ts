@@ -24,7 +24,9 @@ export type Questao = {
   dificuldade: string | null
   tem_imagem: boolean | null
   nr_questao: number
-  alternativas: { id_alternativa: number; letra: string; texto: string | null }[]
+  alternativas: { id_alternativa: number; letra: string; texto: string | null; correta: boolean }[]
+  id_tema?: number
+  assunto_detalhado?: string
 }
 
 export type RespostaLocal = {

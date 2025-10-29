@@ -1,26 +1,58 @@
 import React from 'react';
 import { useState } from 'react';
+import imageService from '../../services/imageService';
 
 interface FormattedTextProps {
   text: string;
   className?: string;
   showSummary?: boolean;
   maxHeight?: number;
+  questionId?: string; // Para compatibilidade
+  questionNumber?: number; // Novo: usar número da questão
 }
 
 interface TextSection {
-  type: 'paragraph' | 'citation' | 'reference' | 'instruction' | 'list';
+  type: 'paragraph' | 'citation' | 'reference' | 'instruction' | 'list' | 'image';
   content: string;
   level?: number;
+  imageRef?: string;
+  imageUrl?: string;
 }
 
 export const FormattedTextRenderer: React.FC<FormattedTextProps> = ({
   text,
   className = '',
   showSummary = false,
-  maxHeight
+  maxHeight,
+  questionId,
+  questionNumber
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [imageZoom, setImageZoom] = useState<string | null>(null);
+  
+  // Função para detectar referências de imagens no texto
+  const detectImageReferences = (text: string): Array<{ref: string, url: string}> => {
+    const imageRefs: Array<{ref: string, url: string}> = [];
+    
+    // Priorizar questionNumber sobre questionId
+    if (questionNumber) {
+      const questionImages = imageService.getQuestionImagesByNumber(questionNumber);
+      questionImages.forEach(img => {
+        if (img.available && img.url) {
+          imageRefs.push({ref: img.ref, url: img.url});
+        }
+      });
+    } else if (questionId) {
+      const questionImages = imageService.getQuestionImages(questionId);
+      questionImages.forEach(img => {
+        if (img.available && img.url) {
+          imageRefs.push({ref: img.ref, url: img.url});
+        }
+      });
+    }
+    
+    return imageRefs;
+  };
   
   // Função para detectar e classificar seções do texto
   const parseTextSections = (text: string): TextSection[] => {
@@ -28,6 +60,7 @@ export const FormattedTextRenderer: React.FC<FormattedTextProps> = ({
     
     const sections: TextSection[] = [];
     const lines = text.split('\n');
+    const imageRefs = detectImageReferences(text);
     
     let currentParagraph = '';
     
@@ -42,6 +75,25 @@ export const FormattedTextRenderer: React.FC<FormattedTextProps> = ({
           });
           currentParagraph = '';
         }
+        continue;
+      }
+      
+      // Detectar referências de imagem
+      const imageRef = imageRefs.find(img => trimmed.includes(img.ref));
+      if (imageRef) {
+        if (currentParagraph) {
+          sections.push({
+            type: 'paragraph',
+            content: currentParagraph.trim()
+          });
+          currentParagraph = '';
+        }
+        sections.push({
+          type: 'image',
+          content: imageRef.ref,
+          imageRef: imageRef.ref,
+          imageUrl: imageRef.url
+        });
         continue;
       }
       
@@ -131,6 +183,22 @@ export const FormattedTextRenderer: React.FC<FormattedTextProps> = ({
     const key = `section-${index}`;
     
     switch (section.type) {
+      case 'image':
+        return (
+          <div key={key} className="my-6 text-center">
+            <img 
+              src={section.imageUrl}
+              alt={`Imagem da questão - ${section.imageRef}`}
+              className="mx-auto max-h-96 rounded-lg shadow-lg cursor-pointer hover:scale-105 transition-transform"
+              onClick={() => setImageZoom(section.imageUrl || null)}
+              loading="lazy"
+            />
+            <p className="text-xs text-gray-400 mt-2">
+              Clique para ampliar • {section.imageRef}
+            </p>
+          </div>
+        );
+      
       case 'citation':
         return (
           <blockquote
@@ -209,9 +277,29 @@ export const FormattedTextRenderer: React.FC<FormattedTextProps> = ({
         >
           {isExpanded ? '▲ Ver menos' : '▼ Ver mais'}
         </button>
+        )}
+      
+      {/* Modal de zoom para imagens */}
+      {imageZoom && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setImageZoom(null)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <img 
+              src={imageZoom}
+              alt="Imagem ampliada"
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+            <button
+              onClick={() => setImageZoom(null)}
+              className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
-};
-
-export default FormattedTextRenderer;
+};export default FormattedTextRenderer;
