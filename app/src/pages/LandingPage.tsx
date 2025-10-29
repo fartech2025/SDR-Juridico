@@ -29,18 +29,6 @@ export default function LandingPage() {
                 <p className="text-sm text-slate-400">Plataforma Inteligente de Preparação</p>
               </div>
             </div>
-            
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/home" className="text-slate-300 hover:text-white transition-colors">
-                Dashboard
-              </Link>
-              <Link to="/provas" className="text-slate-300 hover:text-white transition-colors">
-                Simulados
-              </Link>
-              <Link to="/ranking" className="text-slate-300 hover:text-white transition-colors">
-                Ranking
-              </Link>
-            </nav>
 
             <div className="flex items-center space-x-4">
               <Link
