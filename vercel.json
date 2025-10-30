@@ -4,6 +4,7 @@
   "outputDirectory": "app/dist",
   "installCommand": "cd app && npm install",
   "routes": [
+    { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
