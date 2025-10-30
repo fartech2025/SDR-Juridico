@@ -1,21 +1,15 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchProvas } from "../services/supabaseService";
 import { useExam } from "../contexts/ExamContext";
-
-type ProvaRow = {
-  id_prova: number;
-  nome: string;
-  descricao: string | null;
-  tempo_por_questao: number | null;
-};
+import type { Prova } from "../types";
 
 export default function SelecionarProva() {
   const navigate = useNavigate();
   const { selectedExam, selectExam } = useExam();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [provas, setProvas] = useState<ProvaRow[]>([]);
+  const [provas, setProvas] = useState<Prova[]>([]);
 
   useEffect(() => {
     async function loadProvas() {
@@ -26,15 +20,20 @@ export default function SelecionarProva() {
         console.error(fetchError);
         setError("Nao foi possivel carregar as provas.");
       } else {
-        setProvas((data ?? []) as ProvaRow[]);
+        setProvas((data ?? []) as Prova[]);
       }
       setLoading(false);
     }
     loadProvas();
   }, []);
 
-  const handleSelect = (prova: ProvaRow) => {
-    selectExam(prova);
+  const handleSelect = (prova: Prova) => {
+    selectExam({
+      id_prova: prova.id_prova,
+      nome: prova.nome,
+      descricao: prova.descricao,
+      tempo_por_questao: prova.tempo_por_questao ?? null,
+    });
     navigate("/");
   };
 

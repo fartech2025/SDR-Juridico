@@ -16,7 +16,7 @@ export function useProvas() {
       setProvas(data || []);
       setLoading(false);
     }
-    load();
+    void load();
   }, []);
 
   return { provas, loading, error };

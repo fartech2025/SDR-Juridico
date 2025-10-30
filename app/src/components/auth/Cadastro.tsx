@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
+import { ensureUsuarioRegistro } from '../../services/supabaseService';
 import DevBanner from '../layout/DevBanner';
 import type { AuthFormEvent } from '../../types';
 
@@ -15,10 +16,7 @@ export default function Cadastro() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const validatePassword = (senha: string) => {
-    // Pelo menos 8 caracteres, 1 letra, 1 número
-    return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=]{8,}$/.test(senha);
-  };
+  const validatePassword = (senha: string) => senha.length >= 6;
 
   const handleCadastro = async (e: AuthFormEvent) => {
     e.preventDefault();
@@ -29,7 +27,7 @@ export default function Cadastro() {
       return;
     }
     if (!validatePassword(senha)) {
-      setErro('A senha deve ter pelo menos 8 caracteres e conter letras e números.');
+      setErro('A senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
@@ -47,21 +45,9 @@ export default function Cadastro() {
       if (error) {
         setErro(error.message);
       } else if (data?.user) {
-        // Inserir na tabela usuarios
-        const insertRes = await supabase
-          .from('usuarios')
-          .insert([{
-            id_usuario: data.user.id,
-            nome,
-            email,
-            senha_hash: '', // Não armazenar senha em texto! Use hash real se quiser
-          }]);
-        if (insertRes.error) {
-          setErro('Usuário criado no Auth, mas falha ao salvar em usuarios: ' + insertRes.error.message);
-        } else {
-          alert('Cadastro realizado! Você será redirecionado para o login.');
-          navigate('/login');
-        }
+        await ensureUsuarioRegistro(data.user, nome);
+        alert('Cadastro realizado! Você será redirecionado para o login.');
+        navigate('/login');
       }
     } catch (error) {
       setErro('Erro inesperado ao cadastrar');

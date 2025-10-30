@@ -1,20 +1,64 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { mockSupabase } from "./mockSupabase";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const isDev = import.meta.env.VITE_DEV_MODE === 'true';
+type SupabaseEnv = {
+  VITE_SUPABASE_URL?: string;
+  VITE_SUPABASE_ANON_KEY?: string;
+  VITE_USE_SUPABASE_MOCK?: string;
+  NODE_ENV?: string;
+  [key: string]: string | undefined;
+};
 
-// Função para criar o cliente Supabase apropriado
-function createSupabaseClient() {
-  // Se estiver em modo de desenvolvimento, usa mock com dados reais
-  if (isDev) {
-    console.log('🔧 Modo de desenvolvimento: usando mock com dados reais do banco Supabase');
-    return mockSupabase as any;
+function readViteEnv(): SupabaseEnv | undefined {
+  try {
+    return new Function("return import.meta.env || {}")() as SupabaseEnv;
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveRuntimeEnv(): SupabaseEnv {
+  const nodeEnv =
+    typeof process !== "undefined" && process?.env ? (process.env as SupabaseEnv) : undefined;
+
+  if (
+    nodeEnv &&
+    (nodeEnv.VITE_SUPABASE_URL ||
+      nodeEnv.VITE_SUPABASE_ANON_KEY ||
+      nodeEnv.VITE_USE_SUPABASE_MOCK ||
+      nodeEnv.NODE_ENV === "test")
+  ) {
+    return nodeEnv;
   }
 
-  const DEFAULT_LOCAL_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwOTI1MDM2NSwiZXhwIjoxOTI0NjA3MDM2fQ.C0V-2lt3nMtk0iDdi8m-7Y4Y5E0sJY9Z3rroWAt4EVI";
+  const viteEnv = readViteEnv();
+  if (viteEnv) return viteEnv;
+
+  return {};
+}
+
+const runtimeEnv = resolveRuntimeEnv();
+const nodeEnv = typeof process !== "undefined" && process?.env ? process.env : {};
+const DEFAULT_LOCAL_URL = "http://localhost:54321";
+const DEFAULT_LOCAL_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwOTI1MDM2NSwiZXhwIjoxOTI0NjA3MDM2fQ.C0V-2lt3nMtk0iDdi8m-7Y4Y5E0sJY9Z3rroWAt4EVI";
+
+const isLocalEnv =
+  typeof window !== "undefined" &&
+  /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname ?? "");
+
+const supabaseUrl = runtimeEnv.VITE_SUPABASE_URL || (isLocalEnv ? DEFAULT_LOCAL_URL : undefined);
+const supabaseAnonKey =
+  runtimeEnv.VITE_SUPABASE_ANON_KEY || (isLocalEnv ? DEFAULT_LOCAL_ANON_KEY : undefined);
+const useMock =
+  runtimeEnv.VITE_USE_SUPABASE_MOCK === "true" ||
+  (typeof nodeEnv.NODE_ENV === "string" && nodeEnv.NODE_ENV === "test");
+
+function createSupabaseClient(): SupabaseClient {
+  if (useMock) {
+    console.warn("⚠️  Usando mock do Supabase (VITE_USE_SUPABASE_MOCK=true)");
+    return mockSupabase as unknown as SupabaseClient;
+  }
 
   if (!supabaseUrl) {
     throw new Error(
@@ -34,8 +78,8 @@ function createSupabaseClient() {
   ) {
     throw new Error(
       [
-        "Chave anon invalida detectada.",
-        "A chave configurada corresponde ao valor padrao do Supabase CLI (apenas ambientes locais).",
+        "Chave anon inválida detectada.",
+        "A chave configurada corresponde ao valor padrão do Supabase CLI (apenas ambientes locais).",
         "Acesse o painel do Supabase -> Settings -> API e copie a Project anon key para VITE_SUPABASE_ANON_KEY.",
       ].join(" ")
     );

@@ -8,7 +8,9 @@ export interface User {
 export interface Prova {
   id_prova: number;
   ano: number;
-  descricao: string;
+  nome: string;
+  descricao: string | null;
+  tempo_por_questao?: number | null;
 }
 
 export interface Tema {
@@ -16,24 +18,33 @@ export interface Tema {
   nome_tema: string;
 }
 
-export interface Alternativa {
-  alternativa_a: string;
-  alternativa_b: string;
-  alternativa_c: string;
-  alternativa_d: string;
-  alternativa_e: string;
-  alternativa_correta: string;
+export interface QuestaoAlternativa {
+  id_alternativa: number;
+  letra: string;
+  texto: string;
+  correta: boolean;
+  tem_imagem: boolean;
+  imagens?: QuestaoImagem[];
+}
+
+export interface QuestaoImagem {
+  id_imagem: number;
+  caminho_arquivo: string;
+  descricao?: string | null;
 }
 
 export interface Questao {
   id_questao: number;
   id_tema: number;
+  id_prova: number;
   enunciado: string;
   dificuldade: string;
-  imagem_url?: string;
-  created_at?: string;
-  peso_dificuldade?: number;
-  alternativas?: Alternativa[];
+  tem_imagem: boolean;
+  nr_questao?: number | null;
+  peso_dificuldade?: number | null;
+  imagens?: QuestaoImagem[];
+  alternativas: QuestaoAlternativa[];
+  alternativa_correta: string | null;
 }
 
 export interface ProtectedRouteProps {
@@ -42,4 +53,17 @@ export interface ProtectedRouteProps {
 
 export interface AuthFormEvent {
   preventDefault: () => void;
+}
+
+export interface Usuario {
+  id_usuario: number;
+  email: string;
+  nome: string | null;
+  auth_user_id: string;
+  nivel: number;
+  xp_total: number;
+  streak_dias: number;
+  ultima_resposta_em: string | null;
+  created_at?: string;
+  updated_at?: string;
 }

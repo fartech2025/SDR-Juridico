@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
+import { ensureUsuarioRegistro } from '../../services/supabaseService';
 import DevBanner from '../layout/DevBanner';
 import type { AuthFormEvent } from '../../types';
 
@@ -14,9 +15,7 @@ export default function Login() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const validatePassword = (senha: string) => {
-    return senha.length >= 8;
-  };
+  const validatePassword = (senha: string) => senha.length >= 6;
 
   const handleLogin = async (e: AuthFormEvent) => {
     e.preventDefault();
@@ -27,15 +26,18 @@ export default function Login() {
       return;
     }
     if (!validatePassword(senha)) {
-      setErro('A senha deve ter pelo menos 8 caracteres.');
+      setErro('A senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
       if (error) {
         setErro(error.message);
       } else {
+        if (data?.user) {
+          await ensureUsuarioRegistro(data.user);
+        }
         navigate('/');
       }
     } catch (error) {

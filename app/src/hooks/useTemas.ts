@@ -16,7 +16,7 @@ export function useTemas() {
       setTemas(data || []);
       setLoading(false);
     }
-    load();
+    void load();
   }, []);
 
   return { temas, loading, error };
