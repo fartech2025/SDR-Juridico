@@ -1,0 +1,117 @@
+/* Estilos para textos formatados de questões */
+.formatted-text {
+  @apply text-gray-200 leading-relaxed;
+}
+
+.formatted-text p {
+  @apply mb-3 leading-7;
+}
+
+.formatted-text blockquote {
+  @apply border-l-4 border-blue-400 pl-4 py-2 my-4 bg-blue-50/10 italic text-gray-300;
+}
+
+.formatted-text .reference {
+  @apply text-sm text-gray-400 mt-2 font-mono border-t border-gray-700 pt-2;
+}
+
+.formatted-text .instruction {
+  @apply bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-lg p-3 my-3;
+}
+
+.formatted-text .list-item {
+  @apply ml-4 my-1 text-gray-200;
+}
+
+.formatted-text .citation {
+  @apply bg-gray-800/30 border-l-4 border-yellow-400 pl-4 py-3 my-4 rounded-r-lg;
+}
+
+.formatted-text .summary {
+  @apply bg-gray-800/50 rounded-lg p-3 mb-4 border border-gray-700;
+}
+
+.formatted-text .expand-button {
+  @apply mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors cursor-pointer;
+}
+
+/* Animações para expansão de texto */
+.text-expand-enter {
+  opacity: 0;
+  max-height: 0;
+}
+
+.text-expand-enter-active {
+  opacity: 1;
+  max-height: 1000px;
+  transition: opacity 300ms, max-height 300ms;
+}
+
+.text-expand-exit {
+  opacity: 1;
+  max-height: 1000px;
+}
+
+.text-expand-exit-active {
+  opacity: 0;
+  max-height: 0;
+  transition: opacity 300ms, max-height 300ms;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .formatted-text {
+    @apply text-sm;
+  }
+  
+  .formatted-text p {
+    @apply mb-2 leading-6;
+  }
+  
+  .formatted-text blockquote {
+    @apply pl-3 py-2 my-3;
+  }
+  
+  .formatted-text .instruction {
+    @apply p-2 my-2;
+  }
+}
+
+/* Estilos para melhor legibilidade */
+.formatted-text h4 {
+  @apply text-blue-400 font-semibold mb-2;
+}
+
+.formatted-text strong {
+  @apply font-semibold text-white;
+}
+
+.formatted-text em {
+  @apply italic text-gray-300;
+}
+
+.formatted-text code {
+  @apply bg-gray-800 px-2 py-1 rounded text-sm font-mono text-green-400;
+}
+
+/* Destaque para números e medidas */
+.formatted-text .number {
+  @apply font-semibold text-blue-300;
+}
+
+.formatted-text .unit {
+  @apply text-gray-300 ml-1;
+}
+
+/* Estilos para alternativas melhoradas */
+.alternative-text {
+  @apply text-gray-200 leading-relaxed p-3 rounded-lg border border-gray-700 bg-gray-800/30;
+}
+
+.alternative-text:hover {
+  @apply bg-gray-700/30 border-gray-600;
+}
+
+.alternative-text.selected {
+  @apply bg-blue-600/20 border-blue-500;
+}

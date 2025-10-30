@@ -1,0 +1,75 @@
+# Environment variables and configuration
+.env
+*.env
+.env.local
+.env.production
+*.key
+*.secret
+
+# Supabase backups
+backup_supabase*.json
+backup_*
+create_table.sql
+
+# Test reports and temporary files
+*_test_report_*.json
+*_report_*.json
+banco_inexistente.db
+
+# GitHub Pages - Keep these files for Pages
+# Remove the comment below to exclude from Pages if needed
+# index.html
+# _config.yml
+# .nojekyll
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# PDF files (opcional - remover se quiser versionar o PDF)
+*.pdf
+
+# Output directory (opcional - remover se quiser versionar a saída)
+output/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+.vercel

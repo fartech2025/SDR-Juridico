@@ -1,0 +1,36 @@
+# BancoEnem - GitHub Pages Configuration
+
+# Site settings
+theme: minima
+title: "BancoEnem - Sistema de Extração ENEM 2024"
+description: "Sistema completo para extração, processamento e sincronização de questões do ENEM 2024"
+baseurl: ""
+url: ""
+
+# GitHub Pages configuration
+markdown: kramdown
+highlighter: rouge
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Navigation
+header_pages:
+  - index.html
+  - README.md
+
+# Build settings
+exclude:
+  - __pycache__/
+  - .vscode/
+  - .DS_Store
+  - "*.db"
+  - "*.json"
+  - requirements.txt
+  - "*.py"
+  - output/
+
+# Include specific files
+include:
+  - index.html
