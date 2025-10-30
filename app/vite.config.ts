@@ -14,15 +14,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['framer-motion', 'lucide-react']
-        }
-      }
-    }
+    // Use Rollup's default chunking to avoid referencing optional deps
   },
   server: {
     port: 5173,

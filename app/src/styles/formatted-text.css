@@ -1,3 +1,5 @@
+@reference "tailwindcss";
+
 /* Estilos para textos formatados de questões */
 .formatted-text {
   @apply text-gray-200 leading-relaxed;

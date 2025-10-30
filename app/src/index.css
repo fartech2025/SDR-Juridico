@@ -1,10 +1,8 @@
+@import "tailwindcss";
+
 /* Importar sistema de design */
 @import './styles/design-system.css';
 @import './styles/formatted-text.css';
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 :root {
   color-scheme: dark;
