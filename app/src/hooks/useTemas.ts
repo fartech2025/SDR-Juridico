@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchTemas } from '../services/supabaseService';
-import type { Tema } from '../types';
+import type { Tema } from '../types/index';
 
 export function useTemas() {
   const [temas, setTemas] = useState<Tema[]>([]);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchQuestoesPorProvaTema } from '../services/supabaseService';
-import type { Questao } from '../types';
+import type { Questao } from '../types/index';
 
 export function useQuestoes(id_prova: number, id_tema?: number) {
   const [questoes, setQuestoes] = useState<Questao[]>([]);

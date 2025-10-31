@@ -77,11 +77,20 @@ export default function ResolverProva() {
         .select("id_alternativa,id_questao,letra,texto,correta")
         .in("id_questao", qIds);
 
-      const { data: imgs } = await supabase
+      // IDs das alternativas para buscar imagens vinculadas às alternativas
+      const altIds = (alts ?? []).map((a) => a.id_alternativa);
+
+      const { data: imgsAlts } = await supabase
         .from("imagens")
-        .select("tipo_entidade,id_entidade,caminho_arquivo")
-        .in("id_entidade", qIds)
+        .select("tipo_entidade,id_entidade,caminho_arquivo,descricao")
+        .in("id_entidade", altIds.length ? altIds : [-1])
         .in("tipo_entidade", ["alternativa"]);
+
+      const { data: imgsQuestoes } = await supabase
+        .from("imagens")
+        .select("tipo_entidade,id_entidade,caminho_arquivo,descricao")
+        .in("id_entidade", qIds.length ? qIds : [-1])
+        .in("tipo_entidade", ["questao"]);
 
       // 🔹 Cria URLs públicas do bucket rendered-questions
       const fullQuestoes = await Promise.all(
@@ -89,27 +98,53 @@ export default function ResolverProva() {
           const alternativas = alts
             ?.filter((a) => a.id_questao === q.id_questao)
             .map((a) => {
-              const imgAlt = imgs?.find(
+              const imgAlt = imgsAlts?.find(
                 (i) =>
                   i.tipo_entidade === "alternativa" &&
                   i.id_entidade === a.id_alternativa
               );
+
+              const toPublicUrl = (fullPath?: string | null): string | null => {
+                if (!fullPath) return null;
+                const parts = fullPath.split("/");
+                if (parts.length > 1) {
+                  const bucket = parts.shift() as string;
+                  const path = parts.join("/");
+                  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+                  return data.publicUrl || null;
+                }
+                // Fallback: assume bucket 'rendered-questions' quando não vier bucket
+                const { data } = supabase.storage.from("rendered-questions").getPublicUrl(fullPath);
+                return data.publicUrl || null;
+              };
+
               return {
                 ...a,
-                imagem: imgAlt ? imgAlt.caminho_arquivo : null,
+                imagem: toPublicUrl(imgAlt?.caminho_arquivo),
               };
             });
 
-          // Caminho da imagem P1
-          const caminho = `questao_${q.nr_questao}/enunciado_questao_${q.nr_questao}_p1.png`;
+          // Imagem do enunciado da questão via tabela 'imagens' (schema: tipo_entidade='questao')
+          const imgQuestao = imgsQuestoes?.find(
+            (i) => i.tipo_entidade === "questao" && i.id_entidade === q.id_questao
+          );
 
-          const { data: publicUrl } = supabase.storage
-            .from("rendered-questions")
-            .getPublicUrl(caminho);
+          const toPublicUrl = (fullPath?: string | null): string | null => {
+            if (!fullPath) return null;
+            const parts = fullPath.split("/");
+            if (parts.length > 1) {
+              const bucket = parts.shift() as string;
+              const path = parts.join("/");
+              const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+              return data.publicUrl || null;
+            }
+            const { data } = supabase.storage.from("rendered-questions").getPublicUrl(fullPath);
+            return data.publicUrl || null;
+          };
 
           return {
             ...q,
-            enunciadoImagem: publicUrl.publicUrl || null,
+            enunciadoImagem: toPublicUrl(imgQuestao?.caminho_arquivo),
             alternativas,
           };
         })

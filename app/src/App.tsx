@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Login from './components/auth/Login';
 import Cadastro from './components/auth/Cadastro';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -11,18 +11,26 @@ import DashboardAluno from './components/DashboardAluno_dark_supabase';
 import DashboardGestor from './components/DashboardGestor_dark_supabase';
 import SelecionarProva from './pages/SelecionarProva';
 import { ExamProvider } from './contexts/ExamContext';
+import LandingPage from './pages/LandingPage';
+import Monitor from './pages/Monitor';
 
 export default function AppWrapper() {
   return (
-    <BrowserRouter>
-      <ErrorBoundary>
-        <ExamProvider>
-          <Routes>
+    <ErrorBoundary>
+      <ExamProvider>
+        <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
 
+            {/* Landing pública na raiz */}
+            <Route path="/" element={<LandingPage />} />
+
+            {/* Página pública de monitoramento/diagnóstico */}
+            <Route path="/monitor" element={<Monitor />} />
+
+            {/* Home protegida foi movida para /home */}
             <Route
-              path="/"
+              path="/home"
               element={
                 <ProtectedRoute>
                   <DashboardHome />
@@ -85,9 +93,8 @@ export default function AppWrapper() {
             />
 
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ExamProvider>
-      </ErrorBoundary>
-    </BrowserRouter>
+        </Routes>
+      </ExamProvider>
+    </ErrorBoundary>
   );
 }

@@ -1,0 +1,95 @@
+@reference "tailwindcss";
+
+/* Camada base global para unificar o visual em TODAS as páginas
+   - NÃO altera a estrutura/posição do conteúdo, apenas aparência
+   - Inspirado em plataformas de estudo modernas (Coursera, Khan, Udemy)
+*/
+
+@layer base {
+  html, body, #root { @apply h-full; }
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased selection:bg-blue-600/30 selection:text-white;
+    background-image: radial-gradient(1200px 600px at 10% -10%, rgba(37,99,235,.08), transparent),
+                      radial-gradient(1000px 500px at 110% 10%, rgba(147,51,234,.07), transparent);
+    background-attachment: fixed;
+  }
+
+  /* Tipografia base */
+  h1 { @apply text-2xl sm:text-3xl font-bold tracking-tight text-slate-100; }
+  h2 { @apply text-xl sm:text-2xl font-semibold text-slate-100/95; }
+  h3 { @apply text-lg sm:text-xl font-semibold text-slate-200; }
+  h4 { @apply text-base sm:text-lg font-semibold text-slate-200/90; }
+  p  { @apply leading-relaxed text-slate-300; }
+  small { @apply text-xs text-slate-400; }
+
+  /* Links acessíveis */
+  a { @apply text-blue-400 underline-offset-4 hover:text-blue-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60 rounded-sm; }
+
+  /* Botões padrão (sem alterar layout) */
+  button {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-slate-800/80 text-slate-100 border border-slate-700 shadow-sm hover:bg-slate-700/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60 disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+  button.primary, .btn-primary-base {
+    @apply bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 border-blue-500;
+    box-shadow: 0 0 0 1px rgba(59,130,246,.25), 0 8px 30px rgba(59,130,246,.15);
+  }
+  button.ghost, .btn-ghost-base {
+    @apply bg-transparent border-transparent text-slate-300 hover:bg-white/5;
+  }
+
+  /* Campos de formulário – aparência consistente */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    @apply w-full rounded-lg bg-slate-900/80 text-slate-100 placeholder:text-slate-400 border border-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400/40 p-3;
+  }
+  label { @apply text-slate-300 font-medium; }
+  fieldset { @apply border border-slate-800 rounded-xl p-4; }
+  legend { @apply px-2 text-slate-400; }
+  ::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.8); }
+
+  /* Cards e painéis genéricos */
+  .card, .panel, .surface, .paper {
+    @apply bg-slate-900/70 border border-slate-800 rounded-2xl shadow-lg backdrop-blur-xl;
+  }
+
+  /* Tabelas legíveis sem mudar estrutura */
+  table { @apply w-full text-left border-collapse; }
+  thead th { @apply text-slate-300 font-semibold border-b border-slate-800 py-3; }
+  tbody td { @apply text-slate-300/90 border-b border-slate-900 py-3; }
+  tr:hover td { @apply bg-slate-900/40; }
+
+  /* Componentes de feedback */
+  .alert-success { @apply text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2; }
+  .alert-warning { @apply text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2; }
+  .alert-error   { @apply text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2; }
+
+  /* Estados de foco globais reforçados */
+  :focus-visible { @apply outline-none ring-2 ring-blue-400/60; }
+}
+
+/* Camada de componentes (não altera DOM, apenas oferece utilitários prontos) */
+@layer components {
+  .ds-heading { @apply text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-50; }
+  .ds-subtitle { @apply text-slate-300 text-base; }
+  .ds-card { @apply bg-slate-900/70 border border-slate-800 rounded-2xl shadow-lg backdrop-blur-xl p-4 sm:p-6; }
+  .ds-cta { @apply inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 px-5 py-3 font-semibold hover:from-blue-500 hover:to-indigo-500 transition-colors; box-shadow: 0 0 0 1px rgba(59,130,246,.25), 0 8px 30px rgba(59,130,246,.15); }
+  .ds-muted { @apply text-slate-400; }
+
+  .ds-input { @apply w-full rounded-lg bg-slate-900/80 text-slate-100 placeholder:text-slate-400 border border-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400/40 p-3; }
+  .ds-select { @apply w-full rounded-lg bg-slate-900/80 text-slate-100 placeholder:text-slate-400 border border-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400/40 p-3 pr-9; }
+  .ds-textarea { @apply w-full rounded-lg bg-slate-900/80 text-slate-100 placeholder:text-slate-400 border border-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400/40 p-3 min-h-[120px]; }
+  .ds-label { @apply text-slate-300 font-medium; }
+
+  .ds-badge { @apply inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-xs font-medium text-slate-300; }
+  .ds-badge-primary { @apply border-blue-600/60 bg-blue-600/10 text-blue-300; }
+  .ds-badge-success { @apply border-emerald-600/60 bg-emerald-600/10 text-emerald-300; }
+  .ds-badge-warning { @apply border-amber-600/60 bg-amber-600/10 text-amber-300; }
+  .ds-badge-error { @apply border-rose-600/60 bg-rose-600/10 text-rose-300; }
+}

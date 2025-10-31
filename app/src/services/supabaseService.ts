@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
-import type { Questao, Usuario, QuestaoAlternativa, QuestaoImagem } from '../types';
+import type { Questao, Usuario, QuestaoAlternativa, QuestaoImagem } from '../types/index';
 
 type SelectResponse<T> = {
   data: T[] | null;
@@ -130,6 +130,15 @@ export async function ensureUsuarioRegistro(user: User, nome?: string) {
         auth_user_id: user.id,
         email: user.email,
         nome: nome ?? user.user_metadata?.nome ?? null,
+        celular: '',
+        senha_hash: '',
+        data_cadastro: new Date().toISOString(),
+        num_provas_realizadas: 0,
+        esta_logado: false,
+        nivel: 1,
+        xp_total: 0,
+        streak_dias: 0,
+        ultima_resposta_em: null
       },
       { onConflict: 'auth_user_id', ignoreDuplicates: false }
     )

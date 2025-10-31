@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchProvas } from '../services/supabaseService';
-import type { Prova } from '../types';
+import type { Prova } from '../types/index';
 
 export function useProvas() {
   const [provas, setProvas] = useState<Prova[]>([]);

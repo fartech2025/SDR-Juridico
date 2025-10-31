@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { ensureUsuarioRegistro } from '../../services/supabaseService';
+// Import removido: o registro do usuário na tabela pública agora é garantido
+// após a autenticação (Login/ProtectedRoute). Isso evita falhas quando o
+// Supabase exige confirmação de e-mail e não retorna sessão no signUp.
 import DevBanner from '../layout/DevBanner';
 import type { AuthFormEvent } from '../../types';
 
@@ -38,15 +40,33 @@ export default function Cadastro() {
         options: {
           data: {
             nome: nome
-          }
+          },
+          // Redireciona para a página de login após confirmar o e-mail
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined
         }
       });
 
       if (error) {
-        setErro(error.message);
-      } else if (data?.user) {
-        await ensureUsuarioRegistro(data.user, nome);
-        alert('Cadastro realizado! Você será redirecionado para o login.');
+        // Mensagens mais amigáveis para alguns casos comuns
+        if ((error as any)?.message?.toLowerCase?.().includes('already registered') ||
+            (error as any)?.message?.toLowerCase?.().includes('user already exists')) {
+          setErro('Este e-mail já está cadastrado. Tente fazer login.');
+        } else {
+          setErro(error.message);
+        }
+        return;
+      }
+
+      // Quando a confirmação de e-mail está habilitada, o Supabase não retorna sessão aqui.
+      // O registro na tabela `usuarios` será garantido no primeiro login (via ensureUsuarioRegistro)
+      // ou na navegação protegida (ProtectedRoute).
+      if (data?.user) {
+        const precisaConfirmarEmail = !data.session;
+        if (precisaConfirmarEmail) {
+          alert('Cadastro realizado! Verifique seu e-mail para confirmar a conta antes de fazer login.');
+        } else {
+          alert('Cadastro realizado! Você será redirecionado para o login.');
+        }
         navigate('/login');
       }
     } catch (error) {

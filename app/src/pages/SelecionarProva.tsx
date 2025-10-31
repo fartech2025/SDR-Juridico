@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchProvas } from "../services/supabaseService";
 import { useExam } from "../contexts/ExamContext";
-import type { Prova } from "../types";
+import type { Prova } from "../types/index";
 
 export default function SelecionarProva() {
   const navigate = useNavigate();

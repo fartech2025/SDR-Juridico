@@ -38,7 +38,8 @@ export default function Login() {
         if (data?.user) {
           await ensureUsuarioRegistro(data.user);
         }
-        navigate('/');
+        // Após login, levar para Home protegida; a landing continua pública em '/'
+        navigate('/home');
       }
     } catch (error) {
       setErro('Erro inesperado ao fazer login');

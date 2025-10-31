@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   AcademicCapIcon,
@@ -13,7 +13,92 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 
+import { supabase } from '../lib/supabaseClient';
+
 export default function LandingPage() {
+  const [logoUrl, setLogoUrl] = useState<string>("");
+
+  useEffect(() => {
+    const loadLogo = async () => {
+      // 1) Monte listas de candidatos a bucket e path (env + fallbacks mais prováveis)
+      const envBucket = (import.meta.env.VITE_LOGO_BUCKET as string | undefined)?.trim();
+      const envPath = (import.meta.env.VITE_LOGO_PATH as string | undefined)?.trim();
+
+      const bucketCandidates = Array.from(
+        new Set(
+          [
+            envBucket,
+            // variações mais comuns vistas no projeto
+            'Imagens_contidas', // conforme informado
+            'Imagens_Contidas',
+            'logo',
+            'Logo',
+            'rendered-questions'
+          ].filter(Boolean) as string[]
+        )
+      );
+
+      const pathCandidates = Array.from(
+        new Set(
+          [
+            envPath,
+            // variações com e sem case
+            'logo4.png',
+            'logo/logo4.png', // conforme informado
+            'LOGO4.png',
+            'logo/LOGO4.png',
+            'LOGO/LOGO4.png',
+            'Logo/LOGO4.png'
+          ].filter(Boolean) as string[]
+        )
+      );
+
+      // Helper: valida uma URL pública realizando HEAD (evita mostrar imagem quebrada)
+      const validatePublicUrl = async (url?: string) => {
+        if (!url) return false;
+        try {
+          const res = await fetch(url, { method: 'HEAD' });
+          return res.ok;
+        } catch {
+          return false;
+        }
+      };
+
+      // 2) Tente primeiro URLs assinadas (funciona para buckets privados e confirma existência)
+      for (const b of bucketCandidates) {
+        for (const p of pathCandidates) {
+          try {
+            const signed = await supabase.storage.from(b).createSignedUrl(p, 60 * 60 * 24);
+            if (signed.data?.signedUrl) {
+              setLogoUrl(signed.data.signedUrl);
+              return;
+            }
+          } catch {
+            // tenta próxima combinação
+          }
+        }
+      }
+
+      // 3) Fallback: tente publicUrl mas só use se a URL existir (HEAD 200)
+      for (const b of bucketCandidates) {
+        for (const p of pathCandidates) {
+          try {
+            const { data } = supabase.storage.from(b).getPublicUrl(p);
+            if (data?.publicUrl && (await validatePublicUrl(data.publicUrl))) {
+              setLogoUrl(data.publicUrl);
+              return;
+            }
+          } catch {
+            // segue tentando
+          }
+        }
+      }
+
+      // 4) Se nada funcionar, mantém sem logo (o layout já esconde o <img /> quando vazio)
+    };
+    loadLogo();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header/Navigation */}
@@ -21,11 +106,15 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <AcademicCapIcon className="w-6 h-6 text-white" />
-              </div>
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt="Logo ENEM Ultra"
+                  className="w-10 h-10 object-contain"
+                />
+              )}
               <div>
-                <h1 className="text-2xl font-bold text-white">ENEM Academy</h1>
+                <h1 className="text-2xl font-bold text-white">ENEM Ultra</h1>
                 <p className="text-sm text-slate-400">Plataforma Inteligente de Preparação</p>
               </div>
             </div>
@@ -61,7 +150,7 @@ export default function LandingPage() {
           <div className="text-center">
             <div className="inline-flex items-center px-4 py-2 bg-slate-800/50 rounded-full text-sm text-slate-300 mb-6 border border-slate-700">
               <SparklesIcon className="w-4 h-4 mr-2 text-yellow-400" />
-              Plataforma de Preparação ENEM 2024
+              Plataforma de Preparação ENEM
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
@@ -73,7 +162,7 @@ export default function LandingPage() {
             </h1>
             
             <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Uma plataforma inteligente e interativa que revoluciona sua preparação para o ENEM. 
+              Uma plataforma inteligente e interativa que revoluciona sua preparação para o ENEM.
               Simulados personalizados, análises detalhadas e acompanhamento em tempo real.
             </p>
             
@@ -87,7 +176,7 @@ export default function LandingPage() {
               </Link>
               
               <Link
-                to="/provas"
+                to="/selecionar-prova"
                 className="px-8 py-4 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all duration-200 flex items-center space-x-3 text-lg border border-slate-600"
               >
                 <BookOpenIcon className="w-6 h-6" />
@@ -264,7 +353,7 @@ export default function LandingPage() {
               <h4 className="text-white font-semibold mb-4">Plataforma</h4>
               <ul className="space-y-2 text-slate-400 text-sm">
                 <li><Link to="/home" className="hover:text-white transition-colors">Dashboard</Link></li>
-                <li><Link to="/provas" className="hover:text-white transition-colors">Simulados</Link></li>
+                <li><Link to="/selecionar-prova" className="hover:text-white transition-colors">Simulados</Link></li>
                 <li><Link to="/ranking" className="hover:text-white transition-colors">Ranking</Link></li>
                 <li><Link to="/estatisticas" className="hover:text-white transition-colors">Estatísticas</Link></li>
               </ul>
@@ -291,7 +380,7 @@ export default function LandingPage() {
           
           <div className="border-t border-slate-700 mt-8 pt-8 text-center">
             <p className="text-slate-400 text-sm">
-              © 2024 ENEM Academy. Todos os direitos reservados.
+              © {new Date().getFullYear()} ENEM Ultra. Todos os direitos reservados.
             </p>
           </div>
         </div>
