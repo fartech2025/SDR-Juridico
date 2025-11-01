@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BasePage from "./BasePage";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
@@ -132,11 +133,15 @@ export default function DashboardGestor_dark() {
     carregarDados();
   }, []);
 
-  if (carregando) return <div className="text-center text-gray-300 p-10">Carregando dados do Supabase...</div>;
+  if (carregando) return (
+    <BasePage maxWidth="max-w-6xl">
+      <div className="text-center text-gray-300 p-10">Carregando dados do Supabase...</div>
+    </BasePage>
+  );
 
   if (erro || !dados) {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-10">
+      <BasePage maxWidth="max-w-md">
         <div className="bg-gray-900 p-8 rounded-3xl shadow-xl w-full max-w-md text-center space-y-4">
           <h1 className="text-2xl font-bold text-red-400">Algo deu errado</h1>
           <p>{erro ?? 'Não foi possível carregar dados da turma.'}</p>
@@ -144,20 +149,20 @@ export default function DashboardGestor_dark() {
             Voltar para o início
           </Link>
         </div>
-      </div>
+      </BasePage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-blue-400">Painel do Gestor</h1>
-            <p className="text-sm text-gray-400">Acompanhamento geral da turma</p>
-          </div>
-          <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">Voltar</Link>
+    <BasePage maxWidth="max-w-6xl">
+  <div className="w-full px-6 py-8" style={{ paddingTop: '6.5rem' }}>
+        {/* Título no canto superior direito */}
+        {/* Título absoluto no topo direito, alinhado com ENEM Ultra */}
+        <div className="absolute right-8 top-8 z-30 text-right">
+          <h1 className="text-3xl font-bold text-blue-400 drop-shadow">Painel do Gestor</h1>
+          <p className="text-base text-gray-300 mt-1">Acompanhamento geral da turma</p>
         </div>
+        {/* ...conteúdo principal... */}
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -211,8 +216,12 @@ export default function DashboardGestor_dark() {
             </tbody>
           </table>
         </ChartCard>
+        {/* Botão Voltar no final */}
+        <div className="flex justify-end mt-10">
+          <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">Voltar</Link>
+        </div>
       </div>
-    </div>
+    </BasePage>
   );
 }
 
@@ -227,7 +236,7 @@ function KPI({ title, value }) {
 
 function ChartCard({ title, children }) {
   return (
-    <div className="bg-gray-900 p-5 mb-6 rounded-2xl border border-gray-800">
+    <div className="p-5 mb-6 rounded-2xl border border-gray-800 backdrop-blur-sm bg-slate-900/60">
       <h3 className="font-semibold mb-3">{title}</h3>
       {children}
     </div>

@@ -4,6 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
+// Expor variáveis do Vite para acesso indireto em módulos compartilhados com testes Node.
+if (typeof globalThis !== 'undefined') {
+  (globalThis as { __VITE_ENV__?: ImportMetaEnv }).__VITE_ENV__ = import.meta.env;
+}
+
 // Suprimir erros de extensões do navegador (message channel)
 window.addEventListener('error', (event) => {
   if (event.message.includes('message channel') || 

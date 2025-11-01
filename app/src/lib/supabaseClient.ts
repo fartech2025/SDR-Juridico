@@ -10,15 +10,17 @@ type SupabaseEnv = {
   [key: string]: string | undefined;
 };
 
+type GlobalWithViteEnv = typeof globalThis & {
+  __VITE_ENV__?: SupabaseEnv;
+};
+
 function readViteEnv(): SupabaseEnv | undefined {
-  try {
-    // Em ambientes Vite, estas chaves são injetadas em build time.
-    // No navegador (produção), import.meta.env é um objeto estático.
-    // No Node (test), pode não existir, por isso o try/catch.
-    return (typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined) as SupabaseEnv;
-  } catch {
-    return undefined;
+  const globalEnv = (globalThis as GlobalWithViteEnv).__VITE_ENV__;
+  if (globalEnv && typeof globalEnv === "object") {
+    return globalEnv;
   }
+
+  return undefined;
 }
 
 function resolveRuntimeEnv(): SupabaseEnv {

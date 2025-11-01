@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import BasePage from "./BasePage";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
@@ -115,12 +116,16 @@ export default function DashboardAluno_dark() {
   }, []);
 
   if (carregando) {
-    return <div className="text-center text-gray-300 p-10">Carregando dados do Supabase...</div>;
+    return (
+      <BasePage maxWidth="max-w-6xl">
+        <div className="text-center text-gray-300 p-10">Carregando dados do Supabase...</div>
+      </BasePage>
+    );
   }
 
   if (erro || !dados) {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-10">
+      <BasePage maxWidth="max-w-md">
         <div className="bg-gray-900 p-8 rounded-3xl shadow-xl w-full max-w-md text-center space-y-4">
           <h1 className="text-2xl font-bold text-red-400">Ops!</h1>
           <p>{erro ?? 'Não foi possível carregar o painel do aluno.'}</p>
@@ -128,7 +133,7 @@ export default function DashboardAluno_dark() {
             Voltar para o início
           </Link>
         </div>
-      </div>
+      </BasePage>
     );
   }
 
@@ -146,8 +151,8 @@ export default function DashboardAluno_dark() {
     : '-';
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <BasePage maxWidth="max-w-6xl">
+      <div className="w-full px-6 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-blue-400">Painel do Estudante</h1>
@@ -225,7 +230,7 @@ export default function DashboardAluno_dark() {
           </InsightCard>
         </div>
       </div>
-    </div>
+    </BasePage>
   );
 }
 

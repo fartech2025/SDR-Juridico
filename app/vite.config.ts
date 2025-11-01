@@ -17,6 +17,13 @@ export default defineConfig(({ command, mode }) => ({
     } 
   },
   base: '/',
+  // Acelera o dev server pré-empacotando libs pesadas
+  optimizeDeps: {
+    include: [
+      '@supabase/supabase-js',
+      'recharts'
+    ],
+  },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

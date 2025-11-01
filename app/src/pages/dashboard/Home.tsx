@@ -22,7 +22,7 @@ export default function Home() {
             <h1 className="ds-heading mb-2">Simulados ENEM</h1>
             <p className="ds-subtitle">Escolha a prova e como deseja resolver.</p>
           </div>
-          <div className="flex justify-center gap-2 mb-4">
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
             <Link
               to="/ranking"
               className="btn btn-ghost"
@@ -39,6 +39,14 @@ export default function Home() {
             >
               📊 Estatísticas
             </Link>
+            <Link to="/painel-gestor" className="btn btn-ghost">👔 Painel do Gestor</Link>
+            <Link to="/painel-aluno" className="btn btn-ghost">🎒 Painel do Aluno</Link>
+            <Link to="/selecionar-prova" className="btn btn-ghost">📝 Selecionar Prova</Link>
+            <Link to="/simulado/1/1" className="btn btn-ghost">🧪 Simulado (Exemplo)</Link>
+            <Link to="/monitor" className="btn btn-ghost">🖥️ Monitor</Link>
+            <Link to="/sec-educacao" className="btn btn-ghost">🏛️ Sec. Educação</Link>
+            <Link to="/database-inspetor" className="btn btn-ghost">🗄️ Database Inspetor</Link>
+            <Link to="/database-relations" className="btn btn-ghost">🔗 Relações entre Tabelas</Link>
           </div>
           <div className="mb-4">
             <label className="ds-label block mb-2">Selecione uma prova</label>

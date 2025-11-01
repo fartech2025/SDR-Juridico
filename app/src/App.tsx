@@ -1,3 +1,5 @@
+import DatabaseRelations from './pages/DatabaseRelations';
+import DatabaseInspetor from './pages/DatabaseInspetor';
 import React, { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Login from './pages/Login';
@@ -92,11 +94,9 @@ export default function AppWrapper() {
             <Route
               path="/painel-aluno"
               element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
-                    <DashboardAluno />
-                  </Suspense>
-                </ProtectedRoute>
+                <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                  <DashboardAluno />
+                </Suspense>
               }
             />
 
@@ -111,6 +111,8 @@ export default function AppWrapper() {
               }
             />
 
+            <Route path="/database-inspetor" element={<DatabaseInspetor />} />
+            <Route path="/database-relations" element={<DatabaseRelations />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ExamProvider>

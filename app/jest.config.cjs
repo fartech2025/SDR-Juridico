@@ -4,11 +4,16 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.+(ts|tsx|js)', '**/?(*.)+(spec|test).+(ts|tsx|js)'],
   testEnvironment: 'jest-environment-jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   transform: {
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
         tsconfig: '<rootDir>/tsconfig.jest.json',
+        useESM: true,
+        diagnostics: {
+          ignoreCodes: [151002],
+        },
       },
     ],
   },

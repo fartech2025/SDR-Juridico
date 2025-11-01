@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import BasePage from '../components/BasePage';
 
 type CheckResult = {
   ok: boolean;
@@ -84,8 +85,8 @@ export default function Monitor() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
+    <BasePage maxWidth="max-w-5xl">
+      <div className="w-full p-6 space-y-6">
         <h1 className="text-2xl font-bold">📊 Monitoramento do App</h1>
 
         <section className="grid sm:grid-cols-2 gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
@@ -154,6 +155,6 @@ export default function Monitor() {
           </ul>
         </section>
       </div>
-    </div>
+    </BasePage>
   );
 }
