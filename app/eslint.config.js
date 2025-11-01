@@ -16,6 +16,7 @@ export default defineConfig([
       ...tseslint.configs.recommended,
       reactHooks.configs['recommended-latest'],
       reactRefresh.configs.vite,
+  // Tailwind CSS plugin skipped (Tailwind v4 incompatible). Using Prettier plugin + custom script instead.
     ],
     languageOptions: {
       ecmaVersion: 2020,

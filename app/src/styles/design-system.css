@@ -189,6 +189,24 @@
   color: white;
 }
 
+/* Success Button */
+.btn-success {
+  background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+  color: white;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  border: none;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.btn-success:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
 /* Input Components */
 .input-field {
   background: rgba(30, 41, 59, 0.8);
