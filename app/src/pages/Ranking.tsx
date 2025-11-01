@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import TopBar from '@/components/TopBar'
-import { hasSupabase, supabase } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
+import BasePage from '../components/BasePage';
 
 type Row = { pos: number, nome: string, percentual: number, acertos: number, total: number }
 
@@ -11,7 +11,7 @@ const Ranking: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        if (!hasSupabase) throw new Error('Supabase não configurado (.env)')
+  // if (!supabase) throw new Error('Supabase não configurado (.env)')
         const { data: ru, error: e1 } = await supabase
           .from('resultados_usuarios')
           .select('id_usuario,total_questoes,total_acertos,percentual_acertos')
@@ -45,14 +45,7 @@ const Ranking: React.FC = () => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-amber-900 to-slate-900">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-yellow-500/5 to-orange-500/5"></div>
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl animate-pulse-glow"></div>
-      
-      <TopBar />
-      
+    <BasePage maxWidth="max-w-6xl">
       <div className="relative container mx-auto px-6 py-8 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-8">

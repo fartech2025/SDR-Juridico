@@ -73,3 +73,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 .vercel
+
+# Additional env protections (nested folders and backups)
+**/.env*
+*.env.local.bak*

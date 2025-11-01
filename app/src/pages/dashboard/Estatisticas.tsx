@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '../../lib/supabaseClient';
+import BasePage from '../../components/BasePage';
 
 type Serie = { nome: string; valor: number };
 type SerieHora = { hora: string; percentual: number };
@@ -46,13 +47,12 @@ export default function Estatisticas() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-2 sm:p-10 flex items-center justify-center">
-      <div className="max-w-5xl w-full mx-auto space-y-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-center text-blue-400">📊 Estatísticas</h1>
-
-        <div className="bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl space-y-6">
+    <BasePage maxWidth="max-w-5xl">
+      <div className="space-y-6">
+        <h1 className="ds-heading text-center text-blue-400">📊 Estatísticas</h1>
+        <div className="glass-card p-4 sm:p-8 space-y-6">
           {loading ? (
-            <p className="text-center text-gray-400">Carregando estatísticas...</p>
+            <p className="ds-muted text-center">Carregando estatísticas...</p>
           ) : erro ? (
             <p className="text-center text-red-400" role="alert">
               {erro}
@@ -103,7 +103,7 @@ export default function Estatisticas() {
           )}
         </div>
       </div>
-    </div>
+    </BasePage>
   );
 }
 

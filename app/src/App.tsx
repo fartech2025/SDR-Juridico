@@ -1,15 +1,18 @@
+import React, { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom';
-import Login from './components/auth/Login';
-import Cadastro from './components/auth/Cadastro';
+import Login from './pages/Login';
+import Cadastro from './pages/Cadastro';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import ErrorBoundary from './components/layout/ErrorBoundary';
-import DashboardHome from './pages/dashboard/Home';
-import Ranking from './pages/dashboard/Ranking';
-import Estatisticas from './pages/dashboard/Estatisticas';
-import SimuladoProva from './pages/exam/SimuladoProva';
-import DashboardAluno from './components/DashboardAluno_dark_supabase';
-import DashboardGestor from './components/DashboardGestor_dark_supabase';
-import SelecionarProva from './pages/SelecionarProva';
+// lazy-loaded heavy pages
+const DashboardHome = React.lazy(() => import('./pages/dashboard/Home'))
+const Ranking = React.lazy(() => import('./pages/dashboard/Ranking'))
+const Estatisticas = React.lazy(() => import('./pages/dashboard/Estatisticas'))
+const SimuladoProva = React.lazy(() => import('./pages/exam/SimuladoProva'))
+const DashboardAluno = React.lazy(() => import('./components/DashboardAluno_dark_supabase'))
+const DashboardGestor = React.lazy(() => import('./components/DashboardGestor_dark_supabase'))
+const SelecionarProva = React.lazy(() => import('./pages/SelecionarProva'))
+const SecEducacao = React.lazy(() => import('./pages/SecEducacao'))
 import { ExamProvider } from './contexts/ExamContext';
 import LandingPage from './pages/LandingPage';
 import Monitor from './pages/Monitor';
@@ -33,7 +36,9 @@ export default function AppWrapper() {
               path="/home"
               element={
                 <ProtectedRoute>
-                  <DashboardHome />
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <DashboardHome />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
@@ -42,16 +47,22 @@ export default function AppWrapper() {
               path="/selecionar-prova"
               element={
                 <ProtectedRoute>
-                  <SelecionarProva />
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <SelecionarProva />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
+
+            <Route path="/sec-educacao" element={<Suspense fallback={<div className="p-6">Carregando...</div>}><SecEducacao /></Suspense>} />
 
             <Route
               path="/simulado/:id_prova/:id_tema"
               element={
                 <ProtectedRoute>
-                  <SimuladoProva />
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <SimuladoProva />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
@@ -60,7 +71,9 @@ export default function AppWrapper() {
               path="/ranking"
               element={
                 <ProtectedRoute>
-                  <Ranking />
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <Ranking />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
@@ -69,7 +82,9 @@ export default function AppWrapper() {
               path="/estatisticas"
               element={
                 <ProtectedRoute>
-                  <Estatisticas />
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <Estatisticas />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
@@ -78,7 +93,9 @@ export default function AppWrapper() {
               path="/painel-aluno"
               element={
                 <ProtectedRoute>
-                  <DashboardAluno />
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <DashboardAluno />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
@@ -87,7 +104,9 @@ export default function AppWrapper() {
               path="/painel-gestor"
               element={
                 <ProtectedRoute>
-                  <DashboardGestor />
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <DashboardGestor />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />

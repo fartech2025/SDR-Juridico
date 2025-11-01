@@ -8,5 +8,4 @@ if errorlevel 1 (
   exit /b 1
 )
 echo Tipos gerados em app\src\lib\database.types.ts
-exit /b 0
 

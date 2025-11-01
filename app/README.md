@@ -36,3 +36,16 @@ npm run preview
   - Botões: Anterior, Pular, Próxima, Finalizar Prova.
   - **Autofinalização** quando o tempo acaba, com **Resumo da prova** (acertos, erros, pulos, não respondidas, tempo total).
 - **Tudo integrado ao Supabase** com upsert em `respostas_usuarios`.
+ 
+## Mocks (desenvolvimento)
+
+Se você precisa trabalhar offline ou com dados fictícios, existe um mock do Supabase dentro de `app/src/lib/_mocks/mockSupabase.ts`.
+
+Para ativá-lo localmente defina a variável de ambiente `VITE_USE_SUPABASE_MOCK=true` (por exemplo em `.env.local`):
+
+```env
+# ative apenas em dev local quando realmente necessário
+VITE_USE_SUPABASE_MOCK=true
+```
+
+Observação: por padrão a aplicação usa o Supabase real, para evitar o uso acidental de dados fictícios.

@@ -1,0 +1,1 @@
+-- Arquivo movido para arquivos_antigos em 31/10/2025 para limpeza do projeto.

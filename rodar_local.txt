@@ -1,3 +1,4 @@
+ (This file has been moved to arquivos_antigos and is no longer needed.)
 No arquivo app/.env.local use os valores padrão da instância local do Supabase CLI:
 VITE_SUPABASE_URL=http://127.0.0.1:54321
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwOTI1MDM2NSwiZXhwIjoxOTI0NjA3MDM2fQ.C0V-2lt3nMtk0iDdi8m-7Y4Y5E0sJY9Z3rroWAt4EVI

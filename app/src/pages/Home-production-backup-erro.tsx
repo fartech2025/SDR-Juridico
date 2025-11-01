@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { UsuarioResumo, Prova, Tema } from '@/types'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts'
-import { hasSupabase, supabase, CURRENT_USER_ID } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 import { Link } from 'react-router-dom'
 import ChatGPTStyleSidebar from '../components/ui/ChatGPTStyleSidebar'
 
@@ -42,12 +42,10 @@ export default function HomeProduction() {
   // Função para carregar dados de aproveitamento por tema
   const loadAproveitamentoPorTema = async () => {
     try {
-      if (!hasSupabase || !supabase) return;
-      
       const { data: temaData } = await supabase
         .from('resultados_por_tema')
         .select('nome_tema, percentual_acertos')
-        .eq('id_usuario', CURRENT_USER_ID)
+        .eq('id_usuario', 1)
 
       if (temaData) {
         const formattedData = temaData.map((item) => ({
@@ -64,12 +62,6 @@ export default function HomeProduction() {
   // Função para carregar provas e temas
   const loadProvasETemas = async () => {
     try {
-      if (!hasSupabase || !supabase) {
-        setProvas(demoProvas)
-        setTemas(demoTemas)
-        return
-      }
-
       const [provasResponse, temasResponse] = await Promise.all([
         supabase.from('provas').select('*').order('ano', { ascending: false }),
         supabase.from('temas').select('*').order('nome_tema')
@@ -98,23 +90,18 @@ export default function HomeProduction() {
         await loadProvasETemas()
         await loadAproveitamentoPorTema()
 
-        if (hasSupabase && supabase) {
-          const { data: resumoData, error: resumoError } = await supabase
-            .from('usuario_resumo')
-            .select('*')
-            .eq('id_usuario', CURRENT_USER_ID)
-            .single()
+        const { data: resumoData, error: resumoError } = await supabase
+          .from('usuario_resumo')
+          .select('*')
+          .eq('id_usuario', 1)
+          .single()
 
-          if (resumoError) {
-            console.warn('⚠️ Erro ao buscar resumo no Supabase:', resumoError.message)
-            setResumo(demoResumo)
-          } else if (resumoData) {
-            console.log('✅ Resumo carregado do Supabase:', resumoData)
-            setResumo(resumoData)
-          }
-        } else {
-          console.log('🔧 Usando dados de demonstração')
+        if (resumoError) {
+          console.warn('⚠️ Erro ao buscar resumo no Supabase:', resumoError.message)
           setResumo(demoResumo)
+        } else if (resumoData) {
+          console.log('✅ Resumo carregado do Supabase:', resumoData)
+          setResumo(resumoData)
         }
       } catch (err) {
         console.error('❌ Erro geral:', err)
@@ -171,7 +158,6 @@ export default function HomeProduction() {
         onTemaChange={setTemaSelecionado}
         aproveitamentoPorTema={aproveitamentoPorTema}
       />
-
       {/* Main Content com margem para sidebar */}
       <main style={{ 
         marginLeft: '280px', 
@@ -205,58 +191,25 @@ export default function HomeProduction() {
                 </div>
               </div>
             </div>
-            
             <div className="flex items-center gap-4">
               {/* Status de Conexão */}
-              {hasSupabase ? (
-                <div className="flex items-center gap-2 text-green-400 text-sm">
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <span>Conectado</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-amber-400 text-sm">
-                  <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
-                  <span>Modo Demo</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                  Dashboard ENEM 2024
-                </h1>
-                <p className="text-slate-300 text-lg flex items-center gap-2">
-                  <span className="text-2xl">👋</span>
-                  Bem-vindo, <span className="font-semibold text-white">{resumo?.nome || 'Estudante'}</span>!
-                </p>
+              <div className="flex items-center gap-2 text-amber-400 text-sm">
+                <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                <span>Modo Demo</span>
               </div>
             </div>
           </div>
         </div>
-
         {/* Status de Conexão */}
         <div style={{ marginBottom: '24px' }}>
-          {hasSupabase ? (
-            <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-4">
-              <div className="flex items-center gap-2 text-green-200">
-                <span className="text-xl">✅</span>
-                <span className="font-medium">
-                  Conectado ao banco de dados - Dados atualizados ({provas.length} provas, {temas.length} temas)
-                </span>
-              </div>
+          <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-blue-200">
+              <span className="text-xl">🔧</span>
+              <span className="font-medium">
+                Modo demonstração - Configure o Supabase para dados reais
+              </span>
             </div>
-          ) : (
-            <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4">
-              <div className="flex items-center gap-2 text-blue-200">
-                <span className="text-xl">🔧</span>
-                <span className="font-medium">
-                  Modo demonstração - Configure o Supabase para dados reais
-                </span>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
           {/* Debug Info - apenas durante desenvolvimento */}
@@ -264,7 +217,6 @@ export default function HomeProduction() {
             <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-xl p-4 mb-6">
               <h3 className="text-yellow-200 font-medium mb-2">🔧 Debug Info:</h3>
               <div className="text-sm text-yellow-100 space-y-1">
-                <p>hasSupabase: {hasSupabase ? '✅' : '❌'}</p>
                 <p>Provas carregadas: {provas.length}</p>
                 <p>Temas carregados: {temas.length}</p>
                 <p>Prova selecionada: {provaSelecionada || 'nenhuma'}</p>
@@ -499,7 +451,7 @@ export default function HomeProduction() {
               ))}
             </div>
           </div>
-        </main>
-      </div>
-    )
-  }
+      </main>
+    </div>
+  )
+}

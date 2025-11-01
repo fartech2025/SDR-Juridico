@@ -1,0 +1,38 @@
+name: DB smoke test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  db-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (app)
+        run: |
+          cd app
+          npm ci
+
+      - name: Write .env.local for app (from secrets)
+        run: |
+          echo "VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > app/.env.local
+          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> app/.env.local
+          # optional: ensure NODE_ENV
+          echo "VITE_DEV_MODE=true" >> app/.env.local
+
+      - name: Run DB smoke insert script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          npm --prefix app run test:db-insert

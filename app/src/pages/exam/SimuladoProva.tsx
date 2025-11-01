@@ -1,14 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { ensureUsuarioRegistro, fetchQuestoesPorProvaTema } from '../../services/supabaseService';
+import { ensureUsuarioRegistro, fetchQuestoesPorProvaTema, fetchQuestoesIdsPorProvaTema, fetchQuestaoById } from '../../services/supabaseService';
 import type { Questao } from '../../types';
+import BasePage from '../../components/BasePage';
+import QuestionSkeleton from '../../components/ui/QuestionSkeleton';
 
 export default function SimuladoProva() {
   const { id_prova, id_tema } = useParams();
   const navigate = useNavigate();
   
-  const [questoes, setQuestoes] = useState<Questao[]>([]);
+  // agora mantemos apenas a lista de ids e um cache por id
+  const [questaoIds, setQuestaoIds] = useState<number[]>([]);
+  const [cacheVersion, setCacheVersion] = useState(0);
+  const questoesCache = useRef<Map<number, Questao>>(new Map());
   const [questaoAtual, setQuestaoAtual] = useState(0);
   const [respostas, setRespostas] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
@@ -28,7 +33,38 @@ export default function SimuladoProva() {
     [respostas]
   );
 
-  const questao = questoes[questaoAtual] ?? null;
+  const currentId = questaoIds[questaoAtual] ?? null;
+  const questao = currentId ? questoesCache.current.get(currentId) ?? null : null;
+
+  // quando mudamos de questão, se não estiver no cache, buscar sob demanda
+  useEffect(() => {
+    if (!currentId) return;
+    if (questoesCache.current.has(currentId)) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await fetchQuestaoById(currentId);
+        if (mounted && data) {
+          questoesCache.current.set(currentId, data);
+          setCacheVersion((v) => v + 1);
+          // prefetch próxima questão
+          const idx = questaoAtual;
+          const nextId = questaoIds[idx + 1];
+          if (nextId && !questoesCache.current.has(nextId)) {
+            void fetchQuestaoById(nextId).then((res) => {
+              if (res.data) {
+                questoesCache.current.set(nextId, res.data);
+                setCacheVersion((v) => v + 1);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Erro ao carregar questão sob demanda', e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [currentId, questaoAtual, setCacheVersion, questaoIds]);
 
   useEffect(() => {
     const carregar = async () => {
@@ -47,41 +83,58 @@ export default function SimuladoProva() {
   }, []);
 
   useEffect(() => {
-    async function carregarQuestoes() {
+    async function carregarQuestoesIds() {
       try {
         const provaId = Number(id_prova);
         if (!Number.isFinite(provaId) || provaId <= 0) {
           setErro('Prova selecionada é inválida.');
-          setQuestoes([]);
+          setQuestaoIds([]);
           setLoading(false);
           return;
         }
         const temaId = id_tema === 'completa' ? undefined : Number(id_tema);
-        const normalizedTemaId =
-          temaId !== undefined && Number.isFinite(temaId) && temaId > 0 ? temaId : undefined;
+        const normalizedTemaId = temaId !== undefined && Number.isFinite(temaId) && temaId > 0 ? temaId : undefined;
 
-        const { data, error } = await fetchQuestoesPorProvaTema(provaId, normalizedTemaId);
+        const { data, error } = await fetchQuestoesIdsPorProvaTema(provaId, normalizedTemaId);
         if (error) {
-          console.error('Erro ao carregar questões:', error);
+          console.error('Erro ao carregar ids das questões:', error);
           setErro('Não foi possível carregar as questões deste simulado.');
-          setQuestoes([]);
+          setQuestaoIds([]);
         } else {
-          setQuestoes(data || []);
+          const ids = (data ?? []).map((r: any) => r.id_questao);
+          setQuestaoIds(ids);
+          // prefetch primeira questão
+          if (ids.length) {
+            const firstId = ids[0];
+            const { data: q } = await fetchQuestaoById(firstId);
+            if (q) questoesCache.current.set(firstId, q);
+            // prefetch next
+            if (ids.length > 1) {
+              const nextId = ids[1];
+              void fetchQuestaoById(nextId).then((res) => { if (res.data) questoesCache.current.set(nextId, res.data); });
+            }
+          }
         }
       } catch (error) {
         console.error('Erro ao carregar questões:', error);
         setErro('Erro inesperado ao carregar questões.');
-        setQuestoes([]);
+        setQuestaoIds([]);
       } finally {
         setLoading(false);
       }
     }
-    carregarQuestoes();
+    carregarQuestoesIds();
   }, [id_prova, id_tema]);
 
   const proximaQuestao = () => {
-    if (questaoAtual < questoes.length - 1) {
-      setQuestaoAtual((prev) => prev + 1);
+    if (questaoAtual < questaoIds.length - 1) {
+      const next = questaoAtual + 1;
+      setQuestaoAtual(next);
+      // prefetch subsequent question
+      const nextId = questaoIds[next + 1];
+      if (nextId && !questoesCache.current.has(nextId)) {
+        void fetchQuestaoById(nextId).then((res) => { if (res.data) questoesCache.current.set(nextId, res.data); });
+      }
     }
   };
 
@@ -93,69 +146,75 @@ export default function SimuladoProva() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center">
-        <div className="text-center">
+      <BasePage maxWidth="max-w-2xl">
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <span className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4" aria-label="Carregando"></span>
-          <p className="text-gray-400">Carregando questões...</p>
+          <p className="ds-muted text-center">Carregando questões...</p>
         </div>
-      </div>
+      </BasePage>
     );
   }
 
   if (erro) {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 p-4 sm:p-10 flex items-center justify-center">
-        <div className="max-w-4xl w-full mx-auto text-center">
-          <h1 className="text-xl sm:text-2xl font-bold mb-6 text-blue-400">🎓 Simulado ENEM</h1>
-          <div className="bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl">
-            <p className="text-red-400 mb-4">{erro}</p>
-            <button 
-              onClick={() => navigate('/')} 
-              className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            >
-              Voltar ao Início
-            </button>
-          </div>
+      <BasePage maxWidth="max-w-2xl">
+        <div className="glass-card p-6 text-center">
+          <h1 className="ds-heading mb-6 text-blue-400">🎓 Simulado ENEM</h1>
+          <p className="text-red-400 mb-4">{erro}</p>
+          <button 
+            onClick={() => navigate('/')} 
+            className="btn btn-primary"
+          >
+            Voltar ao Início
+          </button>
         </div>
-      </div>
+      </BasePage>
     );
   }
 
-  if (questoes.length === 0) {
+  if (questaoIds.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 p-4 sm:p-10 flex items-center justify-center">
-        <div className="max-w-4xl w-full mx-auto text-center">
-          <h1 className="text-xl sm:text-2xl font-bold mb-6 text-blue-400">🎓 Simulado ENEM</h1>
-          <div className="bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl">
-            <p className="text-gray-400 mb-4">
-              Nenhuma questão encontrada para esta prova/tema.<br/>
-              <span className="text-xs text-gray-500">Total de questões disponíveis: 0</span>
-            </p>
-            <button 
-              onClick={() => navigate('/')} 
-              className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            >
-              Voltar ao Início
-            </button>
-          </div>
+      <BasePage maxWidth="max-w-2xl">
+        <div className="glass-card p-6 text-center">
+          <h1 className="ds-heading mb-6 text-blue-400">🎓 Simulado ENEM</h1>
+          <p className="ds-muted mb-4">
+            Nenhuma questão encontrada para esta prova/tema.<br/>
+            <span className="text-xs text-gray-500">Total de questões disponíveis: 0</span>
+          </p>
+          <button 
+            onClick={() => navigate('/')} 
+            className="btn btn-primary"
+          >
+            Voltar ao Início
+          </button>
         </div>
-      </div>
+      </BasePage>
     );
   }
 
   if (!questao) {
+    // se não encontramos a questão no cache, pode ser que esteja sendo buscada sob demanda
+    if (!currentId) {
+      return (
+        <BasePage maxWidth="max-w-2xl">
+          <div className="glass-card p-6 text-center">
+            <p className="text-red-400 font-semibold">Questão inválida ou inexistente.</p>
+            <button
+              onClick={() => navigate('/')}
+              className="btn btn-primary mt-4"
+            >
+              Voltar ao início
+            </button>
+          </div>
+        </BasePage>
+      );
+    }
+
+    // Render skeleton enquanto carrega a questão atual
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-6">
-        <div className="bg-gray-900 p-6 rounded-3xl shadow-xl text-center max-w-lg">
-          <p className="text-red-400 font-semibold">Questão inválida ou inexistente.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-          >
-            Voltar ao início
-          </button>
-        </div>
-      </div>
+      <BasePage maxWidth="max-w-4xl">
+        <QuestionSkeleton />
+      </BasePage>
     );
   }
 
@@ -169,30 +228,45 @@ export default function SimuladoProva() {
     if (salvando || finalizado) return;
     setSalvando(true);
 
-    const total = questoes.length;
-    const acertos = questoes.reduce((acc, q) => {
-      const resposta = respostas[q.id_questao];
-      const alternativaCorreta =
-        q.alternativa_correta ??
-        q.alternativas.find((alt) => alt.correta)?.letra ??
-        null;
+  // total de questões do simulado
+    // garantir que temos os detalhes das questões respondidas
+    const answeredIds = Object.keys(respostas).map((k) => Number(k)).filter(Boolean);
+    const missing = answeredIds.filter((id) => !questoesCache.current.has(id));
+    if (missing.length) {
+      // buscar em batch as questões faltantes
+      const { data } = await supabase.from('questoes').select('id_questao').in('id_questao', missing);
+      // fallback: sequential fetch via fetchQuestaoById for each missing
+      for (const id of missing) {
+        const { data: q } = await fetchQuestaoById(id);
+        if (q) questoesCache.current.set(id, q);
+      }
+    }
+
+  const total = questaoIds.length;
+    const acertos = answeredIds.reduce((acc, id) => {
+      const q = questoesCache.current.get(id);
+      if (!q) return acc;
+      const alternativaCorreta = q.alternativa_correta ?? q.alternativas.find((alt) => alt.correta)?.letra ?? null;
+      const resposta = respostas[id];
       return acc + (resposta && alternativaCorreta && resposta === alternativaCorreta ? 1 : 0);
     }, 0);
-    const erros = total - acertos;
+    const erros = Object.keys(respostas).filter((k) => respostas[Number(k)]).length - acertos;
     const percentual = total ? (acertos / total) * 100 : 0;
 
     try {
       if (usuarioId && totalRespondidas > 0) {
         const now = new Date().toISOString();
-        const payload = questoes
-          .map((q) => {
-            const resposta = respostas[q.id_questao];
+        const payload = answeredIds
+          .map((id) => {
+            const resposta = respostas[id];
             if (!resposta) return null;
+            const q = questoesCache.current.get(id);
+            const correta = !!q?.alternativas.find((alt) => alt.letra === resposta)?.correta;
             return {
               id_usuario: usuarioId,
-              id_questao: q.id_questao,
+              id_questao: id,
               alternativa_marcada: resposta,
-              correta: !!q.alternativas.find((alt) => alt.letra === resposta)?.correta,
+              correta,
               data_resposta: now,
               tempo_resposta_ms: null,
             };
@@ -234,40 +308,40 @@ export default function SimuladoProva() {
 
   if (finalizado) {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-6">
-        <div className="bg-gray-900 p-8 rounded-3xl shadow-xl max-w-lg w-full text-center space-y-4">
-          <h1 className="text-2xl font-bold text-green-400">🎯 Simulado Finalizado</h1>
+      <BasePage maxWidth="max-w-2xl">
+        <div className="glass-card p-8 text-center space-y-4">
+          <h1 className="ds-heading text-green-400">🎯 Simulado Finalizado</h1>
           <p>Total de questões: {resumo.total}</p>
           <p className="text-green-400 font-semibold">Acertos: {resumo.acertos}</p>
           <p className="text-red-400 font-semibold">Erros: {resumo.erros}</p>
           <p>Aproveitamento: {resumo.percentual}%</p>
           <button
             onClick={() => navigate('/')}
-            className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-lg font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none w-full"
+            className="btn btn-primary w-full"
           >
             Voltar ao início
           </button>
         </div>
-      </div>
+      </BasePage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-2 sm:p-10 flex items-center justify-center">
-      <div className="max-w-4xl w-full mx-auto">
+    <BasePage maxWidth="max-w-4xl">
+      <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
-          <h1 className="text-xl sm:text-2xl font-bold text-blue-400">🎓 Simulado ENEM</h1>
-          <div className="text-gray-400 text-sm">
-            Questão {questaoAtual + 1} de {questoes.length}
+          <h1 className="ds-heading text-blue-400">🎓 Simulado ENEM</h1>
+          <div className="ds-muted text-sm">
+            Questão {questaoAtual + 1} de {questaoIds.length}
           </div>
         </div>
-        <div className="mb-2 text-right text-xs text-gray-400">
-          Total de questões disponíveis neste simulado: <b>{questoes.length}</b>
+        <div className="mb-2 text-right text-xs ds-muted">
+          Total de questões disponíveis neste simulado: <b>{questaoIds.length}</b>
         </div>
-        <div className="mb-2 text-right text-xs text-gray-400">
+        <div className="mb-2 text-right text-xs ds-muted">
           Respondidas: <b>{totalRespondidas}</b>
         </div>
-        <div className="bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl">
+        <div className="glass-card p-4 sm:p-8">
           <div className="mb-6 space-y-4">
             <h2 className="text-base sm:text-lg font-semibold text-gray-100">
               {questao.enunciado}
@@ -339,23 +413,23 @@ export default function SimuladoProva() {
             <button
               onClick={questaoAnterior}
               disabled={questaoAtual === 0}
-              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 px-6 py-2 rounded-lg w-full sm:w-auto focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              className="btn btn-ghost w-full sm:w-auto"
             >
               ← Anterior
             </button>
             <div className="flex gap-3 w-full sm:w-auto">
-              {questaoAtual === questoes.length - 1 ? (
+              {questaoAtual === questaoIds.length - 1 ? (
                 <button
                   onClick={finalizarSimulado}
                   disabled={salvando || totalRespondidas === 0}
-                  className="bg-green-600 hover:bg-green-500 disabled:bg-green-900 disabled:text-green-300 px-6 py-2 rounded-lg font-semibold w-full sm:w-auto focus:ring-2 focus:ring-green-400 focus:outline-none"
+                  className="btn btn-success w-full sm:w-auto"
                 >
                   {salvando ? 'Salvando...' : 'Finalizar Simulado'}
                 </button>
               ) : (
                 <button
                   onClick={proximaQuestao}
-                  className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg w-full sm:w-auto focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  className="btn btn-primary w-full sm:w-auto"
                 >
                   Próxima →
                 </button>
@@ -366,12 +440,12 @@ export default function SimuladoProva() {
         <div className="mt-6 text-center">
           <button
             onClick={() => navigate('/')}
-            className="text-gray-400 hover:text-gray-300 underline focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="ds-muted underline hover:text-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
           >
             ← Voltar ao início
           </button>
         </div>
       </div>
-    </div>
+    </BasePage>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchProvas } from "../services/supabaseService";
 import { useExam } from "../contexts/ExamContext";
 import type { Prova } from "../types/index";
+import BasePage from '../components/BasePage';
 
 export default function SelecionarProva() {
   const navigate = useNavigate();
@@ -34,15 +35,13 @@ export default function SelecionarProva() {
       descricao: prova.descricao,
       tempo_por_questao: prova.tempo_por_questao ?? null,
     });
-    navigate("/");
+    navigate(`/simulado/${prova.id_prova}/-1`); // -1 para id_tema opcional, ajuste se necessário
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-200 flex flex-col items-center py-6 px-2 sm:py-12 sm:px-4">
-      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-4 sm:p-10 transition-all">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-700 mb-6 text-center">
-          Selecione a prova que deseja realizar
-        </h1>
+    <BasePage maxWidth="max-w-3xl">
+      <div className="glass-card p-6 sm:p-10">
+        <h1 className="ds-heading text-center mb-6">Selecione a prova que deseja realizar</h1>
 
         {selectedExam ? (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800">
@@ -57,14 +56,14 @@ export default function SelecionarProva() {
               className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-400 mb-3"
               aria-label="Carregando"
             ></span>
-            <p className="text-center text-gray-600">Carregando provas...</p>
+            <p className="ds-muted text-center">Carregando provas...</p>
           </div>
         ) : error ? (
           <p className="text-center text-red-600" role="alert">
             {error}
           </p>
         ) : provas.length === 0 ? (
-          <p className="text-center text-gray-600">
+          <p className="ds-muted text-center">
             Nenhuma prova disponível no momento.
           </p>
         ) : (
@@ -94,6 +93,6 @@ export default function SelecionarProva() {
           </ul>
         )}
       </div>
-    </div>
+    </BasePage>
   );
 }

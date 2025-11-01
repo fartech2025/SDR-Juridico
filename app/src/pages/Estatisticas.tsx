@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
-import { hasSupabase, supabase, CURRENT_USER_ID } from "../lib/supabaseClient";
+import { supabase } from "../lib/supabaseClient";
+import BasePage from '../components/BasePage';
 
 type TemaRow = { id_tema: number; percentual: number };
 type DifRow = { dificuldade: string; percentual: number };
@@ -14,33 +15,18 @@ export default function Estatisticas() {
   useEffect(() => {
     const carregar = async () => {
       try {
-        if (!hasSupabase) {
-          // Dados de demonstração se Supabase não estiver configurado
-          setTemas([
-            { id_tema: 1, percentual: 85 },
-            { id_tema: 2, percentual: 72 },
-            { id_tema: 3, percentual: 68 },
-            { id_tema: 4, percentual: 45 },
-            { id_tema: 5, percentual: 38 }
-          ]);
-          setDificuldade([
-            { dificuldade: 'Fácil', percentual: 78 },
-            { dificuldade: 'Médio', percentual: 65 },
-            { dificuldade: 'Difícil', percentual: 42 }
-          ]);
-          return;
-        }
+        // Sempre buscar dados reais do Supabase, modo demo se falhar
 
         // Buscar dados reais do Supabase
         const { data: temaData, error: temaError } = await supabase
           .from("resultados_por_tema")
           .select("id_tema, percentual")
-          .eq('id_usuario', CURRENT_USER_ID);
+          .eq('id_usuario', 1);
 
         const { data: difData, error: difError } = await supabase
           .from("resultados_por_dificuldade")
           .select("dificuldade, percentual")
-          .eq('id_usuario', CURRENT_USER_ID);
+          .eq('id_usuario', 1);
 
         if (temaError) throw temaError;
         if (difError) throw difError;
@@ -89,21 +75,18 @@ export default function Estatisticas() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6 flex items-center justify-center">
+      <BasePage maxWidth="max-w-6xl">
         <div className="text-center">
           <div className="text-6xl mb-4 animate-pulse-glow">📊</div>
           <h2 className="text-2xl font-bold text-white mb-2">Carregando estatísticas...</h2>
           <p className="text-slate-300">Aguarde enquanto buscamos seus dados de performance.</p>
         </div>
-      </div>
+      </BasePage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
-      
+    <BasePage maxWidth="max-w-6xl">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-8">
         <div className="text-center mb-8">

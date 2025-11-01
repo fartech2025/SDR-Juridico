@@ -78,7 +78,7 @@ export default function Cadastro() {
     <div className="min-h-screen flex flex-col bg-gray-950 text-gray-100">
       <DevBanner />
       <div className="flex-1 flex items-center justify-center p-2 sm:p-10">
-        <div className="bg-gray-900 p-4 sm:p-10 rounded-3xl shadow-xl w-full max-w-md transition-all">
+  <div className="bg-gray-900 p-4 sm:p-10 rounded-3xl shadow-xl w-full max-w-md transition-all">
           <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-blue-400">🎓 Cadastro ENEM</h1>
           {erro && <p className="text-red-400 mb-4 text-center" role="alert">{erro}</p>}
           <form onSubmit={handleCadastro} className="space-y-4">

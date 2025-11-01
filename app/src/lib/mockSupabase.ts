@@ -1,3 +1,8 @@
+// Compat shim: manter este arquivo para compatibilidade com imports antigos.
+// Ele apenas reexporta o mock que foi movido para `_mocks`.
+export { mockSupabase } from "./_mocks/mockSupabase";
+
+// Nota: preferível importar diretamente de './_mocks/mockSupabase' em novos módulos.
 // Mock do Supabase para desenvolvimento offline
 interface MockUser {
   id: string;

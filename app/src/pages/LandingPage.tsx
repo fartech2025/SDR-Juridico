@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
+import {
   AcademicCapIcon,
   ChartBarIcon,
   TrophyIcon,
@@ -12,8 +13,8 @@ import {
   SparklesIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
-
 import { supabase } from '../lib/supabaseClient';
+import BasePage from '../components/BasePage';
 
 export default function LandingPage() {
   const [logoUrl, setLogoUrl] = useState<string>("");
@@ -100,171 +101,92 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header/Navigation */}
-      <header className="relative z-10 border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
-              {logoUrl && (
-                <img
-                  src={logoUrl}
-                  alt="Logo ENEM Ultra"
-                  className="w-10 h-10 object-contain"
-                />
-              )}
-              <div>
-                <h1 className="text-2xl font-bold text-white">ENEM Ultra</h1>
-                <p className="text-sm text-slate-400">Plataforma Inteligente de Preparação</p>
-              </div>
+    <BasePage maxWidth="max-w-7xl">
+      <div className="flex flex-col gap-8 items-center w-full">
+        <header className="w-full flex justify-end items-center py-6 border-b border-slate-700">
+          <nav className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-4">
+              <Link to="/login" className="btn btn-ghost">Login</Link>
             </div>
-
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="px-4 py-2 text-slate-300 hover:text-white transition-colors"
-              >
-                Login
+            <div className="flex flex-col gap-2 items-end">
+              <Link to="/home" className="btn btn-primary sm:min-w-[220px] w-full flex items-center justify-between px-4">
+                <span className="text-left">Acesso Administrativo</span>
+                <ArrowRightIcon className="w-4 h-4" />
               </Link>
-              <Link
-                to="/home"
-                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2"
-              >
-                <span>Acesso Administrativo</span>
+              <Link to="/sec-educacao" className="btn btn-primary sm:min-w-[220px] w-full flex items-center justify-between px-4">
+                <span className="text-left">Sec. de Educação</span>
                 <ArrowRightIcon className="w-4 h-4" />
               </Link>
             </div>
+          </nav>
+        </header>
+        <section className="w-full text-center py-16">
+          <div className="inline-flex items-center px-4 py-2 glass-card rounded-full text-sm mb-6">
+            <SparklesIcon className="w-4 h-4 mr-2 text-yellow-400" />
+            Plataforma de Preparação ENEM
           </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-slate-800/50 rounded-full text-sm text-slate-300 mb-6 border border-slate-700">
-              <SparklesIcon className="w-4 h-4 mr-2 text-yellow-400" />
-              Plataforma de Preparação ENEM
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Transforme seus
-              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                {" "}estudos{" "}
-              </span>
-              em resultados
-            </h1>
-            
-            <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Uma plataforma inteligente e interativa que revoluciona sua preparação para o ENEM.
-              Simulados personalizados, análises detalhadas e acompanhamento em tempo real.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link
-                to="/home"
-                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 flex items-center space-x-3 text-lg font-semibold shadow-lg"
-              >
-                <PlayIcon className="w-6 h-6" />
-                <span>Começar Agora</span>
-              </Link>
-              
-              <Link
-                to="/selecionar-prova"
-                className="px-8 py-4 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all duration-200 flex items-center space-x-3 text-lg border border-slate-600"
-              >
-                <BookOpenIcon className="w-6 h-6" />
-                <span>Ver Simulados</span>
-              </Link>
-            </div>
+          <h1 className="ds-heading text-4xl md:text-6xl mb-6">Transforme seus <span className="text-gradient">estudos</span> em resultados</h1>
+          <p className="ds-muted text-xl mb-8 max-w-3xl mx-auto">Uma plataforma inteligente e interativa que revoluciona sua preparação para o ENEM. Simulados personalizados, análises detalhadas e acompanhamento em tempo real.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/home" className="btn btn-primary flex items-center gap-3 text-lg font-semibold">
+              <PlayIcon className="w-6 h-6" />
+              <span>Começar Agora</span>
+            </Link>
+            <Link to="/selecionar-prova" className="btn btn-ghost flex items-center gap-3 text-lg">
+              <BookOpenIcon className="w-6 h-6" />
+              <span>Ver Simulados</span>
+            </Link>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-slate-800/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Por que escolher nossa plataforma?
-            </h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Recursos avançados projetados para maximizar seu desempenho no ENEM
-            </p>
+      <section className="py-20 w-full">
+        <div className="text-center mb-16">
+          <h2 className="ds-heading text-3xl mb-4">Por que escolher nossa plataforma?</h2>
+          <p className="ds-muted text-xl max-w-2xl mx-auto">Recursos avançados projetados para maximizar seu desempenho no ENEM</p>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="glass-card p-8 flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center mb-6">
+              <ChartBarIcon className="w-6 h-6 text-blue-400" />
+            </div>
+            <h3 className="ds-heading text-xl mb-4">Análise Inteligente</h3>
+            <p className="ds-muted">Algoritmos avançados analisam seu desempenho e identificam pontos fortes e áreas de melhoria em tempo real.</p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-700 hover:border-blue-500/50 transition-all duration-300 group">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ChartBarIcon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-4">Análise Inteligente</h3>
-              <p className="text-slate-300 leading-relaxed">
-                Algoritmos avançados analisam seu desempenho e identificam pontos fortes e áreas de melhoria em tempo real.
-              </p>
+          <div className="glass-card p-8 flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center mb-6">
+              <BookOpenIcon className="w-6 h-6 text-purple-400" />
             </div>
-
-            {/* Feature 2 */}
-            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-700 hover:border-purple-500/50 transition-all duration-300 group">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <BookOpenIcon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-4">Simulados Personalizados</h3>
-              <p className="text-slate-300 leading-relaxed">
-                Simulados adaptativos que se ajustam ao seu nível de conhecimento e focam nas suas necessidades específicas.
-              </p>
+            <h3 className="ds-heading text-xl mb-4">Simulados Personalizados</h3>
+            <p className="ds-muted">Simulados adaptativos que se ajustam ao seu nível de conhecimento e focam nas suas necessidades específicas.</p>
+          </div>
+          <div className="glass-card p-8 flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center mb-6">
+              <TrophyIcon className="w-6 h-6 text-green-400" />
             </div>
-
-            {/* Feature 3 */}
-            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-700 hover:border-green-500/50 transition-all duration-300 group">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <TrophyIcon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-4">Ranking Competitivo</h3>
-              <p className="text-slate-300 leading-relaxed">
-                Compare seu desempenho com outros estudantes e acompanhe sua evolução no ranking nacional.
-              </p>
+            <h3 className="ds-heading text-xl mb-4">Ranking Competitivo</h3>
+            <p className="ds-muted">Compare seu desempenho com outros estudantes e acompanhe sua evolução no ranking nacional.</p>
+          </div>
+          <div className="glass-card p-8 flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center mb-6">
+              <ClockIcon className="w-6 h-6 text-yellow-400" />
             </div>
-
-            {/* Feature 4 */}
-            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-700 hover:border-yellow-500/50 transition-all duration-300 group">
-              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ClockIcon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-4">Gestão de Tempo</h3>
-              <p className="text-slate-300 leading-relaxed">
-                Treine a gestão de tempo com cronômetros inteligentes e análises de velocidade de resposta.
-              </p>
+            <h3 className="ds-heading text-xl mb-4">Gestão de Tempo</h3>
+            <p className="ds-muted">Treine a gestão de tempo com cronômetros inteligentes e análises de velocidade de resposta.</p>
+          </div>
+          <div className="glass-card p-8 flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center mb-6">
+              <UsersIcon className="w-6 h-6 text-indigo-400" />
             </div>
-
-            {/* Feature 5 */}
-            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-700 hover:border-indigo-500/50 transition-all duration-300 group">
-              <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <UsersIcon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-4">Comunidade Ativa</h3>
-              <p className="text-slate-300 leading-relaxed">
-                Conecte-se com milhares de estudantes, tire dúvidas e compartilhe experiências de estudo.
-              </p>
+            <h3 className="ds-heading text-xl mb-4">Comunidade Ativa</h3>
+            <p className="ds-muted">Conecte-se com milhares de estudantes, tire dúvidas e compartilhe experiências de estudo.</p>
+          </div>
+          <div className="glass-card p-8 flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center mb-6">
+              <ShieldCheckIcon className="w-6 h-6 text-red-400" />
             </div>
-
-            {/* Feature 6 */}
-            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-700 hover:border-red-500/50 transition-all duration-300 group">
-              <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ShieldCheckIcon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-4">Conteúdo Oficial</h3>
-              <p className="text-slate-300 leading-relaxed">
-                Questões oficiais do ENEM dos últimos anos com explicações detalhadas e resolução passo a passo.
-              </p>
-            </div>
+            <h3 className="ds-heading text-xl mb-4">Conteúdo Oficial</h3>
+            <p className="ds-muted">Questões oficiais do ENEM dos últimos anos com explicações detalhadas e resolução passo a passo.</p>
           </div>
         </div>
       </section>
@@ -385,6 +307,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </BasePage>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { UsuarioResumo, Prova, Tema } from '@/types'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts'
-import { hasSupabase, supabase, CURRENT_USER_ID } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 import { Link } from 'react-router-dom'
 import ChatGPTStyleSidebar from '@/components/ui/ChatGPTStyleSidebar'
 
@@ -39,23 +39,23 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       try {
-        if (!hasSupabase) {
-          // Usar dados demo se não houver Supabase
-          setResumo(demoResumo)
-          setProvas(demoProvas)
-          setTemas(demoTemas)
-          setAproveitamentoPorTema([
-            { tema: 'Literatura', acertos: 85, total: 100 },
-            { tema: 'Matemática', acertos: 65, total: 100 }
-          ])
-          return
-        }
+  // Modo demo sempre ativo
+        //   // Usar dados demo se não houver Supabase
+        //   setResumo(demoResumo)
+        //   setProvas(demoProvas)
+        //   setTemas(demoTemas)
+        //   setAproveitamentoPorTema([
+        //     { tema: 'Literatura', acertos: 85, total: 100 },
+        //     { tema: 'Matemática', acertos: 65, total: 100 }
+        //   ])
+        //   return
+        // }
 
         // Carregar resumo do usuário
         const { data: ru, error: e1 } = await supabase!
           .from('resultados_usuarios')
           .select('id_usuario,total_questoes,total_acertos,total_erros,percentual_acertos,tempo_medio_resposta_ms')
-          .eq('id_usuario', CURRENT_USER_ID)
+          .eq('id_usuario', 1)
           .maybeSingle()
         if (e1) throw e1
 
@@ -63,7 +63,7 @@ export default function Home() {
         const { data: u, error: e4 } = await supabase!
           .from('usuarios')
           .select('id_usuario,nome')
-          .eq('id_usuario', CURRENT_USER_ID)
+          .eq('id_usuario', 1)
           .maybeSingle()
         if (e4) throw e4
 
@@ -83,7 +83,7 @@ export default function Home() {
         const { data: rpt, error: e2 } = await supabase!
           .from('resultados_por_tema')
           .select('id_tema,percentual')
-          .eq('id_usuario', CURRENT_USER_ID)
+          .eq('id_usuario', 1)
         if (e2) throw e2
 
         const ids = Array.from(new Set((rpt ?? []).map(r => r.id_tema)))
@@ -97,7 +97,7 @@ export default function Home() {
         const fracos = (rpt ?? []).filter(r => (r.percentual ?? 0) <= 40).map(r => nomes.get(r.id_tema) || `Tema ${r.id_tema}`).slice(0,5)
 
         setResumo({
-          id_usuario: CURRENT_USER_ID,
+          id_usuario: 1,
           nome: u?.nome ?? 'Aluno(a)',
           total_questoes: ru?.total_questoes ?? 0,
           total_acertos: ru?.total_acertos ?? 0,
@@ -191,15 +191,6 @@ export default function Home() {
                 <span className="text-xl">⚠️</span>
                 <span className="font-medium">
                   Usando dados de demonstração - Erro de conexão com o banco de dados
-                </span>
-              </div>
-            </div>
-          ) : hasSupabase ? (
-            <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-4">
-              <div className="flex items-center gap-2 text-green-200">
-                <span className="text-xl">✅</span>
-                <span className="font-medium">
-                  Conectado ao banco de dados - Dados atualizados
                 </span>
               </div>
             </div>

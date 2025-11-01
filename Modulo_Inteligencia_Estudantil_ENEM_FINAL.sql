@@ -1,14 +1,4 @@
 
--- ======================================================================
--- 📘 MÓDULO DE INTELIGÊNCIA ESTUDANTIL – VERSÃO FINAL (Supabase/Postgres)
--- ======================================================================
--- Este script é idempotente (pode rodar várias vezes) e faz:
--- 1) Desativa RLS (operação segura) nas tabelas sensíveis para evitar bloqueio.
--- 2) Aplica PATCHES de colunas/índices ausentes (sem apagar dados).
--- 3) Cria tabelas de agregados, funções, trigger e views materializadas.
--- 4) Inclui bloco OPCIONAL no final para reativar RLS + policies padrão.
--- ======================================================================
-
 -- ============================================================
 -- 0) DESATIVAR RLS NAS TABELAS SENSÍVEIS (evita bloqueios)
 -- ============================================================

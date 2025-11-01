@@ -1,67 +1,121 @@
+
 import { Link } from 'react-router-dom';
+import { prefetchRoute } from '../lib/prefetch';
 import { useAuth } from '../hooks/useAuth';
+import BasePage from '../components/BasePage';
 
 export default function Landing() {
   const { user } = useAuth();
-
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <header className="container mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="text-xl font-bold text-blue-400">ENEM Ultra</div>
-        <nav className="flex gap-3">
-          <Link to="/login" className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700">Entrar</Link>
-          <Link to="/cadastro" className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600">Criar conta</Link>
-        </nav>
-      </header>
-
-      <main className="container mx-auto px-4 py-10 grid gap-10">
+    <BasePage maxWidth="max-w-5xl">
+      <div className="w-full flex flex-col gap-8 items-center">
+        <header className="w-full flex items-center justify-between mb-4">
+          <div className="ds-heading text-blue-400">ENEM Ultra</div>
+          <nav className="flex gap-3">
+            <Link to="/login" className="btn btn-ghost">Entrar</Link>
+            <Link to="/cadastro" className="btn btn-primary">Criar conta</Link>
+          </nav>
+        </header>
         <section className="text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl font-extrabold text-white mb-4">Seu caminho aprovado no ENEM</h1>
-          <p className="text-slate-300 mb-8">Simulados realistas, estatísticas inteligentes e acompanhamento por perfil. Comece agora mesmo.</p>
+          <h1 className="ds-heading text-3xl mb-4">Seu caminho aprovado no ENEM</h1>
+          <p className="ds-muted mb-8">Simulados realistas, estatísticas inteligentes e acompanhamento por perfil. Comece agora mesmo.</p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/selecionar-prova" className="px-6 py-3 rounded-lg bg-blue-700 hover:bg-blue-600">Fazer Simulado</Link>
-            <Link to="/ranking" className="px-6 py-3 rounded-lg bg-slate-800 hover:bg-slate-700">Ver Ranking</Link>
-            <Link to="/estatisticas" className="px-6 py-3 rounded-lg bg-slate-800 hover:bg-slate-700">Estatísticas</Link>
+            <Link
+              to="/selecionar-prova"
+              className="btn btn-primary"
+              onMouseEnter={() => prefetchRoute(() => import('./SelecionarProva'), 'SelecionarProva')}
+              onFocus={() => prefetchRoute(() => import('./SelecionarProva'), 'SelecionarProva')}
+            >
+              Fazer Simulado
+            </Link>
+            <Link
+              to="/ranking"
+              className="btn btn-ghost"
+              onMouseEnter={() => prefetchRoute(() => import('./dashboard/Ranking'), 'Ranking')}
+              onFocus={() => prefetchRoute(() => import('./dashboard/Ranking'), 'Ranking')}
+            >
+              Ver Ranking
+            </Link>
+            <Link
+              to="/estatisticas"
+              className="btn btn-ghost"
+              onMouseEnter={() => prefetchRoute(() => import('./dashboard/Estatisticas'), 'Estatisticas')}
+              onFocus={() => prefetchRoute(() => import('./dashboard/Estatisticas'), 'Estatisticas')}
+            >
+              Estatísticas
+            </Link>
           </div>
         </section>
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full">
           <Card title="Para Alunos" desc="Resolva provas anteriores, acompanhe seu progresso e foque no que mais importa.">
-            <Link to="/painel-aluno" className="btn inline-block">Ir para painel do aluno</Link>
+            <Link
+              to="/painel-aluno"
+              className="btn"
+              onMouseEnter={() => prefetchRoute(() => import('../components/DashboardAluno_dark_supabase'), 'DashboardAluno')}
+              onFocus={() => prefetchRoute(() => import('../components/DashboardAluno_dark_supabase'), 'DashboardAluno')}
+            >
+              Ir para painel do aluno
+            </Link>
           </Card>
           <Card title="Para Gestores" desc="Acompanhe turmas, veja ranking e indicadores para tomada de decisão.">
-            <Link to="/painel-gestor" className="btn inline-block">Ir para painel do gestor</Link>
+            <Link
+              to="/painel-gestor"
+              className="btn"
+              onMouseEnter={() => prefetchRoute(() => import('../components/DashboardGestor_dark_supabase'), 'DashboardGestor')}
+              onFocus={() => prefetchRoute(() => import('../components/DashboardGestor_dark_supabase'), 'DashboardGestor')}
+            >
+              Ir para painel do gestor
+            </Link>
           </Card>
           <Card title="Simulados ENEM" desc="Provas por ano/tema com correção automática e análise de acertos.">
-            <Link to="/selecionar-prova" className="btn inline-block">Selecionar prova</Link>
+            <Link to="/selecionar-prova" className="btn">Selecionar prova</Link>
           </Card>
         </section>
-
         {user && (
-          <section className="text-center">
-            <p className="text-slate-300 mb-3">Você já está autenticado.</p>
+          <section className="text-center w-full">
+            <p className="ds-muted mb-3">Você já está autenticado.</p>
             <div className="flex justify-center gap-3">
-              <Link to="/home" className="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600">Ir para Home</Link>
-              <Link to="/painel-aluno" className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700">Painel Aluno</Link>
-              <Link to="/painel-gestor" className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700">Painel Gestor</Link>
+              <Link
+                to="/home"
+                className="btn btn-success"
+                onMouseEnter={() => prefetchRoute(() => import('./dashboard/Home'), 'DashboardHome')}
+                onFocus={() => prefetchRoute(() => import('./dashboard/Home'), 'DashboardHome')}
+              >
+                Ir para Home
+              </Link>
+              <Link
+                to="/painel-aluno"
+                className="btn btn-ghost"
+                onMouseEnter={() => prefetchRoute(() => import('../components/DashboardAluno_dark_supabase'), 'DashboardAluno')}
+                onFocus={() => prefetchRoute(() => import('../components/DashboardAluno_dark_supabase'), 'DashboardAluno')}
+              >
+                Painel Aluno
+              </Link>
+              <Link
+                to="/painel-gestor"
+                className="btn btn-ghost"
+                onMouseEnter={() => prefetchRoute(() => import('../components/DashboardGestor_dark_supabase'), 'DashboardGestor')}
+                onFocus={() => prefetchRoute(() => import('../components/DashboardGestor_dark_supabase'), 'DashboardGestor')}
+              >
+                Painel Gestor
+              </Link>
             </div>
           </section>
         )}
-      </main>
-
-      <footer className="container mx-auto px-4 py-10 text-center text-slate-500 text-sm">
-        © {new Date().getFullYear()} ENEM Ultra — Todos os direitos reservados.
-      </footer>
-    </div>
+        <footer className="w-full text-center text-slate-500 text-sm mt-8">
+          © {new Date().getFullYear()} ENEM Ultra — Todos os direitos reservados.
+        </footer>
+      </div>
+    </BasePage>
   );
 }
 
 function Card({ title, desc, children }: { title: string; desc: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 flex flex-col gap-4">
+    <div className="glass-card p-6 flex flex-col gap-4">
       <div>
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <p className="text-slate-300 text-sm mt-1">{desc}</p>
+        <h3 className="ds-heading text-lg">{title}</h3>
+        <p className="ds-muted text-sm mt-1">{desc}</p>
       </div>
       <div>{children}</div>
     </div>

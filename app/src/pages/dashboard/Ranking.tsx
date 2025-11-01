@@ -1,4 +1,6 @@
+
 import { useEffect, useState } from 'react';
+import BasePage from '../../components/BasePage';
 import { supabase } from '../../lib/supabaseClient';
 
 type RankingLinha = {
@@ -34,8 +36,8 @@ export default function Ranking() {
         }
 
         const linhas: RankingLinha[] =
-          resultados?.map((linha) => {
-            const usuario = usuarios?.find((u) => u.id_usuario === linha.id_usuario);
+          resultados?.map((linha: any) => {
+            const usuario = usuarios?.find((u: any) => u.id_usuario === linha.id_usuario);
             return {
               nome: usuario?.nome || usuario?.email || `Usuário #${linha.id_usuario}`,
               percentual: Number(linha.percentual_acertos ?? 0),
@@ -56,19 +58,18 @@ export default function Ranking() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-2 sm:p-10 flex items-center justify-center">
-      <div className="max-w-4xl w-full mx-auto space-y-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-center text-blue-400">🏆 Ranking</h1>
-
-        <div className="bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl">
+    <BasePage maxWidth="max-w-4xl">
+      <div className="space-y-6">
+        <h1 className="ds-heading text-center text-blue-400">🏆 Ranking</h1>
+        <div className="glass-card p-4 sm:p-8">
           {loading ? (
-            <p className="text-center text-gray-400">Carregando ranking...</p>
+            <p className="ds-muted text-center">Carregando ranking...</p>
           ) : erro ? (
             <p className="text-center text-red-400" role="alert">
               {erro}
             </p>
           ) : ranking.length === 0 ? (
-            <p className="text-center text-gray-400">Ainda não há resultados suficientes para montar o ranking.</p>
+            <p className="ds-muted text-center">Ainda não há resultados suficientes para montar o ranking.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-gray-300">
@@ -95,6 +96,6 @@ export default function Ranking() {
           )}
         </div>
       </div>
-    </div>
+    </BasePage>
   );
 }

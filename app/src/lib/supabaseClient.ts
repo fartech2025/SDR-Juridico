@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { mockSupabase } from "./mockSupabase";
+// Mocks foram movidos para `./_mocks/mockSupabase` para separar código de desenvolvimento.
+import { mockSupabase } from "./_mocks/mockSupabase";
 
 type SupabaseEnv = {
   VITE_SUPABASE_URL?: string;
@@ -53,9 +54,9 @@ const isLocalEnv =
 const supabaseUrl = runtimeEnv.VITE_SUPABASE_URL || (isLocalEnv ? DEFAULT_LOCAL_URL : undefined);
 const supabaseAnonKey =
   runtimeEnv.VITE_SUPABASE_ANON_KEY || (isLocalEnv ? DEFAULT_LOCAL_ANON_KEY : undefined);
-const useMock =
-  runtimeEnv.VITE_USE_SUPABASE_MOCK === "true" ||
-  (typeof nodeEnv.NODE_ENV === "string" && nodeEnv.NODE_ENV === "test");
+// Use mock apenas se a variável VITE_USE_SUPABASE_MOCK estiver explicitamente definida como "true".
+// Removemos a detecção automática por NODE_ENV === 'test' para evitar usar dados fictícios em dev.
+const useMock = runtimeEnv.VITE_USE_SUPABASE_MOCK === "true";
 
 function createSupabaseClient(): SupabaseClient {
   if (useMock) {
