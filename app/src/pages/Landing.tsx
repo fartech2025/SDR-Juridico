@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { prefetchRoute } from '../lib/prefetch';
 import { useAuth } from '../hooks/useAuth';
 import BasePage from '../components/BasePage';
+import LandingSidebar from '../components/ui/LandingSidebar';
 
 export default function Landing() {
   const { user } = useAuth();
@@ -19,7 +20,8 @@ export default function Landing() {
         <section className="text-center max-w-3xl mx-auto">
           <h1 className="ds-heading text-3xl mb-4">Seu caminho aprovado no ENEM</h1>
           <p className="ds-muted mb-8">Simulados realistas, estatísticas inteligentes e acompanhamento por perfil. Comece agora mesmo.</p>
-          <div className="flex flex-wrap justify-center gap-3">
+          {/* No desktop os botões vão para a sidebar; aqui ficam visíveis apenas em telas menores */}
+          <div className="flex flex-wrap justify-center gap-3 lg:hidden">
             <Link
               to="/selecionar-prova"
               className="btn btn-primary"
@@ -106,6 +108,8 @@ export default function Landing() {
           © {new Date().getFullYear()} ENEM Ultra — Todos os direitos reservados.
         </footer>
       </div>
+      {/* Sidebar fixa à direita (mostrada apenas em telas grandes) */}
+      <LandingSidebar />
     </BasePage>
   );
 }
