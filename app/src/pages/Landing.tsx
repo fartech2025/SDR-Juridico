@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { prefetchRoute } from '../lib/prefetch';
 import { useAuth } from '../hooks/useAuth';
 import BasePage from '../components/BasePage';
-import LandingSidebar from '../components/ui/LandingSidebar';
 
 export default function Landing() {
   const { user } = useAuth();
@@ -12,7 +11,38 @@ export default function Landing() {
       <div className="w-full flex flex-col gap-8 items-center">
         <header className="w-full flex items-center justify-between mb-4">
           <div className="ds-heading text-blue-400">ENEM Ultra</div>
-          <nav className="flex gap-3">
+          {/* Top bar (desktop): ações principais no lado direito */}
+          <nav className="hidden lg:flex items-center gap-2">
+            <Link
+              to="/selecionar-prova"
+              className="btn btn-primary"
+              onMouseEnter={() => prefetchRoute(() => import('./SelecionarProva'), 'SelecionarProva')}
+              onFocus={() => prefetchRoute(() => import('./SelecionarProva'), 'SelecionarProva')}
+            >
+              Fazer Simulado
+            </Link>
+            <Link
+              to="/ranking"
+              className="btn btn-ghost"
+              onMouseEnter={() => prefetchRoute(() => import('./dashboard/Ranking'), 'Ranking')}
+              onFocus={() => prefetchRoute(() => import('./dashboard/Ranking'), 'Ranking')}
+            >
+              Ver Ranking
+            </Link>
+            <Link
+              to="/estatisticas"
+              className="btn btn-ghost"
+              onMouseEnter={() => prefetchRoute(() => import('./dashboard/Estatisticas'), 'Estatisticas')}
+              onFocus={() => prefetchRoute(() => import('./dashboard/Estatisticas'), 'Estatisticas')}
+            >
+              Estatísticas
+            </Link>
+            <span className="mx-2 h-6 w-px bg-slate-700" aria-hidden="true" />
+            <Link to="/login" className="btn btn-ghost">Entrar</Link>
+            <Link to="/cadastro" className="btn btn-primary">Criar conta</Link>
+          </nav>
+          {/* Mobile: mantém apenas login/cadastro no topo */}
+          <nav className="flex lg:hidden gap-2">
             <Link to="/login" className="btn btn-ghost">Entrar</Link>
             <Link to="/cadastro" className="btn btn-primary">Criar conta</Link>
           </nav>
@@ -20,7 +50,7 @@ export default function Landing() {
         <section className="text-center max-w-3xl mx-auto">
           <h1 className="ds-heading text-3xl mb-4">Seu caminho aprovado no ENEM</h1>
           <p className="ds-muted mb-8">Simulados realistas, estatísticas inteligentes e acompanhamento por perfil. Comece agora mesmo.</p>
-          {/* No desktop os botões vão para a sidebar; aqui ficam visíveis apenas em telas menores */}
+          {/* No desktop os botões ficam na top bar; aqui ficam visíveis apenas em telas menores */}
           <div className="flex flex-wrap justify-center gap-3 lg:hidden">
             <Link
               to="/selecionar-prova"
@@ -108,8 +138,7 @@ export default function Landing() {
           © {new Date().getFullYear()} ENEM Ultra — Todos os direitos reservados.
         </footer>
       </div>
-      {/* Sidebar fixa à direita (mostrada apenas em telas grandes) */}
-      <LandingSidebar />
+      {/* Removido: sidebar da landing. Mantemos top bar para CTAs em desktop. */}
     </BasePage>
   );
 }

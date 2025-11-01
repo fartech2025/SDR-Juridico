@@ -20,8 +20,10 @@ Para garantir que novas telas sigam o padrão visual da Landing, use SEMPRE os u
 No VS Code, use o snippet `newpage` para criar uma página já padronizada.
 
 ## Lint e Prettier
-- `eslint-plugin-tailwindcss` impede valores arbitrários e ordena classes.
-- `prettier-plugin-tailwindcss` ordena as classes automaticamente ao salvar.
+- Execução sob demanda:
+	- Ordenação de classes: `prettier-plugin-tailwindcss` (format on save no VS Code, se habilitado).
+	- Validação de cores arbitrárias: `npm run lint:style` (somente quando o dev quiser).
+- Não há mais workflow automático no GitHub para estilo. Rode localmente quando precisar.
 
 ## Tailwind Theme
 `tailwind.config.js` define `colors.primary|surface|success|warning|error`, `container` e `fontFamily`.
