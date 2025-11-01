@@ -1,10 +1,7 @@
-name: Style Lint
+name: Style Lint (manual)
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   style-lint:
@@ -23,7 +20,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
 
-      - name: Install deps
+      - name: Install deps (optional)
         run: npm ci
 
       - name: Run style lint (no arbitrary colors)
