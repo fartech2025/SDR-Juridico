@@ -1,14 +1,17 @@
-import React from 'react';
-import { supabase } from '../lib/supabaseClient';
+import React from "react";
 
 interface BasePageProps {
   children: React.ReactNode;
-  title?: string;
-  logo?: string;
+  maxWidth?: string; // Ex: 'max-w-md', 'max-w-3xl'
+  className?: string;
 }
 
-export default function BasePage({ children, title = 'ENEM - Sistema de Estudos', logo }: BasePageProps) {
-  const [logoUrl, setLogoUrl] = React.useState<string>('/favicon.svg');
+import { supabase } from '../lib/supabaseClient';
+import { Link } from 'react-router-dom';
+
+export default function BasePage({ children, maxWidth = "max-w-md", className = "" }: BasePageProps) {
+  // URL da logo (carregada assincronamente: tenta signed url, depois public url)
+  const [logoUrl, setLogoUrl] = React.useState<string>("");
   const [imgError, setImgError] = React.useState(false);
 
   // Permite sobrescrever a logo via variável de ambiente VITE_LOGO_URL (útil em produção)
@@ -66,7 +69,6 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
     loadLogo();
     return () => { mounted = false; };
   }, [logoBucket, logoPath, envLogo]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       {/* Background Patterns & Dynamic Effects */}
@@ -78,62 +80,54 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
         <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-green-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-full blur-3xl animate-spin-slow" />
         {/* Glow Effect */}
-        <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/5 via-transparent to-green-500/5 animate-pulse" />
+        <div className="absolute left-1/2 top-1/2 w-[120vw] h-[120vw] -translate-x-1/2 -translate-y-1/2 bg-gradient-radial from-green-400/10 via-emerald-500/10 to-transparent rounded-full blur-2xl opacity-70 animate-pulse" style={{animationDuration:'8s'}} />
+        {/* Animated Particles */}
+        {[...Array(18)].map((_,i)=>(
+          <div key={i} className={`absolute rounded-full bg-emerald-400/30 blur-[2px] animate-float z-0`}
+            style={{
+              width: `${8 + (i%4)*4}px`,
+              height: `${8 + (i%3)*4}px`,
+              left: `${Math.random()*100}%`,
+              top: `${Math.random()*100}%`,
+              animationDelay: `${(i%7)*0.7}s`,
+              animationDuration: `${6 + (i%5)*2}s`,
+            }}
+          />
+        ))}
+        {/* Shine sweep */}
+        <div className="absolute left-0 top-0 w-full h-full pointer-events-none animate-shine bg-gradient-to-r from-transparent via-white/10 to-transparent" style={{animationDuration:'7s'}} />
       </div>
-
-      {/* Header */}
-      <header className="relative z-20 border-b border-slate-800/50 bg-slate-900/80 backdrop-blur-xl shadow-2xl">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {(logo || logoUrl) && !imgError && (
-                <img 
-                  src={logo || logoUrl} 
-                  alt="Logo" 
-                  className="h-12 w-auto object-contain"
+      <div className={`relative z-10 min-h-screen flex flex-col items-center justify-center p-4 ${className}`}>
+        {/* Top bar com logo e texto */}
+  <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
+          {/* Espaço reservado para a logo - se existir será exibida */}
+          <div className="relative w-20 h-20 flex items-center justify-center">
+            {logoUrl && !imgError ? (
+              <Link to="/" aria-label="Ir para início" className="relative inline-block">
+                <div className="absolute inset-0 rounded-full blur-2xl opacity-80 bg-gradient-to-tr from-emerald-400/30 via-green-300/20 to-transparent" />
+                <img
+                  src={logoUrl}
+                  alt="Logo ENEM"
+                  className="relative w-20 h-20 rounded-full object-contain shadow-2xl transition-transform duration-300 ease-out hover:scale-105"
+                  draggable={false}
                   onError={() => setImgError(true)}
+                  style={{ background: 'transparent' }}
                 />
-              )}
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                  {title}
-                </h1>
-                <p className="text-slate-400 text-sm">Sistema Inteligente de Preparação</p>
-              </div>
-            </div>
-
-            <div className="hidden md:flex items-center space-x-6">
-              <div className="flex items-center space-x-2 text-emerald-400">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium">Sistema Ativo</span>
-              </div>
-            </div>
+              </Link>
+            ) : (
+              // mantém o espaço reservado mesmo sem imagem
+              <div className="w-20 h-20 rounded-full bg-transparent" aria-hidden="true" />
+            )}
+          </div>
+          <div className="flex flex-col ml-3">
+            <span className="font-bold text-lg text-white leading-tight drop-shadow">ENEM Ultra</span>
+            <span className="text-xs text-slate-200 opacity-80 leading-tight drop-shadow">Plataforma Inteligente de Preparação</span>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="relative z-10 flex-1 overflow-y-auto">
-        <div className="container mx-auto px-6 py-8">
+        <div className={`w-full ${maxWidth} flex-1 flex flex-col items-center justify-center`}>
           {children}
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="relative z-20 border-t border-slate-800/50 bg-slate-900/80 backdrop-blur-xl">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between text-sm text-slate-400">
-            <p>© 2024 Sistema ENEM. Preparação inteligente para o sucesso.</p>
-            <div className="flex items-center space-x-4">
-              <span>Versão 2.0</span>
-              <div className="flex items-center space-x-1">
-                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></div>
-                <span className="text-emerald-400">Online</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }

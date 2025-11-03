@@ -46,37 +46,32 @@ function resolveRuntimeEnv(): SupabaseEnv {
 const runtimeEnv = resolveRuntimeEnv();
 const nodeEnv = typeof process !== "undefined" && process?.env ? process.env : {};
 
-// Função auxiliar para acessar variáveis de ambiente de forma compatível com Jest
-function getEnvVar(key: string): string | undefined {
-  // Em testes (Jest), usar apenas process.env ou runtimeEnv
-  if (typeof process !== "undefined" && process?.env?.NODE_ENV === "test") {
-    return runtimeEnv[key] || nodeEnv[key];
-  }
-  
-  // Em ambiente de desenvolvimento/produção, tentar acessar import.meta.env com segurança
-  let viteEnvValue: string | undefined;
-  try {
-    // Acesso seguro ao import.meta.env via globalThis
-    const globalWithImport = globalThis as any;
-    viteEnvValue = globalWithImport.import?.meta?.env?.[key];
-  } catch {
-    // Ignorar erro silenciosamente
-  }
-  
-  return viteEnvValue || runtimeEnv[key];
-}
+// Em ambiente de produção/desenvolvimento, usar import.meta.env diretamente
+// Em testes, usar as variáveis do runtimeEnv
+const supabaseUrl = (typeof process !== "undefined" && process?.env?.NODE_ENV === "test") 
+  ? runtimeEnv.VITE_SUPABASE_URL 
+  : import.meta.env.VITE_SUPABASE_URL || runtimeEnv.VITE_SUPABASE_URL;
 
-// Sempre usar as variáveis de ambiente definidas
-const supabaseUrl = getEnvVar("VITE_SUPABASE_URL");
-const supabaseAnonKey = getEnvVar("VITE_SUPABASE_ANON_KEY");
+const supabaseAnonKey = (typeof process !== "undefined" && process?.env?.NODE_ENV === "test")
+  ? runtimeEnv.VITE_SUPABASE_ANON_KEY
+  : import.meta.env.VITE_SUPABASE_ANON_KEY || runtimeEnv.VITE_SUPABASE_ANON_KEY;
+
 // Use mock apenas se a variável VITE_USE_SUPABASE_MOCK estiver explicitamente definida como "true".
 // Removemos a detecção automática por NODE_ENV === 'test' para evitar usar dados fictícios em dev.
 const useMock = runtimeEnv.VITE_USE_SUPABASE_MOCK === "true";
 
+// Singleton para evitar múltiplas instâncias
+let supabaseInstance: SupabaseClient | null = null;
+
 function createSupabaseClient(): SupabaseClient {
+  if (supabaseInstance) {
+    return supabaseInstance;
+  }
+
   if (useMock) {
     console.warn("⚠️  Usando mock do Supabase (VITE_USE_SUPABASE_MOCK=true)");
-    return mockSupabase as unknown as SupabaseClient;
+    supabaseInstance = mockSupabase as unknown as SupabaseClient;
+    return supabaseInstance;
   }
 
   if (!supabaseUrl) {
@@ -91,7 +86,8 @@ function createSupabaseClient(): SupabaseClient {
     );
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey);
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  return supabaseInstance;
 }
 
 export const supabase = createSupabaseClient();
