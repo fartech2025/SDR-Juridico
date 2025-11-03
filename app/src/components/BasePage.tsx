@@ -20,7 +20,6 @@ export default function BasePage({ children, maxWidth = "max-w-md", className = 
   React.useEffect(() => {
     if (envLogo) {
       setLogoUrl(envLogo);
-      if (typeof window !== 'undefined') console.log('[BasePage] Logo from VITE_LOGO_URL:', envLogo);
       return;
     }
     let mounted = true;

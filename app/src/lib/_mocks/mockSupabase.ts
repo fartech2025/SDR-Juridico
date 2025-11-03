@@ -22,7 +22,9 @@ class MockSupabaseAuth {
       user_metadata: { name: 'Usuário Mock' },
     };
     this.currentUser = mockUser;
-    try { localStorage.setItem('mock_user', JSON.stringify(mockUser)); } catch {}
+    try { localStorage.setItem('mock_user', JSON.stringify(mockUser)); } catch {
+      // Ignorar erros de localStorage em ambientes sem suporte
+    }
     return { user: mockUser };
   }
 
@@ -32,13 +34,17 @@ class MockSupabaseAuth {
       if (raw) {
         this.currentUser = JSON.parse(raw) as MockUser;
       }
-    } catch {}
+    } catch {
+      // Ignorar erros de localStorage
+    }
     return { data: { user: this.currentUser } };
   }
 
   async signOut(): Promise<void> {
     this.currentUser = null;
-    try { localStorage.removeItem('mock_user'); } catch {}
+    try { localStorage.removeItem('mock_user'); } catch {
+      // Ignorar erros de localStorage
+    }
   }
 }
 

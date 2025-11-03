@@ -234,7 +234,12 @@ export default function DashboardAluno_dark() {
   );
 }
 
-function KPI({ title, value }) {
+interface KPIProps {
+  title: string;
+  value: string | number;
+}
+
+function KPI({ title, value }: KPIProps) {
   return (
     <div className="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center">
       <p className="text-sm text-gray-400">{title}</p>
@@ -243,7 +248,12 @@ function KPI({ title, value }) {
   );
 }
 
-function ChartCard({ title, children }) {
+interface ChartCardProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function ChartCard({ title, children }: ChartCardProps) {
   return (
     <div className="bg-gray-900 p-5 rounded-2xl border border-gray-800">
       <h3 className="font-semibold mb-3">{title}</h3>
@@ -252,7 +262,12 @@ function ChartCard({ title, children }) {
   );
 }
 
-function InsightCard({ title, children }) {
+interface InsightCardProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function InsightCard({ title, children }: InsightCardProps) {
   return (
     <div className="bg-gray-900 p-5 rounded-2xl border border-gray-800">
       <h3 className="font-semibold mb-3">{title}</h3>

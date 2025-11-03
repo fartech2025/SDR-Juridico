@@ -15,9 +15,9 @@ export default function Monitor() {
   const [error, setError] = useState<string | null>(null);
 
   const env = useMemo(() => ({
-    VITE_SUPABASE_URL: (import.meta as any)?.env?.VITE_SUPABASE_URL as string | undefined,
-    VITE_LOGO_BUCKET: (import.meta as any)?.env?.VITE_LOGO_BUCKET as string | undefined,
-    VITE_LOGO_PATH: (import.meta as any)?.env?.VITE_LOGO_PATH as string | undefined,
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL as string | undefined,
+    VITE_LOGO_BUCKET: import.meta.env.VITE_LOGO_BUCKET as string | undefined,
+    VITE_LOGO_PATH: import.meta.env.VITE_LOGO_PATH as string | undefined,
   }), []);
 
   const bucket = env.VITE_LOGO_BUCKET?.trim();

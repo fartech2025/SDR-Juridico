@@ -177,8 +177,8 @@ const Ranking: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  )
+    </BasePage>
+  );
 }
 
-export default Ranking
+export default Ranking;

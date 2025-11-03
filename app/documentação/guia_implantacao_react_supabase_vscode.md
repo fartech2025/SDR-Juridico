@@ -43,26 +43,13 @@ Projeto ENEM/
 - `gen_types_enem.bat` — gera `app/src/lib/database.types.ts` via Supabase CLI (útil após alterar schema).
 - `teste_supabase_cli.bat` — teste automatizado: sobe Supabase, aguarda, executa health check no REST e exibe resultado.
 
-### 5. Supabase local (docker + CLI)
-1. **Abra o Docker Desktop** (precisa estar “Running”).
-2. Rode `start_enem_services.bat` ou execute manualmente:
-   ```cmd
-   npx supabase@latest start
-   ```
-   Ao final, o terminal mostra URLs e chaves:
-   - API URL: `http://127.0.0.1:54321`
-   - Database URL: `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
-   - Publishable key (anon) — use esta no frontend
-   - Secret key (service_role) — **nunca** exponha no frontend
-3. Para parar: `npx supabase@latest stop`.
-4. Para testar se está respondendo (sem scripts):
-   ```cmd
-   curl http://localhost:54321/rest/v1/?apikey=<anon>
-   ```
-   ou use `teste_supabase_cli.bat`.
+### 5. Configuração de produção
+O projeto está configurado para usar apenas o Supabase Cloud remoto:
+- URL do projeto: `https://mskvucuaarutehslvhsp.supabase.co`
+- As variáveis estão no arquivo `.env` da aplicação
 
-### 6. Seed: o que é aplicado
-- `supabase/seed.sql` foi reescrito e inclui:
+### 6. Seed: dados de exemplo
+- O banco remoto já possui dados de teste carregados
   - Tabelas base (`usuarios`, `temas`, `questoes`, `respostas_usuarios`, `resultados_*`, `solucoes_questoes`).
   - Funções/trigger para manter agregados.
   - Views materializadas (`vw_resultados_calculados`, etc.).
@@ -77,21 +64,22 @@ Projeto ENEM/
   VITE_SUPABASE_ANON_KEY=<anon key>
   ```
 - Para build remoto (`npm run build`), use valores equivalentes em `app/.env.production`.
-- Se preferir continuar em ambiente local, substitua temporariamente pelos valores `http://localhost:54321` e a `anon key` exibida pelo CLI.
+- Configure sempre as variáveis de ambiente do arquivo `.env` para apontar para o projeto remoto no Supabase Cloud.
 
-### 8. Rodando o frontend
-1. Certifique-se de que o Supabase local está rodando.
+### 8. Rodando a aplicação
+
+1. Certifique-se de que as variáveis de ambiente estão corretas no arquivo `.env`.
 2. Na pasta `app/`:
    ```cmd
    npm run dev
    ```
-   Abrir o link (ex.: http://localhost:5173). O script `start_enem_services.bat` já faz isso automaticamente.
+   A aplicação será iniciada automaticamente e você verá a URL de acesso no terminal.
 3. Build de produção:
    ```cmd
    npm run build
    npm run preview
    ```
-   Acesse o link exibido (ex.: http://localhost:4173). `dist/` conterá os artefatos estáticos para deploy.
+   Os arquivos de produção serão gerados na pasta `dist/` para deploy.
 
 ### 9. Funcionalidades do app
 - Tela de Login:
@@ -111,38 +99,32 @@ Projeto ENEM/
 - O login usa e-mail + senha; após login, todas as rotas são liberadas.
 
 ### 11. VS Code (tarefas e debug)
-- `.vscode/tasks.json`:
-  - `Supabase: Start`
-  - `Supabase: Stop`
-  - `DB: Reset + Seed`
-  - `Types: Generate`
-  - `Web: Dev`
+### 11. VS Code (tarefas úteis)
+- Configure as tarefas do VS Code para comandos npm:
+  - `Web: Dev` - inicia servidor de desenvolvimento  
+  - `Types: Generate` - gera tipos TypeScript do Supabase
 - `.vscode/launch.json`:
   - `Web: Debug (Edge)` (F5 inicia o Vite e abre o Edge conectado ao debugger).
 
 ### 12. Scripts auxiliares
-- **setup_enem_workspace.bat** – provisiona tudo do zero (front + supabase).
-- **start_enem_services.bat** – começa Supabase e Vite (usa `npx supabase start`).
-- **reset_enem_db.bat** – reaplica seed completo (`supabase db reset`).
-- **gen_types_enem.bat** – atualiza as tipagens TS a partir do schema.
-- **teste_supabase_cli.bat** – sobe, checa e exibe status. Útil para confirmar que Docker/Supabase estão respondendo.
+### 12. Scripts auxiliares
+- **gen_types_enem.bat** – atualiza as tipagens TypeScript a partir do schema do Supabase
+- Use comandos npm para desenvolvimento (dev, build, test)
 
-> **Nota:** esses scripts servem para o ambiente local com Docker. Para usar a nuvem da Supabase, siga o guia `documentação/usando_supabase_cloud.md`.
+> **Nota:** O projeto está configurado para usar apenas o Supabase Cloud. Para mais informações, consulte `documentação/usando_supabase_cloud.md`.
 
 ### 13. Customizações comuns
-- Alterar cor/tema (Tailwind): edite `tailwind.config.cjs` e `src/index.css`.
+- Alterar cor/tema (Tailwind): edite `tailwind.config.js` e `src/index.css`.
 - Ajustar layout ou adicionar componentes: modifique `src/App.tsx` e demais arquivos em `src/`.
 - Acrescentar novas tabelas/migrações:
   1. Atualize `supabase/seed.sql` ou crie migrações em `supabase/migrations/` (pasta pode ser criada).
   2. Rode `reset_enem_db.bat` para aplicar.
   3. Gere tipos com `gen_types_enem.bat` se usar o SDK com tipagem.
 
-### 14. Troubleshooting rápido
-- **`Failed to fetch` no frontend** → Supabase não está rodando (abra Docker + `supabase start`).
-- **`supabaseKey is required`** → `.env.local` não preencheu `VITE_SUPABASE_ANON_KEY`.
-- **Erro “Cannot read properties of null (reading 'useRef')”** → faltavam `react-router-dom`/`recharts`; já estão instalados.
-- **Timeout no `supabase start`** → Docker pode estar demorando a baixar imagens; aguarde ou relance com `--debug`.
-- **Erro ao resetar seed** → verifique se `supabase/seed.sql` foi modificado ou se a tabela já existia com schema diferente.
+### 14. Solução de problemas
+- **`Cannot resolve module` ou erros de import** → Verifique se o npm install foi executado.
+- **Erro de autenticação** → Confirme se as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão corretas no .env.
+- **Dados não carregam** → Verifique a conexão com o Supabase Cloud e se o usuário tem as permissões necessárias.
 
 ### 15. Replicando em outra máquina
 1. Copie toda a pasta `Projeto ENEM/` para a nova máquina.

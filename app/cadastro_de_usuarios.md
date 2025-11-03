@@ -16,17 +16,17 @@ Passo a passo para registrar contas que podem usar o ENEM App (login por e-mail 
    - Opcional: defina uma senha para usar com `signInWithPassword`.
 4. Salve. O usuário recebe o e-mail com link de acesso (caso o SMTP esteja ativo) ou já aparece como confirmado se você marcou "Confirm user".
 
-### 3. Ambiente local (CLI `supabase start`)
-A CLI não envia e-mails automaticamente. Use uma das opções abaixo:
+### 3. Configuração Remota no Supabase Cloud
+Utilize sempre o ambiente remoto para desenvolvimento e produção:
 
-**Opção A – Criar pelo Studio local**
-1. Após `supabase start`, abra o Supabase Studio local (URL exibida no terminal, geralmente `http://localhost:54323/project/default`).
+**Para criar usuários via Studio**
+1. Acesse o Supabase Studio no painel do projeto em [https://supabase.com/dashboard](https://supabase.com/dashboard).
 2. Vá para **Authentication** → **Users** → **Add user**.
 3. Informe o e-mail.
 4. Marque **Confirm user** para evitar dependência de e-mail.
 5. Se quiser login por senha, preencha "Password" e depois ajuste o frontend para usar `signInWithPassword`.
 
-**Opção B – API Admin**
+**Para criar via API**
 1. Crie um script Node/TS com `@supabase/supabase-js`.
 2. Instancie o cliente com a `service_role key` (somente em backend seguro) e rode:
    ```ts
@@ -38,26 +38,20 @@ A CLI não envia e-mails automaticamente. Use uma das opções abaixo:
    ```
 3. Execute o script sempre que precisar cadastrar novos e-mails.
 
-**Opção C – SMTP local**
-- Configure variáveis de ambiente no arquivo `supabase/.env`:
-  ```env
-  AUTH_SMTP_HOST=smtp.mailtrap.io
-  AUTH_SMTP_PORT=2525
-  AUTH_SMTP_USER=...
-  AUTH_SMTP_PASS=...
-  AUTH_SMTP_SENDER="ENEM App" <no-reply@exemplo.com>
-  ```
-- Reinicie: `supabase stop && supabase start --env-file supabase/.env`.
-- Agora o `signInWithOtp` envia e-mails de link mágico mesmo no ambiente local.
+### 4. Configuração SMTP no Supabase Cloud
+Para funcionalidade completa de e-mail:
+- Configure SMTP nas configurações do projeto no Supabase Dashboard
+- Defina o provedor de e-mail (SendGrid, Resend, etc.)
+- Configure as credenciais de envio apropriadas
+- Teste o envio de e-mails de autenticação
 
-### 4. Ajustes no frontend
-- Tela de login (`src/App.tsx`) hoje usa `signInWithOtp` (link mágico).
-- Se preferir senha:
+### 5. Ajustes no frontend
+- Tela de login (`src/App.tsx`) usa `signInWithOtp` (link mágico) por padrão.
+- Para autenticação com senha:
   ```ts
   const { error } = await supabase.auth.signInWithPassword({ email, password })
   ```
-  - Cadastre uma senha ao criar o usuário (Studio ou Admin API).
-- Garanta que `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` estejam corretos antes de testar.
+- Garanta que as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` estejam corretas no arquivo `.env`.
 
 ### 5. Testando
 1. Rode o app: `npm run dev` (ou `npm run preview` após build).

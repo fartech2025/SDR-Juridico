@@ -1,10 +1,3 @@
-// import { useEffect, useState } from 'react';
-// import { useNavigate, Link } from 'react-router-dom';
-// import { supabase } from '../../lib/supabaseClient';
-// import { fetchProvas, fetchTemas } from '../../services/supabaseService';
-// import DevBanner from '../../components/layout/DevBanner';
-// import type { Prova, Tema } from '../../types';
-
 import BasePage from '../../components/BasePage';
 import { Link } from 'react-router-dom';
 import { prefetchRoute } from '../../lib/prefetch';
