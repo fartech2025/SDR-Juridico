@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import BasePage from '../components/BasePage';
 import { supabase } from '../lib/supabaseClient';
-import { buscarSimuladosDisponveis } from '../services/questoesService';
+import { SimuladosService, SimuladoDoEnem } from '../services/simuladosService';
 import { ensureUsuarioRegistro } from '../services/supabaseService';
 import {
   BookOpenIcon,
@@ -12,23 +12,15 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 
-interface Simulado {
-  id_simulado: number;
-  nome: string;
-  descricao?: string;
-  data_criacao: string;
-  total_questoes?: number;
-}
-
 interface ResultadoSimulado {
-  id_simulado: number;
+  id_prova: number;
   percentual_acertos: number;
   data_conclusao: string;
 }
 
 export default function SimuladosPage() {
   const navigate = useNavigate();
-  const [simulados, setSimulados] = useState<Simulado[]>([]);
+  const [simulados, setSimulados] = useState<SimuladoDoEnem[]>([]);
   const [resultados, setResultados] = useState<Map<number, ResultadoSimulado>>(new Map());
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -54,29 +46,9 @@ export default function SimuladosPage() {
       const perfil = await ensureUsuarioRegistro(userData.user);
       setUsuario(perfil);
 
-      // Buscar simulados
-      const { data: simuladosData, error: erroSimulados } = await supabase
-        .from('simulados')
-        .select('id_simulado, nome, descricao, data_criacao');
-
-      if (erroSimulados) throw erroSimulados;
-
-      // Contar questões em cada simulado
-      const simuladosComContagem = await Promise.all(
-        (simuladosData || []).map(async (sim) => {
-          const { count } = await supabase
-            .from('simulado_questoes')
-            .select('*', { count: 'exact', head: true })
-            .eq('id_simulado', sim.id_simulado);
-
-          return {
-            ...sim,
-            total_questoes: count || 0,
-          };
-        })
-      );
-
-      setSimulados(simuladosComContagem);
+      // ✅ NOVO: Buscar simulados via SimuladosService (baseado em provas)
+      const simuladosData = await SimuladosService.listarSimulados();
+      setSimulados(simuladosData);
 
       // Buscar resultados do usuário
       const { data: resultadosData, error: erroResultados } = await supabase
@@ -100,14 +72,14 @@ export default function SimuladosPage() {
   };
 
   const simuladosFiltrados = simulados.filter((sim) => {
-    const temResultado = resultados.has(sim.id_simulado);
+    const temResultado = resultados.has(sim.id_prova);
     if (filtro === 'nao-respondidos') return !temResultado;
     if (filtro === 'respondidos') return temResultado;
     return true;
   });
 
-  const iniciarSimulado = (idSimulado: number) => {
-    navigate(`/resolver-simulado/${idSimulado}`);
+  const iniciarSimulado = (idProva: number) => {
+    navigate(`/resolver-simulado/${idProva}`);
   };
 
   const formatarData = (data: string) => {
@@ -192,7 +164,7 @@ export default function SimuladosPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {simuladosFiltrados.map((simulado) => {
-              const resultado = resultados.get(simulado.id_simulado);
+              const resultado = resultados.get(simulado.id_prova);
               const percentualCores = resultado
                 ? resultado.percentual_acertos >= 70
                   ? 'from-green-500 to-emerald-600'
@@ -203,7 +175,7 @@ export default function SimuladosPage() {
 
               return (
                 <div
-                  key={simulado.id_simulado}
+                  key={simulado.id_prova}
                   className="group relative overflow-hidden rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 hover:border-slate-600 transition-all hover:shadow-xl hover:shadow-blue-500/20"
                 >
                   {/* Gradient background */}
@@ -253,7 +225,7 @@ export default function SimuladosPage() {
                             </div>
                           </div>
                           <button
-                            onClick={() => iniciarSimulado(simulado.id_simulado)}
+                            onClick={() => iniciarSimulado(simulado.id_prova)}
                             className="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                           >
                             <SparklesIcon className="w-4 h-4" />
@@ -262,7 +234,7 @@ export default function SimuladosPage() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => iniciarSimulado(simulado.id_simulado)}
+                          onClick={() => iniciarSimulado(simulado.id_prova)}
                           className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white transition-all font-semibold flex items-center justify-center gap-2 group/btn"
                         >
                           <span>Iniciar</span>

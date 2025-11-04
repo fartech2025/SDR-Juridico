@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { buscarSimuladosDisponveis } from "../services/questoesService";
+import { SimuladosService, SimuladoDoEnem } from "../services/simuladosService";
 import { supabase } from "../lib/supabaseClient";
 import { ensureUsuarioRegistro } from "../services/supabaseService";
 
-interface Simulado {
-  id_simulado: number;
-  nome: string;
-  descricao?: string;
-  data_criacao?: string;
-  simulado_questoes?: Array<{ count: number }>;
-}
-
 interface ResultadoSimulado {
   id_usuario: number;
-  id_simulado: number;
+  id_prova: number;
   percentual: number;
   data_conclusao: string;
 }
@@ -26,7 +18,7 @@ interface SimuladosSidebarProps {
 
 export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSidebarProps) {
   const navigate = useNavigate();
-  const [simulados, setSimulados] = useState<Simulado[]>([]);
+  const [simulados, setSimulados] = useState<SimuladoDoEnem[]>([]);
   const [resultados, setResultados] = useState<Map<number, ResultadoSimulado>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +43,9 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
         const perfil = await ensureUsuarioRegistro(user);
         setUserId(perfil.id_usuario);
 
-        // Carregar simulados
-        const simuladosData = await buscarSimuladosDisponveis();
-        setSimulados((simuladosData ?? []) as Simulado[]);
+        // ✅ NOVO: Carregar simulados via SimuladosService
+        const simuladosData = await SimuladosService.listarSimulados();
+        setSimulados(simuladosData);
 
         // Carregar resultados do usuário
         if (perfil.id_usuario) {
@@ -64,7 +56,7 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
 
           const resultadosMap = new Map<number, ResultadoSimulado>();
           (resultadosData ?? []).forEach((r: ResultadoSimulado) => {
-            resultadosMap.set(r.id_simulado, r);
+            resultadosMap.set(r.id_prova, r);
           });
           setResultados(resultadosMap);
         }
@@ -79,19 +71,19 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
     carregarDados();
   }, []);
 
-  const handleIniciarSimulado = (simulado: Simulado) => {
-    navigate(`/resolver-simulado/${simulado.id_simulado}`);
+  const handleIniciarSimulado = (simulado: SimuladoDoEnem) => {
+    navigate(`/resolver-simulado/${simulado.id_prova}`);
     onClose?.();
   };
 
-  const handleRefazerSimulado = (simulado: Simulado) => {
-    navigate(`/resolver-simulado/${simulado.id_simulado}`);
+  const handleRefazerSimulado = (simulado: SimuladoDoEnem) => {
+    navigate(`/resolver-simulado/${simulado.id_prova}`);
     onClose?.();
   };
 
-  const handleVerResultado = (simulado: Simulado) => {
+  const handleVerResultado = (simulado: SimuladoDoEnem) => {
     // Navegar para página de resultado (poderia ser um modal ou página separada)
-    const resultado = resultados.get(simulado.id_simulado);
+    const resultado = resultados.get(simulado.id_prova);
     if (resultado) {
       alert(`Resultado: ${resultado.percentual}% - ${new Date(resultado.data_conclusao).toLocaleDateString('pt-BR')}`);
     }
@@ -144,12 +136,12 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
           ) : (
             <div className="space-y-2">
               {simulados.map((simulado) => {
-                const resultado = resultados.get(simulado.id_simulado);
+                const resultado = resultados.get(simulado.id_prova);
                 const temResultado = !!resultado;
                 
                 return (
                   <div
-                    key={simulado.id_simulado}
+                    key={simulado.id_prova}
                     className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-blue-600 transition"
                   >
                     {collapsed ? (
