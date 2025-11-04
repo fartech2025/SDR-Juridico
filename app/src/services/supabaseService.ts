@@ -193,7 +193,7 @@ export async function fetchTemas() {
 export async function fetchProvas() {
   return supabase
     .from('provas')
-    .select('id_prova, nome, ano, descricao, tempo_por_questao')
+    .select('id_prova, descricao, ano, tempo_por_questao, cor_caderno, data_aplicacao')
     .order('ano', { ascending: false });
 }
 

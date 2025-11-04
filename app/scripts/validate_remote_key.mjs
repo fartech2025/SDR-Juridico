@@ -11,7 +11,7 @@ async function main() {
   const supabase = createClient(url, key);
   try {
     console.log('Querying /provas (limit 1) to validate credentials...');
-    const { data, error } = await supabase.from('provas').select('id_prova,nome').limit(1);
+    const { data, error } = await supabase.from('provas').select('id_prova,descricao,ano').limit(1);
     if (error) {
       console.error('Error from Supabase:', error);
       process.exit(1);
