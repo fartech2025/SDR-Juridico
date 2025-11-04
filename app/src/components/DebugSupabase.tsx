@@ -121,7 +121,7 @@ export default function DebugSupabase() {
     addLog("🎓 Testando SimuladosService...");
     
     try {
-      const simulados = await SimuladosService.buscarSimuladosPorProvas();
+      const simulados = await SimuladosService.listarSimulados();
       addLog(`📚 Simulados encontrados via service: ${simulados.length}`);
       
       simulados.forEach((sim: any) => {
@@ -131,7 +131,7 @@ export default function DebugSupabase() {
       // Testar estatísticas
       const stats = await SimuladosService.buscarEstatisticasSimulados();
       addLog(`📊 Estatísticas: ${stats.simuladosDisponiveis} simulados, ${stats.totalQuestoes} questões total`);
-      addLog(`� Provas: ${stats.provasDisponiveis.join(', ')}`);
+      addLog(`🎯 Provas: ${stats.provasDisponiveis.join(', ')}`);
       
     } catch (error: any) {
       addLog(`💥 Erro no SimuladosService: ${error.message}`);

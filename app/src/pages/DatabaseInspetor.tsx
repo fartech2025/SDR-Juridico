@@ -653,18 +653,18 @@ export default function DatabaseInspetor() {
     addDebugLog("🎓 Testando SimuladosService...");
     
     try {
-      const simulados = await SimuladosService.buscarSimuladosPorProvas();
+      const simulados = await SimuladosService.listarSimulados();
       
       addDebugLog(`✅ Service executado!`);
       addDebugLog(`📊 ${simulados.length} simulados encontrados via service`);
       
       if (simulados.length > 0) {
-        const totalQuestoes = simulados.reduce((sum: number, sim: any) => sum + sim.totalQuestoes, 0);
+        const totalQuestoes = simulados.reduce((sum: number, sim: any) => sum + sim.total_questoes, 0);
         addDebugLog(`📝 Total de questões: ${totalQuestoes}`);
         
         addDebugLog("📋 Primeiros 3 simulados:");
         simulados.slice(0, 3).forEach((sim: any) => {
-          addDebugLog(`   🎓 ${sim.titulo} (${sim.totalQuestoes} questões)`);
+          addDebugLog(`   🎓 ${sim.nome} (${sim.total_questoes} questões)`);
         });
       } else {
         addDebugLog("⚠️ Nenhum simulado foi encontrado pelo service");
