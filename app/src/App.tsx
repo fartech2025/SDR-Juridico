@@ -16,6 +16,8 @@ const DashboardAluno = React.lazy(() => import('./components/DashboardAluno_dark
 const DashboardGestor = React.lazy(() => import('./components/DashboardGestor_dark_supabase'))
 const SelecionarProva = React.lazy(() => import('./pages/SelecionarProva'))
 const SecEducacao = React.lazy(() => import('./pages/SecEducacao'))
+const SimuladosPage = React.lazy(() => import('./pages/SimuladosPage'))
+const ResolverSimulado = React.lazy(() => import('./pages/ResolverSimuladoComImagens'))
 import { ExamProvider } from './contexts/ExamContext';
 import LandingPage from './pages/LandingPage';
 import Monitor from './pages/Monitor';
@@ -108,6 +110,29 @@ export default function AppWrapper() {
                 <ProtectedRoute>
                   <Suspense fallback={<div className="p-6">Carregando...</div>}>
                     <DashboardGestor />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Novas rotas de simulados com imagens */}
+            <Route
+              path="/simulados"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <SimuladosPage />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/resolver-simulado/:id_simulado"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <ResolverSimulado />
                   </Suspense>
                 </ProtectedRoute>
               }
