@@ -10,91 +10,149 @@ interface BasePageProps {
 export default function BasePage({ children, title = 'ENEM - Sistema de Estudos', logo, className }: BasePageProps) {
   const [logoUrl, setLogoUrl] = React.useState<string>('/favicon.svg');
   const [imgError, setImgError] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(new Date());
 
   // Permite sobrescrever a logo via variável de ambiente VITE_LOGO_URL (útil em produção)
   const envLogo = (import.meta.env.VITE_LOGO_URL as string | undefined)?.trim();
-  const logoBucket = import.meta.env.VITE_LOGO_BUCKET || 'Imagens_Geral';
-  const logoPath = import.meta.env.VITE_LOGO_PATH || 'LOGO/LOGO4.png';
 
   React.useEffect(() => {
-    // Se VITE_LOGO_URL estiver configurado, usar diretamente (sem tentativas extras)
     if (envLogo) {
       setLogoUrl(envLogo);
       return;
     }
-    
-    // Fallback: usar logo local se nada estiver configurado
     setLogoUrl('/favicon.svg');
   }, [envLogo]);
 
+  // Update time every minute
+  React.useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 relative overflow-hidden flex flex-col">
-      {/* Background Patterns & Dynamic Effects - Premium */}
-      <div className="absolute inset-0 pointer-events-none select-none">
-        {/* Animated Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-slate-950 to-purple-600/5" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden flex flex-col">
+      {/* Premium Background Effects */}
+      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+        {/* Animated Mesh Gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.1),transparent_50%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.08),transparent_50%)]" />
         
-        {/* Premium Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e3a8a_0.5px,transparent_0.5px),linear-gradient(to_bottom,#1e3a8a_0.5px,transparent_0.5px)] bg-[size:5rem_5rem] opacity-20 [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_50%,transparent_100%)]" />
+        {/* Sophisticated Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,black,transparent)]" />
         
-        {/* Floating Orbs - Refined */}
-        <div className="absolute top-10 left-1/3 w-80 h-80 bg-blue-500/15 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/3 right-1/3 w-72 h-72 bg-blue-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        {/* Dynamic Light Beams */}
+        <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-blue-500/20 via-transparent to-transparent" />
+        <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-purple-500/15 via-transparent to-transparent" />
         
-        {/* Radial Gradient Overlay */}
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-slate-950" />
+        {/* Floating Orbs - Enhanced */}
+        <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute top-1/3 -right-20 w-[500px] h-[500px] bg-purple-500/8 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-blue-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        
+        {/* Noise Texture Overlay */}
+        <div className="absolute inset-0 opacity-[0.015] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]" />
       </div>
 
-      {/* Header - Minimal & Clean */}
-      <header className="relative z-20 border-b border-blue-900/20 bg-gradient-to-r from-slate-900/40 to-blue-900/20 backdrop-blur-xl shadow-lg">
-        <div className="container-max px-6 py-5">
+      {/* Premium Header */}
+      <header className="relative z-20 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl shadow-2xl">
+        {/* Top Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+        
+        <div className="container-max px-8 py-6">
           <div className="flex items-center justify-between">
-            {/* Brand Section */}
-            <div className="flex items-center gap-4 flex-1">
+            {/* Brand Section - Enhanced */}
+            <div className="flex items-center gap-5 flex-1">
               {(logo || logoUrl) && !imgError && (
-                <img 
-                  src={logo || logoUrl} 
-                  alt="Logo" 
-                  className="h-10 w-auto object-contain drop-shadow-lg hover:drop-shadow-xl transition-all"
-                  onError={() => setImgError(true)}
-                />
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                  <img 
+                    src={logo || logoUrl} 
+                    alt="Logo" 
+                    className="relative h-12 w-auto object-contain drop-shadow-2xl transition-all duration-300 group-hover:scale-105"
+                    onError={() => setImgError(true)}
+                  />
+                </div>
               )}
-              <div className="flex flex-col">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-300 bg-clip-text text-transparent leading-tight">
+              <div className="flex flex-col gap-1">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent leading-none tracking-tight">
                   {title}
                 </h1>
+                <p className="text-xs text-slate-500 font-medium">Plataforma Educacional de Excelência</p>
               </div>
             </div>
 
-            {/* Status Badge */}
-            <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-xs font-semibold text-emerald-300">Sistema Ativo</span>
+            {/* Right Section - Enhanced */}
+            <div className="flex items-center gap-4">
+              {/* Time Display */}
+              <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium text-slate-300">
+                  {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+
+              {/* Status Badge - Premium */}
+              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/30 shadow-lg shadow-emerald-500/5">
+                <div className="relative">
+                  <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
+                  <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping opacity-75" />
+                </div>
+                <span className="text-sm font-bold text-emerald-300 tracking-wide">ONLINE</span>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content - Flex Grow */}
+      {/* Main Content - Enhanced Spacing */}
       <main className={`flex-1 relative z-10 overflow-y-auto ${className || ''}`}>
-        <div className="container-max px-6 py-8">
+        <div className="container-max px-8 py-10">
           {children}
         </div>
       </main>
 
-      {/* Footer - Minimal & Elegant */}
-      <footer className="relative z-20 border-t border-blue-900/20 bg-gradient-to-r from-slate-900/50 to-blue-900/30 backdrop-blur-xl mt-auto">
-        <div className="container-max px-6 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-400 text-center md:text-left">
-              © 2024 Sistema ENEM • Transformando resultados através da tecnologia
-            </p>
-            <div className="flex items-center gap-4 text-xs text-slate-500">
-              <span className="px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50">v2.0</span>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                <span className="text-emerald-300">Online</span>
+      {/* Premium Footer */}
+      <footer className="relative z-20 border-t border-white/5 bg-slate-900/60 backdrop-blur-2xl mt-auto">
+        {/* Top Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+        
+        <div className="container-max px-8 py-8">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+            {/* Left Section */}
+            <div className="flex flex-col items-center lg:items-start gap-2">
+              <p className="text-sm text-slate-400 font-medium">
+                © 2024 Sistema ENEM • Transformando Educação
+              </p>
+              <p className="text-xs text-slate-600">
+                Tecnologia de ponta para resultados excepcionais
+              </p>
+            </div>
+
+            {/* Right Section - Enhanced Badges */}
+            <div className="flex items-center gap-4">
+              {/* Version Badge */}
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
+                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+                <span className="text-sm font-bold text-slate-300">v2.0.1</span>
+              </div>
+
+              {/* Status Badge */}
+              <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/30 shadow-lg shadow-emerald-500/5">
+                <div className="relative flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-sm font-bold text-emerald-300">Sistema Operacional</span>
+                </div>
+              </div>
+
+              {/* Performance Badge */}
+              <div className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-sm font-medium text-blue-300">Alta Performance</span>
               </div>
             </div>
           </div>
