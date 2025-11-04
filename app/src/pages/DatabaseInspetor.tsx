@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import BasePage from '../components/BasePage';
 
 export default function DatabaseInspetor() {
+  const [activeTab, setActiveTab] = useState<string>('monitor');
   const [tables, setTables] = useState<string[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [rows, setRows] = useState<any[]>([]);
@@ -249,10 +250,47 @@ export default function DatabaseInspetor() {
 
   return (
     <BasePage>
-      <div className="w-full max-w-5xl mx-auto p-6 space-y-6">
-        <h1 className="text-2xl font-bold">🗄️ Database Inspetor & Monitor</h1>
+      <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">🗄️ Database Inspetor & Monitor</h1>
+          <div className="text-xs text-slate-400">
+            Última atualização: {new Date().toLocaleTimeString('pt-BR')}
+          </div>
+        </div>
         
-        {/* Real-time Database Monitor */}
+        {/* Navigation Tabs */}
+        <div className="bg-slate-900/60 rounded-xl p-1 border border-slate-700 mb-6">
+          <div className="flex flex-wrap gap-1">
+            {[
+              { id: 'monitor', label: '📊 Monitor', description: 'Status em tempo real' },
+              { id: 'inspector', label: '🔍 Inspetor', description: 'Dados das tabelas' },
+              { id: 'project', label: '📋 Projeto', description: 'Git & configurações' },
+              { id: 'performance', label: '⚡ Performance', description: 'Métricas do sistema' },
+              { id: 'security', label: '🔐 Segurança', description: 'Monitoramento seguro' },
+              { id: 'files', label: '🧹 Arquivos', description: 'Análise e limpeza' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 min-w-0 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="font-semibold">{tab.label}</div>
+                  <div className="text-xs opacity-75 mt-1">{tab.description}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Content based on active tab */}
+        {activeTab === 'monitor' && (
+          <div className="space-y-6">
+            {/* Real-time Database Monitor */}
         <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700 mb-6">
           <h2 className="text-lg font-semibold mb-3 flex items-center">
             📊 Monitor de Banco em Tempo Real
@@ -337,6 +375,96 @@ export default function DatabaseInspetor() {
             </button>
           </div>
         </div>
+          </div>
+        )}
+
+        {activeTab === 'inspector' && (
+          <div className="space-y-6">
+            {error && (
+              <div className="bg-red-900/30 border border-red-600 rounded-lg p-4">
+                <p className="text-red-300">{error}</p>
+              </div>
+            )}
+
+            {/* Database Tables List */}
+            <div className="bg-slate-900/60 rounded-xl p-6 border border-slate-700">
+              <h2 className="text-lg font-semibold mb-4">📋 Tabelas do Banco</h2>
+              {tables.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tables.map((table) => (
+                    <div
+                      key={table}
+                      onClick={() => fetchRows(table)}
+                      className="bg-slate-800/50 p-4 rounded-lg border border-slate-600 hover:border-blue-500 transition-colors cursor-pointer"
+                    >
+                      <h3 className="font-medium text-blue-300 mb-2">{table}</h3>
+                      <p className="text-sm text-slate-400">Clique para visualizar dados</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-400">Carregando tabelas...</p>
+              )}
+            </div>
+
+            {/* Table Data */}
+            {selectedTable && (
+              <div className="bg-slate-900/60 rounded-xl p-6 border border-slate-700">
+                <h2 className="text-lg font-semibold mb-4">
+                  🔍 Dados da Tabela: <span className="text-blue-400">{selectedTable}</span>
+                </h2>
+                
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                    <p className="mt-2 text-slate-400">Carregando dados...</p>
+                  </div>
+                ) : rows.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-600">
+                          {Object.keys(rows[0]).map((key) => (
+                            <th key={key} className="text-left p-2 text-slate-300 font-medium">
+                              {key}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row, index) => (
+                          <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+                            {Object.values(row).map((value, i) => (
+                              <td key={i} className="p-2 text-slate-400 max-w-xs truncate">
+                                {value === null ? (
+                                  <span className="text-slate-500 italic">null</span>
+                                ) : typeof value === 'object' ? (
+                                  JSON.stringify(value).slice(0, 50) + (JSON.stringify(value).length > 50 ? '...' : '')
+                                ) : (
+                                  String(value).slice(0, 100) + (String(value).length > 100 ? '...' : '')
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {rows.length > 0 && (
+                      <p className="text-sm text-slate-400 mt-3">
+                        Total de {rows.length} registro(s) encontrado(s)
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-slate-400">Nenhum registro encontrado na tabela</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'project' && (
+          <div className="space-y-6">
         
         {/* Git Status & Project Info */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -388,7 +516,11 @@ export default function DatabaseInspetor() {
             </div>
           </div>
         </div>
+          </div>
+        )}
 
+        {activeTab === 'performance' && (
+          <div className="space-y-6">
         {/* Recent Changes */}
         <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700 mb-6">
           <h2 className="text-lg font-semibold mb-3 flex items-center">
@@ -832,6 +964,53 @@ export default function DatabaseInspetor() {
             </div>
           </div>
         </div>
+          </div>
+        )}
+
+        {activeTab === 'files' && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
+              <h2 className="text-lg font-semibold mb-3 flex items-center">
+                🧹 Análise de Arquivos e Limpeza
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-600">
+                  <h3 className="text-orange-400 font-medium mb-3">📂 Arquivos Redundantes</h3>
+                  <div className="space-y-2 text-sm max-h-40 overflow-y-auto">
+                    {fileAnalysis.redundantFiles.length > 0 ? (
+                      fileAnalysis.redundantFiles.map((file, idx) => (
+                        <div key={idx} className="text-slate-300 bg-slate-700/30 px-2 py-1 rounded">
+                          {file}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-green-400">✅ Nenhum arquivo redundante encontrado</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-600">
+                  <h3 className="text-red-400 font-medium mb-3">🗑️ Arquivos Desnecessários</h3>
+                  <div className="space-y-2 text-sm max-h-40 overflow-y-auto">
+                    {fileAnalysis.unnecessaryFiles.length > 0 ? (
+                      fileAnalysis.unnecessaryFiles.map((file, idx) => (
+                        <div key={idx} className="text-slate-300 bg-slate-700/30 px-2 py-1 rounded">
+                          {file}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-green-400">✅ Projeto limpo, sem arquivos desnecessários</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 text-sm text-slate-400">
+                📋 <strong>Última limpeza:</strong> {fileAnalysis.lastCleanup}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </BasePage>
   );
