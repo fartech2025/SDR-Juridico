@@ -32,9 +32,9 @@ export async function testeSimplesDados(): Promise<any> {
 
     // 3. Se há dados, buscar algumas amostras
     if (countProvas && countProvas > 0) {
-      const { data: provasAmostra, error: errorAmostra } = await supabase
+      const { data: provasAmostra } = await supabase
         .from('provas')
-        .select('id_prova, ano, cor_caderno, descricao')
+        .select('id_prova, ano, descricao, data_aplicacao')
         .limit(3);
 
       resultado.amostrasProvas = provasAmostra || [];

@@ -42,7 +42,7 @@ export async function verificarIdProva(): Promise<{
     try {
       const { data: provas, error: errorProvas } = await supabase
         .from('provas')
-        .select('id_prova, nome, ano')
+        .select('id_prova, ano, descricao')
         .limit(5);
 
       if (!errorProvas) {
@@ -73,11 +73,7 @@ export async function verificarIdProva(): Promise<{
           .from('questoes')
           .select(`
             id_prova,
-            provas!inner(
-              id_prova,
-              nome,
-              ano
-            )
+            provas!inner(id_prova, ano, descricao)
           `)
           .limit(3);
 

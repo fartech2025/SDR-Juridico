@@ -632,7 +632,7 @@ export default function DatabaseInspetor() {
           if (analise.provas.exemplos && analise.provas.exemplos.length > 0) {
             addDebugLog("📋 Exemplos de provas:");
             analise.provas.exemplos.slice(0, 5).forEach((prova: any) => {
-              addDebugLog(`   🏛️ ID ${prova.id_prova}: ${prova.ano || 'N/A'} - ${prova.cor_caderno || 'Sem caderno'}`);
+              addDebugLog(`   🏛️ ID ${prova.id_prova}: ${prova.ano || 'N/A'} - ${prova.descricao || 'Sem descrição'}`);
             });
           }
         }
@@ -704,7 +704,7 @@ export default function DatabaseInspetor() {
       if (resultado.amostrasProvas?.length > 0) {
         addDebugLog("📋 Amostras de provas:");
         resultado.amostrasProvas.forEach((prova: any) => {
-          addDebugLog(`   🏛️ ID ${prova.id_prova}: ${prova.ano} - ${prova.cor_caderno || 'Sem caderno'}`);
+          addDebugLog(`   🏛️ ID ${prova.id_prova}: ${prova.ano} - ${prova.descricao || 'Sem descrição'}`);
         });
       }
       

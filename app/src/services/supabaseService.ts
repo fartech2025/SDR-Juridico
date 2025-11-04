@@ -187,14 +187,42 @@ export async function fetchQuestaoById(id_questao: number) {
 }
 
 export async function fetchTemas() {
-  return supabase.from('temas').select('id_tema, nome_tema, descricao');
+  const { data, error } = await supabase
+    .from('temas')
+    .select('id_tema, nome_tema')
+    .order('nome_tema', { ascending: true });
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  return { data, error: null };
 }
 
+type RawProva = {
+  id_prova: number;
+  ano: number;
+  descricao: string | null;
+  data_aplicacao: string | null;
+  tempo_por_questao: number | null;
+};
+
 export async function fetchProvas() {
-  return supabase
+  const { data, error } = await supabase
     .from('provas')
-    .select('id_prova, nome, ano, descricao, tempo_por_questao')
+    .select('id_prova, ano, descricao, data_aplicacao, tempo_por_questao')
     .order('ano', { ascending: false });
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  const mapped = (data ?? []).map((prova: RawProva) => ({
+    ...prova,
+    nome: prova.descricao ?? `ENEM ${prova.ano}`,
+  }));
+
+  return { data: mapped, error: null };
 }
 
 export async function fetchUsuarioPorAuthId(authUserId: string) {

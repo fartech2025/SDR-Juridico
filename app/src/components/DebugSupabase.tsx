@@ -309,7 +309,7 @@ export default function DebugSupabase() {
       if (resultado.amostrasProvas?.length > 0) {
         addLog("📋 Amostras de provas:");
         resultado.amostrasProvas.forEach((prova: any) => {
-          addLog(`   🏛️ ID ${prova.id_prova}: ${prova.ano} - ${prova.cor_caderno || 'Sem caderno'}`);
+          addLog(`   🏛️ ID ${prova.id_prova}: ${prova.ano} - ${prova.descricao || 'Sem descrição'}`);
         });
       }
       

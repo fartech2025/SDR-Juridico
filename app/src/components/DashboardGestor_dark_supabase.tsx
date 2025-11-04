@@ -51,7 +51,9 @@ export default function DashboardGestor_dark() {
           supabase
             .from("resultados_usuarios")
             .select("id_usuario, total_questoes, total_acertos, percentual_acertos, tempo_medio_resposta_ms"),
-          supabase.from("vw_resultados_por_tema").select("id_usuario, nome_tema, percentual"),
+          supabase
+            .from("resultados_por_tema")
+            .select("id_usuario, id_tema, percentual, temas:temas(nome_tema)"),
           supabase.from("usuarios").select("id_usuario, nome, email"),
           supabase
             .from("respostas_usuarios")
@@ -87,11 +89,12 @@ export default function DashboardGestor_dark() {
             : 0;
 
         const temasMap = new Map<string, number[]>();
-        (resultadosTemas ?? []).forEach((tema) => {
-          if (!temasMap.has(tema.nome_tema)) {
-            temasMap.set(tema.nome_tema, []);
+        (resultadosTemas ?? []).forEach((tema: any) => {
+          const nomeTema = tema.temas?.nome_tema || "Tema não informado";
+          if (!temasMap.has(nomeTema)) {
+            temasMap.set(nomeTema, []);
           }
-          temasMap.get(tema.nome_tema)?.push(Number(tema.percentual ?? 0));
+          temasMap.get(nomeTema)?.push(Number(tema.percentual ?? 0));
         });
         const temas: TemaMedia[] = Array.from(temasMap.entries()).map(([nome_tema, valores]) => ({
           nome_tema,

@@ -86,8 +86,8 @@ export default function HomeModern() {
         
         const { data: questoesData, error: questoesError } = await supabase
           .from('questoes')
-          .select('ano')
-          .not('ano', 'is', null)
+          .select('id_prova, provas(ano)')
+          .not('id_prova', 'is', null)
 
         if (questoesError) {
           console.error('❌ Erro ao buscar questões:', questoesError)
@@ -96,7 +96,9 @@ export default function HomeModern() {
           console.log('✅ Questões encontradas:', questoesData)
           // Agrupar por ano e contar
           const anosCount = questoesData.reduce((acc: Record<number, number>, item: any) => {
-            acc[item.ano] = (acc[item.ano] || 0) + 1
+            const ano = item.provas?.ano
+            if (!ano) return acc
+            acc[ano] = (acc[ano] || 0) + 1
             return acc
           }, {})
           

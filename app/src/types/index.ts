@@ -31,6 +31,8 @@ export interface QuestaoImagem {
   id_imagem: number;
   caminho_arquivo: string;
   descricao?: string | null;
+  tipo_entidade?: 'questao' | 'alternativa' | 'solucao';
+  id_entidade?: number;
 }
 
 export interface Questao {

@@ -66,11 +66,11 @@ export default function DashboardAluno_dark() {
               .eq("id_usuario", perfil.id_usuario)
               .maybeSingle(),
             supabase
-              .from("vw_resultados_por_tema")
-              .select("nome_tema, percentual")
+              .from("resultados_por_tema")
+              .select("percentual, id_tema, temas:temas(nome_tema)")
               .eq("id_usuario", perfil.id_usuario),
             supabase
-              .from("vw_resultados_por_dificuldade")
+              .from("resultados_por_dificuldade")
               .select("dificuldade, percentual")
               .eq("id_usuario", perfil.id_usuario),
             supabase
@@ -80,8 +80,8 @@ export default function DashboardAluno_dark() {
               .order("data_resposta", { ascending: true }),
           ]);
 
-        const temasFormatados: TemaDesempenho[] = (temas ?? []).map((t) => ({
-          nome_tema: t.nome_tema,
+        const temasFormatados: TemaDesempenho[] = (temas ?? []).map((t: any) => ({
+          nome_tema: t.temas?.nome_tema || "Tema não informado",
           percentual: Number(t.percentual ?? 0),
         }));
 

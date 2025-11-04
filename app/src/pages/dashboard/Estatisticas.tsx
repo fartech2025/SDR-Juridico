@@ -23,8 +23,12 @@ export default function Estatisticas() {
           { data: dificuldadesData, error: difError },
           { data: horasData, error: horasError },
         ] = await Promise.all([
-          supabase.from('vw_resultados_por_tema').select('nome_tema, percentual'),
-          supabase.from('vw_resultados_por_dificuldade').select('dificuldade, percentual'),
+          supabase
+            .from('resultados_por_tema')
+            .select('percentual, id_tema, temas:temas(nome_tema)'),
+          supabase
+            .from('resultados_por_dificuldade')
+            .select('dificuldade, percentual'),
           supabase.from('resultados_por_hora').select('hora, percentual'),
         ]);
 
@@ -32,7 +36,12 @@ export default function Estatisticas() {
         if (difError) throw difError;
         if (horasError) throw horasError;
 
-        setTemas(agruparMediaPorNome(temasData ?? [], 'nome_tema'));
+        const temasNormalizados = (temasData ?? []).map((linha: any) => ({
+          ...linha,
+          nome_tema: linha.temas?.nome_tema ?? 'Tema não informado',
+        }));
+
+        setTemas(agruparMediaPorNome(temasNormalizados, 'nome_tema'));
         setDificuldades(agruparMediaPorNome(dificuldadesData ?? [], 'dificuldade'));
         setHoras(agruparMediaPorHora(horasData ?? []));
       } catch (error) {
