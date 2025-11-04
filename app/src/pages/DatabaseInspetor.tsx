@@ -72,6 +72,76 @@ export default function DatabaseInspetor() {
     lastDeploy: '4 Nov 2025'
   });
 
+  // Function to analyze tables that can be discarded
+  const getTableAnalysis = () => {
+    const allTables = ['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'];
+    
+    const emptyTables = allTables.filter(table => getTableRecordCount(table) === 0);
+    const activeTables = allTables.filter(table => getTableRecordCount(table) > 0);
+    
+    const recommendations = emptyTables.map(table => {
+      switch(table) {
+        case 'simulados':
+          return {
+            table,
+            priority: 'baixa',
+            reason: 'Tabela principal para funcionalidade futura de simulados',
+            action: 'Manter - será populada quando simulados forem implementados'
+          };
+        case 'simulado_questoes':
+          return {
+            table,
+            priority: 'baixa',
+            reason: 'Tabela de relacionamento necessária para simulados',
+            action: 'Manter - depende da funcionalidade de simulados'
+          };
+        case 'resultados_simulados':
+          return {
+            table,
+            priority: 'baixa',
+            reason: 'Tabela para armazenar resultados dos simulados',
+            action: 'Manter - funcionalidade planejada'
+          };
+        case 'questoes_imagens':
+          return {
+            table,
+            priority: 'média',
+            reason: 'Funcionalidade de imagens não implementada ainda',
+            action: 'Considerar remoção se imagens não forem prioridade'
+          };
+        case 'alternativas_imagens':
+          return {
+            table,
+            priority: 'média',
+            reason: 'Funcionalidade de imagens não implementada ainda',
+            action: 'Considerar remoção se imagens não forem prioridade'
+          };
+        case 'resultados_questoes':
+          return {
+            table,
+            priority: 'alta',
+            reason: 'Parece redundante com resultados_simulados',
+            action: 'Candidata forte à remoção - analisar se é necessária'
+          };
+        default:
+          return {
+            table,
+            priority: 'baixa',
+            reason: 'Tabela vazia sem uso aparente',
+            action: 'Revisar necessidade'
+          };
+      }
+    });
+
+    return {
+      emptyTables,
+      activeTables,
+      recommendations,
+      totalEmpty: emptyTables.length,
+      totalActive: activeTables.length
+    };
+  };
+
   // Function to get realistic record counts for each table based on real data
   const getTableRecordCount = (tableName: string): number => {
     const recordCounts: { [key: string]: number } = {
@@ -1077,6 +1147,135 @@ export default function DatabaseInspetor() {
 
         {activeTab === 'files' && (
           <div className="space-y-6">
+            {/* Database Tables Analysis */}
+            <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
+              <h2 className="text-lg font-semibold mb-3 flex items-center">
+                🗄️ Análise de Tabelas do Banco
+                <span className="ml-2 text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded">LIMPEZA</span>
+              </h2>
+              
+              {(() => {
+                const analysis = getTableAnalysis();
+                return (
+                  <div className="space-y-4">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-600 text-center">
+                        <div className="text-green-400 text-sm font-medium">Tabelas Ativas</div>
+                        <div className="text-2xl font-bold text-white">{analysis.totalActive}</div>
+                        <div className="text-xs text-slate-400">Com dados</div>
+                      </div>
+                      <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-600 text-center">
+                        <div className="text-orange-400 text-sm font-medium">Tabelas Vazias</div>
+                        <div className="text-2xl font-bold text-white">{analysis.totalEmpty}</div>
+                        <div className="text-xs text-slate-400">Sem dados</div>
+                      </div>
+                      <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-600 text-center">
+                        <div className="text-red-400 text-sm font-medium">Candidatas à Remoção</div>
+                        <div className="text-2xl font-bold text-white">
+                          {analysis.recommendations.filter(r => r.priority === 'alta').length}
+                        </div>
+                        <div className="text-xs text-slate-400">Alta prioridade</div>
+                      </div>
+                    </div>
+
+                    {/* Active Tables */}
+                    <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700">
+                      <h3 className="text-green-400 font-medium mb-3 flex items-center">
+                        ✅ Tabelas Ativas (Manter)
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {analysis.activeTables.map((table) => (
+                          <div key={table} className="bg-slate-700/50 p-3 rounded border border-green-600/30">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-green-300">{table}</span>
+                              <span className="text-sm text-green-400 font-bold">
+                                {getTableRecordCount(table)} registros
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tables Analysis */}
+                    <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700">
+                      <h3 className="text-orange-400 font-medium mb-3 flex items-center">
+                        🔍 Análise de Tabelas Vazias
+                      </h3>
+                      <div className="space-y-3">
+                        {analysis.recommendations.map((rec, idx) => (
+                          <div key={idx} className={`p-4 rounded-lg border ${
+                            rec.priority === 'alta' ? 'border-red-600/50 bg-red-900/20' :
+                            rec.priority === 'média' ? 'border-yellow-600/50 bg-yellow-900/20' :
+                            'border-slate-600/50 bg-slate-800/30'
+                          }`}>
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-slate-200">{rec.table}</span>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  rec.priority === 'alta' ? 'bg-red-600/30 text-red-300' :
+                                  rec.priority === 'média' ? 'bg-yellow-600/30 text-yellow-300' :
+                                  'bg-slate-600/30 text-slate-300'
+                                }`}>
+                                  {rec.priority.toUpperCase()}
+                                </span>
+                              </div>
+                              <span className="text-slate-400 text-sm">0 registros</span>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-2">{rec.reason}</p>
+                            <p className={`text-sm font-medium ${
+                              rec.priority === 'alta' ? 'text-red-300' :
+                              rec.priority === 'média' ? 'text-yellow-300' :
+                              'text-slate-300'
+                            }`}>
+                              💡 {rec.action}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recommendations Summary */}
+                    <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700">
+                      <h3 className="text-blue-400 font-medium mb-3">📋 Resumo das Recomendações</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                          <span className="text-slate-300">
+                            <strong>Alta prioridade:</strong> {analysis.recommendations.filter(r => r.priority === 'alta').length} tabela(s) - 
+                            Candidatas fortes à remoção
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                          <span className="text-slate-300">
+                            <strong>Média prioridade:</strong> {analysis.recommendations.filter(r => r.priority === 'média').length} tabela(s) - 
+                            Revisar se funcionalidade será implementada
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 bg-slate-500 rounded-full"></span>
+                          <span className="text-slate-300">
+                            <strong>Baixa prioridade:</strong> {analysis.recommendations.filter(r => r.priority === 'baixa').length} tabela(s) - 
+                            Manter para funcionalidades planejadas
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 p-3 bg-blue-900/30 rounded border border-blue-600/30">
+                        <p className="text-blue-300 text-sm">
+                          💡 <strong>Dica:</strong> Antes de remover qualquer tabela, certifique-se de que não há 
+                          dependências no código e considere fazer backup dos dados.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* File Analysis */}
             <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
               <h2 className="text-lg font-semibold mb-3 flex items-center">
                 🧹 Análise de Arquivos e Limpeza
