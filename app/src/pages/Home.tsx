@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { UsuarioResumo } from '@/types';
 import { PieChart, Pie, Tooltip, ResponsiveContainer } from 'recharts';
 import BasePage from '../components/BasePage';
@@ -43,6 +44,9 @@ export default function Home() {
               <div className="flex justify-center gap-2 mb-4">
                 <button className="btn btn-ghost">🏆 Ranking</button>
                 <button className="btn btn-ghost">📊 Estatísticas</button>
+                <Link to="/documentacao-relacionamentos" className="btn btn-ghost">
+                  📚 Relações BD
+                </Link>
               </div>
               <div className="mb-4">
                 <label className="ds-label block mb-2">Selecione uma prova</label>

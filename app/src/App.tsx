@@ -7,6 +7,7 @@ import Cadastro from './pages/Cadastro';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 import DebugAuth from './pages/DebugAuth';
+import DocumentacaoRelacionamentos from './pages/DocumentacaoRelacionamentos';
 // lazy-loaded heavy pages
 const DashboardHome = React.lazy(() => import('./pages/dashboard/Home'))
 const Ranking = React.lazy(() => import('./pages/dashboard/Ranking'))
@@ -140,6 +141,7 @@ export default function AppWrapper() {
 
             <Route path="/database-inspetor" element={<DatabaseInspetor />} />
             <Route path="/database-relations" element={<DatabaseRelations />} />
+            <Route path="/documentacao-relacionamentos" element={<DocumentacaoRelacionamentos />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ExamProvider>
