@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Cadastro from './pages/Cadastro';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import ErrorBoundary from './components/layout/ErrorBoundary';
+import DebugAuth from './pages/DebugAuth';
 // lazy-loaded heavy pages
 const DashboardHome = React.lazy(() => import('./pages/dashboard/Home'))
 const Ranking = React.lazy(() => import('./pages/dashboard/Ranking'))
@@ -26,6 +27,7 @@ export default function AppWrapper() {
         <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
+            <Route path="/debug-auth" element={<DebugAuth />} />
 
             {/* Landing pública na raiz */}
             <Route path="/" element={<LandingPage />} />

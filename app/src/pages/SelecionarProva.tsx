@@ -39,7 +39,7 @@ export default function SelecionarProva() {
   };
 
   return (
-    <BasePage maxWidth="max-w-3xl">
+    <BasePage>
       <div className="glass-card p-6 sm:p-10">
         <h1 className="ds-heading text-center mb-6">Selecione a prova que deseja realizar</h1>
 

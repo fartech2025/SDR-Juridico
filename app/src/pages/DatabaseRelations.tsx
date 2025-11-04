@@ -32,7 +32,7 @@ export default function DatabaseRelations() {
   }, []);
 
   return (
-    <BasePage maxWidth="max-w-4xl">
+    <BasePage>
       <div className="w-full p-6 space-y-6">
         <h1 className="text-2xl font-bold">🔗 Relações entre Tabelas</h1>
         <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 text-xs text-slate-200 mb-4">

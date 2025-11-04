@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
-import { ArrowLeft, ArrowRight, ZoomIn } from "lucide-react";
-
-// -------------------- INSTÂNCIA SUPABASE --------------------
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from "../lib/supabaseClient";
 
 export default function ResolverProva() {
   const { ano } = useParams();
@@ -257,7 +250,7 @@ export default function ResolverProva() {
               onClick={() => setZoomImagem(current.enunciadoImagem)}
               title="Ampliar imagem"
             >
-              <ZoomIn className="text-slate-200" size={18} />
+              🔍
             </button>
           </div>
         ) : (
@@ -314,14 +307,14 @@ export default function ResolverProva() {
         {/* Navegação */}
         <div className="flex justify-between items-center mt-6">
           <button onClick={() => setIndex((i) => Math.max(i - 1, 0))} className="btn">
-            <ArrowLeft size={16} /> Anterior
+            ← Anterior
           </button>
           <div className="flex gap-2">
             <button
               onClick={() => setIndex((i) => (i < questoes.length - 1 ? i + 1 : i))}
               className="btn"
             >
-              Próxima <ArrowRight size={16} />
+              Próxima →
             </button>
           </div>
           <button

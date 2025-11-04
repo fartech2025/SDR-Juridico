@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import BasePage from "./BasePage";
+import SimuladosSidebar from "./SimuladosSidebar";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
@@ -115,9 +116,20 @@ export default function DashboardAluno_dark() {
     carregarDados();
   }, []);
 
+  // ✅ TODOS os hooks SEMPRE são chamados - ANTES de qualquer condicional
+  const pontosFortes = useMemo(
+    () => dados?.temas.filter((t) => t.percentual > 70).map((t) => t.nome_tema) ?? [],
+    [dados?.temas]
+  );
+  const pontosFracos = useMemo(
+    () => dados?.temas.filter((t) => t.percentual < 50).map((t) => t.nome_tema) ?? [],
+    [dados?.temas]
+  );
+
+  // ✅ AGORA os early returns - DEPOIS de todos os hooks
   if (carregando) {
     return (
-      <BasePage maxWidth="max-w-6xl">
+      <BasePage>
         <div className="text-center text-gray-300 p-10">Carregando dados do Supabase...</div>
       </BasePage>
     );
@@ -125,8 +137,8 @@ export default function DashboardAluno_dark() {
 
   if (erro || !dados) {
     return (
-      <BasePage maxWidth="max-w-md">
-        <div className="bg-gray-900 p-8 rounded-3xl shadow-xl w-full max-w-md text-center space-y-4">
+      <BasePage>
+        <div className="bg-gray-900 p-8 rounded-3xl shadow-xl w-full max-w-md text-center space-y-4 mx-auto">
           <h1 className="text-2xl font-bold text-red-400">Ops!</h1>
           <p>{erro ?? 'Não foi possível carregar o painel do aluno.'}</p>
           <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg inline-block">
@@ -137,35 +149,31 @@ export default function DashboardAluno_dark() {
     );
   }
 
-  const pontosFortes = useMemo(
-    () => dados.temas.filter((t) => t.percentual > 70).map((t) => t.nome_tema),
-    [dados.temas]
-  );
-  const pontosFracos = useMemo(
-    () => dados.temas.filter((t) => t.percentual < 50).map((t) => t.nome_tema),
-    [dados.temas]
-  );
-
   const ultimaAtualizacao = dados.aluno.ultima_atualizacao
     ? new Date(dados.aluno.ultima_atualizacao).toLocaleDateString('pt-BR')
     : '-';
 
   return (
-    <BasePage maxWidth="max-w-6xl">
-      <div className="w-full px-6 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-blue-400">Painel do Estudante</h1>
-            <p className="text-sm text-gray-400">
-              Bem-vindo, {dados.aluno.nome}
-              {dados.aluno.nivel !== undefined ? ` • Nível ${dados.aluno.nivel}` : null}
-            </p>
-            {dados.aluno.xp_total !== undefined ? (
-              <p className="text-xs text-gray-500">XP total: {dados.aluno.xp_total}</p>
-            ) : null}
+    <div className="flex h-screen bg-gray-950">
+      {/* Sidebar de Simulados */}
+      <SimuladosSidebar isOpen={true} />
+
+      {/* Conteúdo Principal */}
+      <BasePage className="flex-1">
+        <div className="w-full px-6 py-8">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-blue-400">Painel do Estudante</h1>
+              <p className="text-sm text-gray-400">
+                Bem-vindo, {dados.aluno.nome}
+                {dados.aluno.nivel !== undefined ? ` • Nível ${dados.aluno.nivel}` : null}
+              </p>
+              {dados.aluno.xp_total !== undefined ? (
+                <p className="text-xs text-gray-500">XP total: {dados.aluno.xp_total}</p>
+              ) : null}
+            </div>
+            <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">Voltar</Link>
           </div>
-          <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">Voltar</Link>
-        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <KPI title="Aproveitamento" value={`${dados.aluno.media_geral ?? 0}%`} />
@@ -231,6 +239,7 @@ export default function DashboardAluno_dark() {
         </div>
       </div>
     </BasePage>
+    </div>
   );
 }
 

@@ -58,7 +58,7 @@ export default function Ranking() {
   }, []);
 
   return (
-    <BasePage maxWidth="max-w-4xl">
+    <BasePage>
       <div className="space-y-6">
         <h1 className="ds-heading text-center text-blue-400">🏆 Ranking</h1>
         <div className="glass-card p-4 sm:p-8">

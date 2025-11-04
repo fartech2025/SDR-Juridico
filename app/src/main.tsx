@@ -10,25 +10,38 @@ if (typeof globalThis !== 'undefined') {
 }
 
 // Suprimir erros de extensões do navegador (message channel)
-window.addEventListener('error', (event) => {
-  if (event.message.includes('message channel') || 
-      event.message.includes('listener indicated') ||
-      event.message.includes('asynchronous response')) {
-    event.preventDefault();
-    return true;
-  }
-});
+const isExtensionError = (message: string | undefined) => {
+  if (!message) return false;
+  const msg = String(message).toLowerCase();
+  return msg.includes('message channel') || 
+         msg.includes('listener indicated') ||
+         msg.includes('asynchronous response');
+};
 
-window.addEventListener('unhandledrejection', (event) => {
-  if (event.reason && typeof event.reason === 'object' && 
-      event.reason.message && 
-      (event.reason.message.includes('message channel') ||
-       event.reason.message.includes('listener indicated') ||
-       event.reason.message.includes('asynchronous response'))) {
+// Handle de erros não capturados de extensões
+window.addEventListener('error', (event) => {
+  if (isExtensionError(event.message)) {
     event.preventDefault();
     return true;
   }
-});
+}, true);
+
+// Handle de rejections não capturadas de extensões
+window.addEventListener('unhandledrejection', (event) => {
+  const errorMsg = event.reason?.message || event.reason || '';
+  if (isExtensionError(String(errorMsg))) {
+    event.preventDefault();
+  }
+}, true);
+
+// Interceptar console.error para extensões
+const originalError = console.error;
+console.error = (...args: any[]) => {
+  const message = String(args[0] || '');
+  if (!isExtensionError(message)) {
+    originalError.apply(console, args);
+  }
+};
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

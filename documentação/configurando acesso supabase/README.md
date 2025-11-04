@@ -48,14 +48,12 @@ const { data, error } = await supabase.from('sua_tabela').select('*')
 
 ### 6) Scripts e tarefas úteis
 - Scripts CMD:
-  - `start_enem_services.bat` → inicia Supabase e Vite.
-  - `reset_enem_db.bat` → reseta DB e aplica seed.
+  - `start_enem_services.bat` → inicia Vite.
   - `gen_types_enem.bat` → gera `app/src/lib/database.types.ts`.
 - VS Code (Terminal > Executar Tarefa…):
-  - `Supabase: Start`, `DB: Reset + Seed`, `Types: Generate`, `Web: Dev`.
+  - `Types: Generate`, `Web: Dev`.
 
 ### 7) Problemas comuns
-- Docker desligado: `supabase start` falha. Abra o Docker Desktop.
 - Chaves erradas: 401/403 nas requisições → confira `.env.local`/`.env.production`.
 - OneDrive pode atrasar hot reload; se necessário, mova o projeto para fora do OneDrive.
 

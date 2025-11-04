@@ -55,7 +55,7 @@ export default function Provas() {
   }, [items, query])
 
   return (
-    <BasePage maxWidth="max-w-6xl">
+    <BasePage>
       <div className="relative w-full px-2 sm:px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">

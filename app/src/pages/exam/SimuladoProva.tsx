@@ -146,7 +146,7 @@ export default function SimuladoProva() {
 
   if (loading) {
     return (
-      <BasePage maxWidth="max-w-2xl">
+      <BasePage>
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <span className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4" aria-label="Carregando"></span>
           <p className="ds-muted text-center">Carregando questões...</p>
@@ -157,7 +157,7 @@ export default function SimuladoProva() {
 
   if (erro) {
     return (
-      <BasePage maxWidth="max-w-2xl">
+      <BasePage>
         <div className="glass-card p-6 text-center">
           <h1 className="ds-heading mb-6 text-blue-400">🎓 Simulado ENEM</h1>
           <p className="text-red-400 mb-4">{erro}</p>
@@ -174,7 +174,7 @@ export default function SimuladoProva() {
 
   if (questaoIds.length === 0) {
     return (
-      <BasePage maxWidth="max-w-2xl">
+      <BasePage>
         <div className="glass-card p-6 text-center">
           <h1 className="ds-heading mb-6 text-blue-400">🎓 Simulado ENEM</h1>
           <p className="ds-muted mb-4">
@@ -196,7 +196,7 @@ export default function SimuladoProva() {
     // se não encontramos a questão no cache, pode ser que esteja sendo buscada sob demanda
     if (!currentId) {
       return (
-        <BasePage maxWidth="max-w-2xl">
+        <BasePage>
           <div className="glass-card p-6 text-center">
             <p className="text-red-400 font-semibold">Questão inválida ou inexistente.</p>
             <button
@@ -212,7 +212,7 @@ export default function SimuladoProva() {
 
     // Render skeleton enquanto carrega a questão atual
     return (
-      <BasePage maxWidth="max-w-4xl">
+      <BasePage>
         <QuestionSkeleton />
       </BasePage>
     );
@@ -308,7 +308,7 @@ export default function SimuladoProva() {
 
   if (finalizado) {
     return (
-      <BasePage maxWidth="max-w-2xl">
+      <BasePage>
         <div className="glass-card p-8 text-center space-y-4">
           <h1 className="ds-heading text-green-400">🎯 Simulado Finalizado</h1>
           <p>Total de questões: {resumo.total}</p>
@@ -327,7 +327,7 @@ export default function SimuladoProva() {
   }
 
   return (
-    <BasePage maxWidth="max-w-4xl">
+    <BasePage>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
           <h1 className="ds-heading text-blue-400">🎓 Simulado ENEM</h1>

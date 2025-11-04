@@ -7,7 +7,7 @@ import BasePage from '../components/BasePage';
 export default function Landing() {
   const { user } = useAuth();
   return (
-    <BasePage maxWidth="max-w-5xl">
+    <BasePage>
       <div className="w-full flex flex-col gap-8 items-center">
         <header className="w-full flex items-center justify-between mb-4">
           <div className="ds-heading text-blue-400">ENEM Ultra</div>

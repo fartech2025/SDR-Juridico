@@ -13,13 +13,10 @@ set "ROOT=%~dp0"
 pushd "%ROOT%" >nul 2>&1
 
 echo.
-echo [1/8] Verificando Node.js e Docker...
+echo [1/8] Verificando Node.js...
 where node >nul 2>nul || (
   echo ERRO: Node.js nao encontrado no PATH. Instale o Node LTS em https://nodejs.org/ e reexecute.
   goto :EOF
-)
-where docker >nul 2>nul || (
-  echo AVISO: Docker nao encontrado no PATH. Instale/abra o Docker Desktop para usar o Supabase local.
 )
 
 echo.

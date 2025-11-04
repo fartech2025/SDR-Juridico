@@ -36,14 +36,19 @@ export default function Monitor() {
           const { data, error } = await supabase.storage
             .from(bucket)
             .createSignedUrl(path, 60 * 60);
-          if (error) throw error;
-          if (data?.signedUrl) {
+          if (error) {
+            // URLs assinadas podem falhar em buckets públicos - isso é normal
+            console.warn('URL assinada falhou (normal em buckets públicos):', error);
+            setSignedCheck({ ok: false, details: `${error.message} (normal em buckets públicos)` });
+          } else if (data?.signedUrl) {
             setSignedCheck({ ok: true, url: data.signedUrl });
           } else {
             setSignedCheck({ ok: false, details: 'createSignedUrl não retornou URL.' });
           }
         } catch (e: any) {
-          setSignedCheck({ ok: false, details: e?.message ?? String(e) });
+          // Erro ao criar URL assinada é esperado em buckets públicos
+          console.warn('Erro ao criar URL assinada (normal em buckets públicos):', e);
+          setSignedCheck({ ok: false, details: `${e?.message ?? String(e)} (normal em buckets públicos)` });
         }
 
         // 2) Tenta publicUrl
@@ -85,8 +90,8 @@ export default function Monitor() {
   );
 
   return (
-    <BasePage maxWidth="max-w-5xl">
-      <div className="w-full p-6 space-y-6">
+    <BasePage>
+      <div className="w-full max-w-5xl mx-auto p-6 space-y-6">
         <h1 className="text-2xl font-bold">📊 Monitoramento do App</h1>
 
         <section className="grid sm:grid-cols-2 gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
@@ -100,6 +105,11 @@ export default function Monitor() {
             <strong>Configuração incompleta:</strong> {error}
           </div>
         )}
+
+        <div className="bg-blue-500/10 border border-blue-500/40 text-blue-200 p-4 rounded-xl">
+          <strong>ℹ️ Nota:</strong> URLs assinadas podem falhar em buckets públicos do Supabase Storage. 
+          Isso é comportamento normal - a aplicação usa URLs públicas automaticamente quando URLs assinadas falham.
+        </div>
 
         <section className="grid md:grid-cols-2 gap-4">
           <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">

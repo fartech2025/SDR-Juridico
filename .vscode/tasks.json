@@ -4,7 +4,8 @@
 		{
 			"label": "Supabase: Start",
 			"type": "shell",
-			"command": "npx.cmd",
+			"command": "npx",
+			"windows": { "command": "npx.cmd" },
 			"args": [
 				"supabase@latest",
 				"start"
@@ -17,7 +18,8 @@
 		{
 			"label": "Supabase: Stop",
 			"type": "shell",
-			"command": "npx.cmd",
+			"command": "npx",
+			"windows": { "command": "npx.cmd" },
 			"args": [
 				"supabase@latest",
 				"stop"
@@ -30,7 +32,8 @@
 		{
 			"label": "DB: Reset + Seed",
 			"type": "shell",
-			"command": "npx.cmd",
+			"command": "npx",
+			"windows": { "command": "npx.cmd" },
 			"args": [
 				"supabase@latest",
 				"db",
@@ -47,11 +50,18 @@
 		{
 			"label": "Types: Generate",
 			"type": "shell",
-			"command": "powershell",
+			"command": "bash",
+			"windows": {
+				"command": "powershell",
+				"args": [
+					"-NoProfile",
+					"-Command",
+					"npx.cmd supabase@latest gen types typescript --local ^| Set-Content -Encoding UTF8 app/src\\lib\\database.types.ts"
+				]
+			},
 			"args": [
-				"-NoProfile",
-				"-Command",
-				"npx.cmd supabase@latest gen types typescript --local ^| Set-Content -Encoding UTF8 app/src/lib/database.types.ts"
+				"-lc",
+				"npx supabase@latest gen types typescript --local > app/src/lib/database.types.ts"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
@@ -64,7 +74,8 @@
 		{
 			"label": "Web: Dev",
 			"type": "shell",
-			"command": "npm.cmd",
+			"command": "npm",
+			"windows": { "command": "npm.cmd" },
 			"args": [
 				"run",
 				"dev"
@@ -74,16 +85,16 @@
 			},
 			"isBackground": true,
 			"problemMatcher": {
-				"owner": "vite",
-				"pattern": [
-					{
-						"regexp": "."
-					}
-				],
+				"pattern": {
+					"regexp": "^.*$",
+					"file": 1,
+					"location": 2,
+					"message": 3
+				},
 				"background": {
 					"activeOnStart": true,
-					"beginsPattern": "VITE v",
-					"endsPattern": "Local:"
+					"beginsPattern": "^.*VITE.*",
+					"endsPattern": "^.*Local:.*"
 				}
 			},
 			"presentation": {
@@ -95,6 +106,7 @@
 			"label": "Seed: Supabase DB",
 			"type": "shell",
 			"command": "npx",
+			"windows": { "command": "npx.cmd" },
 			"args": [
 				"supabase@latest",
 				"db",
@@ -103,15 +115,6 @@
 			"isBackground": false,
 			"group": "build"
 		},
-		{
-			"label": "Web: Dev",
-			"type": "shell",
-			"command": "npm.cmd",
-			"args": [
-				"run",
-				"dev"
-			],
-			"isBackground": true
-		}
+		// Removido task duplicada "Web: Dev" sem cwd
 	]
 }

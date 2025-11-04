@@ -7,7 +7,7 @@ import { Section } from '../components/ui/Section';
 
 export default function ExemploEstilo() {
   return (
-    <BasePage maxWidth="max-w-5xl">
+    <BasePage>
       <Section className="text-center">
         <Heading size="lg" className="mb-4">Página Exemplo (Padrão Landing)</Heading>
         <Text muted className="mb-8">Use estes componentes e classes para manter o padrão visual.</Text>

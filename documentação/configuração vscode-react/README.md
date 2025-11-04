@@ -4,7 +4,6 @@ Este guia explica como o workspace foi configurado para editar, rodar e depurar 
 
 ## Pré‑requisitos
 - Node.js LTS instalado e no PATH.
-- Docker Desktop (para `supabase start`).
 - VS Code instalado.
 
 Observação: O script usa `npx supabase@latest` (não exige instalação global do CLI). Em ambientes restritos de rede, garanta acesso à internet para baixar dependências.
@@ -27,11 +26,10 @@ Arquivo: `setup_enem_workspace.bat`
   - `--types`     Gera `app/src/lib/database.types.ts` a partir do schema local.
 
 ## Como usar
-1) Dê um duplo‑clique em `setup_enem_workspace.bat` (CMD puro). Ele prepara tudo.
-2) Para iniciar serviços e utilitários, use os scripts CMD puros incluídos:
-   - `start_enem_services.bat` – inicia Supabase e o Vite.
-   - `reset_enem_db.bat` – reseta o banco local e aplica `supabase/seed.sql`.
-   - `gen_types_enem.bat` – gera `app/src/lib/database.types.ts` do schema local.
+- Dê um duplo‑clique em `setup_enem_workspace.bat` (CMD puro). Ele prepara tudo.
+- Para iniciar serviços e utilitários, use os scripts CMD puros incluídos:
+   - `start_enem_services.bat` – inicia o Vite.
+   - `gen_types_enem.bat` – gera `app/src/lib/database.types.ts` do schema do Supabase Cloud.
 3) Abra o workspace no VS Code (Arquivo > Abrir Pasta...).
 4) Tarefas disponíveis (Terminal > Executar Tarefa...):
    - `Supabase: Start` e `Supabase: Stop`
@@ -42,8 +40,8 @@ Arquivo: `setup_enem_workspace.bat`
 
 ## Variáveis do frontend
 Arquivo: `app/.env.local`
-- `VITE_SUPABASE_URL=http://localhost:54321`
-- `VITE_SUPABASE_ANON_KEY=` (preencha após `supabase start`; a chave anon é exibida no terminal do CLI)
+- `VITE_SUPABASE_URL=https://mskvucuaarutehslvhsp.supabase.co`
+- `VITE_SUPABASE_ANON_KEY=` (preencha com a chave anon do dashboard Supabase)
 
 ## Estrutura criada
 - `app/` – Aplicação React (Vite + TS)
@@ -52,12 +50,9 @@ Arquivo: `app/.env.local`
 - `setup_enem_workspace.bat` – Script de automação
 
 ## Comandos úteis (manual)
-- Iniciar Supabase local: `npx supabase@latest start`
-- Resetar banco e aplicar seed: `npx supabase@latest db reset`
-- Gerar tipos TS: `npx supabase@latest gen types typescript --local > app/src/lib/database.types.ts`
+- Gerar tipos TS: `npx supabase@latest gen types typescript --linked > app/src/lib/database.types.ts`
 - Rodar frontend: `cd app && npm run dev`
 
 ## Dicas e problemas comuns
-- Docker desligado: `supabase start` falha; abra o Docker Desktop.
-- Chaves incorretas no `.env.local`: confirme `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` após `supabase start`.
+- Chaves incorretas no `.env.local`: confirme `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` estão corretas.
 - OneDrive pode atrasar hot reload: se notar lentidão, considere mover o projeto fora do OneDrive ou ajustar exclusões.

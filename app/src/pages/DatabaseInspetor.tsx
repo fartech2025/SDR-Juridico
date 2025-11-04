@@ -13,11 +13,19 @@ export default function DatabaseInspetor() {
     async function fetchTables() {
       setError(null);
       try {
-        const { data, error } = await supabase.rpc('pg_list_tables');
+        const { data, error } = await supabase.rpc('get_all_tables');
+        
         if (error) throw error;
-        setTables(data || []);
+        
+        const tableNames = (data || [])
+          .map((row: any) => row.table_name || row)
+          .filter((name: string) => !name.startsWith('_')) // Filtrar tabelas internas
+          .sort();
+        
+        setTables(tableNames);
       } catch (e: any) {
         setError('Erro ao buscar tabelas: ' + (e.message || e));
+        console.error('Erro detalhado:', e);
       }
     }
     fetchTables();
@@ -40,8 +48,8 @@ export default function DatabaseInspetor() {
   }
 
   return (
-    <BasePage maxWidth="max-w-5xl">
-      <div className="w-full p-6 space-y-6">
+    <BasePage>
+      <div className="w-full max-w-5xl mx-auto p-6 space-y-6">
         <h1 className="text-2xl font-bold">🗄️ Database Inspetor</h1>
         {error && <div className="bg-red-500/10 border border-red-500/40 text-red-200 p-4 rounded-xl">{error}</div>}
         <div className="flex flex-wrap gap-2 mb-4">

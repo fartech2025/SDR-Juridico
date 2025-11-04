@@ -5,7 +5,7 @@ import BasePage from '../components/BasePage';
 export default function SecEducacao() {
   const navigate = useNavigate();
   return (
-    <BasePage maxWidth="max-w-3xl">
+    <BasePage>
       <div className="w-full flex flex-col items-center justify-center min-h-[60vh]">
         <div className="glass-card p-8 max-w-lg w-full text-center">
           <h1 className="ds-heading mb-4">Secretaria de Educação</h1>

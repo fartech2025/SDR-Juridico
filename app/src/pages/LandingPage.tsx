@@ -101,23 +101,23 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <BasePage maxWidth="max-w-7xl">
+    <BasePage>
       <div className="flex flex-col gap-8 items-center w-full">
-        <header className="w-full flex justify-end items-center py-6 border-b border-slate-700">
-          <nav className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-4">
-              <Link to="/login" className="btn btn-ghost">Login</Link>
-            </div>
-            <div className="flex flex-col gap-2 items-end">
-              <Link to="/home" className="btn btn-primary sm:min-w-[220px] w-full flex items-center justify-between px-4">
-                <span className="text-left">Acesso Administrativo</span>
-                <ArrowRightIcon className="w-4 h-4" />
-              </Link>
-              <Link to="/sec-educacao" className="btn btn-primary sm:min-w-[220px] w-full flex items-center justify-between px-4">
-                <span className="text-left">Sec. de Educação</span>
-                <ArrowRightIcon className="w-4 h-4" />
-              </Link>
-            </div>
+        <header className="w-full flex justify-between items-center py-6 px-6 border-b border-slate-700">
+          <div className="flex-1" />
+          <nav className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+            <Link to="/login" className="btn btn-ghost">
+              🔐 Login
+            </Link>
+            <div className="hidden md:block w-px h-6 bg-slate-600" />
+            <Link to="/home" className="btn btn-primary flex items-center gap-2 px-4 py-2">
+              <span>👨‍💼 Administrativo</span>
+              <ArrowRightIcon className="w-4 h-4" />
+            </Link>
+            <Link to="/sec-educacao" className="btn btn-primary flex items-center gap-2 px-4 py-2">
+              <span>🏫 Sec. Educação</span>
+              <ArrowRightIcon className="w-4 h-4" />
+            </Link>
           </nav>
         </header>
         <section className="w-full text-center py-16">
@@ -222,35 +222,6 @@ export default function LandingPage() {
               </div>
               <div className="text-slate-300">Suporte Disponível</div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Pronto para acelerar seus estudos?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Junte-se a milhares de estudantes que já estão transformando seus resultados com nossa plataforma.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/home"
-              className="px-8 py-4 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-3 text-lg font-semibold shadow-lg"
-            >
-              <span>Começar Gratuitamente</span>
-              <ArrowRightIcon className="w-5 h-5" />
-            </Link>
-            
-            <Link
-              to="/login"
-              className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl hover:bg-white hover:text-blue-600 transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
-            >
-              <span>Fazer Login</span>
-            </Link>
           </div>
         </div>
       </section>

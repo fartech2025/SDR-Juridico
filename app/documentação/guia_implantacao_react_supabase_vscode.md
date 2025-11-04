@@ -5,11 +5,10 @@ Este documento concentra tudo o que foi configurado e testado aqui para que voc�
 ### 1. Requisitos de ambiente
 - **Windows 10/11** com acesso de administrador.
 - **Node.js LTS** (inclui npm). Verifique com `node -v` e `npm -v`.
-- **Docker Desktop** instalado **e executando** (ícone da “baleia” na bandeja → “Running”).
 - **Git** opcional (para clonar versões futuras).
 - **VS Code** + extensões recomendadas:
   - ESLint, Prettier, Error Lens, EditorConfig
-  - Docker, GitLens, DotENV
+  - GitLens, DotENV
   - Tailwind CSS IntelliSense
   - Debugger for Edge/Chrome (incluso nas versões atuais do VS Code)
 
@@ -17,31 +16,26 @@ Este documento concentra tudo o que foi configurado e testado aqui para que voc�
 ```
 Projeto ENEM/
 ├─ app/                     ← Frontend React (Vite + Tailwind + Supabase SDK)
-├─ supabase/                ← Projeto local do Supabase (seed, config)
+├─ supabase/                ← Configuração Supabase (migrações, seed)
 ├─ documentação/            ← Guias de apoio
-├─ setup_enem_workspace.bat ← Provisionamento completo (frontend + supabase)
-├─ start_enem_services.bat  ← Inicia Supabase + Vite
-├─ reset_enem_db.bat        ← Reseta banco local e aplica seed
+├─ setup_enem_workspace.bat ← Provisionamento completo (frontend)
+├─ start_enem_services.bat  ← Inicia Vite
 ├─ gen_types_enem.bat       ← Gera tipos TypeScript do schema
-├─ teste_supabase_cli.bat   ← Health check automatizado Supabase local
 └─ cadastro_de_usuarios.md  ← Guia para criar usuários no Supabase
 ```
 
 ### 3. Provisionamento inicial (uma vez)
-1. **Garantir requisitos** (Docker aberto, Node disponível).
+1. **Garantir requisitos** (Node disponível, conexão internet ativa).
 2. **Executar** `setup_enem_workspace.bat` (duplo-clique ou via CMD). Ele fará:
    - Criação/instalação do app React (`app/`).
    - Instalação de `@supabase/supabase-js`, `react-router-dom`, `recharts`, Tailwind.
-   - Inicialização do Supabase local (`supabase/` + `.vscode/*`).
    - Copiar o seed customizado em `supabase/seed.sql`.
    - Criar configs de VS Code (`tasks.json`, `launch.json`).
    - Gerar `app/.env.local` e `app/src/lib/supabaseClient.ts`.
 
 ### 4. Scripts disponíveis
-- `start_enem_services.bat` — inicia Supabase local e abre o Vite (frontend). Use quando vai trabalhar.
-- `reset_enem_db.bat` — roda `npx supabase@latest db reset` aplicando `supabase/seed.sql` (schema + dados demo).
+- `start_enem_services.bat` — inicia o Vite (frontend) em modo desenvolvimento. Use quando vai trabalhar.
 - `gen_types_enem.bat` — gera `app/src/lib/database.types.ts` via Supabase CLI (útil após alterar schema).
-- `teste_supabase_cli.bat` — teste automatizado: sobe Supabase, aguarda, executa health check no REST e exibe resultado.
 
 ### 5. Configuração de produção
 O projeto está configurado para usar apenas o Supabase Cloud remoto:
@@ -55,7 +49,6 @@ O projeto está configurado para usar apenas o Supabase Cloud remoto:
   - Views materializadas (`vw_resultados_calculados`, etc.).
   - Seeds de temas/questões/soluções para testes.
   - RLS desabilitado (facilita dev). Ative manualmente se necessário.
-- Para reaplicar do zero, use `reset_enem_db.bat`.
 
 ### 7. Variáveis de ambiente do frontend
 - `app/.env.local` agora vem com placeholders para o Supabase hospedado. Preencha com seu `Project URL` e a `anon key` do dashboard.
@@ -98,7 +91,6 @@ O projeto está configurado para usar apenas o Supabase Cloud remoto:
 - Em dev, recomendo: Studio → Authentication → Users → add user → marcar “Confirm user” e definir senha.
 - O login usa e-mail + senha; após login, todas as rotas são liberadas.
 
-### 11. VS Code (tarefas e debug)
 ### 11. VS Code (tarefas úteis)
 - Configure as tarefas do VS Code para comandos npm:
   - `Web: Dev` - inicia servidor de desenvolvimento  
@@ -107,19 +99,15 @@ O projeto está configurado para usar apenas o Supabase Cloud remoto:
   - `Web: Debug (Edge)` (F5 inicia o Vite e abre o Edge conectado ao debugger).
 
 ### 12. Scripts auxiliares
-### 12. Scripts auxiliares
 - **gen_types_enem.bat** – atualiza as tipagens TypeScript a partir do schema do Supabase
 - Use comandos npm para desenvolvimento (dev, build, test)
-
-> **Nota:** O projeto está configurado para usar apenas o Supabase Cloud. Para mais informações, consulte `documentação/usando_supabase_cloud.md`.
 
 ### 13. Customizações comuns
 - Alterar cor/tema (Tailwind): edite `tailwind.config.js` e `src/index.css`.
 - Ajustar layout ou adicionar componentes: modifique `src/App.tsx` e demais arquivos em `src/`.
 - Acrescentar novas tabelas/migrações:
-  1. Atualize `supabase/seed.sql` ou crie migrações em `supabase/migrations/` (pasta pode ser criada).
-  2. Rode `reset_enem_db.bat` para aplicar.
-  3. Gere tipos com `gen_types_enem.bat` se usar o SDK com tipagem.
+  1. Atualize o schema no Supabase Dashboard.
+  2. Gere tipos com `gen_types_enem.bat` se usar o SDK com tipagem.
 
 ### 14. Solução de problemas
 - **`Cannot resolve module` ou erros de import** → Verifique se o npm install foi executado.
@@ -128,17 +116,16 @@ O projeto está configurado para usar apenas o Supabase Cloud remoto:
 
 ### 15. Replicando em outra máquina
 1. Copie toda a pasta `Projeto ENEM/` para a nova máquina.
-2. Instale os pré-requisitos (Node, Docker, VS Code).
+2. Instale os pré-requisitos (Node, VS Code, Git opcional).
 3. Execute `setup_enem_workspace.bat` (revalida dependências).
-4. Faça login no Docker Desktop e abra.
-5. Rode `start_enem_services.bat` (ou CLI).
-6. Ajuste usuários (Studio ou script) e utilize o app normalmente.
+4. Rode `start_enem_services.bat` (ou `npm run dev` dentro de `app/`).
+5. Ajuste usuários (Studio ou script) e utilize o app normalmente.
 
 ### 16. Usando a Supabase na nuvem
-- O projeto está pronto para apontar para supabase.co. Consulte `documentação/usando_supabase_cloud.md` para:
-  - Executar o script `supabase/seed.sql` no SQL Editor ou via CLI (`supabase link/db push`).
+- O projeto está pronto para apontar para supabase.co. Para:
+  - Executar migrações manualmente no SQL Editor.
   - Criar usuários no Auth hospedado.
   - Configurar `.env.local` / `.env.production` com as chaves do dashboard.
 - Após atualizar as variáveis, rode `npm run dev` e o app consumirá o backend remoto diretamente.
 
-Com isso, qualquer máquina Windows consegue subir todo o ambiente ENEM (frontend + Supabase) totalmente integrado ao VS Code, com scripts para provisionar, testar e rodar o sistema.
+Com isso, qualquer máquina Windows consegue subir todo o ambiente ENEM (frontend + Supabase Cloud) totalmente integrado ao VS Code, com scripts para iniciar e rodar o sistema.

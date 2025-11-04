@@ -133,94 +133,86 @@ export default function DashboardGestor_dark() {
     carregarDados();
   }, []);
 
-  if (carregando) return (
-    <BasePage maxWidth="max-w-6xl">
-      <div className="text-center text-gray-300 p-10">Carregando dados do Supabase...</div>
-    </BasePage>
-  );
-
-  if (erro || !dados) {
-    return (
-      <BasePage maxWidth="max-w-md">
-        <div className="bg-gray-900 p-8 rounded-3xl shadow-xl w-full max-w-md text-center space-y-4">
+  return (
+    <BasePage>
+      {carregando ? (
+        <div className="text-center text-gray-300 p-10">Carregando dados do Supabase...</div>
+      ) : erro || !dados ? (
+        <div className="bg-gray-900 p-8 rounded-3xl shadow-xl w-full max-w-md text-center space-y-4 mx-auto">
           <h1 className="text-2xl font-bold text-red-400">Algo deu errado</h1>
           <p>{erro ?? 'Não foi possível carregar dados da turma.'}</p>
           <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg inline-block">
             Voltar para o início
           </Link>
         </div>
-      </BasePage>
-    );
-  }
+      ) : (
+        <div className="w-full px-6 py-8" style={{ paddingTop: '6.5rem' }}>
+          {/* Título no canto superior direito */}
+          {/* Título absoluto no topo direito, alinhado com ENEM Ultra */}
+          <div className="absolute right-8 top-8 z-30 text-right">
+            <h1 className="text-3xl font-bold text-blue-400 drop-shadow">Painel do Gestor</h1>
+            <p className="text-base text-gray-300 mt-1">Acompanhamento geral da turma</p>
+          </div>
+          {/* ...conteúdo principal... */}
 
-  return (
-    <BasePage maxWidth="max-w-6xl">
-  <div className="w-full px-6 py-8" style={{ paddingTop: '6.5rem' }}>
-        {/* Título no canto superior direito */}
-        {/* Título absoluto no topo direito, alinhado com ENEM Ultra */}
-        <div className="absolute right-8 top-8 z-30 text-right">
-          <h1 className="text-3xl font-bold text-blue-400 drop-shadow">Painel do Gestor</h1>
-          <p className="text-base text-gray-300 mt-1">Acompanhamento geral da turma</p>
-        </div>
-        {/* ...conteúdo principal... */}
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <KPI title="Média da turma" value={`${dados.kpis.mediaTurma}%`} />
+            <KPI title="Melhor aluno" value={`${dados.kpis.melhor}%`} />
+            <KPI title="Pior aluno" value={`${dados.kpis.pior}%`} />
+            <KPI title="Tempo médio" value={`${dados.kpis.tempo}s`} />
+          </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <KPI title="Média da turma" value={`${dados.kpis.mediaTurma}%`} />
-          <KPI title="Melhor aluno" value={`${dados.kpis.melhor}%`} />
-          <KPI title="Pior aluno" value={`${dados.kpis.pior}%`} />
-          <KPI title="Tempo médio" value={`${dados.kpis.tempo}s`} />
-        </div>
+          {/* Média por tema */}
+          <ChartCard title="Média por Tema">
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={dados.temas}>
+                <XAxis dataKey="nome_tema" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip />
+                <Bar dataKey="media" fill="#60a5fa" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
 
-        {/* Média por tema */}
-        <ChartCard title="Média por Tema">
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={dados.temas}>
-              <XAxis dataKey="nome_tema" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip />
-              <Bar dataKey="media" fill="#60a5fa" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+          {/* Tendência semanal */}
+          <ChartCard title="Tendência Semanal da Turma">
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={dados.tendencia}>
+                <XAxis dataKey="periodo" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="media_percentual" stroke="#a78bfa" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
 
-        {/* Tendência semanal */}
-        <ChartCard title="Tendência Semanal da Turma">
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={dados.tendencia}>
-              <XAxis dataKey="periodo" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="media_percentual" stroke="#a78bfa" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        {/* Ranking de alunos */}
-        <ChartCard title="Ranking de Alunos">
-          <table className="w-full text-left text-sm text-gray-300">
-            <thead className="bg-gray-800 text-gray-400">
-              <tr>
-                <th className="p-2">Aluno</th>
-                <th className="p-2">Média</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dados.ranking.map((r, i) => (
-                <tr key={i} className="border-t border-gray-800 hover:bg-gray-800/40">
-                  <td className="p-2">{r.nome}</td>
-                  <td className="p-2">{r.media_geral.toFixed(2)}%</td>
+          {/* Ranking de alunos */}
+          <ChartCard title="Ranking de Alunos">
+            <table className="w-full text-left text-sm text-gray-300">
+              <thead className="bg-gray-800 text-gray-400">
+                <tr>
+                  <th className="p-2">Aluno</th>
+                  <th className="p-2">Média</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </ChartCard>
-        {/* Botão Voltar no final */}
-        <div className="flex justify-end mt-10">
-          <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">Voltar</Link>
+              </thead>
+              <tbody>
+                {dados.ranking.map((r, i) => (
+                  <tr key={i} className="border-t border-gray-800 hover:bg-gray-800/40">
+                    <td className="p-2">{r.nome}</td>
+                    <td className="p-2">{r.media_geral.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ChartCard>
+          {/* Botão Voltar no final */}
+          <div className="flex justify-end mt-10">
+            <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">Voltar</Link>
+          </div>
         </div>
-      </div>
+      )}
     </BasePage>
   );
 }

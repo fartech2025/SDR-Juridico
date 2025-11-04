@@ -78,12 +78,6 @@ npm install
 # Configurar .env.local (veja app/README.md)
 cp .env.example .env.local
 
-# Iniciar Supabase local (requer Docker)
-npx supabase@latest start
-
-# Reset do banco com dados
-npx supabase@latest db reset
-
 # Rodar frontend
 npm run dev
 ```

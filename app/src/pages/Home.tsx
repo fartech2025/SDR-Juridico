@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-// import TopBar from '@/components/TopBar';
-// import { supabase } from '@/lib/supabaseClient';
 import { UsuarioResumo } from '@/types';
 import { PieChart, Pie, Tooltip, ResponsiveContainer } from 'recharts';
 import BasePage from '../components/BasePage';

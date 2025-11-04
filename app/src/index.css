@@ -3,6 +3,8 @@
 /* Importar sistema de design */
 @import './styles/design-system.css';
 @import './styles/formatted-text.css';
+@import './styles/modern-effects.css';
+@import './styles/components.css';
 
 :root {
   color-scheme: dark;
@@ -12,44 +14,144 @@ html, body, #root {
   height: 100%;
 }
 
-/* Container responsivo */
-.container-max {
-  @apply max-w-7xl mx-auto px-3 sm:px-4 lg:px-6;
+@layer components {
+  /* Container responsivo */
+  .container-max {
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-max {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-max {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  /* Cards responsivos modernos */
+  .card {
+    background-color: rgb(15 23 42 / 0.7);
+    border: 1px solid rgb(30 41 59 / 1);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  @media (min-width: 640px) {
+    .card {
+      border-radius: 1rem;
+    }
+  }
+
+  /* Cards com glassmorphism */
+  .glass-card {
+    background-color: rgb(255 255 255 / 0.05);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Buttons responsivos */
+  .btn {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    background-color: rgb(30 41 59 / 0.8);
+    border: 1px solid rgb(51 65 85 / 1);
+    font-size: 0.75rem;
+    transition-property: background-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  .btn:hover {
+    background-color: rgb(30 41 59 / 0.6);
+  }
+
+  @media (min-width: 640px) {
+    .btn {
+      padding-left: 1rem;
+      padding-right: 1rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .btn-primary {
+    background-color: rgb(37 99 235 / 0.9);
+    border-color: rgb(59 130 246 / 1);
+  }
+
+  .btn-primary:hover {
+    background-color: rgb(59 130 246 / 1);
+  }
 }
 
-/* Cards responsivos modernos */
-.card {
-  @apply bg-slate-900/70 border border-slate-800 rounded-xl sm:rounded-2xl shadow-lg backdrop-blur-sm;
-}
-
-/* Cards com glassmorphism */
-.glass-card {
-  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
-}
-
-/* Buttons responsivos */
-.btn {
-  @apply px-3 py-2 sm:px-4 rounded-lg bg-slate-800/80 border border-slate-700 text-xs sm:text-sm hover:bg-slate-700/80 transition-colors;
-}
-
-.btn-primary {
-  @apply bg-blue-600/90 border-blue-500 hover:bg-blue-500;
-}
-
-/* Classes utilitárias responsivas */
 @layer utilities {
   .text-responsive {
-    @apply text-sm sm:text-base lg:text-lg;
-  }
-  
-  .heading-responsive {
-    @apply text-lg sm:text-xl lg:text-2xl;
-  }
-  
-  .padding-responsive {
-    @apply p-3 sm:p-4 lg:p-6;
+    font-size: 0.875rem;
   }
 
+  @media (min-width: 640px) {
+    .text-responsive {
+      font-size: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .text-responsive {
+      font-size: 1.125rem;
+    }
+  }
+
+  .heading-responsive {
+    font-size: 1.125rem;
+  }
+
+  @media (min-width: 640px) {
+    .heading-responsive {
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .heading-responsive {
+      font-size: 1.5rem;
+    }
+  }
+
+  .padding-responsive {
+    padding: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .padding-responsive {
+      padding: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .padding-responsive {
+      padding: 1.5rem;
+    }
+  }
+}
+
+@layer components {
   /* Animações customizadas */
   .animate-fade-in {
     animation: fadeIn 0.5s ease-in-out;
@@ -59,13 +161,41 @@ html, body, #root {
     animation: pulseGlow 2s ease-in-out infinite;
   }
 
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .text-gradient {
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4);
+    background-size: 200% 200%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  .glass-effect {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
   .hover-lift {
     transition: all 0.3s ease;
   }
 
   .hover-lift:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   }
+
+  /* Radial Gradient Background */
+  .bg-radial-gradient {
+    background-image: radial-gradient(circle at 50% 50%, transparent 0%, rgba(15, 23, 42, 1) 100%);
+  }
+}
+
+@layer utilities {
 }
 
 /* Keyframes para animações */
@@ -91,10 +221,14 @@ html, body, #root {
   }
 }
 
-/* Animações modernas */
 @keyframes gradient-shift {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
 }
 
 @keyframes pulse-glow {
@@ -105,31 +239,6 @@ html, body, #root {
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
-}
-
-/* Classes utilitárias modernas */
-.text-gradient {
-  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4);
-  background-size: 200% 200%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradient-shift 3s ease infinite;
-}
-
-.glass-effect {
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.hover-lift {
-  transition: all 0.3s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 /* Scrollbar personalizada */

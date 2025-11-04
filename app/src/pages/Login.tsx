@@ -1,9 +1,10 @@
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import BasePage from "../components/BasePage";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,16 +14,53 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Função de login (pode ser adaptada para autenticação real)
+  // Redirecionar para /home se já estiver autenticado
+  useEffect(() => {
+    async function verificarAutenticacao() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        navigate("/home", { replace: true });
+      }
+    }
+    verificarAutenticacao();
+  }, [navigate]);
+
+  // Função de login com Supabase Auth
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro("");
     setLoading(true);
-    // Exemplo: login fake, só redireciona
-    setTimeout(() => {
+
+    try {
+      // Fazer login com email e senha
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          setErro("Email ou senha incorretos");
+        } else if (error.message.includes("Email not confirmed")) {
+          setErro("Email não confirmado. Verifique sua caixa de entrada.");
+        } else {
+          setErro(error.message || "Erro ao fazer login. Tente novamente.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (data?.session?.user) {
+        // Aguardar um pouco para a sessão se estabelecer
+        setTimeout(() => {
+          navigate("/home", { replace: true });
+        }, 300);
+      }
+    } catch (err: any) {
+      console.error("Erro ao fazer login:", err);
+      setErro("Erro desconhecido ao fazer login. Tente novamente.");
       setLoading(false);
-      navigate("/");
-    }, 800);
+    }
   };
 
   return (

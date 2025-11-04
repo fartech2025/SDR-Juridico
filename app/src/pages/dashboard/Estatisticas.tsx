@@ -47,7 +47,7 @@ export default function Estatisticas() {
   }, []);
 
   return (
-    <BasePage maxWidth="max-w-5xl">
+    <BasePage>
       <div className="space-y-6">
         <h1 className="ds-heading text-center text-blue-400">📊 Estatísticas</h1>
         <div className="glass-card p-4 sm:p-8 space-y-6">
