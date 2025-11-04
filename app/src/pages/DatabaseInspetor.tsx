@@ -1270,6 +1270,154 @@ export default function DatabaseInspetor() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Cleanup Action Buttons */}
+                    <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700">
+                      <h3 className="text-red-400 font-medium mb-4 flex items-center">
+                        🧹 Ações de Limpeza
+                        <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">CUIDADO</span>
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* High Priority Cleanup */}
+                        <button
+                          onClick={() => {
+                            const highPriorityTables = analysis.recommendations
+                              .filter(r => r.priority === 'alta')
+                              .map(r => r.table);
+                            
+                            if (highPriorityTables.length > 0) {
+                              const confirmed = window.confirm(
+                                `⚠️ ATENÇÃO!\n\nVocê está prestes a remover ${highPriorityTables.length} tabela(s) de ALTA PRIORIDADE:\n\n${highPriorityTables.join(', ')}\n\nEsta ação é IRREVERSÍVEL!\n\nTem certeza que deseja continuar?`
+                              );
+                              
+                              if (confirmed) {
+                                alert(`🗑️ Comando de remoção:\n\nDROP TABLE IF EXISTS ${highPriorityTables.join(', ')};`);
+                              }
+                            } else {
+                              alert('✅ Nenhuma tabela de alta prioridade para remover!');
+                            }
+                          }}
+                          className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2"
+                        >
+                          🔥 Remover Alta Prioridade
+                          <span className="text-xs bg-red-800 px-2 py-1 rounded">
+                            {analysis.recommendations.filter(r => r.priority === 'alta').length}
+                          </span>
+                        </button>
+
+                        {/* Medium Priority Cleanup */}
+                        <button
+                          onClick={() => {
+                            const mediumPriorityTables = analysis.recommendations
+                              .filter(r => r.priority === 'média')
+                              .map(r => r.table);
+                            
+                            if (mediumPriorityTables.length > 0) {
+                              const confirmed = window.confirm(
+                                `⚠️ Remover tabelas de MÉDIA PRIORIDADE?\n\n${mediumPriorityTables.join(', ')}\n\nEssas tabelas podem ser necessárias para funcionalidades futuras.\n\nContinuar?`
+                              );
+                              
+                              if (confirmed) {
+                                alert(`🗑️ Comando de remoção:\n\nDROP TABLE IF EXISTS ${mediumPriorityTables.join(', ')};`);
+                              }
+                            } else {
+                              alert('✅ Nenhuma tabela de média prioridade para remover!');
+                            }
+                          }}
+                          className="px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2"
+                        >
+                          ⚠️ Remover Média Prioridade
+                          <span className="text-xs bg-yellow-800 px-2 py-1 rounded">
+                            {analysis.recommendations.filter(r => r.priority === 'média').length}
+                          </span>
+                        </button>
+
+                        {/* Low Priority Cleanup */}
+                        <button
+                          onClick={() => {
+                            const lowPriorityTables = analysis.recommendations
+                              .filter(r => r.priority === 'baixa')
+                              .map(r => r.table);
+                            
+                            alert(`⚠️ TABELAS DE BAIXA PRIORIDADE\n\n${lowPriorityTables.join(', ')}\n\nEssas tabelas são recomendadas para MANTER pois fazem parte de funcionalidades planejadas.\n\nNão é recomendado removê-las.`);
+                          }}
+                          className="px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2"
+                        >
+                          ℹ️ Baixa Prioridade (Manter)
+                          <span className="text-xs bg-slate-800 px-2 py-1 rounded">
+                            {analysis.recommendations.filter(r => r.priority === 'baixa').length}
+                          </span>
+                        </button>
+
+                        {/* Redundant Files Cleanup */}
+                        <button
+                          onClick={() => {
+                            if (fileAnalysis.redundantFiles.length > 0) {
+                              const confirmed = window.confirm(
+                                `🗑️ Remover ${fileAnalysis.redundantFiles.length} arquivo(s) redundante(s)?\n\n${fileAnalysis.redundantFiles.slice(0, 5).join('\n')}${fileAnalysis.redundantFiles.length > 5 ? '\n... e mais ' + (fileAnalysis.redundantFiles.length - 5) + ' arquivo(s)' : ''}\n\nContinuar?`
+                              );
+                              
+                              if (confirmed) {
+                                alert(`🧹 Comandos de limpeza:\n\nrm ${fileAnalysis.redundantFiles.join(' ')}\n\n✅ ${fileAnalysis.redundantFiles.length} arquivo(s) marcado(s) para remoção!`);
+                              }
+                            } else {
+                              alert('✅ Nenhum arquivo redundante encontrado para remover!');
+                            }
+                          }}
+                          className="px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2"
+                        >
+                          📂 Arquivos Redundantes
+                          <span className="text-xs bg-orange-800 px-2 py-1 rounded">
+                            {fileAnalysis.redundantFiles.length}
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Safety Warning */}
+                      <div className="mt-4 p-3 bg-red-900/30 rounded border border-red-600/30">
+                        <p className="text-red-300 text-sm flex items-center gap-2">
+                          ⚠️ <strong>ATENÇÃO:</strong> Todas as ações de limpeza são IRREVERSÍVEIS. 
+                          Faça backup antes de executar qualquer remoção!
+                        </p>
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="mt-4 flex gap-3">
+                        <button
+                          onClick={() => {
+                            const commands = [
+                              '-- BACKUP DAS TABELAS',
+                              'pg_dump -h localhost -U postgres -d enem_db --schema-only > backup_schema.sql',
+                              'pg_dump -h localhost -U postgres -d enem_db --data-only > backup_data.sql',
+                              '',
+                              '-- ANÁLISE DE DEPENDÊNCIAS',
+                              "SELECT conname, conrelid::regclass, confrelid::regclass FROM pg_constraint WHERE confrelid::regclass::text IN ('resultados_questoes');",
+                              '',
+                              '-- COMANDOS DE REMOÇÃO (EXECUTAR APENAS APÓS BACKUP)',
+                              ...analysis.recommendations
+                                .filter(r => r.priority === 'alta')
+                                .map(r => `DROP TABLE IF EXISTS ${r.table} CASCADE;`)
+                            ].join('\n');
+                            
+                            navigator.clipboard.writeText(commands);
+                            alert('📋 Comandos SQL copiados para o clipboard!\n\nInclui:\n- Comandos de backup\n- Análise de dependências\n- Comandos de remoção');
+                          }}
+                          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+                        >
+                          📋 Copiar Comandos SQL
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            window.open('https://supabase.com/docs/guides/database/backups', '_blank');
+                          }}
+                          className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+                        >
+                          📚 Guia de Backup
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
