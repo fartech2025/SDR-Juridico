@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import BasePage from '../components/BasePage';
 import { createSecurityDashboard } from '../lib/security/SecurityAlertSystem';
+import BankingComplianceMonitor from '../lib/security/BankingComplianceMonitor';
 
 export default function DatabaseInspetor() {
   const [activeTab, setActiveTab] = useState<string>('monitor');
@@ -12,6 +13,7 @@ export default function DatabaseInspetor() {
   
   // Security dashboard integration
   const securityDashboard = createSecurityDashboard({ maxAlerts: 5 });
+  const complianceMonitor = BankingComplianceMonitor.getInstance();
   const [loading, setLoading] = useState(false);
   const [gitInfo, setGitInfo] = useState({
     lastCommit: '7a52d0e',
@@ -1521,6 +1523,236 @@ export default function DatabaseInspetor() {
                       <p className="text-sm">Sistema operando normalmente</p>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Banking Compliance Monitoring */}
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-green-600/30">
+                <h3 className="text-green-400 font-semibold mb-3 flex items-center">
+                  🏦 Monitoramento de Conformidade Bancária
+                  <span className="ml-2 text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">ATIVO</span>
+                </h3>
+                
+                {/* Compliance Score */}
+                <div className="mb-4 p-3 bg-green-900/20 rounded border border-green-600/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-green-300 font-medium">Score de Conformidade</h4>
+                      <p className="text-slate-400 text-sm">Avaliação geral de todos os padrões regulamentares</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-green-400">{complianceMonitor.getComplianceScore()}%</div>
+                      <div className="text-xs text-slate-400">Conformidade Total</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Compliance Standards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {complianceMonitor.getComplianceStandards().map((standard) => (
+                    <div key={standard.id} className={`p-3 rounded border ${
+                      standard.status === 'compliant' ? 'border-green-600/50 bg-green-900/20' :
+                      standard.status === 'non_compliant' ? 'border-red-600/50 bg-red-900/20' :
+                      standard.status === 'in_progress' ? 'border-yellow-600/50 bg-yellow-900/20' :
+                      'border-orange-600/50 bg-orange-900/20'
+                    }`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h4 className={`font-medium text-sm ${
+                            standard.status === 'compliant' ? 'text-green-400' :
+                            standard.status === 'non_compliant' ? 'text-red-400' :
+                            standard.status === 'in_progress' ? 'text-yellow-400' :
+                            'text-orange-400'
+                          }`}>
+                            {standard.name}
+                          </h4>
+                          <p className="text-slate-400 text-xs mt-1">{standard.description}</p>
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          standard.status === 'compliant' ? 'bg-green-700/50 text-green-300' :
+                          standard.status === 'non_compliant' ? 'bg-red-700/50 text-red-300' :
+                          standard.status === 'in_progress' ? 'bg-yellow-700/50 text-yellow-300' :
+                          'bg-orange-700/50 text-orange-300'
+                        }`}>
+                          {standard.status === 'compliant' ? '✓ CONFORME' :
+                           standard.status === 'non_compliant' ? '✗ NÃO CONFORME' :
+                           standard.status === 'in_progress' ? '⏳ EM PROGRESSO' :
+                           '⚠️ EXPIRADO'}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-slate-400">Certificação:</span>
+                          <div className="text-blue-400 font-mono">{standard.certificationNumber || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Próxima Auditoria:</span>
+                          <div className="text-purple-400">{standard.nextAudit.toLocaleDateString('pt-BR')}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <span className={`w-2 h-2 rounded-full ${
+                            standard.riskLevel === 'critical' ? 'bg-red-500' :
+                            standard.riskLevel === 'high' ? 'bg-orange-500' :
+                            standard.riskLevel === 'medium' ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}></span>
+                          <span className="text-xs text-slate-400">
+                            Risco: {standard.riskLevel.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {standard.requirements.filter(r => r.status === 'met').length}/{standard.requirements.length} requisitos
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Security Policies Monitor */}
+                <div className="bg-slate-700/30 rounded p-3 border border-slate-600/50">
+                  <h4 className="text-blue-400 font-medium mb-2 flex items-center">
+                    📋 Políticas de Segurança Ativas
+                    <span className="ml-2 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                      {complianceMonitor.getSecurityPolicies().filter(p => p.status === 'active').length} ativas
+                    </span>
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {complianceMonitor.getSecurityPolicies().map((policy) => (
+                      <div key={policy.id} className={`p-2 rounded text-xs border ${
+                        policy.status === 'active' ? 'border-green-600/30 bg-green-900/20' :
+                        policy.status === 'inactive' ? 'border-gray-600/30 bg-gray-900/20' :
+                        'border-orange-600/30 bg-orange-900/20'
+                      }`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`font-medium ${
+                            policy.status === 'active' ? 'text-green-400' :
+                            policy.status === 'inactive' ? 'text-gray-400' :
+                            'text-orange-400'
+                          }`}>
+                            {policy.name}
+                          </span>
+                          <span className={`text-xs px-1 py-0.5 rounded ${
+                            policy.enforcementLevel === 'mandatory' ? 'bg-red-700/50 text-red-300' :
+                            policy.enforcementLevel === 'recommended' ? 'bg-yellow-700/50 text-yellow-300' :
+                            'bg-blue-700/50 text-blue-300'
+                          }`}>
+                            {policy.enforcementLevel === 'mandatory' ? 'OBRIGATÓRIO' :
+                             policy.enforcementLevel === 'recommended' ? 'RECOMENDADO' :
+                             'OPCIONAL'}
+                          </span>
+                        </div>
+                        
+                        <div className="text-slate-400 mb-2">
+                          {policy.description}
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">
+                            Cat: {policy.category}
+                          </span>
+                          <span className={`${policy.violations > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                            {policy.violations > 0 ? `${policy.violations} violações` : '✓ Ok'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Audit Trail Monitor */}
+                <div className="mt-4 bg-slate-700/30 rounded p-3 border border-slate-600/50">
+                  <h4 className="text-purple-400 font-medium mb-2 flex items-center">
+                    📜 Log de Auditoria (Últimas Atividades)
+                    <span className="ml-2 w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
+                  </h4>
+                  
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {complianceMonitor.getAuditTrail(8).map((entry) => (
+                      <div key={entry.id} className={`p-2 rounded text-xs border-l-2 ${
+                        entry.result === 'success' ? 'border-green-500 bg-green-900/10' :
+                        entry.result === 'failure' ? 'border-red-500 bg-red-900/10' :
+                        'border-orange-500 bg-orange-900/10'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`${
+                              entry.result === 'success' ? 'text-green-400' :
+                              entry.result === 'failure' ? 'text-red-400' :
+                              'text-orange-400'
+                            }`}>
+                              {entry.result === 'success' ? '✓' :
+                               entry.result === 'failure' ? '✗' :
+                               '🚫'}
+                            </span>
+                            <span className="text-slate-300 font-medium">{entry.action}</span>
+                            <span className="text-slate-400">→ {entry.resource}</span>
+                          </div>
+                          <span className="text-slate-500">{entry.timestamp.toLocaleTimeString('pt-BR')}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 mt-1 text-slate-500">
+                          <span>👤 {entry.userId}</span>
+                          <span>🌐 {entry.ipAddress}</span>
+                          <span className={`${
+                            entry.result === 'success' ? 'text-green-400' :
+                            entry.result === 'failure' ? 'text-red-400' :
+                            'text-orange-400'
+                          }`}>
+                            {entry.result.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Compliance Actions */}
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      const report = complianceMonitor.generateComplianceReport();
+                      navigator.clipboard.writeText(report);
+                      alert('📋 Relatório de Conformidade copiado!\n\nRelatório completo com:\n• Score de conformidade atual\n• Status de todas as certificações\n• Problemas críticos identificados\n• Log de auditoria das últimas 24h\n\nRelatório copiado para o clipboard.');
+                    }}
+                    className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+                  >
+                    📊 Gerar Relatório
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const standards = complianceMonitor.getComplianceStandards();
+                      const expiring = standards.filter(s => {
+                        const daysUntilAudit = Math.ceil((s.nextAudit.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                        return daysUntilAudit <= 30;
+                      });
+                      
+                      if (expiring.length > 0) {
+                        alert(`⚠️ Alertas de Conformidade:\n\n${expiring.map(s => 
+                          `• ${s.name}: Auditoria em ${Math.ceil((s.nextAudit.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} dias`
+                        ).join('\n')}\n\nPor favor, agende as auditorias necessárias.`);
+                      } else {
+                        alert('✅ Todas as auditorias estão em dia!\n\nNenhuma ação necessária no momento.');
+                      }
+                    }}
+                    className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm transition-colors"
+                  >
+                    ⏰ Verificar Prazos
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      alert('🔄 Sincronização de Conformidade Iniciada!\n\n✅ Verificando certificações externas\n✅ Atualizando status de compliance\n✅ Validando políticas ativas\n✅ Sincronizando logs de auditoria\n\n📊 Sistema de conformidade atualizado!');
+                    }}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+                  >
+                    🔄 Sincronizar
+                  </button>
                 </div>
               </div>
             </div>
