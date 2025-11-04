@@ -31,33 +31,43 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden flex flex-col">
-      {/* Premium Background Effects */}
+      {/* Premium Background Effects with Enhanced Depth */}
       <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
-        {/* Animated Mesh Gradient */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.1),transparent_50%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.08),transparent_50%)]" />
+        {/* Animated Mesh Gradient - Enhanced */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.12),transparent_50%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.1),transparent_50%)]" />
         
-        {/* Sophisticated Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,black,transparent)]" />
+        {/* Sophisticated Grid Pattern with Depth */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.04)_1.5px,transparent_1.5px),linear-gradient(90deg,rgba(59,130,246,0.04)_1.5px,transparent_1.5px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,black,transparent)]" />
         
-        {/* Dynamic Light Beams */}
-        <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-blue-500/20 via-transparent to-transparent" />
-        <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-purple-500/15 via-transparent to-transparent" />
+        {/* Dynamic Light Beams - More Visible */}
+        <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-blue-400/30 via-blue-500/10 to-transparent" />
+        <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-purple-400/25 via-purple-500/10 to-transparent" />
+        <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-cyan-400/20 via-cyan-500/5 to-transparent" />
         
-        {/* Floating Orbs - Enhanced */}
-        <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute top-1/3 -right-20 w-[500px] h-[500px] bg-purple-500/8 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-blue-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        {/* Floating Orbs - Enhanced with Better Visibility */}
+        <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl animate-float" />
+        <div className="absolute top-1/3 -right-20 w-[500px] h-[500px] bg-purple-500/12 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-cyan-400/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         
-        {/* Noise Texture Overlay */}
-        <div className="absolute inset-0 opacity-[0.015] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]" />
+        {/* Additional Depth Layers */}
+        <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-blue-600/5 rounded-full blur-2xl animate-float" style={{ animationDelay: '3s' }} />
+        
+        {/* Noise Texture Overlay - Subtle */}
+        <div className="absolute inset-0 opacity-[0.02] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]" />
       </div>
 
-      {/* Premium Header */}
-      <header className="relative z-20 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl shadow-2xl">
-        {/* Top Accent Line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+      {/* Glassmorphism Header - Material Design */}
+      <header className="relative z-20 border-b border-white/10 bg-white/[0.02] backdrop-blur-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
+        {/* Top Accent Line - Brighter */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
         
-        <div className="container-max px-8 py-6">
+        {/* Glass Reflection Effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none" />
+        
+        {/* Inner Glow */}
+        <div className="absolute inset-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] pointer-events-none" />
+        
+        <div className="container-max px-8 py-6 relative">
           <div className="flex items-center justify-between">
             {/* Brand Section - Enhanced */}
             <div className="flex items-center gap-5 flex-1">
@@ -80,44 +90,61 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
               </div>
             </div>
 
-            {/* Right Section - Enhanced */}
+            {/* Right Section - Glassmorphism Enhanced */}
             <div className="flex items-center gap-4">
-              {/* Time Display */}
-              <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
-                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Time Display - Glass Effect */}
+              <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.2)]">
+                <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-sm font-medium text-slate-300">
+                <span className="text-sm font-medium text-slate-200">
                   {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
 
-              {/* Status Badge - Premium */}
-              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/30 shadow-lg shadow-emerald-500/5">
-                <div className="relative">
-                  <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
-                  <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping opacity-75" />
+              {/* Status Badge - Glassmorphism Premium */}
+              <div className="relative group">
+                {/* Glass Container */}
+                <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white/[0.05] border border-emerald-400/30 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(16,185,129,0.15)]">
+                  {/* Inner Glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-xl" />
+                  
+                  <div className="relative flex items-center gap-2.5">
+                    <div className="relative">
+                      <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                      <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping opacity-75" />
+                    </div>
+                    <span className="text-sm font-bold text-emerald-300 tracking-wide">ONLINE</span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-emerald-300 tracking-wide">ONLINE</span>
+                
+                {/* Hover Glow Effect */}
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-green-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content - Enhanced Spacing */}
+      {/* Main Content - Enhanced with Glass Cards Support */}
       <main className={`flex-1 relative z-10 overflow-y-auto ${className || ''}`}>
         <div className="container-max px-8 py-10">
           {children}
         </div>
       </main>
 
-      {/* Premium Footer */}
-      <footer className="relative z-20 border-t border-white/5 bg-slate-900/60 backdrop-blur-2xl mt-auto">
-        {/* Top Accent Line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+      {/* Glassmorphism Footer - Material Design */}
+      <footer className="relative z-20 border-t border-white/10 bg-white/[0.02] backdrop-blur-3xl mt-auto shadow-[0_-8px_32px_0_rgba(0,0,0,0.37)]">
+        {/* Top Accent Line - Brighter */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent" />
         
-        <div className="container-max px-8 py-8">
+        {/* Glass Reflection Effect */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/[0.05] to-transparent pointer-events-none" />
+        
+        {/* Inner Glow */}
+        <div className="absolute inset-0 shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.1)] pointer-events-none" />
+        
+        <div className="container-max px-8 py-8 relative">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
             {/* Left Section */}
             <div className="flex flex-col items-center lg:items-start gap-2">
@@ -129,26 +156,29 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
               </p>
             </div>
 
-            {/* Right Section - Enhanced Badges */}
+            {/* Right Section - Glassmorphism Badges */}
             <div className="flex items-center gap-4">
-              {/* Version Badge */}
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-sm">
+              {/* Version Badge - Glass Effect */}
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-[0_4px_24px_0_rgba(0,0,0,0.2)]">
                 <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                 </svg>
-                <span className="text-sm font-bold text-slate-300">v2.0.1</span>
+                <span className="text-sm font-bold text-slate-200">v2.0.1</span>
               </div>
 
-              {/* Status Badge */}
-              <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/30 shadow-lg shadow-emerald-500/5">
-                <div className="relative flex items-center gap-2">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-sm font-bold text-emerald-300">Sistema Operacional</span>
+              {/* Status Badge - Glass Effect */}
+              <div className="relative group">
+                <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-white/[0.04] border border-emerald-400/30 backdrop-blur-xl shadow-[0_4px_24px_0_rgba(16,185,129,0.12)]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-xl" />
+                  <div className="relative flex items-center gap-2">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+                    <span className="text-sm font-bold text-emerald-300">Sistema Operacional</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Performance Badge */}
-              <div className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/30">
+              {/* Performance Badge - Glass Effect */}
+              <div className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-blue-400/30 backdrop-blur-xl shadow-[0_4px_24px_0_rgba(59,130,246,0.12)]">
                 <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
