@@ -3,37 +3,38 @@
 [![React](https://img.shields.io/badge/React-19.1.1-blue.svg)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-7.1.12-purple.svg)](https://vitejs.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue.svg)](https://typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Cloud-green.svg)](https://supabase.com)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-black.svg)](https://vercel.com)
 [![Status](https://img.shields.io/badge/Status-Produção-green.svg)]()
-[![Tests](https://img.shields.io/badge/Tests-8/8 Passing-brightgreen.svg)]()
-[![Build](https://img.shields.io/badge/Build-0 Errors-brightgreen.svg)]()
 
 ---
 
 ## 📋 Descrição
 
-**Sistema completo** de estudos para ENEM com extração de questões, processamento de imagens e interface moderna para alunos resolverem simulados.
+**Sistema completo** de estudos para ENEM com banco de questões, simulados personalizados e interface moderna para estudantes.
 
 ### ✨ Principais Funcionalidades
 
-- ✅ **Banco de Questões**: 95+ questões do ENEM processadas
+- ✅ **Banco de Questões**: Base completa de questões do ENEM
 - ✅ **Simulados Personalizados**: Criar e resolver provas customizadas
 - ✅ **Análise de Desempenho**: Tracking de progresso com estatísticas
-- ✅ **Interface Moderna**: React + Tailwind CSS + Vite
-- ✅ **Banco de Dados Real-time**: Supabase PostgreSQL + RLS
+- ✅ **Interface Moderna**: React 19 + TypeScript + Tailwind CSS
+- ✅ **Banco de Dados Cloud**: Supabase PostgreSQL + RLS
 - ✅ **Autenticação Segura**: Supabase Auth + Email
-- ✅ **Testes Automatizados**: Jest + TypeScript (8/8 ✅)
+- ✅ **Deploy Automático**: Vercel + GitHub Actions
 
 ---
 
 ## 🚀 Início Rápido
 
-### 1. Requisitos
+### 1. Pré-requisitos
 ```bash
-Node.js 18+ (verificar com: node --version)
-npm 9+ (verificar com: npm --version)
+# Verificar versões
+node --version  # Node.js 18+
+npm --version   # npm 9+
 ```
 
-### 2. Instalação
+### 2. Configuração Local
 ```bash
 # Clonar projeto
 git clone https://github.com/AlanMerlini/Projeto-ENEM.git
@@ -42,19 +43,26 @@ cd Projeto-ENEM/app
 # Instalar dependências
 npm install
 
-# Iniciar servidor dev
+# Configurar variáveis de ambiente
+cp .env.example .env.local
+# Editar .env.local com suas credenciais Supabase
+
+# Iniciar desenvolvimento
 npm run dev
 ```
 
-### 3. Deploy Database (Uma única vez)
+### 3. Configuração Supabase Cloud
+
+1. Crie uma conta em [supabase.com](https://supabase.com)
+2. Crie um novo projeto
+3. Configure o arquivo `.env.local` em `app/`:
+
 ```bash
-# Na raiz do projeto
-bash run_migrations.sh          # Linux/macOS
-# ou
-run_migrations.bat              # Windows
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anon
 ```
 
-### 4. Acessar
+### 4. Acessar Aplicação
 ```
 http://localhost:5173
 ```
@@ -78,201 +86,119 @@ Projeto-ENEM/
 │   │   │   └── ...
 │   │   ├── lib/
 │   │   │   ├── supabaseClient.ts      # Cliente Supabase
-│   │   │   ├── questoesService.ts     # 15 funções de API
+│   │   │   ├── questoesService.ts     # API do banco
 │   │   │   └── database.types.ts      # Types auto-gerados
-│   │   ├── hooks/
+│   │   ├── hooks/                    # React Hooks
 │   │   │   ├── useAuth.ts
 │   │   │   ├── useSimulados.ts
 │   │   │   └── ...
 │   │   ├── App.tsx                   # Rotas principais
 │   │   └── main.tsx
-│   ├── __tests__/
-│   │   └── build.test.ts              # 8 testes de validação
+│   ├── __tests__/                    # Testes automatizados
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── tsconfig.json
 │   └── tailwind.config.js
 │
-├── supabase/                         # Banco de dados
-│   ├── migrations/
-│   │   ├── 20251103_create_simulados_table.sql
-│   │   ├── 20251103_seed_simulados_teste.sql
-│   │   └── ...
-│   └── config.toml
-│
-├── run_migrations.sh                 # Deploy script (Linux/macOS)
-├── run_migrations.bat                # Deploy script (Windows)
-├── main.py                           # Python utility
-├── production_tests.py               # Production tests
-├── requirements.txt                  # Python deps
-├── README.md                         ← Você está aqui
-└── ENTREGA_FINAL_SIMULADOS.md       # Documentação técnica completa
+├── documentação/                     # Documentação técnica
+├── main.py                          # Utilitário Python (opcional)
+├── production_tests.py              # Testes de produção
+├── requirements.txt                 # Dependências Python
+├── vercel.json                      # Configuração Vercel
+└── README.md                        ← Você está aqui
 ```
-
-### **Frontend/Interface:**
-- React/Next.js
-- TypeScript
-- Tailwind CSS
-- Supabase Client
-
-## 🚀 Setup Rápido
-
-### **1. Backend/Extração (BancoEnem)**
-```bash
-# Instalar dependências Python
-pip install -r requirements.txt
-
-# Executar extração
-python3 main.py
-
-# Ou processo completo
-python3 main_extended.py --full
-```
-
-### **2. Frontend/Interface Web**
-```bash
-# Instalar dependências do frontend
-cd app
-npm install
-
-# Configurar .env.local (veja app/README.md)
-cp .env.example .env.local
-
-# Rodar frontend
-npm run dev
-```
-
-### **3. Testes e Validação**
-```bash
-# Testes básicos
-python3 test_project.py
-
-# Testes de produção completos
-python3 production_tests.py
-
-# Resumo do sistema
-python3 system_summary.py
-```
-
-## 📁 Estrutura do Projeto
-
-```
-Projeto-ENEM/
-├── 🐍 **Extração e Processamento**
-│   ├── main.py                    # Extrator principal
-│   ├── supabase_integration.py    # Integração BD
-│   ├── production_tests.py        # Testes completos
-│   ├── system_summary.py         # Diagnóstico
-│   └── output/                    # Dados extraídos
-│
-├── 🌐 **Frontend Web**
-│   ├── app/                       # Aplicação React/Next.js
-│   ├── package.json              # Dependências Node
-│   └── node_modules/             # Pacotes instalados
-│
-├── 🧠 **Inteligência Estudantil**
-│   ├── Modulo_Inteligencia_Estudantil_ENEM.docx
-│   ├── Modulo_Inteligencia_Estudantil_ENEM_FINAL.sql
-│   └── documentação/             # Docs do módulo
-│
-├── 📊 **Dados e Banco**
-│   ├── enem.db                   # SQLite local
-│   ├── supabase/                 # Config Supabase
-│   └── output/                   # Arquivos gerados
-│
-├── 🔧 **Configuração**
-│   ├── requirements.txt          # Python deps
-│   ├── .github/workflows/        # CI/CD
-│   └── scripts/                  # Utilitários
-│
-└── 📝 **Documentação**
-    ├── README.md                 # Este arquivo
-    ├── GITHUB_PAGES.md          # Deploy Pages
-    └── documentação/            # Docs completas
-```
-
-## 📋 Scripts Úteis
-
-### **Python (Extração)**
-```bash
-python3 main.py                    # Extração básica
-python3 main_extended.py --full    # Processo completo  
-python3 test_project.py            # Validação básica
-python3 production_tests.py        # Testes produção
-python3 system_summary.py          # Diagnóstico
-```
-
-### **Node.js (Frontend)**
-```bash
-cd app
-npm run dev          # Desenvolvimento
-npm run build        # Build produção
-npm run preview      # Preview build
-npm run lint         # Validação código
-```
-
-### **Supabase (Banco)**
-```bash
-npx supabase@latest start         # Iniciar local
-npx supabase@latest db reset      # Reset/seed banco
-npx supabase@latest status        # Status serviços
-npx supabase@latest stop          # Parar serviços
-```
-
-## 🌐 URLs de Acesso
-
-### **Produção:**
-- **Interface Web**: https://alanmerlini.github.io/Projeto-ENEM/
-- **Repositório**: https://github.com/AlanMerlini/Projeto-ENEM
-
-### **Local:**
-- **Frontend**: http://localhost:3000
-- **Supabase Studio**: http://localhost:54323
-- **API Local**: http://localhost:54321
-
-## 🏆 Status do Sistema
-
-### ✅ **Componentes Validados:**
-- [x] Extração de PDF (95 questões)
-- [x] Classificação temática (12 temas)
-- [x] Processamento de imagens (13 imagens)
-- [x] Interface web moderna
-- [x] Integração Supabase
-- [x] Sistema de testes (100% sucesso)
-- [x] Módulo inteligência estudantil
-- [x] Deploy automático
-
-### 📊 **Métricas de Qualidade:**
-- **Taxa de sucesso dos testes**: 100%
-- **Performance**: 31,525 ops/segundo
-- **Questões extraídas**: 95/95 (100%)
-- **Temas identificados**: 12
-- **Imagens processadas**: 13
-
-## 🤝 Contribuição
-
-Este é um **projeto colaborativo**. Para contribuir:
-
-1. **Fork** o repositório
-2. **Crie branch** para sua feature: `git checkout -b feature/nova-funcionalidade`
-3. **Commit** suas mudanças: `git commit -m "Adiciona nova funcionalidade"`
-4. **Push** para branch: `git push origin feature/nova-funcionalidade`
-5. **Abra Pull Request**
-
-## 📞 Suporte
-
-### **Diagnóstico:**
-```bash
-python3 system_summary.py  # Relatório completo
-```
-
-### **Logs:**
-- Relatórios de teste: `*_test_report_*.json`
-- Status Supabase: `npx supabase status`
-- Build frontend: `npm run build`
 
 ---
 
-**🎯 Projeto ENEM - Sistema Colaborativo Completo**  
-📅 Última atualização: 28/10/2025  
-🏆 Status: PRONTO PARA PRODUÇÃO
+## 🛠️ Desenvolvimento
+
+### Scripts Disponíveis
+
+```bash
+# No diretório app/
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build para produção
+npm run preview      # Preview do build
+npm run lint         # Linting do código
+npm test            # Executar testes
+```
+
+### Estrutura de Arquivos Principais
+
+- **`app/src/components/`** - Componentes React reutilizáveis
+- **`app/src/pages/`** - Páginas da aplicação
+- **`app/src/lib/`** - Utilitários e configurações
+- **`app/src/hooks/`** - React Hooks customizados
+---
+
+## 🌐 Deploy e Produção
+
+### Deploy Automático (Vercel)
+
+Este projeto está configurado para deploy automático:
+
+1. **Fork** este repositório
+2. **Conecte** no [Vercel](https://vercel.com)
+3. **Configure** as variáveis de ambiente:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+4. **Deploy** automático a cada push
+
+### URLs de Acesso
+
+- **Produção**: [Link do Deploy](https://seu-projeto.vercel.app)
+- **Desenvolvimento**: http://localhost:5173
+
+---
+
+## 🏆 Funcionalidades
+
+### ✅ Implementado
+- [x] Sistema de autenticação (Supabase Auth)
+- [x] Banco de questões do ENEM
+- [x] Criação de simulados personalizados
+- [x] Resolução de questões com imagens
+- [x] Dashboard do estudante
+- [x] Análise de desempenho
+- [x] Interface responsiva
+- [x] Deploy automático
+
+### � Em Desenvolvimento
+- [ ] Sistema de ranking
+- [ ] Relatórios detalhados
+- [ ] Integração com redes sociais
+- [ ] App mobile
+
+---
+
+## 🤝 Contribuição
+
+Para contribuir com o projeto:
+
+1. **Fork** o repositório
+2. **Crie** uma branch: `git checkout -b feature/nova-funcionalidade`
+3. **Commit** suas mudanças: `git commit -m "feat: adiciona nova funcionalidade"`
+4. **Push** para a branch: `git push origin feature/nova-funcionalidade`
+5. **Abra** um Pull Request
+
+---
+
+## 📞 Suporte
+
+### Troubleshooting
+
+**Problema**: Erro de conexão com Supabase
+**Solução**: Verifique as variáveis de ambiente em `.env.local`
+
+**Problema**: Build falha
+**Solução**: Execute `npm run lint` e corrija os erros
+
+**Problema**: Aplicação não carrega
+**Solução**: Verifique se o servidor está rodando em `localhost:5173`
+
+---
+
+**🎯 Projeto ENEM - Sistema de Estudos Completo**  
+📅 Última atualização: 4 Nov 2025  
+🏆 Status: PRONTO PARA PRODUÇÃO  
+🔗 [GitHub](https://github.com/AlanMerlini/Projeto-ENEM)
