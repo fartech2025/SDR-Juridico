@@ -1,46 +1,52 @@
 -- ============================================================
 -- CREATE FUNCTION: pg_foreign_keys
 -- ============================================================
--- 
+--
 -- Objetivo: Buscar todos os relacionamentos (foreign keys) 
---           entre tabelas no schema public
+--           entre tabelas em todos os schemas
 --
 -- Uso: SELECT * FROM public.pg_foreign_keys();
+--
+-- Retorna:
+--   - table_schema: Schema da tabela origem
+--   - table_name: Nome da tabela origem
+--   - foreign_key_name: Nome da constraint
+--   - column_name: Coluna que referencia
+--   - foreign_table_schema: Schema da tabela destino
+--   - foreign_table_name: Nome da tabela destino
+--   - foreign_column_name: Coluna referenciada
 --
 -- ============================================================
 
 create or replace function public.pg_foreign_keys()
 returns table(
-  tabela_origem text,
-  coluna_origem text,
-  tabela_destino text,
-  coluna_destino text
+    table_schema text,
+    table_name text,
+    foreign_key_name text,
+    column_name text,
+    foreign_table_schema text,
+    foreign_table_name text,
+    foreign_column_name text
 )
 language sql
-stable
 as $$
-  select
-    tc.table_name as tabela_origem,
-    kcu.column_name as coluna_origem,
-    ccu.table_name as tabela_destino,
-    ccu.column_name as coluna_destino
-  from
-    information_schema.table_constraints as tc
+    select
+        tc.table_schema,
+        tc.table_name,
+        tc.constraint_name as foreign_key_name,
+        kcu.column_name,
+        ccu.table_schema as foreign_table_schema,
+        ccu.table_name as foreign_table_name,
+        ccu.column_name as foreign_column_name
+    from information_schema.table_constraints as tc
     join information_schema.key_column_usage as kcu
-      on tc.constraint_name = kcu.constraint_name
-      and tc.table_schema = kcu.table_schema
+        on tc.constraint_name = kcu.constraint_name
+        and tc.table_schema = kcu.table_schema
     join information_schema.constraint_column_usage as ccu
-      on ccu.constraint_name = tc.constraint_name
-      and ccu.table_schema = tc.table_schema
-  where
-    tc.constraint_type = 'FOREIGN KEY'
-    and tc.table_schema = 'public'
-  order by
-    tc.table_name,
-    kcu.column_name;
-$$;
-
--- ============================================================
+        on ccu.constraint_name = tc.constraint_name
+        and ccu.table_schema = tc.table_schema
+    where tc.constraint_type = 'FOREIGN KEY';
+$$;-- ============================================================
 -- PERMISSIONS: Grant execute to anonymous and authenticated
 -- ============================================================
 
