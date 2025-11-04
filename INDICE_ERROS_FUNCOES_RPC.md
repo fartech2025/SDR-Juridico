@@ -77,18 +77,18 @@ Faça isso para CADA erro:
 
 ---
 
-### 📖 10-15 MINUTOS (Entender Tudo)
+### ⏱️ 10-15 MINUTOS (Entender Tudo)
 
 Para cada erro, siga o guia passo-a-passo:
 
 **Para pg_foreign_keys:**
 1. Leia: `INSTRUCOES_CRIAR_FUNCAO_PG_FOREIGN_KEYS.md`
-2. Execute a solução
+2. Execute a solução via Supabase Cloud
 3. Teste conforme instruído
 
 **Para get_all_tables:**
 1. Leia: `INSTRUCOES_CRIAR_FUNCAO_GET_ALL_TABLES.md`
-2. Execute a solução
+2. Execute a solução via Supabase Cloud
 3. Teste conforme instruído
 
 ---
@@ -162,11 +162,13 @@ Escolha UMA das opções:
    → SQL_CRIAR_FUNCAO_PG_FOREIGN_KEYS.sql
 ```
 
-**OPÇÃO C - USAR CLI (automático)**
-```bash
-cd /Users/fernandodias/Projeto-ENEM
-npx supabase db reset
-# Executa ambas as migrations automaticamente
+**OPÇÃO C - USAR SUPABASE CLOUD (Recomendado)**
+```
+1. Abra: https://supabase.com/dashboard
+2. SQL Editor → New Query
+3. Cole conteúdo dos arquivos SQL
+4. RUN para cada função
+5. Pronto!
 ```
 
 ---

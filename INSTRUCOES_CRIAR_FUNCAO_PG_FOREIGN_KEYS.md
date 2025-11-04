@@ -16,16 +16,10 @@ ou acesse o SQL Editor do Supabase para criar a função manualmente.
 
 ### Passo 1: Abrir SQL Editor do Supabase
 
-Se você está usando **Supabase Cloud**:
 1. Acesse: https://supabase.com/dashboard
 2. Selecione seu projeto
 3. Vá em **SQL Editor** (lado esquerdo)
 4. Clique em **New Query**
-
-Se você está usando **Supabase Local**:
-1. Abra: http://localhost:54323 (ou a porta configurada)
-2. Clique em **SQL Editor**
-3. Clique em **New Query**
 
 ---
 

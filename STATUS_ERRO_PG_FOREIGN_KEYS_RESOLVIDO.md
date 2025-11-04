@@ -98,17 +98,6 @@ Se você usar `npx supabase db reset`, esta migration é **executada automaticam
 7. Recarregue a página da app (F5)
 ```
 
-### Para Supabase Local
-
-```
-1. Acesse: http://localhost:54323 (ou a porta configurada)
-2. Vá em: SQL Editor → New Query
-3. Copie tudo de: SQL_CRIAR_FUNCAO_PG_FOREIGN_KEYS.sql
-4. Cole no editor
-5. Clique: RUN
-6. Recarregue a página da app (F5)
-```
-
 ### Alternativa: Usar CLI
 
 ```bash
@@ -199,7 +188,7 @@ Se recebe **erro de função não encontrada**:
 | Permissões negadas | Execute também o `GRANT EXECUTE` |
 | 0 rows retornadas | Função criada, mas sem dados; execute SEED |
 | Página ainda com erro | Limpe cache (Ctrl+Shift+R) e recarregue |
-| Docker não está rodando | Inicie Docker Desktop e tente novamente |
+| Docker não está rodando | Configure Supabase Cloud - não usar Docker |
 
 ---
 
