@@ -4,12 +4,11 @@ import { supabase } from '../lib/supabaseClient';
 export interface SimuladoDoEnem {
   // Identificadores
   id_prova: number;              // FK real no banco de dados
-  id_simulado_virtual: string;   // ID virtual gerado (ex: enem_2024_azul)
+  id_simulado_virtual: string;   // ID virtual gerado (ex: enem_2024)
   
   // Informações básicas
-  nome: string;                  // "ENEM 2024 - Caderno Azul"
+  nome: string;                  // "ENEM 2024"
   ano: number;
-  cor_caderno: string | null;
   descricao: string;
   
   // Questões e configuração
@@ -80,7 +79,6 @@ export class SimuladosService {
         .select(`
           id_prova,
           ano,
-          cor_caderno,
           descricao,
           data_aplicacao,
           tempo_por_questao
@@ -115,17 +113,14 @@ export class SimuladosService {
 
         // Só adiciona provas que têm questões
         if (totalQuestoes && totalQuestoes > 0) {
-          const corCaderno = prova.cor_caderno || 'Padrão';
-          
           const simulado: SimuladoDoEnem = {
             // Identificadores
             id_prova: prova.id_prova,
-            id_simulado_virtual: `enem_${prova.ano}_${corCaderno.toLowerCase()}`,
+            id_simulado_virtual: `enem_${prova.ano}`,
             
             // Informações básicas
-            nome: `ENEM ${prova.ano} - ${corCaderno}`,
+            nome: `ENEM ${prova.ano}`,
             ano: prova.ano,
-            cor_caderno: prova.cor_caderno,
             descricao: prova.descricao || `Simulado completo ENEM ${prova.ano} com ${totalQuestoes} questões`,
             
             // Questões e configuração

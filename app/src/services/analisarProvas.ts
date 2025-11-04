@@ -83,15 +83,12 @@ export async function analisarProvasEQuestoes(): Promise<{
         const areas = [...new Set(questoes!.map(q => q.area_conhecimento))].filter(Boolean);
         const disciplinas = [...new Set(questoes!.map(q => q.disciplina))].filter(Boolean);
         
-        const corCaderno = prova.cor_caderno || 'Padrão';
-        
         const simulado: SimuladoAnalise = {
           // Campos de SimuladoDoEnem
           id_prova: prova.id_prova,
-          id_simulado_virtual: `enem_${prova.ano}_${corCaderno.toLowerCase()}`,
-          nome: prova.descricao || `ENEM ${prova.ano} - ${corCaderno}`,
+          id_simulado_virtual: `enem_${prova.ano}`,
+          nome: prova.descricao || `ENEM ${prova.ano}`,
           ano: prova.ano,
-          cor_caderno: prova.cor_caderno,
           descricao: prova.descricao || `Simulado baseado na prova ${prova.id_prova}`,
           total_questoes: totalQuestoes,
           tempo_por_questao: prova.tempo_por_questao || 180,
