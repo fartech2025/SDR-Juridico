@@ -1,53 +1,113 @@
-# 🎯 Projeto ENEM - Sistema Completo de Questões
+# 🎯 Projeto ENEM - Sistema Completo
 
-[![Python](https://img.shields.io/badge/Python-3.12.4-blue.svg)](https://python.org)
+[![React](https://img.shields.io/badge/React-19.1.1-blue.svg)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-7.1.12-purple.svg)](https://vitejs.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue.svg)](https://typescriptlang.org)
 [![Status](https://img.shields.io/badge/Status-Produção-green.svg)]()
-[![Tests](https://img.shields.io/badge/Tests-100%25-brightgreen.svg)]()
-[![Score](https://img.shields.io/badge/Score-100%25-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-8/8 Passing-brightgreen.svg)]()
+[![Build](https://img.shields.io/badge/Build-0 Errors-brightgreen.svg)]()
+
+---
 
 ## 📋 Descrição
 
-**Projeto colaborativo** para extração, processamento e análise de questões do ENEM 2024. Combina **extração automática de PDF** com **interface web moderna** e **inteligência estudantil** para análise completa das questões.
+**Sistema completo** de estudos para ENEM com extração de questões, processamento de imagens e interface moderna para alunos resolverem simulados.
 
-## 🚀 Componentes do Sistema
+### ✨ Principais Funcionalidades
 
-### 🤖 **Extração e Processamento (BancoEnem)**
-- **Extração automática de PDF**: Processa automaticamente o PDF oficial do ENEM 2024
-- **Classificação temática inteligente**: 12 temas identificados automaticamente
-- **Processamento de imagens**: Extração e marca d'água automática
-- **Múltiplos formatos**: JSON, SQL, SQLite e PNG
-- **Integração Supabase**: Sincronização bidirecional completa
-- **Sistema de testes**: 100% de taxa de sucesso
+- ✅ **Banco de Questões**: 95+ questões do ENEM processadas
+- ✅ **Simulados Personalizados**: Criar e resolver provas customizadas
+- ✅ **Análise de Desempenho**: Tracking de progresso com estatísticas
+- ✅ **Interface Moderna**: React + Tailwind CSS + Vite
+- ✅ **Banco de Dados Real-time**: Supabase PostgreSQL + RLS
+- ✅ **Autenticação Segura**: Supabase Auth + Email
+- ✅ **Testes Automatizados**: Jest + TypeScript (8/8 ✅)
 
-### 🌐 **Interface Web (Frontend)**
-- **Framework moderno**: React/Next.js
-- **Interface responsiva**: Desktop e mobile
-- **Visualização de dados**: Gráficos e estatísticas
-- **Gerenciamento de questões**: CRUD completo
-- **Integração com Supabase**: Tempo real
+---
 
-### 🧠 **Inteligência Estudantil**
-- **Análise de performance**: Estatísticas personalizadas
-- **Recomendações**: IA para melhorar estudos
-- **Relatórios detalhados**: Progress tracking
-- **Módulo SQL**: Banco estruturado para análises
+## 🚀 Início Rápido
 
-## 📊 Dados Atuais
+### 1. Requisitos
+```bash
+Node.js 18+ (verificar com: node --version)
+npm 9+ (verificar com: npm --version)
+```
 
-- **95 questões** do ENEM 2024 LC extraídas
-- **12 temas** classificados automaticamente
-- **13 imagens** processadas com marca d'água
-- **100%** taxa de sucesso nos testes
-- **Interface web completa** funcionando
+### 2. Instalação
+```bash
+# Clonar projeto
+git clone https://github.com/AlanMerlini/Projeto-ENEM.git
+cd Projeto-ENEM/app
 
-## 🛠️ Tecnologias
+# Instalar dependências
+npm install
 
-### **Backend/Extração:**
-- Python 3.12.4
-- PyMuPDF 1.26.5 (PDF)
-- Pillow 12.0.0 (Imagens)
-- Pandas 2.3.3 (Dados)
-- Supabase 2.22.1 (BD nuvem)
+# Iniciar servidor dev
+npm run dev
+```
+
+### 3. Deploy Database (Uma única vez)
+```bash
+# Na raiz do projeto
+bash run_migrations.sh          # Linux/macOS
+# ou
+run_migrations.bat              # Windows
+```
+
+### 4. Acessar
+```
+http://localhost:5173
+```
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+Projeto-ENEM/
+├── app/                              # Aplicação React
+│   ├── src/
+│   │   ├── components/               # Componentes React
+│   │   │   ├── SimuladosSidebar.tsx    ← Sidebar de simulados
+│   │   │   ├── SimuladosPage.tsx       ← Lista de simulados
+│   │   │   ├── QuestaoRenderer.tsx     ← Renderiza questões
+│   │   │   └── ResolverSimuladoComImagens.tsx ← Resolve prova
+│   │   ├── pages/                    # Páginas da aplicação
+│   │   │   ├── PainelAluno.tsx        ← Dashboard do aluno
+│   │   │   ├── LandingPage.tsx        ← Página inicial
+│   │   │   └── ...
+│   │   ├── lib/
+│   │   │   ├── supabaseClient.ts      # Cliente Supabase
+│   │   │   ├── questoesService.ts     # 15 funções de API
+│   │   │   └── database.types.ts      # Types auto-gerados
+│   │   ├── hooks/
+│   │   │   ├── useAuth.ts
+│   │   │   ├── useSimulados.ts
+│   │   │   └── ...
+│   │   ├── App.tsx                   # Rotas principais
+│   │   └── main.tsx
+│   ├── __tests__/
+│   │   └── build.test.ts              # 8 testes de validação
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   └── tailwind.config.js
+│
+├── supabase/                         # Banco de dados
+│   ├── migrations/
+│   │   ├── 20251103_create_simulados_table.sql
+│   │   ├── 20251103_seed_simulados_teste.sql
+│   │   └── ...
+│   └── config.toml
+│
+├── run_migrations.sh                 # Deploy script (Linux/macOS)
+├── run_migrations.bat                # Deploy script (Windows)
+├── main.py                           # Python utility
+├── production_tests.py               # Production tests
+├── requirements.txt                  # Python deps
+├── README.md                         ← Você está aqui
+└── ENTREGA_FINAL_SIMULADOS.md       # Documentação técnica completa
+```
 
 ### **Frontend/Interface:**
 - React/Next.js
