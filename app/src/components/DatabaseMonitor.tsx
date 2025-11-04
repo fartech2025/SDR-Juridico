@@ -22,10 +22,9 @@ export default function DatabaseMonitor() {
 
   const tables = [
     'usuarios',
+    'provas',
     'questoes',
     'questoes_imagens',
-    'simulados',
-    'simulado_questoes',
     'resultados_simulados',
   ];
 

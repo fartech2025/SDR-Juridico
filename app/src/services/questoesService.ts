@@ -24,14 +24,6 @@ export interface QuestaoComImagens {
   imagens?: Imagem[];
 }
 
-export interface SimuladoComQuestoes {
-  id_simulado: number;
-  nome: string;
-  descricao?: string;
-  data_criacao: string;
-  questoes: QuestaoComImagens[];
-}
-
 /**
  * Busca todas as questões com suas imagens associadas
  */
@@ -218,102 +210,6 @@ export async function deletarImagemQuestao(id_imagem: number): Promise<void> {
     if (error) throw error;
   } catch (error) {
     console.error(`Erro ao deletar imagem ${id_imagem}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Busca um simulado com todas suas questões e imagens
- */
-export async function buscarSimuladoComQuestoes(
-  id_simulado: number
-): Promise<SimuladoComQuestoes | null> {
-  try {
-    // Primeiro busca o simulado
-    const { data: simulado, error: erroSimulado } = await supabase
-      .from('simulados')
-      .select('*')
-      .eq('id_simulado', id_simulado)
-      .single();
-
-    if (erroSimulado && erroSimulado.code !== 'PGRST116') throw erroSimulado;
-    if (!simulado) return null;
-
-    // Depois busca as questões do simulado (ordenadas)
-    const { data: questoes, error: erroQuestoes } = await supabase
-      .from('simulado_questoes')
-      .select('id_questao, ordem')
-      .eq('id_simulado', id_simulado)
-      .order('ordem', { ascending: true });
-
-    if (erroQuestoes) throw erroQuestoes;
-
-    // Busca cada questão com suas imagens em paralelo para melhor performance
-    const questoesComImagens: QuestaoComImagens[] = [];
-    if (questoes && questoes.length > 0) {
-      const promises = questoes.map(q => buscarQuestaoComImagens(q.id_questao));
-      const resultados = await Promise.all(promises);
-      questoesComImagens.push(...resultados.filter(q => q !== null) as QuestaoComImagens[]);
-    }
-
-    return {
-      ...simulado,
-      questoes: questoesComImagens,
-    } as SimuladoComQuestoes;
-  } catch (error) {
-    console.error(`Erro ao buscar simulado ${id_simulado}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Busca todos os simulados com contagem de questões
- */
-export async function buscarSimuladosDisponveis() {
-  try {
-    // Tentar com VIEW primeiro
-    const { data: dataView, error: errorView } = await supabase
-      .from('vw_simulados_com_questoes')
-      .select('*');
-
-    if (!errorView && dataView) {
-      return dataView || [];
-    }
-
-    // Se VIEW falhar, tentar tabela direta
-    console.warn('View não acessível, tentando tabela direta:', errorView?.message);
-    
-    const { data: dataTable, error: errorTable } = await supabase
-      .from('simulados')
-      .select('id_simulado, nome, descricao, data_criacao, data_atualizacao, ativo')
-      .eq('ativo', true);
-
-    if (errorTable) {
-      console.error('Erro ao buscar simulados:', errorTable);
-      throw new Error(`Falha ao buscar simulados: ${errorTable.message}`);
-    }
-
-    // Se conseguiu dados da tabela, buscar contagem de questões para cada
-    if (dataTable && dataTable.length > 0) {
-      const simuladosComContagem = await Promise.all(
-        dataTable.map(async (sim) => {
-          const { count } = await supabase
-            .from('simulado_questoes')
-            .select('*', { count: 'exact', head: true })
-            .eq('id_simulado', sim.id_simulado);
-          
-          return {
-            ...sim,
-            total_questoes: count || 0
-          };
-        })
-      );
-      return simuladosComContagem;
-    }
-
-    return [];
-  } catch (error) {
-    console.error('Erro ao buscar simulados:', error);
     throw error;
   }
 }
