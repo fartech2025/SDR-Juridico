@@ -412,7 +412,7 @@ export async function buscarSimuladoComQuestoes(
       questoes,
     };
   } catch (error) {
-    console.error(Erro ao buscar simulado :, error);
+    console.error('Erro ao buscar simulado:', error);
     throw error;
   }
 }
