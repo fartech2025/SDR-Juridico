@@ -72,18 +72,21 @@ export default function DatabaseInspetor() {
     lastDeploy: '4 Nov 2025'
   });
 
-  // Function to get realistic record counts for each table
+  // Function to get realistic record counts for each table based on real data
   const getTableRecordCount = (tableName: string): number => {
     const recordCounts: { [key: string]: number } = {
-      'usuarios': 4,              // Poucos usuários de teste
-      'questoes': 45,             // Questões do ENEM carregadas
-      'alternativas': 180,        // 4 alternativas por questão (45 * 4)
-      'simulados': 6,             // Alguns simulados criados
-      'simulado_questoes': 90,    // Relação simulados x questões
-      'resultados_simulados': 12  // Resultados dos testes realizados
+      'usuarios': 3,                    // 3 usuários reais (conforme screenshot)
+      'questoes': 415,                  // 415 questões (conforme painel)
+      'alternativas': 2115,             // 2.115 alternativas (conforme painel)
+      'simulados': 0,                   // 0 simulados (conforme painel)
+      'simulado_questoes': 0,           // 0 relações (simulados vazios)
+      'resultados_simulados': 0,        // 0 resultados (sem simulados)
+      'questoes_imagens': 0,            // 0 imagens de questões
+      'alternativas_imagens': 0,        // 0 imagens de alternativas
+      'resultados_questoes': 0          // 0 resultados de questões
     };
     
-    return recordCounts[tableName] || Math.floor(Math.random() * 10) + 1;
+    return recordCounts[tableName] || 0;
   };
 
   useEffect(() => {
@@ -327,7 +330,7 @@ export default function DatabaseInspetor() {
             </div>
             <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-600 text-center">
               <div className="text-purple-400 text-sm font-medium">Registros</div>
-              <div className="text-xl font-bold text-white">337</div>
+              <div className="text-xl font-bold text-white">2.533</div>
               <div className="text-xs text-slate-400">Total nas tabelas</div>
             </div>
             <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-600 text-center">
@@ -339,7 +342,7 @@ export default function DatabaseInspetor() {
 
           {/* Table Status Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {['usuarios', 'questoes', 'alternativas', 'simulados', 'simulado_questoes', 'resultados_simulados'].map((table) => (
+            {['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'].map((table) => (
               <div
                 key={table}
                 className="bg-slate-800/40 rounded-lg p-3 border border-slate-600 hover:border-slate-500 transition-colors cursor-pointer"
@@ -348,10 +351,15 @@ export default function DatabaseInspetor() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-slate-300 font-medium text-sm">{table}</p>
-                    <p className="text-xs text-green-400">Conectado</p>
+                    <p className={`text-xs flex items-center gap-1 ${getTableRecordCount(table) > 0 ? 'text-green-400' : 'text-gray-400'}`}>
+                      <span className={`w-2 h-2 rounded-full ${getTableRecordCount(table) > 0 ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                      {getTableRecordCount(table) > 0 ? 'Conectado' : 'Vazio'}
+                    </p>
                   </div>
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">
-                    ✓
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                    getTableRecordCount(table) > 0 ? 'bg-green-500' : 'bg-gray-500'
+                  }`}>
+                    {getTableRecordCount(table) > 0 ? '✓' : '○'}
                   </div>
                 </div>
                 <div className="flex justify-between text-xs text-slate-400">
@@ -409,7 +417,7 @@ export default function DatabaseInspetor() {
               
               {/* Tables Grid with Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {['usuarios', 'questoes', 'alternativas', 'simulados', 'simulado_questoes', 'resultados_simulados'].map((table) => (
+                {['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'].map((table) => (
                   <div
                     key={table}
                     className="bg-slate-800/40 rounded-lg p-4 border border-slate-600 hover:border-blue-500 transition-colors cursor-pointer"
@@ -418,20 +426,24 @@ export default function DatabaseInspetor() {
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <h3 className="font-medium text-blue-300 text-lg">{table}</h3>
-                        <p className="text-xs text-green-400 flex items-center gap-1">
-                          <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                          Conectado
+                        <p className="text-xs flex items-center gap-1">
+                          <span className={`w-2 h-2 rounded-full ${getTableRecordCount(table) > 0 ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                          {getTableRecordCount(table) > 0 ? 'Conectado' : 'Vazio'}
                         </p>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">
-                        ✓
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                        getTableRecordCount(table) > 0 ? 'bg-green-500' : 'bg-gray-500'
+                      }`}>
+                        {getTableRecordCount(table) > 0 ? '✓' : '○'}
                       </div>
                     </div>
                     
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-slate-400">Registros:</span>
-                        <span className="text-white font-medium">{getTableRecordCount(table)}</span>
+                        <span className={`font-medium ${getTableRecordCount(table) > 0 ? 'text-white' : 'text-gray-400'}`}>
+                          {getTableRecordCount(table)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Latência:</span>
@@ -439,7 +451,9 @@ export default function DatabaseInspetor() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Status:</span>
-                        <span className="text-green-400 font-medium">Ativo</span>
+                        <span className={`font-medium ${getTableRecordCount(table) > 0 ? 'text-green-400' : 'text-gray-400'}`}>
+                          {getTableRecordCount(table) > 0 ? 'Ativo' : 'Vazio'}
+                        </span>
                       </div>
                     </div>
                     
@@ -460,7 +474,7 @@ export default function DatabaseInspetor() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     {tables.filter(table => 
-                      !['usuarios', 'questoes', 'alternativas', 'simulados', 'simulado_questoes', 'resultados_simulados'].includes(table)
+                      !['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'].includes(table)
                     ).map((table) => (
                       <div
                         key={table}
