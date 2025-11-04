@@ -31,7 +31,7 @@ export default function SelecionarProva() {
   const handleSelect = (prova: Prova) => {
     selectExam({
       id_prova: prova.id_prova,
-      nome: prova.nome,
+      nome: prova.descricao || `Prova ${prova.id_prova}`,
       descricao: prova.descricao,
       tempo_por_questao: prova.tempo_por_questao ?? null,
     });
@@ -74,10 +74,10 @@ export default function SelecionarProva() {
                   onClick={() => handleSelect(prova)}
                   className="w-full text-left rounded-xl border border-blue-200 focus:ring-2 focus:ring-blue-400 focus:outline-none hover:border-blue-400 transition bg-white p-4 sm:p-5"
                   tabIndex={0}
-                  aria-label={`Selecionar prova ${prova.nome}`}
+                  aria-label={`Selecionar prova ${prova.descricao || prova.id_prova}`}
                 >
                   <h2 className="text-lg sm:text-xl font-semibold text-blue-700">
-                    {prova.nome}
+                    {prova.descricao || `Prova ${prova.id_prova}`}
                   </h2>
                   {prova.descricao ? (
                     <p className="text-gray-600 mt-1">{prova.descricao}</p>

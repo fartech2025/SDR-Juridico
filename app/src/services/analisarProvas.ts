@@ -67,7 +67,7 @@ export async function analisarProvasEQuestoes(): Promise<{
     const simulados: SimuladoPorProva[] = [];
 
     for (const prova of provas) {
-      console.log(`🔍 Analisando prova ID ${prova.id_prova}: ${prova.nome || 'Sem nome'}`);
+      console.log(`🔍 Analisando prova ID ${prova.id_prova}: ${prova.descricao || 'Sem descrição'}`);
       
       // Buscar questões desta prova
       const { data: questoes, error: errorQuestoes } = await supabase
@@ -90,7 +90,7 @@ export async function analisarProvasEQuestoes(): Promise<{
         
         const simulado: SimuladoPorProva = {
           id_prova: prova.id_prova,
-          nome: prova.nome || `Prova ${prova.id_prova}`,
+          nome: prova.descricao || `Prova ${prova.id_prova}`,
           ano: prova.ano,
           tipo: prova.tipo,
           descricao: prova.descricao || `Simulado baseado na prova ${prova.id_prova}`,
