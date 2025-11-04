@@ -4,7 +4,8 @@ export async function testarConexaoBanco() {
   console.log('🔌 Testando conexão com banco real...');
 
   try {
-    const tabelasEssenciais = ['usuarios', 'provas', 'questoes', 'alternativas', 'respostas_usuarios'];
+    // Testar tabelas específicas necessárias
+    const tabelasEssenciais = ['usuarios', 'simulados', 'resultados_simulados', 'simulado_questoes'];
     const resultados: Record<string, any> = {};
 
     for (const tabela of tabelasEssenciais) {
@@ -32,33 +33,36 @@ export async function testarConexaoBanco() {
 }
 
 export async function verificarDadosSimulados() {
-  console.log('🧪 Verificando dados de simulados...');
-
+  console.log("🎯 Verificando dados de simulados...");
+  
   try {
-    const { data: provas, error: errProvas } = await supabase
-      .from('provas')
-      .select('id_prova, ano, descricao, data_aplicacao')
+    // Verificar simulados disponíveis
+    const { data: simulados, error: errSimulados } = await supabase
+      .from('simulados')
+      .select('id_simulado, nome, descricao, data_criacao')
       .limit(5);
 
-    if (errProvas) {
-      console.error('⚠️ Erro ao buscar provas:', errProvas);
-      return { simulados: [], erro: errProvas.message };
+    if (errSimulados) {
+      console.error("❌ Erro ao buscar simulados:", errSimulados);
+      return { simulados: [], erro: errSimulados.message };
     }
 
-    console.log('🔍 Provas encontradas:', provas);
+    console.log("📋 Simulados encontrados:", simulados);
 
-    for (const prova of provas ?? []) {
+    // Verificar se há questões nos simulados
+    for (const simulado of simulados || []) {
       const { count } = await supabase
         .from('questoes')
         .select('*', { count: 'exact', head: true })
         .eq('id_prova', prova.id_prova);
 
-      console.log(`🔎 Prova ${prova.ano}: ${count} questões`);
+      console.log(`📝 Simulado "${simulado.nome}": ${count} questões`);
     }
 
-    return { simulados: provas ?? [], erro: null };
+    return { simulados: simulados || [], erro: null };
+
   } catch (error: any) {
-    console.error('🚨 Erro ao verificar simulados:', error);
+    console.error("💥 Erro ao verificar simulados:", error);
     return { simulados: [], erro: error?.message || 'Erro desconhecido' };
   }
 }

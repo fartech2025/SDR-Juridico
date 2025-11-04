@@ -65,7 +65,7 @@ export async function verificarColunasTabelas(): Promise<{
     }
 
     // Verificar outras tabelas relacionadas
-    const tabelasParaVerificar = ['alternativas', 'simulados', 'simulado_questoes', 'resultados_simulados'];
+    const tabelasParaVerificar = ['alternativas', 'provas', 'questoes', 'resultados_simulados'];
     
     for (const tabela of tabelasParaVerificar) {
       try {

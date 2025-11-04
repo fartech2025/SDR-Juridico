@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
   buscarQuestaoComImagens,
-  buscarSimuladoComQuestoes,
   QuestaoComImagens,
-  SimuladoComQuestoes,
   Imagem,
 } from '../services/questoesService';
+import { SimuladosService, QuestaoCompleta } from '../services/simuladosService';
+
+// Interface temporária para compatibilidade
+interface SimuladoComQuestoes {
+  id_prova: number;
+  nome: string;
+  descricao?: string;
+  questoes: QuestaoCompleta[];
+}
 
 interface QuestaoRendererProps {
   id_questao: number;
@@ -203,8 +210,23 @@ export function SimuladoRenderer({
   const loadSimulado = async () => {
     try {
       setLoading(true);
-      const s = await buscarSimuladoComQuestoes(id_simulado);
-      if (!s) throw new Error('Simulado não encontrado');
+      
+      // Buscar informações do simulado (prova)
+      const simuladoInfo = await SimuladosService.buscarSimulado(id_simulado);
+      if (!simuladoInfo) throw new Error('Simulado não encontrado');
+      
+      // Buscar questões da prova
+      const questoes = await SimuladosService.buscarQuestoesSimulado(id_simulado);
+      if (!questoes || questoes.length === 0) throw new Error('Nenhuma questão encontrada');
+      
+      // Montar objeto simulado
+      const s: SimuladoComQuestoes = {
+        id_prova: simuladoInfo.id_prova,
+        nome: simuladoInfo.nome,
+        descricao: simuladoInfo.descricao,
+        questoes: questoes
+      };
+      
       setSimulado(s);
       setErro(null);
       setQuestaoAtual(0);

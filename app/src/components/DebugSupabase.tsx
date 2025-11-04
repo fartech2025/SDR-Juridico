@@ -121,7 +121,7 @@ export default function DebugSupabase() {
     addLog("🎓 Testando SimuladosService...");
     
     try {
-      const simulados = await SimuladosService.buscarSimuladosPorProvas();
+      const simulados = await SimuladosService.listarSimulados();
       addLog(`📚 Simulados encontrados via service: ${simulados.length}`);
       
       simulados.forEach((sim: any) => {
@@ -131,7 +131,7 @@ export default function DebugSupabase() {
       // Testar estatísticas
       const stats = await SimuladosService.buscarEstatisticasSimulados();
       addLog(`📊 Estatísticas: ${stats.simuladosDisponiveis} simulados, ${stats.totalQuestoes} questões total`);
-      addLog(`� Provas: ${stats.provasDisponiveis.join(', ')}`);
+      addLog(`🎯 Provas: ${stats.provasDisponiveis.join(', ')}`);
       
     } catch (error: any) {
       addLog(`💥 Erro no SimuladosService: ${error.message}`);
@@ -234,7 +234,7 @@ export default function DebugSupabase() {
           if (resultado.provas.existe) {
             addLog(`✅ Tabela provas existe com ${resultado.provas.total} registros`);
             resultado.provas.exemplos?.forEach((prova: any) => {
-              addLog(`   🏛️ Prova ${prova.id_prova}: ${prova.nome || 'Sem nome'} (${prova.ano || 'Sem ano'})`);
+              addLog(`   🏛️ Prova ${prova.id_prova}: ${prova.descricao || 'Sem descrição'} (${prova.ano || 'Sem ano'})`);
             });
           } else {
             addLog(`❌ Tabela provas não existe ou está vazia`);
@@ -247,7 +247,7 @@ export default function DebugSupabase() {
           if (resultado.correlacao.funciona) {
             addLog(`✅ Correlação entre questões e provas FUNCIONA!`);
             resultado.correlacao.exemplos?.forEach((item: any) => {
-              addLog(`   🔗 Questão id_prova ${item.id_prova} → Prova: ${item.provas?.nome}`);
+              addLog(`   🔗 Questão id_prova ${item.id_prova} → Prova: ${item.provas?.descricao}`);
             });
           } else {
             addLog(`❌ Correlação entre questões e provas NÃO FUNCIONA`);

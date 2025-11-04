@@ -578,7 +578,7 @@ export default function DatabaseInspetor() {
           if (resultado.provas.existe) {
             addDebugLog(`✅ Tabela provas existe com ${resultado.provas.total} registros`);
             resultado.provas.exemplos?.forEach((prova: any) => {
-              addDebugLog(`   🏛️ Prova ${prova.id_prova}: ${prova.nome || 'Sem nome'} (${prova.ano || 'Sem ano'})`);
+              addDebugLog(`   🏛️ Prova ${prova.id_prova}: ${prova.descricao || 'Sem descrição'} (${prova.ano || 'Sem ano'})`);
             });
           } else {
             addDebugLog(`❌ Tabela provas não existe ou está vazia`);
@@ -591,7 +591,7 @@ export default function DatabaseInspetor() {
           if (resultado.correlacao.funciona) {
             addDebugLog(`✅ Correlação entre questões e provas FUNCIONA!`);
             resultado.correlacao.exemplos?.forEach((item: any) => {
-              addDebugLog(`   🔗 Questão id_prova ${item.id_prova} → Prova: ${item.provas?.nome}`);
+              addDebugLog(`   🔗 Questão id_prova ${item.id_prova} → Prova: ${item.provas?.descricao}`);
             });
           } else {
             addDebugLog(`❌ Correlação entre questões e provas NÃO FUNCIONA`);
@@ -653,18 +653,18 @@ export default function DatabaseInspetor() {
     addDebugLog("🎓 Testando SimuladosService...");
     
     try {
-      const simulados = await SimuladosService.buscarSimuladosPorProvas();
+      const simulados = await SimuladosService.listarSimulados();
       
       addDebugLog(`✅ Service executado!`);
       addDebugLog(`📊 ${simulados.length} simulados encontrados via service`);
       
       if (simulados.length > 0) {
-        const totalQuestoes = simulados.reduce((sum: number, sim: any) => sum + sim.totalQuestoes, 0);
+        const totalQuestoes = simulados.reduce((sum: number, sim: any) => sum + sim.total_questoes, 0);
         addDebugLog(`📝 Total de questões: ${totalQuestoes}`);
         
         addDebugLog("📋 Primeiros 3 simulados:");
         simulados.slice(0, 3).forEach((sim: any) => {
-          addDebugLog(`   🎓 ${sim.titulo} (${sim.totalQuestoes} questões)`);
+          addDebugLog(`   🎓 ${sim.nome} (${sim.total_questoes} questões)`);
         });
       } else {
         addDebugLog("⚠️ Nenhum simulado foi encontrado pelo service");

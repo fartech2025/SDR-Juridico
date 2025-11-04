@@ -210,7 +210,7 @@ type RawProva = {
 export async function fetchProvas() {
   const { data, error } = await supabase
     .from('provas')
-    .select('id_prova, ano, descricao, data_aplicacao, tempo_por_questao')
+    .select('id_prova, nome, ano, descricao, tempo_por_questao')
     .order('ano', { ascending: false });
 
   if (error) {

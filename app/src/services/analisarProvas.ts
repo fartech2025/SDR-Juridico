@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { SimuladoDoEnem } from './simuladosService';
 
 // Interface para prova
 interface Prova {
@@ -22,14 +23,8 @@ interface Questao {
   dificuldade?: string;
 }
 
-// Interface para simulado baseado em prova
-interface SimuladoPorProva {
-  id_prova: number;
-  nome: string;
-  ano?: number;
-  tipo?: string;
-  descricao?: string;
-  total_questoes: number;
+// Interface estendida de SimuladoDoEnem para análise de provas
+interface SimuladoAnalise extends SimuladoDoEnem {
   areas_conhecimento: string[];
   disciplinas: string[];
   questoes: Questao[];
@@ -37,7 +32,7 @@ interface SimuladoPorProva {
 
 export async function analisarProvasEQuestoes(): Promise<{
   sucesso: boolean;
-  simulados: SimuladoPorProva[];
+  simulados: SimuladoAnalise[];
   erro?: string;
 }> {
   try {
@@ -64,10 +59,10 @@ export async function analisarProvasEQuestoes(): Promise<{
     }
 
     // Agora buscar questões para cada prova
-    const simulados: SimuladoPorProva[] = [];
+    const simulados: SimuladoAnalise[] = [];
 
     for (const prova of provas) {
-      console.log(`🔍 Analisando prova ID ${prova.id_prova}: ${prova.nome || 'Sem nome'}`);
+      console.log(`🔍 Analisando prova ID ${prova.id_prova}: ${prova.descricao || 'Sem descrição'}`);
       
       // Buscar questões desta prova
       const { data: questoes, error: errorQuestoes } = await supabase
@@ -88,13 +83,20 @@ export async function analisarProvasEQuestoes(): Promise<{
         const areas = [...new Set(questoes!.map(q => q.area_conhecimento))].filter(Boolean);
         const disciplinas = [...new Set(questoes!.map(q => q.disciplina))].filter(Boolean);
         
-        const simulado: SimuladoPorProva = {
+        const simulado: SimuladoAnalise = {
+          // Campos de SimuladoDoEnem
           id_prova: prova.id_prova,
-          nome: prova.nome || `Prova ${prova.id_prova}`,
+          id_simulado_virtual: `enem_${prova.ano}`,
+          nome: prova.descricao || `ENEM ${prova.ano}`,
           ano: prova.ano,
-          tipo: prova.tipo,
           descricao: prova.descricao || `Simulado baseado na prova ${prova.id_prova}`,
           total_questoes: totalQuestoes,
+          tempo_por_questao: prova.tempo_por_questao || 180,
+          data_aplicacao: prova.data_aplicacao,
+          data_criacao: new Date().toISOString(),
+          ativo: true,
+          
+          // Campos extras para análise
           areas_conhecimento: areas,
           disciplinas: disciplinas,
           questoes: questoes!

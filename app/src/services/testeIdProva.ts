@@ -30,7 +30,7 @@ export async function testeSimpleIdProva(): Promise<any> {
     // 3. Tentar relacionamento com provas
     const { data: q3, error: e3 } = await supabase
       .from('questoes')
-      .select('id_prova, provas(id_prova, ano, descricao)')
+      .select('id_prova, provas(id_prova, nome)')
       .limit(1);
     
     console.log('\n📚 Com relacionamento provas:', q3);

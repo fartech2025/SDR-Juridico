@@ -1,21 +1,20 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { buscarSimuladosDisponveis } from '../services/questoesService';
-import { supabase } from '../lib/supabaseClient';
-import { ensureUsuarioRegistro } from '../services/supabaseService';
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { buscarSimuladosDisponveis } from "../services/questoesService";
+import { supabase } from "../lib/supabaseClient";
+import { ensureUsuarioRegistro } from "../services/supabaseService";
 
-type Simulado = {
+interface Simulado {
   id_simulado: number;
-  id_prova: number;
   nome: string;
-  descricao?: string | null;
-  total_questoes: number;
-};
+  descricao?: string;
+  data_criacao?: string;
+  simulado_questoes?: Array<{ count: number }>;
+}
 
-type ResultadoSimulado = {
-  id_prova: number;
-  total_respondidas: number;
-  total_acertos: number;
+interface ResultadoSimulado {
+  id_usuario: number;
+  id_simulado: number;
   percentual: number;
 };
 
@@ -26,7 +25,7 @@ interface SimuladosSidebarProps {
 
 export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSidebarProps) {
   const navigate = useNavigate();
-  const [simulados, setSimulados] = useState<Simulado[]>([]);
+  const [simulados, setSimulados] = useState<SimuladoDoEnem[]>([]);
   const [resultados, setResultados] = useState<Map<number, ResultadoSimulado>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,87 +48,54 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
         return;
       }
 
-      const perfil = await ensureUsuarioRegistro(user);
+        // Garantir registro do usuário
+        const perfil = await ensureUsuarioRegistro(user);
+        setUserId(perfil.id_usuario);
 
-      const simuladosDisponiveis = await buscarSimuladosDisponveis();
-      const simuladosFormatados: Simulado[] = simuladosDisponiveis.map((sim) => ({
-        id_simulado: sim.id_simulado,
-        id_prova: sim.id_prova,
-        nome: sim.nome,
-        descricao: sim.descricao,
-        total_questoes: sim.total_questoes,
-      }));
+        // Carregar simulados
+        const simuladosData = await buscarSimuladosDisponveis();
+        setSimulados((simuladosData ?? []) as Simulado[]);
 
-      setSimulados(simuladosFormatados);
+        // Carregar resultados do usuário
+        if (perfil.id_usuario) {
+          const { data: resultadosData } = await supabase
+            .from("resultados_simulados")
+            .select("*")
+            .eq("id_usuario", perfil.id_usuario);
 
-      const { data: respostasData, error: erroRespostas } = await supabase
-        .from('respostas_usuarios')
-        .select('id_questao, correta, questoes:questoes(id_prova)')
-        .eq('id_usuario', perfil.id_usuario);
-
-      if (erroRespostas) {
-        console.error('Erro ao buscar respostas do usuário:', erroRespostas);
-        return;
+          const resultadosMap = new Map<number, ResultadoSimulado>();
+          (resultadosData ?? []).forEach((r: ResultadoSimulado) => {
+            resultadosMap.set(r.id_simulado, r);
+          });
+          setResultados(resultadosMap);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Erro ao buscar simulados");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const agregados = new Map<number, ResultadoSimulado>();
+    carregarDados();
+  }, []);
 
-      (respostasData ?? []).forEach((linha: any) => {
-        const idProva = linha.questoes?.id_prova;
-        if (!idProva) return;
-
-        const bucket = agregados.get(idProva) ?? {
-          id_prova: idProva,
-          total_respondidas: 0,
-          total_acertos: 0,
-          percentual: 0,
-        };
-
-        bucket.total_respondidas += 1;
-        if (linha.correta) bucket.total_acertos += 1;
-
-        agregados.set(idProva, bucket);
-      });
-
-      agregados.forEach((bucket, idProva) => {
-        const percentual = bucket.total_respondidas
-          ? (bucket.total_acertos / bucket.total_respondidas) * 100
-          : 0;
-
-        agregados.set(idProva, { ...bucket, percentual: Number(percentual.toFixed(2)) });
-      });
-
-      setResultados(
-        new Map(
-          Array.from(agregados.entries()).map(([idProva, resultado]) => [
-            idProva,
-            resultado,
-          ])
-        )
-      );
-    } catch (err) {
-      console.error('Erro ao carregar simulados:', err);
-      setError('Erro ao buscar simulados');
-    } finally {
-      setLoading(false);
-    }
+  const handleIniciarSimulado = (simulado: SimuladoDoEnem) => {
+    navigate(`/resolver-simulado/${simulado.id_prova}`);
+    onClose?.();
   };
 
-  const handleIniciarSimulado = (simulado: Simulado) => {
+  const handleRefazerSimulado = (simulado: Simulado) => {
     navigate(`/resolver-simulado/${simulado.id_simulado}`);
     onClose?.();
   };
 
-  const handleVerResumo = (simulado: Simulado) => {
-    const resultado = resultados.get(simulado.id_prova);
-    if (!resultado) return;
-
-    alert(
-      `Simulado: ${simulado.nome}\n` +
-        `Questões respondidas: ${resultado.total_respondidas}/${simulado.total_questoes}\n` +
-        `Acertos: ${resultado.total_acertos}\n` +
-        `Aproveitamento: ${resultado.percentual.toFixed(1)}%`
-    );
+  const handleVerResultado = (simulado: Simulado) => {
+    // Navegar para página de resultado (poderia ser um modal ou página separada)
+    const resultado = resultados.get(simulado.id_simulado);
+    if (resultado) {
+      alert(`Resultado: ${resultado.percentual}% - ${new Date(resultado.data_conclusao).toLocaleDateString('pt-BR')}`);
+    }
   };
 
   return (
@@ -157,45 +123,57 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
         </button>
       </div>
 
-      <div className="p-4 space-y-4">
-        {loading ? (
-          <p className="text-sm text-slate-400 text-center">Carregando simulados...</p>
-        ) : error ? (
-          <p className="text-sm text-red-400 text-center">{error}</p>
-        ) : simulados.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center">Nenhum simulado disponível</p>
-        ) : (
-          simulados.map((simulado) => {
-            const resultado = resultados.get(simulado.id_prova);
-            const progresso = resultado
-              ? Math.min(
-                  100,
-                  (resultado.total_respondidas / simulado.total_questoes) * 100 || 0
-                )
-              : 0;
-
-            return (
-              <div
-                key={simulado.id_simulado}
-                className="rounded-xl border border-gray-800 bg-gray-900/60 p-4 space-y-3"
-              >
-                <div>
-                  <p className="font-semibold text-slate-100 leading-tight">{simulado.nome}</p>
-                  {simulado.descricao && (
-                    <p className="text-xs text-slate-400 mt-1">{simulado.descricao}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>{simulado.total_questoes} questões</span>
-                  <span>{progresso.toFixed(0)}% concluído</span>
-                </div>
-                <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+        {/* Content */}
+        <div className="p-4 space-y-2">
+          {loading ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded-lg">
+              {error}
+            </div>
+          ) : simulados.length === 0 ? (
+            <div className="text-gray-400 text-sm p-3 text-center">
+              Nenhum simulado disponível
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {simulados.map((simulado) => {
+                const resultado = resultados.get(simulado.id_simulado);
+                const temResultado = !!resultado;
+                
+                return (
                   <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
-                    style={{ width: `${progresso}%` }}
-                  />
-                </div>
+                    key={simulado.id_simulado}
+                    className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-blue-600 transition"
+                  >
+                    {collapsed ? (
+                      <div className="text-xs font-bold text-center truncate">
+                        {simulado.nome.slice(0, 2).toUpperCase()}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="font-semibold text-sm text-blue-300 truncate mb-1">
+                          {simulado.nome}
+                        </div>
+                        {simulado.descricao && (
+                          <div className="text-xs text-gray-400 truncate mb-2">
+                            {simulado.descricao}
+                          </div>
+                        )}
+                        
+                        {/* Status */}
+                        {temResultado && (
+                          <div className="mb-2 p-2 bg-green-900/20 rounded border border-green-700/30">
+                            <div className="text-xs text-green-300 font-semibold">
+                              ✓ Respondido: {resultado.percentual}%
+                            </div>
+                            <div className="text-xs text-green-400">
+                              {new Date(resultado.data_conclusao).toLocaleDateString('pt-BR')}
+                            </div>
+                          </div>
+                        )}
 
                 <div className="flex gap-2">
                   <button

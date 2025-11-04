@@ -11,9 +11,8 @@ interface TableStatus {
 
 const TABLES = [
   'usuarios',
-  'simulados',
+  'provas',
   'questoes',
-  'simulado_questoes',
   'questoes_imagens',
   'alternativas',
   'alternativas_imagens',
