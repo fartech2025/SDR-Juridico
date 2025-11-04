@@ -58,7 +58,7 @@ export default function DatabaseMonitor() {
     const startTime = performance.now();
     
     try {
-      const { data, error, status } = await supabase
+      const { data, error, count } = await supabase
         .from(tableName)
         .select('*', { count: 'exact', head: true });
 
@@ -77,7 +77,7 @@ export default function DatabaseMonitor() {
       return {
         name: tableName,
         status: 'connected',
-        rowCount: data?.length || 0,
+        rowCount: count || 0,
         responseTime,
       };
     } catch (err: any) {

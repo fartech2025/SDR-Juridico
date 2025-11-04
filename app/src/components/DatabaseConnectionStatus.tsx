@@ -41,7 +41,7 @@ export default function DatabaseConnectionStatus() {
     for (const tableName of TABLES) {
       const startTime = performance.now();
       try {
-        const { data, error, status } = await supabase
+        const { data, error, count } = await supabase
           .from(tableName)
           .select('*', { count: 'exact', head: true });
 
@@ -58,7 +58,7 @@ export default function DatabaseConnectionStatus() {
           results.push({
             name: tableName,
             status: 'connected',
-            rowCount: typeof status === 'number' ? status : (data?.length || 0),
+            rowCount: count || 0,
             responseTime
           });
         }
