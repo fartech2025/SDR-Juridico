@@ -239,19 +239,21 @@ export async function buscarSimuladoComQuestoes(
     if (erroSimulado && erroSimulado.code !== 'PGRST116') throw erroSimulado;
     if (!simulado) return null;
 
-    // Depois busca as questões do simulado
+    // Depois busca as questões do simulado (ordenadas)
     const { data: questoes, error: erroQuestoes } = await supabase
       .from('simulado_questoes')
-      .select('id_questao')
-      .eq('id_simulado', id_simulado);
+      .select('id_questao, ordem')
+      .eq('id_simulado', id_simulado)
+      .order('ordem', { ascending: true });
 
     if (erroQuestoes) throw erroQuestoes;
 
-    // Busca cada questão com suas imagens
+    // Busca cada questão com suas imagens em paralelo para melhor performance
     const questoesComImagens: QuestaoComImagens[] = [];
-    for (const q of questoes || []) {
-      const questao = await buscarQuestaoComImagens(q.id_questao);
-      if (questao) questoesComImagens.push(questao);
+    if (questoes && questoes.length > 0) {
+      const promises = questoes.map(q => buscarQuestaoComImagens(q.id_questao));
+      const resultados = await Promise.all(promises);
+      questoesComImagens.push(...resultados.filter(q => q !== null) as QuestaoComImagens[]);
     }
 
     return {
@@ -269,18 +271,13 @@ export async function buscarSimuladoComQuestoes(
  */
 export async function buscarSimuladosDisponveis() {
   try {
+    // Usar VIEW que já faz o count corretamente
     const { data, error } = await supabase
-      .from('simulados')
-      .select(`
-        id_simulado,
-        nome,
-        descricao,
-        data_criacao,
-        simulado_questoes (count)
-      `);
+      .from('vw_simulados_com_questoes')
+      .select('*');
 
     if (error) throw error;
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Erro ao buscar simulados:', error);
     throw error;
