@@ -1,0 +1,73 @@
+
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                                                                             ║
+║                    🔴 ERRO: pg_foreign_keys não encontrada                 ║
+║                                                                             ║
+║                          👇 COMECE AQUI 👇                                 ║
+║                                                                             ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+
+
+📍 ERRO:
+   Página: http://localhost:5173/documentacao-relacionamentos
+   Mensagem: "Função pg_foreign_keys não encontrada"
+
+
+⏱️ QUANTO TEMPO VOCÊ TEM?
+
+   ⚡ 2 MINUTOS?
+      → Abra: SQL_CRIAR_FUNCAO_PG_FOREIGN_KEYS.sql
+      → Copie tudo
+      → Cole no SQL Editor do Supabase (ou http://localhost:54323)
+      → Clique RUN
+      → Pronto! (F5 para recarregar)
+
+   ⏱️ 5-10 MINUTOS?
+      → Abra: INDICE_ERRO_PG_FOREIGN_KEYS.md
+      → Escolha seu caminho
+      → Siga as instruções
+
+   📖 QUER ENTENDER TUDO?
+      → Abra: INSTRUCOES_CRIAR_FUNCAO_PG_FOREIGN_KEYS.md
+      → Leia passo-a-passo
+      → Teste como instruído
+
+
+📚 SEUS 4 ARQUIVOS PRINCIPAIS:
+
+   1. INDICE_ERRO_PG_FOREIGN_KEYS.md
+      ├─ Índice de navegação
+      ├─ 4 caminhos diferentes
+      └─ ⭐ RECOMENDADO COMEÇAR AQUI
+
+   2. SQL_CRIAR_FUNCAO_PG_FOREIGN_KEYS.sql
+      ├─ SQL pronto para copiar
+      └─ Basta colar no SQL Editor
+
+   3. INSTRUCOES_CRIAR_FUNCAO_PG_FOREIGN_KEYS.md
+      ├─ Guia passo-a-passo
+      ├─ 3 passos principais
+      └─ Troubleshooting incluído
+
+   4. STATUS_ERRO_PG_FOREIGN_KEYS_RESOLVIDO.md
+      ├─ Resumo completo
+      ├─ Quick start (cloud e local)
+      └─ Troubleshooting matrix
+
+
+🚀 PRÓXIMA AÇÃO:
+
+   Escolha UMA das opções acima e execute!
+
+   Se preferir o caminho mais rápido:
+   → Abra SQL_CRIAR_FUNCAO_PG_FOREIGN_KEYS.sql
+
+   Se preferir estar bem informado:
+   → Abra INDICE_ERRO_PG_FOREIGN_KEYS.md
+
+═════════════════════════════════════════════════════════════════════════════
+
+✨ Após resolver, você terá acesso total à documentação de relacionamentos!
+
+═════════════════════════════════════════════════════════════════════════════
+
