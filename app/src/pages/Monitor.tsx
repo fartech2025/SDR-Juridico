@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import BasePage from '../components/BasePage';
+import DatabaseConnectionStatus from '../components/DatabaseConnectionStatus';
 
 type CheckResult = {
   ok: boolean;
@@ -93,6 +94,9 @@ export default function Monitor() {
     <BasePage>
       <div className="w-full max-w-5xl mx-auto p-6 space-y-6">
         <h1 className="text-2xl font-bold">📊 Monitoramento do App</h1>
+
+        {/* Status de Conexão com Banco de Dados */}
+        <DatabaseConnectionStatus />
 
         <section className="grid sm:grid-cols-2 gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
           <Info label="VITE_SUPABASE_URL" value={env.VITE_SUPABASE_URL} />
