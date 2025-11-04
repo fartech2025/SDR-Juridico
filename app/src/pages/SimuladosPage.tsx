@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import BasePage from '../components/BasePage';
 import { supabase } from '../lib/supabaseClient';
-import { SimuladosService, SimuladoDoEnem } from '../services/simuladosService';
+import { SimuladosService, type SimuladoDoEnem } from '../services/simuladosService';
 import { ensureUsuarioRegistro } from '../services/supabaseService';
 import {
   BookOpenIcon,
@@ -12,24 +12,18 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 
-interface Simulado {
-  id_simulado: number;
-  nome: string;
-  descricao?: string;
-  data_criacao: string;
-  total_questoes?: number;
-}
-
-interface ResultadoSimulado {
-  id_simulado: number;
-  percentual_acertos: number;
-  data_conclusao: string;
-}
+type ResultadoAgrupado = {
+  id_prova: number;
+  total_respondidas: number;
+  total_acertos: number;
+  percentual: number;
+  ultima_resposta?: string | null;
+};
 
 export default function SimuladosPage() {
   const navigate = useNavigate();
   const [simulados, setSimulados] = useState<SimuladoDoEnem[]>([]);
-  const [resultados, setResultados] = useState<Map<number, ResultadoSimulado>>(new Map());
+  const [resultados, setResultados] = useState<Map<number, ResultadoAgrupado>>(new Map());
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
@@ -47,115 +41,86 @@ export default function SimuladosPage() {
       const { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
       if (!user) {
-        setErro('Usuário não autenticado');
+        setErro('UsuÃ¡rio nÃ£o autenticado');
         return;
       }
 
-      const perfil = await ensureUsuarioRegistro(userData.user);
-      setUsuario(perfil);
+      const perfil = await ensureUsuarioRegistro(user);
+      setUsuarioId(perfil.id_usuario);
 
-      // Buscar simulados
-      const { data: simuladosData, error: erroSimulados } = await supabase
-        .from('simulados')
-        .select('id_simulado, nome, descricao, data_criacao');
+      const simuladosDisponiveis = await SimuladosService.listarSimulados();
+      setSimulados(simuladosDisponiveis);
 
-      if (erroSimulados) throw erroSimulados;
-
-      // Contar questões em cada simulado
-      const simuladosComContagem = await Promise.all(
-        (simuladosData || []).map(async (sim) => {
-          const { count } = await supabase
-            .from('simulado_questoes')
-            .select('*', { count: 'exact', head: true })
-            .eq('id_simulado', sim.id_simulado);
-
-          return {
-            ...sim,
-            total_questoes: count || 0,
-          };
-        })
-      );
-
-      setSimulados(simuladosComContagem);
-
-      // Buscar resultados do usuário
-      const { data: resultadosData, error: erroResultados } = await supabase
-        .from('resultados_simulados')
-        .select('id_simulado, percentual_acertos, data_conclusao')
+      const { data: respostasData, error: respostasError } = await supabase
+        .from('respostas_usuarios')
+        .select('id_questao, correta, data_resposta, questoes:questoes(id_prova)')
         .eq('id_usuario', perfil.id_usuario);
 
-      if (erroRespostas) {
-        console.error('Erro ao buscar respostas do usuário:', erroRespostas);
+      if (respostasError) {
+        console.error('Erro ao buscar respostas do usuÃ¡rio:', respostasError);
         return;
       }
 
-      const agregados = new Map<number, ResultadoSimulado>();
+      const agregados = new Map<number, ResultadoAgrupado>();
 
       (respostasData ?? []).forEach((linha: any) => {
         const idProva = linha.questoes?.id_prova;
         if (!idProva) return;
 
-        const bucket = agregados.get(idProva) ?? {
-          id_prova: idProva,
-          total_respondidas: 0,
-          total_acertos: 0,
-          percentual: 0,
-        };
+        const bucket =
+          agregados.get(idProva) ?? {
+            id_prova: idProva,
+            total_respondidas: 0,
+            total_acertos: 0,
+            percentual: 0,
+            ultima_resposta: null as string | null,
+          };
 
         bucket.total_respondidas += 1;
-        if (linha.correta) {
-          bucket.total_acertos += 1;
+        if (linha.correta) bucket.total_acertos += 1;
+
+        const dataResposta = linha.data_resposta as string | null;
+        if (!bucket.ultima_resposta || (dataResposta && dataResposta > bucket.ultima_resposta)) {
+          bucket.ultima_resposta = dataResposta;
         }
 
         agregados.set(idProva, bucket);
       });
 
       agregados.forEach((bucket, idProva) => {
-        const totalQuestoes = simuladosFormatados.find((s) => s.id_prova === idProva)?.total_questoes ?? 0;
-        const percentual = bucket.total_respondidas
-          ? (bucket.total_acertos / bucket.total_respondidas) * 100
-          : 0;
+        const totalQuestoes =
+          simuladosDisponiveis.find((s) => s.id_prova === idProva)?.total_questoes ?? 0;
+        const percentual =
+          bucket.total_respondidas > 0
+            ? Number(((bucket.total_acertos / bucket.total_respondidas) * 100).toFixed(2))
+            : 0;
 
-        agregados.set(idProva, {
-          ...bucket,
-          percentual: Number(percentual.toFixed(2)),
-        });
+        bucket.percentual = percentual;
+        if (!bucket.total_respondidas && totalQuestoes) {
+          bucket.percentual = 0;
+        }
       });
 
-      setResultados(
-        new Map(
-          Array.from(agregados.entries()).map(([idProva, resultado]) => [
-            idProva,
-            resultado,
-          ])
-        )
-      );
-    } catch (err) {
-      console.error('Erro ao carregar simulados:', err);
+      setResultados(new Map(agregados.entries()));
+    } catch (error) {
+      console.error('Erro ao carregar simulados:', error);
       setErro('Erro ao carregar simulados. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  const simuladosFiltrados = simulados.filter((sim) => {
-    const temResultado = resultados.has(sim.id_simulado);
-    if (filtro === 'nao-respondidos') return !temResultado;
-    if (filtro === 'respondidos') return temResultado;
-    return true;
-  });
+  const simuladosFiltrados = useMemo(() => {
+    return simulados.filter((simulado) => {
+      const temResultado = resultados.has(simulado.id_prova);
+      if (filtro === 'nao-respondidos') return !temResultado;
+      if (filtro === 'respondidos') return temResultado;
+      return true;
+    });
+  }, [simulados, resultados, filtro]);
 
-  const iniciarSimulado = (idProva: number) => {
-    navigate(`/resolver-simulado/${idProva}`);
-  };
-
-  const formatarData = (data: string) => {
-    if (!data) return 'Data não informada';
-    try {
-      return new Date(data).toLocaleDateString('pt-BR');
-    } catch {
-      return data;
-    }
+  const iniciarSimulado = (idSimulado: number) => {
+    navigate(`/resolver-simulado/${idSimulado}`);
   };
 
   if (loading) {
@@ -163,7 +128,7 @@ export default function SimuladosPage() {
       <BasePage>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center space-y-4">
-            <div className="animate-spin text-4xl">⏳</div>
+            <div className="animate-spin text-4xl">â³</div>
             <p className="text-slate-300">Carregando simulados...</p>
           </div>
         </div>
@@ -181,7 +146,7 @@ export default function SimuladosPage() {
               Simulados ENEM
             </h1>
             <p className="ds-muted">
-              Selecione um simulado baseado nas provas oficiais e acompanhe seu desempenho.
+              Monte sua rotina resolvendo provas anteriores e acompanhe o seu progresso.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -195,7 +160,7 @@ export default function SimuladosPage() {
               onClick={() => setFiltro('nao-respondidos')}
               className={`btn ${filtro === 'nao-respondidos' ? 'btn-primary' : 'btn-secondary'}`}
             >
-              Não respondidos
+              NÃ£o respondidos
             </button>
             <button
               onClick={() => setFiltro('respondidos')}
@@ -214,128 +179,123 @@ export default function SimuladosPage() {
 
         {!erro && simuladosFiltrados.length === 0 && (
           <div className="glass-card p-8 text-center space-y-4">
-            <div className="text-5xl">📚</div>
+            <div className="text-5xl">ðŸ“š</div>
             <p className="text-slate-300">
               {filtro === 'respondidos'
-                ? 'Você ainda não respondeu nenhum simulado. Comece agora!'
-                : 'Nenhum simulado disponível'}
+                ? 'VocÃª ainda nÃ£o respondeu nenhum simulado. Comece agora!'
+                : 'Nenhum simulado disponÃ­vel no momento.'}
             </p>
             {filtro === 'respondidos' && (
               <button
                 onClick={() => setFiltro('nao-respondidos')}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
-                Ver simulados disponíveis
+                Ver simulados disponÃ­veis
               </button>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {simuladosFiltrados.map((simulado) => {
-              const resultado = resultados.get(simulado.id_simulado);
-              const percentualCores = resultado
-                ? resultado.percentual_acertos >= 70
-                  ? 'from-green-500 to-emerald-600'
-                  : resultado.percentual_acertos >= 50
-                  ? 'from-yellow-500 to-amber-600'
-                  : 'from-red-500 to-rose-600'
-                : 'from-blue-500 to-purple-600';
+        )}
 
-              return (
-                <div
-                  key={simulado.id_simulado}
-                  className="group relative overflow-hidden rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 hover:border-slate-600 transition-all hover:shadow-xl hover:shadow-blue-500/20"
-                >
-                  {/* Gradient background */}
-                  <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br ${percentualCores}`} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {simuladosFiltrados.map((simulado) => {
+            const resultado = resultados.get(simulado.id_prova);
+            const progresso = resultado
+              ? Math.min(
+                  100,
+                  (resultado.total_respondidas / simulado.total_questoes) * 100 || 0
+                )
+              : 0;
 
-                  {/* Conteúdo */}
-                  <div className="relative p-6 space-y-4 h-full flex flex-col">
-                    {/* Cabeçalho */}
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-bold text-slate-100 line-clamp-2">
-                        {simulado.nome}
-                      </h3>
-                      {simulado.descricao && (
-                        <p className="text-sm text-slate-400 line-clamp-2">
-                          {simulado.descricao}
-                        </p>
-                      )}
+            const badgeClasse =
+              resultado && resultado.percentual >= 70
+                ? 'from-green-500/20 to-emerald-500/10 border-green-400/40 text-green-200'
+                : resultado && resultado.percentual >= 50
+                ? 'from-yellow-500/20 to-amber-500/10 border-yellow-400/40 text-yellow-200'
+                : 'from-blue-500/20 to-indigo-500/10 border-blue-400/40 text-blue-200';
+
+            return (
+              <div key={simulado.id_simulado} className="glass-card p-6 space-y-4 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/0 via-slate-900/10 to-blue-900/5 pointer-events-none" />
+
+                <div className="flex items-start gap-3 relative">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <BookOpenIcon className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div className="space-y-1 flex-1">
+                    <h2 className="text-xl font-semibold text-slate-100">{simulado.nome}</h2>
+                    {simulado.descricao && (
+                      <p className="text-sm text-slate-400">{simulado.descricao}</p>
+                    )}
+                    <div className="text-xs text-slate-500 flex gap-3">
+                      <span>Ano: {simulado.ano}</span>
+                      <span>QuestÃµes: {simulado.total_questoes}</span>
                     </div>
+                  </div>
+                </div>
 
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-3 text-sm relative">
                   <div className="flex items-center gap-2 text-slate-300">
                     <CheckCircleIcon className="w-5 h-5 text-green-400" />
-                    <span>{simulado.total_questoes} questões</span>
+                    <span>{simulado.total_questoes} questÃµes</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-300">
                     <ClockIcon className="w-5 h-5 text-yellow-400" />
                     <span>
                       {simulado.tempo_por_questao
-                        ? `${simulado.tempo_por_questao} seg/questão`
+                        ? `${simulado.tempo_por_questao} seg/questÃ£o`
                         : 'Tempo livre'}
                     </span>
                   </div>
                 </div>
 
-                    {/* Resultado ou CTA */}
-                    <div className="mt-auto pt-4 border-t border-slate-700">
-                      {resultado ? (
-                        <div className="space-y-3">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-slate-100">
-                              {Math.round(resultado.percentual_acertos)}%
-                            </div>
-                            <div className="text-xs text-slate-400">
-                              {formatarData(resultado.data_conclusao)}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => iniciarSimulado(simulado.id_simulado)}
-                            className="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                          >
-                            <SparklesIcon className="w-4 h-4" />
-                            Refazer
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => iniciarSimulado(simulado.id_simulado)}
-                          className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white transition-all font-semibold flex items-center justify-center gap-2 group/btn"
-                        >
-                          <span>Iniciar</span>
-                          <ChevronRightIcon className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                        </button>
-                      )}
-                    </div>
+                <div className="space-y-3 relative">
+                  <div className="flex items-center justify-between text-sm text-slate-400">
+                    <span>Seu progresso</span>
+                    <span>{progresso.toFixed(0)}%</span>
                   </div>
+                  <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+                      style={{ width: `${progresso}%` }}
+                    />
+                  </div>
+                  {resultado && (
+                    <div className={`px-3 py-2 rounded-lg border text-sm bg-gradient-to-r ${badgeClasse}`}>
+                      Aproveitamento: {resultado.percentual.toFixed(1)}% â€¢ Respondidas{' '}
+                      {resultado.total_respondidas}/{simulado.total_questoes}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
 
-        {/* Stats */}
-        {simulados.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-8 border-t border-slate-700">
-            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-              <p className="text-sm text-slate-400">Total de simulados</p>
-              <p className="text-2xl font-bold text-slate-100">{simulados.length}</p>
-            </div>
-            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-              <p className="text-sm text-slate-400">Respondidos</p>
-              <p className="text-2xl font-bold text-green-400">{resultados.size}</p>
-            </div>
-            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-              <p className="text-sm text-slate-400">A responder</p>
-              <p className="text-2xl font-bold text-blue-400">
-                {simulados.length - resultados.size}
-              </p>
-            </div>
+                <div className="flex gap-3 relative">
+                  <button
+                    onClick={() => iniciarSimulado(simulado.id_simulado)}
+                    className="flex-1 inline-flex items-center justify-center gap-2 btn btn-primary"
+                  >
+                    Iniciar
+                    <ChevronRightIcon className="w-4 h-4" />
+                  </button>
+                  <Link to={`/provas/${simulado.id_simulado}`} className="btn btn-secondary flex-1 text-center">
+                    Ver detalhes
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <footer className="glass-card p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <SparklesIcon className="w-6 h-6 text-blue-300" />
+            <span className="text-slate-300">
+              {usuarioId
+                ? `Progresso sincronizado com o usuÃ¡rio #${usuarioId}.`
+                : 'Acesse sua conta para salvar o progresso.'}
+            </span>
           </div>
           <Link to="/dashboard" className="btn btn-secondary inline-flex items-center gap-2">
             <ChartIcon />
-            Ver estatísticas
+            Ver estatÃ­sticas
           </Link>
         </footer>
       </div>
@@ -345,19 +305,9 @@ export default function SimuladosPage() {
 
 function ChartIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-5 h-5"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3 13.5l6 6 8.25-13.5"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.5l6 6 8.25-13.5" />
     </svg>
   );
 }
+

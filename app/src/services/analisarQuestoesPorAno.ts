@@ -1,17 +1,15 @@
 import { supabase } from '../lib/supabaseClient';
 
-// Interface para questão
 interface Questao {
   id_questao: number;
-  ano: number;
-  area_conhecimento: string;
-  disciplina: string;
+  id_prova: number;
+  ano: number | null;
   enunciado: string;
-  gabarito: string;
-  dificuldade?: string;
+  dificuldade?: string | null;
+  tema?: string | null;
+  subtemas?: string[];
 }
 
-// Interface para simulado baseado em ano
 interface SimuladoPorAno {
   ano: number;
   totalQuestoes: number;
@@ -26,73 +24,91 @@ export async function analisarQuestoesPorAno(): Promise<{
   erro?: string;
 }> {
   try {
-    console.log('🔍 Analisando questões por ano...');
-    
-    // Buscar todas as questões com informações básicas
+    console.log('[INFO] Analisando questões por ano...');
+
     const { data: questoes, error } = await supabase
       .from('questoes')
-      .select('id_questao, ano, area_conhecimento, disciplina, enunciado, gabarito, dificuldade')
-      .order('ano', { ascending: false });
+      .select(`
+        id_questao,
+        id_prova,
+        enunciado,
+        dificuldade,
+        provas:provas ( ano ),
+        temas:temas ( nome_tema ),
+        questoes_subtemas (
+          subtemas ( nome_subtema )
+        )
+      `);
 
     if (error) {
       throw new Error(`Erro ao buscar questões: ${error.message}`);
     }
 
-    if (!questoes || questoes.length === 0) {
+    if (!questoes?.length) {
       return {
         sucesso: true,
         simulados: [],
-        erro: 'Nenhuma questão encontrada'
+        erro: 'Nenhuma questão encontrada',
       };
     }
 
-    // Agrupar questões por ano
-    const questoesPorAno: { [ano: number]: Questao[] } = {};
-    
-    questoes.forEach((questao: any) => {
-      const ano = questao.ano;
-      if (!questoesPorAno[ano]) {
-        questoesPorAno[ano] = [];
-      }
-      questoesPorAno[ano].push(questao);
-    });
+    const questoesNormalizadas: Questao[] = (questoes ?? []).map((questao: any) => ({
+      id_questao: questao.id_questao,
+      id_prova: questao.id_prova,
+      ano: questao.provas?.ano ?? null,
+      enunciado: questao.enunciado,
+      dificuldade: questao.dificuldade ?? null,
+      tema: questao.temas?.nome_tema ?? null,
+      subtemas: (questao.questoes_subtemas ?? [])
+        .map((rel: any) => rel?.subtemas?.nome_subtema)
+        .filter((nome: string | null | undefined): nome is string => Boolean(nome)),
+    }));
 
-    // Criar simulados baseados nos anos
-    const simulados: SimuladoPorAno[] = Object.keys(questoesPorAno)
-      .map(ano => parseInt(ano))
-      .sort((a, b) => b - a) // Ordem decrescente (mais recente primeiro)
-      .map(ano => {
-        const questoesDoAno = questoesPorAno[ano];
-        
-        // Extrair áreas e disciplinas únicas
-        const areas = [...new Set(questoesDoAno.map(q => q.area_conhecimento))].filter(Boolean);
-        const disciplinas = [...new Set(questoesDoAno.map(q => q.disciplina))].filter(Boolean);
-        
+    const agrupadoPorAno = questoesNormalizadas.reduce<Map<number, Questao[]>>((acc, questao) => {
+      if (questao.ano === null || questao.ano === undefined) {
+        return acc;
+      }
+
+      const bucket = acc.get(questao.ano) ?? [];
+      bucket.push(questao);
+      acc.set(questao.ano, bucket);
+      return acc;
+    }, new Map());
+
+    const simulados: SimuladoPorAno[] = Array.from(agrupadoPorAno.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([ano, lista]) => {
+        const areas = [...new Set(lista.map(q => q.tema))].filter(
+          (value): value is string => Boolean(value)
+        );
+        const disciplinas = [
+          ...new Set(lista.flatMap(q => q.subtemas ?? [])),
+        ].filter((value): value is string => Boolean(value));
+
         return {
           ano,
-          totalQuestoes: questoesDoAno.length,
+          totalQuestoes: lista.length,
           areas,
           disciplinas,
-          questoes: questoesDoAno
+          questoes: lista,
         };
       });
 
-    console.log(`✅ Encontrados ${simulados.length} simulados (por ano)`);
+    console.log(`[INFO] Encontrados ${simulados.length} simulados (por ano)`);
     simulados.forEach(sim => {
-      console.log(`📅 ${sim.ano}: ${sim.totalQuestoes} questões`);
+      console.log(`[INFO] ${sim.ano}: ${sim.totalQuestoes} questões`);
     });
 
     return {
       sucesso: true,
-      simulados
+      simulados,
     };
-
   } catch (error: any) {
-    console.error('❌ Erro ao analisar questões:', error);
+    console.error('[WARN] Erro ao analisar questões:', error);
     return {
       sucesso: false,
       simulados: [],
-      erro: error.message
+      erro: error?.message ?? 'Erro desconhecido',
     };
   }
 }
@@ -104,44 +120,43 @@ export async function criarSimuladosVirtuais(): Promise<{
 }> {
   try {
     const analise = await analisarQuestoesPorAno();
-    
+
     if (!analise.sucesso) {
       return {
         sucesso: false,
         simuladosCriados: [],
-        erro: analise.erro
+        erro: analise.erro,
       };
     }
 
-    // Criar simulados virtuais baseados nos anos
     const simuladosVirtuais = analise.simulados.map(simulado => ({
       id_simulado: `enem_${simulado.ano}`,
       nome: `ENEM ${simulado.ano}`,
       descricao: `Simulado completo do ENEM ${simulado.ano} com ${simulado.totalQuestoes} questões`,
       ano: simulado.ano,
       tipo: 'completo',
-      duracao_minutos: 300, // 5 horas como o ENEM real
+      duracao_minutos: 300,
       total_questoes: simulado.totalQuestoes,
       areas_conhecimento: simulado.areas,
       disciplinas: simulado.disciplinas,
       data_criacao: new Date().toISOString(),
       ativo: true,
-      questoes: simulado.questoes.map(q => q.id_questao)
+      questoes: simulado.questoes.map(q => q.id_questao),
     }));
 
-    console.log(`✅ Criados ${simuladosVirtuais.length} simulados virtuais`);
+    console.log(`[INFO] Criados ${simuladosVirtuais.length} simulados virtuais`);
 
     return {
       sucesso: true,
-      simuladosCriados: simuladosVirtuais
+      simuladosCriados: simuladosVirtuais,
     };
-
   } catch (error: any) {
-    console.error('❌ Erro ao criar simulados virtuais:', error);
+    console.error('[WARN] Erro ao criar simulados virtuais:', error);
     return {
       sucesso: false,
       simuladosCriados: [],
-      erro: error.message
+      erro: error?.message ?? 'Erro desconhecido',
     };
   }
 }
+

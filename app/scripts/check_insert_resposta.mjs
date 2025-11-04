@@ -62,7 +62,7 @@ async function main() {
 
   // inserir resposta de teste
   // alternativa_marcada é CHAR(1) na schema; usar um único caractere de teste
-  const altChar = 'Z';
+  const altChar = 'A';
   const uniqueTimestamp = new Date().toISOString();
   const payload = [{
     id_usuario: userId,

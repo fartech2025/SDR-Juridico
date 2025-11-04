@@ -13,11 +13,12 @@ const TABLES = [
   'usuarios',
   'provas',
   'questoes',
-  'questoes_imagens',
   'alternativas',
-  'alternativas_imagens',
-  'resultados_simulados',
-  'resultados_questoes'
+  'imagens',
+  'respostas_usuarios',
+  'resultados_usuarios',
+  'resultados_por_tema',
+  'resultados_por_dificuldade'
 ];
 
 export default function DatabaseConnectionStatus() {

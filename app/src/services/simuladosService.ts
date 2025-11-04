@@ -1,21 +1,18 @@
 import { supabase } from '../lib/supabaseClient';
 
-// Interface para simulado baseado em prova
-export interface SimuladoPorProva {
-  id_simulado: string;
+export interface SimuladoDoEnem {
+  id_simulado: number;
   id_prova: number;
   nome: string;
   ano: number;
-  cor_caderno?: string;
-  descricao?: string;
+  descricao: string | null;
   total_questoes: number;
-  data_aplicacao?: string;
-  tempo_por_questao?: number;
+  tempo_por_questao: number | null;
+  data_aplicacao: string | null;
   data_criacao: string;
   ativo: boolean;
 }
 
-// Interface para questão completa com alternativas
 export interface QuestaoCompleta {
   id_questao: number;
   id_prova: number;
@@ -23,31 +20,15 @@ export interface QuestaoCompleta {
   enunciado: string;
   dificuldade: string | null;
   tem_imagem: boolean;
-  nr_questao: number;
+  nr_questao: number | null;
   peso_dificuldade: number | null;
-  alternativas: Alternativa[];
-}
-
-export interface Alternativa {
-  id_alternativa: number;
-  texto: string;
-  letra: string;
-  correta?: boolean;
-}
-
-// Interface para resultado de simulado
-export interface ResultadoSimulado {
-  id_resultado?: number;
-  id_usuario: string;
-  id_prova: number;
-  nome_simulado: string;
-  ano: number;
-  total_questoes: number;
-  acertos: number;
-  nota: number;
-  tempo_gasto_segundos: number;
-  data_realizacao: string;
-  status: 'em_andamento' | 'concluido' | 'abandonado';
+  alternativas: Array<{
+    id_alternativa: number;
+    letra: string;
+    texto: string | null;
+    correta: boolean;
+    tem_imagem: boolean;
+  }>;
 }
 
 export interface EstatisticasSimulados {
@@ -57,201 +38,184 @@ export interface EstatisticasSimulados {
   anosDisponiveis: number[];
 }
 
+type RespostaAgrupada = {
+  id_prova: number;
+  total_respondidas: number;
+  total_acertos: number;
+  ultima_resposta?: string | null;
+};
+
 export class SimuladosService {
-  /**
-   * Busca todos os simulados baseados na tabela provas
-   */
   static async listarSimulados(): Promise<SimuladoDoEnem[]> {
-    try {
-      console.log('🔍 Buscando provas e suas questões...');
-      
-      // Buscar todas as provas com contagem de questões
-      const { data: provas, error: errorProvas } = await supabase
-        .from('provas')
-        .select(`
-          id_prova,
-          ano,
-          cor_caderno,
-          descricao,
-          data_aplicacao,
-          tempo_por_questao
-        `)
-        .order('ano', { ascending: false });
+    const { data: provas, error } = await supabase
+      .from('provas')
+      .select('id_prova, ano, descricao, data_aplicacao, tempo_por_questao')
+      .order('ano', { ascending: false });
 
-      if (errorProvas) {
-        console.error('Erro ao buscar provas:', errorProvas);
-        throw errorProvas;
-      }
-
-      if (!provas || provas.length === 0) {
-        return [];
-      }
-
-      const simulados: SimuladoDoEnem[] = [];
-
-      // Para cada prova, contar suas questões
-      for (const prova of provas) {
-        const { count, error: errorCount } = await supabase
-          .from('questoes')
-          .select('*', { count: 'exact', head: true })
-          .eq('id_prova', prova.id_prova);
-
-        if (errorCount) {
-          console.error(`Erro ao contar questoes da prova ${prova.id_prova}:`, errorCount);
-          continue;
-        }
-
-        const totalQuestoes = count ?? 0;
-        if (totalQuestoes === 0) {
-          continue;
-        }
-
-        if (totalQuestoes && totalQuestoes > 0) {
-          const simulado: SimuladoPorProva = {
-            id_simulado: `enem_${prova.ano}_${prova.cor_caderno || 'padrao'}`,
-            id_prova: prova.id_prova,
-            nome: `ENEM ${prova.ano} - ${prova.cor_caderno || 'Padrão'}`,
-            ano: prova.ano,
-            cor_caderno: prova.cor_caderno,
-            descricao: prova.descricao || `Simulado ENEM ${prova.ano} com ${totalQuestoes} questões`,
-            total_questoes: totalQuestoes,
-            data_aplicacao: prova.data_aplicacao,
-            tempo_por_questao: prova.tempo_por_questao || 120,
-            data_criacao: new Date().toISOString(),
-            ativo: true
-          };
-
-          simulados.push(simulado);
-          console.log(`✅ Simulado criado: ${simulado.nome} (${totalQuestoes} questões)`);
-        }
-      }
-
-      console.log(`🎯 Total: ${simulados.length} simulados criados`);
-      return simulados;
-    } catch (error) {
-      console.error('💥 Erro ao buscar simulados por provas:', error);
-      return [];
+    if (error) {
+      console.error('Erro ao buscar provas para simulados:', error);
+      throw error;
     }
-  }
 
-  /**
-   * Busca estatísticas dos simulados baseados em provas
-   */
-  static async buscarEstatisticasSimulados(): Promise<EstatisticasSimulados> {
-    try {
-      const simulados = await this.buscarSimuladosPorProvas();
-      
-      const provasDisponiveis = simulados.map(s => s.id_prova);
-      const anosDisponiveis = [...new Set(simulados.map(s => s.ano))].sort((a, b) => b - a);
-      const totalQuestoes = simulados.reduce((total, s) => total + s.total_questoes, 0);
-      
-      return {
-        simuladosDisponiveis: simulados.length,
-        provasDisponiveis,
-        totalQuestoes,
-        anosDisponiveis,
-      };
-    } catch (error) {
-      console.error('Erro ao buscar estatisticas:', error);
-      return {
-        simuladosDisponiveis: 0,
-        provasDisponiveis: [],
-        totalQuestoes: 0,
-        anosDisponiveis: [],
-      };
-    }
-  }
+    const lista: SimuladoDoEnem[] = [];
 
-  /**
-   * Busca questões de um simulado específico (id_prova)
-   */
-  static async buscarQuestoesSimulado(idProva: number): Promise<any[]> {
-    try {
-      console.log(`🔍 Buscando questões da prova ${idProva}...`);
-      
-      const { data: questoes, error } = await supabase
+    for (const prova of provas ?? []) {
+      const { count, error: countError } = await supabase
         .from('questoes')
-        .select(
-          `id_questao,
-           id_prova,
-           id_tema,
-           enunciado,
-           dificuldade,
-           tem_imagem,
-           nr_questao,
-           peso_dificuldade,
-           alternativas:alternativas (
-             id_alternativa,
-             letra,
-             texto,
-             correta,
-             tem_imagem
-           )`
-        )
-        .eq('id_prova', idProva)
-        .order('nr_questao', { ascending: true })
-        .order('id_questao', { ascending: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('id_prova', prova.id_prova);
 
-      if (error) throw error;
-      return questoes || [];
+      if (countError) {
+        console.error(`Falha ao contar questÃµes da prova ${prova.id_prova}:`, countError);
+        continue;
+      }
 
-    } catch (error) {
-      console.error(`❌ Erro ao buscar questões da prova ${idProva}:`, error);
-      return [];
+      const totalQuestoes = count ?? 0;
+      if (totalQuestoes === 0) {
+        continue;
+      }
+
+      lista.push({
+        id_simulado: prova.id_prova,
+        id_prova: prova.id_prova,
+        nome: prova.descricao || `ENEM ${prova.ano}`,
+        ano: prova.ano,
+        descricao: prova.descricao ?? null,
+        total_questoes: totalQuestoes,
+        tempo_por_questao: prova.tempo_por_questao ?? null,
+        data_aplicacao: prova.data_aplicacao ?? null,
+        data_criacao: prova.data_aplicacao ?? new Date().toISOString(),
+        ativo: true,
+      });
     }
+
+    return lista;
   }
 
-  /**
-   * Busca informações de uma prova específica
-   */
-  static async buscarProva(idProva: number): Promise<any | null> {
-    try {
-      const { data: prova, error } = await supabase
-        .from('provas')
-        .select('id_prova, ano, descricao, data_aplicacao, tempo_por_questao')
-        .eq('id_prova', idProva)
-        .maybeSingle();
-
-      if (error) throw error;
-      return prova ?? null;
-    } catch (error) {
-      console.error(`Erro ao buscar prova ${idProva}:`, error);
-      return null;
-    }
+    static async buscarSimulado(idSimulado: number): Promise<SimuladoDoEnem | null> {
+    const simulados = await this.listarSimulados();
+    return simulados.find((s) => s.id_simulado === idSimulado) ?? null;
   }
-
-  /**
-   * Busca histórico de resultados do usuário (mock por enquanto)
-   */
-  static async buscarHistoricoUsuario(userId: string): Promise<any[]> {
-    try {
-      const simulados = await this.buscarSimuladosPorProvas();
-      
-      // Mock de dados - depois implementar com tabela real de resultados
-      return simulados.slice(0, 3).map((simulado, index) => ({
-        id_resultado: `result_${simulado.id_prova}_${userId}`,
-        simulado_id: simulado.id_simulado,
-        simulado_nome: simulado.nome,
-        id_prova: simulado.id_prova,
-        ano: simulado.ano,
-        pontuacao: Math.floor(Math.random() * 1000) + 500,
-        acertos: Math.floor(Math.random() * simulado.total_questoes * 0.8) + Math.floor(simulado.total_questoes * 0.2),
-        total_questoes: simulado.total_questoes,
-        data_realizacao: new Date(Date.now() - (index * 7 * 24 * 60 * 60 * 1000)).toISOString(),
-        tempo_gasto: Math.floor(Math.random() * 180) + 120, // 2-5 horas
-        status: 'concluido'
-      }));
-
-    } catch (error) {
-      console.error('❌ Erro ao buscar histórico:', error);
-      return [];
-    }
-  }
-
-  // ⚠️ DEPRECATED: Manter apenas para compatibilidade temporária
-  // Use listarSimulados() ao invés deste método
-  static async buscarSimuladosPorProvas(): Promise<SimuladoDoEnem[]> {
-    console.warn('⚠️ buscarSimuladosPorProvas() está obsoleto. Use listarSimulados()');
+static async buscarSimuladosPorProvas(): Promise<SimuladoDoEnem[]> {
     return this.listarSimulados();
   }
+
+  static async buscarEstatisticasSimulados(): Promise<EstatisticasSimulados> {
+    const simulados = await this.listarSimulados();
+
+    const provasDisponiveis = simulados.map((s) => s.id_prova);
+    const anosDisponiveis = [...new Set(simulados.map((s) => s.ano))].sort((a, b) => b - a);
+    const totalQuestoes = simulados.reduce((total, s) => total + s.total_questoes, 0);
+
+    return {
+      simuladosDisponiveis: simulados.length,
+      provasDisponiveis,
+      totalQuestoes,
+      anosDisponiveis,
+    };
+  }
+
+  static async buscarQuestoesSimulado(idProva: number): Promise<QuestaoCompleta[]> {
+    const { data, error } = await supabase
+      .from('questoes')
+      .select(
+        `id_questao,
+         id_prova,
+         id_tema,
+         enunciado,
+         dificuldade,
+         tem_imagem,
+         nr_questao,
+         peso_dificuldade,
+         alternativas:alternativas (
+           id_alternativa,
+           letra,
+           texto,
+           correta,
+           tem_imagem
+         )`
+      )
+      .eq('id_prova', idProva)
+      .order('nr_questao', { ascending: true })
+      .order('id_questao', { ascending: true });
+
+    if (error) {
+      console.error(`Erro ao buscar questÃµes da prova ${idProva}:`, error);
+      throw error;
+    }
+
+    return (data ?? []).map((linha) => ({
+      id_questao: linha.id_questao,
+      id_prova: linha.id_prova,
+      id_tema: linha.id_tema ?? null,
+      enunciado: linha.enunciado,
+      dificuldade: linha.dificuldade ?? null,
+      tem_imagem: Boolean(linha.tem_imagem),
+      nr_questao: linha.nr_questao ?? null,
+      peso_dificuldade: linha.peso_dificuldade ?? null,
+      alternativas: (linha.alternativas ?? []).map((alt: any) => ({
+        id_alternativa: alt.id_alternativa,
+        letra: alt.letra,
+        texto: alt.texto,
+        correta: Boolean(alt.correta),
+        tem_imagem: Boolean(alt.tem_imagem),
+      })),
+    }));
+  }
+
+  static async buscarProva(idProva: number) {
+    const { data, error } = await supabase
+      .from('provas')
+      .select('id_prova, ano, descricao, data_aplicacao, tempo_por_questao')
+      .eq('id_prova', idProva)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return data ?? null;
+  }
+
+  static async buscarHistoricoUsuario(idUsuario: number): Promise<RespostaAgrupada[]> {
+    const { data, error } = await supabase
+      .from('respostas_usuarios')
+      .select('correta, data_resposta, questoes:questoes(id_prova)')
+      .eq('id_usuario', idUsuario);
+
+    if (error) {
+      console.error('Erro ao agrupar respostas por usuÃ¡rio:', error);
+      throw error;
+    }
+
+    const agregados = new Map<number, RespostaAgrupada>();
+
+    (data ?? []).forEach((linha: any) => {
+      const idProva = linha.questoes?.id_prova;
+      if (!idProva) return;
+
+      const bucket =
+        agregados.get(idProva) ?? {
+          id_prova: idProva,
+          total_respondidas: 0,
+          total_acertos: 0,
+          ultima_resposta: null as string | null,
+        };
+
+      bucket.total_respondidas += 1;
+      if (linha.correta) {
+        bucket.total_acertos += 1;
+      }
+
+      const dataResposta = linha.data_resposta as string | null;
+      if (!bucket.ultima_resposta || (dataResposta && dataResposta > bucket.ultima_resposta)) {
+        bucket.ultima_resposta = dataResposta ?? null;
+      }
+
+      agregados.set(idProva, bucket);
+    });
+
+    return Array.from(agregados.values());
+  }
 }
+

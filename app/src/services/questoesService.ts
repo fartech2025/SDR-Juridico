@@ -1,5 +1,5 @@
-import { supabase } from '../lib/supabaseClient';
-import { SimuladosService, type SimuladoPorProva } from './simuladosService';
+﻿import { supabase } from '../lib/supabaseClient';
+import { SimuladosService, type SimuladoDoEnem } from './simuladosService';
 
 export interface Imagem {
   id_imagem: number;
@@ -29,7 +29,7 @@ export interface QuestaoComImagens {
 export interface SimuladoComQuestoes {
   id_simulado: number;
   nome: string;
-  descricao?: string;
+  descricao?: string | null;
   data_criacao: string;
   questoes: QuestaoComImagens[];
 }
@@ -113,7 +113,7 @@ async function carregarQuestoesDetalhadas(filtro: QuestoesFiltro = {}) {
 
   let filtradas = data ?? [];
 
-  // Se o filtro vier pelo nome do tema, aplicar em memória (evita múltiplas consultas)
+  // Se o filtro vier pelo nome do tema, aplicar em memÃ³ria (evita mÃºltiplas consultas)
   if (filtro.temaNome) {
     const nomeNormalizado = filtro.temaNome.trim().toLowerCase();
     filtradas = filtradas.filter((questao: any) =>
@@ -239,8 +239,8 @@ function montarQuestaoComImagens(
     alternativa_d: porLetra.D ?? '',
     alternativa_e: porLetra.E ?? '',
     resposta_correta: respostaCorreta || '',
-    tema: questao.temas?.nome_tema ?? 'Tema não informado',
-    dificuldade: questao.dificuldade ?? 'Médio',
+    tema: questao.temas?.nome_tema ?? 'Tema nÃ£o informado',
+    dificuldade: questao.dificuldade ?? 'MÃ©dio',
     ano: questao.provas?.ano ?? null,
     conteudo: null,
     ano_enem: questao.provas?.ano ?? null,
@@ -390,97 +390,36 @@ export async function deletarImagemQuestao(id_imagem: number): Promise<void> {
 }
 
 /**
- * Busca um simulado com todas suas questões e imagens
+ * Busca um simulado com todas suas questÃµes e imagens
  */
 export async function buscarSimuladoComQuestoes(
   id_simulado: number
 ): Promise<SimuladoComQuestoes | null> {
   try {
-    // Primeiro busca o simulado
-    const { data: simulado, error: erroSimulado } = await supabase
-      .from('simulados')
-      .select('*')
-      .eq('id_simulado', id_simulado)
-      .single();
-
-    if (erroSimulado && erroSimulado.code !== 'PGRST116') throw erroSimulado;
-    if (!simulado) return null;
-
-    // Depois busca as questões do simulado (ordenadas)
-    const { data: questoes, error: erroQuestoes } = await supabase
-      .from('simulado_questoes')
-      .select('id_questao, ordem')
-      .eq('id_simulado', id_simulado)
-      .order('ordem', { ascending: true });
-
-    if (erroQuestoes) throw erroQuestoes;
-
-    // Busca cada questão com suas imagens em paralelo para melhor performance
-    const questoesComImagens: QuestaoComImagens[] = [];
-    if (questoes && questoes.length > 0) {
-      const promises = questoes.map(q => buscarQuestaoComImagens(q.id_questao));
-      const resultados = await Promise.all(promises);
-      questoesComImagens.push(...resultados.filter(q => q !== null) as QuestaoComImagens[]);
+    const simulados = await SimuladosService.listarSimulados();
+    const simulado = simulados.find((item) => item.id_simulado === id_simulado);
+    if (!simulado) {
+      return null;
     }
+
+    const questoes = await montarQuestoes({ idProva: simulado.id_prova });
 
     return {
-      ...simulado,
-      questoes: questoesComImagens,
-    } as SimuladoComQuestoes;
+      id_simulado: simulado.id_simulado,
+      nome: simulado.nome,
+      descricao: simulado.descricao,
+      data_criacao: simulado.data_criacao,
+      questoes,
+    };
   } catch (error) {
-    console.error(`Erro ao buscar simulado ${id_simulado}:`, error);
+    console.error(Erro ao buscar simulado :, error);
     throw error;
   }
 }
-
 /**
- * Busca todos os simulados com contagem de questões
+ * Busca todos os simulados com contagem de questÃµes
  */
-export async function buscarSimuladosDisponveis() {
-  try {
-    // Tentar com VIEW primeiro
-    const { data: dataView, error: errorView } = await supabase
-      .from('vw_simulados_com_questoes')
-      .select('*');
-
-    if (!errorView && dataView) {
-      return dataView || [];
-    }
-
-    // Se VIEW falhar, tentar tabela direta
-    console.warn('View não acessível, tentando tabela direta:', errorView?.message);
-    
-    const { data: dataTable, error: errorTable } = await supabase
-      .from('simulados')
-      .select('id_simulado, nome, descricao, data_criacao, data_atualizacao, ativo')
-      .eq('ativo', true);
-
-    if (errorTable) {
-      console.error('Erro ao buscar simulados:', errorTable);
-      throw new Error(`Falha ao buscar simulados: ${errorTable.message}`);
-    }
-
-    // Se conseguiu dados da tabela, buscar contagem de questões para cada
-    if (dataTable && dataTable.length > 0) {
-      const simuladosComContagem = await Promise.all(
-        dataTable.map(async (sim) => {
-          const { count } = await supabase
-            .from('simulado_questoes')
-            .select('*', { count: 'exact', head: true })
-            .eq('id_simulado', sim.id_simulado);
-          
-          return {
-            ...sim,
-            total_questoes: count || 0
-          };
-        })
-      );
-      return simuladosComContagem;
-    }
-
-    return [];
-  } catch (error) {
-    console.error('Erro ao buscar simulados:', error);
-    throw error;
-  }
+export async function buscarSimuladosDisponveis(): Promise<SimuladoDoEnem[]> {
+  return SimuladosService.listarSimulados();
 }
+

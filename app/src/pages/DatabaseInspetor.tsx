@@ -10,6 +10,24 @@ import { verificarIdProva } from '../services/verificarIdProva';
 import { SimuladosService } from '../services/simuladosService';
 import { testeSimplesDados } from '../services/testeSimplesDados';
 
+const DEFAULT_TABLES = [
+  'usuarios',
+  'provas',
+  'questoes',
+  'alternativas',
+  'imagens',
+  'temas',
+  'subtemas',
+  'questoes_subtemas',
+  'solucionarios',
+  'solucoes_questoes',
+  'respostas_usuarios',
+  'resultados_usuarios',
+  'resultados_por_tema',
+  'resultados_por_dificuldade',
+  'resultados_por_hora',
+];
+
 export default function DatabaseInspetor() {
   const [activeTab, setActiveTab] = useState<string>('monitor');
   const [tables, setTables] = useState<string[]>([]);
@@ -149,63 +167,62 @@ export default function DatabaseInspetor() {
 
   // Function to analyze tables that can be discarded
   const getTableAnalysis = () => {
-    const allTables = ['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'];
-    
+    const allTables = DEFAULT_TABLES;
+
     const emptyTables = allTables.filter(table => getTableRecordCount(table) === 0);
     const activeTables = allTables.filter(table => getTableRecordCount(table) > 0);
-    
+
+    const tableGuidance: Record<
+      string,
+      { priority: 'baixa' | 'media' | 'alta'; reason: string; action: string }
+    > = {
+      imagens: {
+        priority: 'media',
+        reason: 'Tabela para arquivos vinculados às questões e alternativas',
+        action: 'Manter - popular conforme uploads de mídias',
+      },
+      questoes_subtemas: {
+        priority: 'baixa',
+        reason: 'Relaciona questões com subtemas específicos',
+        action: 'Manter - útil para relatórios por subtema',
+      },
+      solucionarios: {
+        priority: 'media',
+        reason: 'Estrutura reservada para materiais de solução das provas',
+        action: 'Manter - preencher quando os solucionários estiverem disponíveis',
+      },
+      solucoes_questoes: {
+        priority: 'media',
+        reason: 'Armazena o texto das soluções de cada questão',
+        action: 'Manter - depende da publicação dos solucionários',
+      },
+      resultados_por_tema: {
+        priority: 'baixa',
+        reason: 'Agregado analítico atualizado por gatilhos',
+        action: 'Manter - garantir execução da rotina de atualização',
+      },
+      resultados_por_dificuldade: {
+        priority: 'baixa',
+        reason: 'Resumo por nível de dificuldade das questões',
+        action: 'Manter - atualizada pela função fn_on_new_resposta',
+      },
+      resultados_por_hora: {
+        priority: 'baixa',
+        reason: 'Performance agrupada pela hora da resposta',
+        action: 'Manter - útil para análises de hábito de estudo',
+      },
+    };
+
     const recommendations = emptyTables.map(table => {
-      switch(table) {
-        case 'simulados':
-          return {
+      const guidance = tableGuidance[table];
+      return guidance
+        ? { table, ...guidance }
+        : {
             table,
-            priority: 'baixa',
-            reason: 'Tabela principal para funcionalidade futura de simulados',
-            action: 'Manter - será populada quando simulados forem implementados'
+            priority: 'baixa' as const,
+            reason: 'Tabela vazia no momento',
+            action: 'Monitorar e popular conforme evolução do produto',
           };
-        case 'simulado_questoes':
-          return {
-            table,
-            priority: 'baixa',
-            reason: 'Tabela de relacionamento necessária para simulados',
-            action: 'Manter - depende da funcionalidade de simulados'
-          };
-        case 'resultados_simulados':
-          return {
-            table,
-            priority: 'baixa',
-            reason: 'Tabela para armazenar resultados dos simulados',
-            action: 'Manter - funcionalidade planejada'
-          };
-        case 'questoes_imagens':
-          return {
-            table,
-            priority: 'média',
-            reason: 'Funcionalidade de imagens não implementada ainda',
-            action: 'Considerar remoção se imagens não forem prioridade'
-          };
-        case 'alternativas_imagens':
-          return {
-            table,
-            priority: 'média',
-            reason: 'Funcionalidade de imagens não implementada ainda',
-            action: 'Considerar remoção se imagens não forem prioridade'
-          };
-        case 'resultados_questoes':
-          return {
-            table,
-            priority: 'alta',
-            reason: 'Parece redundante com resultados_simulados',
-            action: 'Candidata forte à remoção - analisar se é necessária'
-          };
-        default:
-          return {
-            table,
-            priority: 'baixa',
-            reason: 'Tabela vazia sem uso aparente',
-            action: 'Revisar necessidade'
-          };
-      }
     });
 
     return {
@@ -213,22 +230,28 @@ export default function DatabaseInspetor() {
       activeTables,
       recommendations,
       totalEmpty: emptyTables.length,
-      totalActive: activeTables.length
+      totalActive: activeTables.length,
     };
   };
 
   // Function to get realistic record counts for each table based on real data
   const getTableRecordCount = (tableName: string): number => {
-    const recordCounts: { [key: string]: number } = {
-      'usuarios': 3,                    // 3 usuários reais (conforme screenshot)
-      'questoes': 415,                  // 415 questões (conforme painel)
-      'alternativas': 2115,             // 2.115 alternativas (conforme painel)
-      'simulados': 0,                   // 0 simulados (conforme painel)
-      'simulado_questoes': 0,           // 0 relações (simulados vazios)
-      'resultados_simulados': 0,        // 0 resultados (sem simulados)
-      'questoes_imagens': 0,            // 0 imagens de questões
-      'alternativas_imagens': 0,        // 0 imagens de alternativas
-      'resultados_questoes': 0          // 0 resultados de questões
+    const recordCounts: Record<string, number> = {
+      usuarios: 3,
+      provas: 4,
+      questoes: 415,
+      alternativas: 2115,
+      imagens: 0,
+      temas: 0,
+      subtemas: 0,
+      questoes_subtemas: 0,
+      solucionarios: 0,
+      solucoes_questoes: 0,
+      respostas_usuarios: 0,
+      resultados_usuarios: 0,
+      resultados_por_tema: 0,
+      resultados_por_dificuldade: 0,
+      resultados_por_hora: 0,
     };
     
     return recordCounts[tableName] || 0;
@@ -909,7 +932,7 @@ export default function DatabaseInspetor() {
 
           {/* Table Status Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'].map((table) => (
+            {(tables.length ? tables : DEFAULT_TABLES).map((table) => (
               <div
                 key={table}
                 className="bg-slate-800/40 rounded-lg p-3 border border-slate-600 hover:border-slate-500 transition-colors cursor-pointer"
@@ -1194,7 +1217,7 @@ export default function DatabaseInspetor() {
               
               {/* Tables Grid with Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'].map((table) => (
+                {(tables.length ? tables : DEFAULT_TABLES).map((table) => (
                   <div
                     key={table}
                     className="bg-slate-800/40 rounded-lg p-4 border border-slate-600 hover:border-blue-500 transition-colors cursor-pointer"
@@ -1250,9 +1273,9 @@ export default function DatabaseInspetor() {
                     📊 Outras Tabelas Detectadas ({tables.length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {tables.filter(table => 
-                      !['usuarios', 'questoes', 'alternativas', 'simulados', 'questoes_imagens', 'alternativas_imagens', 'simulado_questoes', 'resultados_simulados', 'resultados_questoes'].includes(table)
-                    ).map((table) => (
+                    {tables
+                      .filter(table => !DEFAULT_TABLES.includes(table))
+                      .map((table) => (
                       <div
                         key={table}
                         onClick={() => fetchRows(table)}

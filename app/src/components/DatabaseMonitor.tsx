@@ -24,8 +24,12 @@ export default function DatabaseMonitor() {
     'usuarios',
     'provas',
     'questoes',
-    'questoes_imagens',
-    'resultados_simulados',
+    'alternativas',
+    'imagens',
+    'respostas_usuarios',
+    'resultados_usuarios',
+    'resultados_por_tema',
+    'resultados_por_dificuldade',
   ];
 
   useEffect(() => {

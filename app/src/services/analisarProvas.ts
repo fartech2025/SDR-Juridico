@@ -1,29 +1,23 @@
 import { supabase } from '../lib/supabaseClient';
 import { SimuladoDoEnem } from './simuladosService';
 
-// Interface para prova
-interface Prova {
+interface ProvaRegistro {
   id_prova: number;
-  nome?: string;
-  ano?: number;
-  tipo?: string;
-  descricao?: string;
-  data_prova?: string;
-  ativa?: boolean;
+  ano: number | null;
+  descricao: string | null;
+  data_aplicacao: string | null;
+  tempo_por_questao: number | null;
 }
 
-// Interface para questão
 interface Questao {
   id_questao: number;
   id_prova: number;
   enunciado: string;
-  area_conhecimento?: string;
-  disciplina?: string;
-  gabarito?: string;
-  dificuldade?: string;
+  dificuldade?: string | null;
+  tema?: string | null;
+  subtemas?: string[];
 }
 
-// Interface estendida de SimuladoDoEnem para análise de provas
 interface SimuladoAnalise extends SimuladoDoEnem {
   areas_conhecimento: string[];
   disciplinas: string[];
@@ -36,94 +30,117 @@ export async function analisarProvasEQuestoes(): Promise<{
   erro?: string;
 }> {
   try {
-    console.log('🔍 Analisando tabela provas e correlação com questões...');
-    
-    // Primeiro, buscar todas as provas
+    console.log('[INFO] Analisando tabela provas e correlacao com questoes...');
+
     const { data: provas, error: errorProvas } = await supabase
       .from('provas')
-      .select('*')
+      .select('id_prova, ano, descricao, data_aplicacao, tempo_por_questao')
       .order('id_prova');
 
     if (errorProvas) {
       throw new Error(`Erro ao buscar provas: ${errorProvas.message}`);
     }
 
-    console.log(`📚 Encontradas ${provas?.length || 0} provas`);
-
-    if (!provas || provas.length === 0) {
+    if (!provas?.length) {
       return {
         sucesso: true,
         simulados: [],
-        erro: 'Nenhuma prova encontrada na tabela provas'
+        erro: 'Nenhuma prova encontrada na tabela provas',
       };
     }
 
-    // Agora buscar questões para cada prova
     const simulados: SimuladoAnalise[] = [];
 
-    for (const prova of provas) {
-      console.log(`🔍 Analisando prova ID ${prova.id_prova}: ${prova.descricao || 'Sem descrição'}`);
-      
-      // Buscar questões desta prova
+    for (const prova of provas as ProvaRegistro[]) {
+      console.log(
+        `[INFO] Analisando prova ID ${prova.id_prova}: ${prova.descricao ?? 'Sem descricao'}`
+      );
+
       const { data: questoes, error: errorQuestoes } = await supabase
         .from('questoes')
-        .select('id_questao, id_prova, enunciado, area_conhecimento, disciplina, gabarito, dificuldade')
+        .select(`
+          id_questao,
+          id_prova,
+          enunciado,
+          dificuldade,
+          temas:temas ( nome_tema ),
+          questoes_subtemas (
+            subtemas ( nome_subtema )
+          )
+        `)
         .eq('id_prova', prova.id_prova);
 
       if (errorQuestoes) {
-        console.error(`❌ Erro ao buscar questões da prova ${prova.id_prova}:`, errorQuestoes.message);
+        console.error(
+          `[WARN] Erro ao buscar questoes da prova ${prova.id_prova}:`,
+          errorQuestoes.message
+        );
         continue;
       }
 
-      const totalQuestoes = questoes?.length || 0;
-      console.log(`📝 Prova ${prova.id_prova}: ${totalQuestoes} questões`);
+      const questoesFormatadas: Questao[] = (questoes ?? []).map((questao: any) => ({
+        id_questao: questao.id_questao,
+        id_prova: questao.id_prova,
+        enunciado: questao.enunciado,
+        dificuldade: questao.dificuldade ?? null,
+        tema: questao.temas?.nome_tema ?? null,
+        subtemas: (questao.questoes_subtemas ?? [])
+          .map((rel: any) => rel?.subtemas?.nome_subtema)
+          .filter((nome: string | null | undefined): nome is string => Boolean(nome)),
+      }));
 
-      if (totalQuestoes > 0) {
-        // Extrair áreas e disciplinas únicas
-        const areas = [...new Set(questoes!.map(q => q.area_conhecimento))].filter(Boolean);
-        const disciplinas = [...new Set(questoes!.map(q => q.disciplina))].filter(Boolean);
-        
-        const simulado: SimuladoAnalise = {
-          // Campos de SimuladoDoEnem
-          id_prova: prova.id_prova,
-          id_simulado_virtual: `enem_${prova.ano}`,
-          nome: prova.descricao || `ENEM ${prova.ano}`,
-          ano: prova.ano,
-          descricao: prova.descricao || `Simulado baseado na prova ${prova.id_prova}`,
-          total_questoes: totalQuestoes,
-          tempo_por_questao: prova.tempo_por_questao || 180,
-          data_aplicacao: prova.data_aplicacao,
-          data_criacao: new Date().toISOString(),
-          ativo: true,
-          
-          // Campos extras para análise
-          areas_conhecimento: areas,
-          disciplinas: disciplinas,
-          questoes: questoes!
-        };
+      const totalQuestoes = questoesFormatadas.length;
+      console.log(`[INFO] Prova ${prova.id_prova}: ${totalQuestoes} questoes`);
 
-        simulados.push(simulado);
-        
-        console.log(`✅ Simulado criado: ${simulado.nome}`);
-        console.log(`   📊 ${totalQuestoes} questões`);
-        console.log(`   📑 Áreas: ${areas.join(', ')}`);
-        console.log(`   📚 Disciplinas: ${disciplinas.join(', ')}`);
+      if (totalQuestoes === 0) {
+        continue;
       }
+
+      const areas = [...new Set(questoesFormatadas.map(q => q.tema))].filter(
+        (value): value is string => Boolean(value)
+      );
+      const disciplinas = [
+        ...new Set(questoesFormatadas.flatMap(q => q.subtemas ?? [])),
+      ].filter((value): value is string => Boolean(value));
+
+      const anoProva = prova.ano ?? 0;
+
+      const simulado: SimuladoAnalise = {
+        id_simulado: prova.id_prova,
+        id_prova: prova.id_prova,
+        nome: prova.descricao || (anoProva ? `ENEM ${anoProva}` : `Prova ${prova.id_prova}`),
+        ano: anoProva,
+        descricao: prova.descricao || `Simulado baseado na prova ${prova.id_prova}`,
+        total_questoes: totalQuestoes,
+        tempo_por_questao: prova.tempo_por_questao ?? null,
+        data_aplicacao: prova.data_aplicacao ?? null,
+        data_criacao: new Date().toISOString(),
+        ativo: true,
+        areas_conhecimento: areas,
+        disciplinas,
+        questoes: questoesFormatadas,
+      };
+
+      simulados.push(simulado);
+
+      console.log(`[INFO] Simulado criado: ${simulado.nome}`);
+      console.log(`   - Questoes: ${totalQuestoes}`);
+      console.log(`   - Temas: ${areas.join(', ') || 'nao informados'}`);
+      console.log(`   - Subtemas: ${disciplinas.join(', ') || 'nao informados'}`);
     }
 
-    console.log(`✅ Total: ${simulados.length} simulados criados baseados em provas`);
+    console.log(`[INFO] Total: ${simulados.length} simulados criados baseados em provas`);
 
     return {
       sucesso: true,
-      simulados
+      simulados,
     };
-
   } catch (error: any) {
-    console.error('❌ Erro ao analisar provas e questões:', error);
+    console.error('[WARN] Erro ao analisar provas e questoes:', error);
     return {
       sucesso: false,
       simulados: [],
-      erro: error.message
+      erro: error?.message ?? 'Erro desconhecido',
     };
   }
 }
@@ -134,21 +151,18 @@ export async function verificarEstruturaBanco(): Promise<{
   erro?: string;
 }> {
   try {
-    console.log('🔍 Verificando estrutura das tabelas provas e questões...');
-    
-    // Verificar tabela provas
+    console.log('[INFO] Verificando estrutura das tabelas provas e questoes...');
+
     const { data: amostraProvas, error: errorProvas } = await supabase
       .from('provas')
       .select('*')
       .limit(3);
 
-    // Verificar tabela questões
     const { data: amostraQuestoes, error: errorQuestoes } = await supabase
       .from('questoes')
       .select('*')
       .limit(3);
 
-    // Contar registros
     const { count: countProvas } = await supabase
       .from('provas')
       .select('*', { count: 'exact', head: true });
@@ -162,29 +176,30 @@ export async function verificarEstruturaBanco(): Promise<{
         existe: !errorProvas,
         total_registros: countProvas || 0,
         colunas: amostraProvas?.[0] ? Object.keys(amostraProvas[0]) : [],
-        amostra: amostraProvas?.slice(0, 2)
+        amostra: amostraProvas?.slice(0, 2),
       },
       questoes: {
         existe: !errorQuestoes,
         total_registros: countQuestoes || 0,
         colunas: amostraQuestoes?.[0] ? Object.keys(amostraQuestoes[0]) : [],
-        amostra: amostraQuestoes?.slice(0, 2)
-      }
+        amostra: amostraQuestoes?.slice(0, 2),
+      },
     };
 
-    console.log('📊 Estrutura verificada:', JSON.stringify(estrutura, null, 2));
+    console.log('[INFO] Estrutura verificada:', JSON.stringify(estrutura, null, 2));
 
     return {
       sucesso: true,
-      estrutura
+      estrutura,
     };
-
   } catch (error: any) {
-    console.error('❌ Erro ao verificar estrutura:', error);
+    console.error('[WARN] Erro ao verificar estrutura:', error);
     return {
       sucesso: false,
       estrutura: {},
-      erro: error.message
+      erro: error?.message ?? 'Erro desconhecido',
     };
   }
 }
+
+

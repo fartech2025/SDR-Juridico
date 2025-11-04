@@ -10,6 +10,7 @@ export interface Prova {
   ano: number;
   nome: string;
   descricao: string | null;
+  data_aplicacao?: string | null;
   tempo_por_questao?: number | null;
 }
 

@@ -33,7 +33,11 @@ async function main() {
   assert(anon, 'VITE_SUPABASE_ANON_KEY não definido');
   const supabase = createClient(url, anon);
 
-  const resProvas = await supabase.from('provas').select('id_prova, descricao, ano, cor_caderno').order('ano', { ascending: false }).limit(5);
+  const resProvas = await supabase
+    .from('provas')
+    .select('id_prova, descricao, ano, data_aplicacao, tempo_por_questao')
+    .order('ano', { ascending: false })
+    .limit(5);
   assert(!resProvas.error, 'Erro ao consultar provas: ' + (resProvas.error?.message || ''));
   const provas = resProvas.data || [];
 
