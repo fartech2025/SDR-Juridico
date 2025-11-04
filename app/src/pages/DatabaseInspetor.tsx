@@ -9,13 +9,35 @@ export default function DatabaseInspetor() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [gitInfo, setGitInfo] = useState({
-    lastCommit: '9188900',
-    lastCommitMessage: 'fix: corrigir contagem de registros no monitor de banco de dados',
+    lastCommit: 'aa1953f',
+    lastCommitMessage: 'feat: melhorias na tela Database Inspetor com informações Git e status',
     branch: 'main',
     totalTables: 0,
     workingTreeStatus: 'clean',
-    lastUpdate: new Date().toLocaleString('pt-BR')
+    lastUpdate: new Date().toLocaleString('pt-BR'),
+    hasEnvLocal: false,
+    envStatus: 'checking'
   });
+
+  useEffect(() => {
+    // Verificar se .env.local existe e tem as variáveis necessárias
+    const checkEnvFile = () => {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      const hasValidConfig = !!(supabaseUrl && supabaseKey && 
+                           supabaseUrl.includes('supabase.co') && 
+                           supabaseKey.length > 100);
+      
+      setGitInfo(prev => ({
+        ...prev,
+        hasEnvLocal: hasValidConfig,
+        envStatus: hasValidConfig ? 'configured' : 'missing'
+      }));
+    };
+    
+    checkEnvFile();
+  }, []);
 
   useEffect(() => {
     async function fetchTables() {
@@ -79,6 +101,12 @@ export default function DatabaseInspetor() {
               <div className="flex justify-between">
                 <span className="text-slate-400">Total Tabelas:</span>
                 <span className="text-blue-400 font-bold">{gitInfo.totalTables}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Arquivo .env.local:</span>
+                <span className={`font-bold ${gitInfo.hasEnvLocal ? 'text-green-400' : 'text-red-400'}`}>
+                  {gitInfo.hasEnvLocal ? '✅ Configurado' : '❌ Ausente/Inválido'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Última Atualização:</span>
@@ -203,7 +231,7 @@ export default function DatabaseInspetor() {
         {/* Technical Info Footer */}
         <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700 mt-8">
           <h2 className="text-lg font-semibold mb-3">🔧 Informações Técnicas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
               <h3 className="text-blue-400 font-medium mb-2">🌐 Infraestrutura</h3>
               <ul className="text-slate-300 space-y-1 text-xs">
@@ -220,6 +248,15 @@ export default function DatabaseInspetor() {
                 <li>• Status em tempo real</li>
                 <li>• Conexão segura (RLS)</li>
                 <li>• Hot reload ativo</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-yellow-400 font-medium mb-2">🔐 Configuração</h3>
+              <ul className="text-slate-300 space-y-1 text-xs">
+                <li>• .env.local: <span className={gitInfo.hasEnvLocal ? 'text-green-400' : 'text-red-400'}>{gitInfo.hasEnvLocal ? 'OK' : 'Erro'}</span></li>
+                <li>• Supabase URL: <span className={import.meta.env.VITE_SUPABASE_URL ? 'text-green-400' : 'text-red-400'}>{import.meta.env.VITE_SUPABASE_URL ? 'Configurado' : 'Ausente'}</span></li>
+                <li>• API Key: <span className={import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-green-400' : 'text-red-400'}>{import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Configurado' : 'Ausente'}</span></li>
+                <li>• Ambiente: <span className="text-blue-400">{import.meta.env.DEV ? 'Desenvolvimento' : 'Produção'}</span></li>
               </ul>
             </div>
             <div>
