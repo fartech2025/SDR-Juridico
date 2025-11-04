@@ -271,13 +271,47 @@ export async function buscarSimuladoComQuestoes(
  */
 export async function buscarSimuladosDisponveis() {
   try {
-    // Usar VIEW que já faz o count corretamente
-    const { data, error } = await supabase
+    // Tentar com VIEW primeiro
+    const { data: dataView, error: errorView } = await supabase
       .from('vw_simulados_com_questoes')
       .select('*');
 
-    if (error) throw error;
-    return data || [];
+    if (!errorView && dataView) {
+      return dataView || [];
+    }
+
+    // Se VIEW falhar, tentar tabela direta
+    console.warn('View não acessível, tentando tabela direta:', errorView?.message);
+    
+    const { data: dataTable, error: errorTable } = await supabase
+      .from('simulados')
+      .select('id_simulado, nome, descricao, data_criacao, data_atualizacao, ativo')
+      .eq('ativo', true);
+
+    if (errorTable) {
+      console.error('Erro ao buscar simulados:', errorTable);
+      throw new Error(`Falha ao buscar simulados: ${errorTable.message}`);
+    }
+
+    // Se conseguiu dados da tabela, buscar contagem de questões para cada
+    if (dataTable && dataTable.length > 0) {
+      const simuladosComContagem = await Promise.all(
+        dataTable.map(async (sim) => {
+          const { count } = await supabase
+            .from('simulado_questoes')
+            .select('*', { count: 'exact', head: true })
+            .eq('id_simulado', sim.id_simulado);
+          
+          return {
+            ...sim,
+            total_questoes: count || 0
+          };
+        })
+      );
+      return simuladosComContagem;
+    }
+
+    return [];
   } catch (error) {
     console.error('Erro ao buscar simulados:', error);
     throw error;
