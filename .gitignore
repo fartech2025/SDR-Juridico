@@ -1,7 +1,7 @@
 # Environment variables and configuration
 .env
 *.env
-.env.local
+# .env.local - AGORA PERMITIDO NO GIT
 .env.production
 *.key
 *.secret
@@ -75,5 +75,5 @@ Temporary Items
 .vercel
 
 # Additional env protections (nested folders and backups)
-**/.env*
+# **/.env* - COMENTADO: Permitindo .env.local
 *.env.local.bak*
