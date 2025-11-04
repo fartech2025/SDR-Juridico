@@ -15,30 +15,34 @@ const isExtensionError = (message: string | undefined) => {
   const msg = String(message).toLowerCase();
   return msg.includes('message channel') || 
          msg.includes('listener indicated') ||
-         msg.includes('asynchronous response');
+         msg.includes('asynchronous response') ||
+         msg.includes('extension') ||
+         msg.includes('content script');
 };
 
 // Handle de erros não capturados de extensões
 window.addEventListener('error', (event) => {
-  if (isExtensionError(event.message)) {
+  if (isExtensionError(event.message) || isExtensionError(String(event.filename))) {
     event.preventDefault();
     return true;
   }
 }, true);
 
-// Handle de rejections não capturadas de extensões
+// Handle de rejections não capturadas de extensões - MAIS AGRESSIVO
 window.addEventListener('unhandledrejection', (event) => {
   const errorMsg = event.reason?.message || event.reason || '';
-  if (isExtensionError(String(errorMsg))) {
+  const errorStack = event.reason?.stack || '';
+  if (isExtensionError(String(errorMsg)) || isExtensionError(errorStack)) {
     event.preventDefault();
   }
 }, true);
 
-// Interceptar console.error para extensões
+// Interceptar console.error para extensões - MAIS AGRESSIVO
 const originalError = console.error;
 console.error = (...args: any[]) => {
   const message = String(args[0] || '');
-  if (!isExtensionError(message)) {
+  const fullMessage = args.map(a => String(a)).join(' ');
+  if (!isExtensionError(message) && !isExtensionError(fullMessage)) {
     originalError.apply(console, args);
   }
 };

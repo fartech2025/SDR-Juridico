@@ -19,13 +19,11 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
   React.useEffect(() => {
     // Se VITE_LOGO_URL estiver configurado, usar diretamente (sem tentativas extras)
     if (envLogo) {
-      console.log('[BasePage] Usando VITE_LOGO_URL:', envLogo);
       setLogoUrl(envLogo);
       return;
     }
     
     // Fallback: usar logo local se nada estiver configurado
-    console.log('[BasePage] VITE_LOGO_URL não configurado, usando favicon.svg');
     setLogoUrl('/favicon.svg');
   }, [envLogo]);
 

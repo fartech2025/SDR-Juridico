@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   AcademicCapIcon,
@@ -13,92 +13,11 @@ import {
   SparklesIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
-import { supabase } from '../lib/supabaseClient';
 import BasePage from '../components/BasePage';
 
 export default function LandingPage() {
-  const [logoUrl, setLogoUrl] = useState<string>("");
-
-  useEffect(() => {
-    const loadLogo = async () => {
-      // 1) Monte listas de candidatos a bucket e path (env + fallbacks mais prováveis)
-      const envBucket = (import.meta.env.VITE_LOGO_BUCKET as string | undefined)?.trim();
-      const envPath = (import.meta.env.VITE_LOGO_PATH as string | undefined)?.trim();
-
-      const bucketCandidates = Array.from(
-        new Set(
-          [
-            envBucket,
-            // variações mais comuns vistas no projeto
-            'Imagens_contidas', // conforme informado
-            'Imagens_Contidas',
-            'logo',
-            'Logo',
-            'rendered-questions'
-          ].filter(Boolean) as string[]
-        )
-      );
-
-      const pathCandidates = Array.from(
-        new Set(
-          [
-            envPath,
-            // variações com e sem case
-            'logo4.png',
-            'logo/logo4.png', // conforme informado
-            'LOGO4.png',
-            'logo/LOGO4.png',
-            'LOGO/LOGO4.png',
-            'Logo/LOGO4.png'
-          ].filter(Boolean) as string[]
-        )
-      );
-
-      // Helper: valida uma URL pública realizando HEAD (evita mostrar imagem quebrada)
-      const validatePublicUrl = async (url?: string) => {
-        if (!url) return false;
-        try {
-          const res = await fetch(url, { method: 'HEAD' });
-          return res.ok;
-        } catch {
-          return false;
-        }
-      };
-
-      // 2) Tente primeiro URLs assinadas (funciona para buckets privados e confirma existência)
-      for (const b of bucketCandidates) {
-        for (const p of pathCandidates) {
-          try {
-            const signed = await supabase.storage.from(b).createSignedUrl(p, 60 * 60 * 24);
-            if (signed.data?.signedUrl) {
-              setLogoUrl(signed.data.signedUrl);
-              return;
-            }
-          } catch {
-            // tenta próxima combinação
-          }
-        }
-      }
-
-      // 3) Fallback: tente publicUrl mas só use se a URL existir (HEAD 200)
-      for (const b of bucketCandidates) {
-        for (const p of pathCandidates) {
-          try {
-            const { data } = supabase.storage.from(b).getPublicUrl(p);
-            if (data?.publicUrl && (await validatePublicUrl(data.publicUrl))) {
-              setLogoUrl(data.publicUrl);
-              return;
-            }
-          } catch {
-            // segue tentando
-          }
-        }
-      }
-
-      // 4) Se nada funcionar, mantém sem logo (o layout já esconde o <img /> quando vazio)
-    };
-    loadLogo();
-  }, []);
+  // Logo é gerenciado por BasePage agora - sem necessidade de carregar aqui
+  // Apenas renderizamos o conteúdo da landing page
 
   return (
     <BasePage>
