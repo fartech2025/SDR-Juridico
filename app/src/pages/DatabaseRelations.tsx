@@ -20,8 +20,20 @@ export default function DatabaseRelations() {
       setError(null);
       try {
         const { data, error } = await supabase.rpc('pg_foreign_keys');
-        if (error) throw error;
-        setRelations(data || []);
+        if (error) {
+          // If function doesn't exist, provide helpful message
+          if (error.message.includes('Could not find the function')) {
+            setError(
+              'Função pg_foreign_keys não encontrada. ' +
+              'Veja SOLUCAO_PG_FOREIGN_KEYS.md para corrigir, ' +
+              'ou acesse o SQL Editor do Supabase para criar a função manualmente.'
+            );
+          } else {
+            throw error;
+          }
+        } else {
+          setRelations(data || []);
+        }
       } catch (e: any) {
         setError('Erro ao buscar relações: ' + (e.message || e));
       } finally {
