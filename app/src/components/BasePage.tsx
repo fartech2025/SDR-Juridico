@@ -1,4 +1,5 @@
 import React from 'react';
+import LiquidGlassButton from './LiquidGlassButton';
 
 interface BasePageProps {
   children: React.ReactNode;
@@ -90,37 +91,32 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
               </div>
             </div>
 
-            {/* Right Section - Glassmorphism Enhanced */}
+            {/* Right Section - Liquid Glass Buttons */}
             <div className="flex items-center gap-4">
-              {/* Time Display - Glass Effect */}
-              <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.2)]">
-                <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Time Display - Liquid Glass */}
+              <LiquidGlassButton 
+                variant="info" 
+                size="sm"
+                className="hidden lg:flex"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-sm font-medium text-slate-200">
+                <span className="text-sm font-medium">
                   {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
-              </div>
+              </LiquidGlassButton>
 
-              {/* Status Badge - Glassmorphism Premium */}
-              <div className="relative group">
-                {/* Glass Container */}
-                <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white/[0.05] border border-emerald-400/30 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(16,185,129,0.15)]">
-                  {/* Inner Glow */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-xl" />
-                  
-                  <div className="relative flex items-center gap-2.5">
-                    <div className="relative">
-                      <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
-                      <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping opacity-75" />
-                    </div>
-                    <span className="text-sm font-bold text-emerald-300 tracking-wide">ONLINE</span>
+              {/* Status Badge - Liquid Glass */}
+              <LiquidGlassButton variant="success" size="md">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative">
+                    <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                    <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping opacity-75" />
                   </div>
+                  <span className="text-sm font-bold tracking-wide">ONLINE</span>
                 </div>
-                
-                {/* Hover Glow Effect */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-green-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
+              </LiquidGlassButton>
             </div>
           </div>
         </div>
@@ -156,34 +152,31 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
               </p>
             </div>
 
-            {/* Right Section - Glassmorphism Badges */}
+            {/* Right Section - Liquid Glass Badges */}
             <div className="flex items-center gap-4">
-              {/* Version Badge - Glass Effect */}
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-[0_4px_24px_0_rgba(0,0,0,0.2)]">
-                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Version Badge - Liquid Glass */}
+              <LiquidGlassButton variant="primary" size="sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                 </svg>
-                <span className="text-sm font-bold text-slate-200">v2.0.1</span>
-              </div>
+                <span className="text-sm font-bold">v2.0.1</span>
+              </LiquidGlassButton>
 
-              {/* Status Badge - Glass Effect */}
-              <div className="relative group">
-                <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-white/[0.04] border border-emerald-400/30 backdrop-blur-xl shadow-[0_4px_24px_0_rgba(16,185,129,0.12)]">
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-xl" />
-                  <div className="relative flex items-center gap-2">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
-                    <span className="text-sm font-bold text-emerald-300">Sistema Operacional</span>
-                  </div>
+              {/* Status Badge - Liquid Glass */}
+              <LiquidGlassButton variant="success" size="sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+                  <span className="text-sm font-bold">Sistema Operacional</span>
                 </div>
-              </div>
+              </LiquidGlassButton>
 
-              {/* Performance Badge - Glass Effect */}
-              <div className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-blue-400/30 backdrop-blur-xl shadow-[0_4px_24px_0_rgba(59,130,246,0.12)]">
-                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Performance Badge - Liquid Glass */}
+              <LiquidGlassButton variant="warning" size="sm" className="hidden xl:flex">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span className="text-sm font-medium text-blue-300">Alta Performance</span>
-              </div>
+                <span className="text-sm font-medium">Alta Performance</span>
+              </LiquidGlassButton>
             </div>
           </div>
         </div>
