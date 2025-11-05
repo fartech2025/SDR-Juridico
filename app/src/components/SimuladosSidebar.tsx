@@ -118,7 +118,7 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
 
   return (
     <div
-      className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300 z-40 overflow-y-auto ${
+      className={`lg:fixed lg:left-0 lg:top-0 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300 lg:z-40 overflow-y-auto flex-shrink-0 ${
         collapsed ? 'w-20' : 'w-80'
       }`}
     >

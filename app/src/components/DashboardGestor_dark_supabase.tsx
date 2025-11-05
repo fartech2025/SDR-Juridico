@@ -4,6 +4,21 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, L
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
+// Função para formatar segundos no formato HH:MM:SS
+function formatarTempo(segundos: number): string {
+  // Validação: se o tempo for maior que 1 hora (3600s), algo está errado nos dados
+  // Tempo razoável para uma questão ENEM: 3-5 minutos (180-300s)
+  if (segundos > 3600 || segundos < 0 || !isFinite(segundos)) {
+    return '00:00:00'; // Retorna zero se dados inválidos
+  }
+  
+  const horas = Math.floor(segundos / 3600);
+  const minutos = Math.floor((segundos % 3600) / 60);
+  const segs = Math.floor(segundos % 60);
+  
+  return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segs).padStart(2, '0')}`;
+}
+
 type KpisGestor = {
   mediaTurma: number;
   melhor: number;
@@ -163,7 +178,7 @@ export default function DashboardGestor_dark() {
             <KPI title="Média da turma" value={`${dados.kpis.mediaTurma}%`} />
             <KPI title="Melhor aluno" value={`${dados.kpis.melhor}%`} />
             <KPI title="Pior aluno" value={`${dados.kpis.pior}%`} />
-            <KPI title="Tempo médio" value={`${dados.kpis.tempo}s`} />
+            <KPI title="Tempo por Questão" value={formatarTempo(dados.kpis.tempo)} />
           </div>
 
           {/* Média por tema */}

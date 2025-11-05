@@ -17,6 +17,12 @@ export default function Home() {
           </div>
           <div className="flex flex-wrap justify-center gap-2 mb-4">
             <Link
+              to="/simulados"
+              className="btn btn-primary w-full mb-3 text-lg py-3"
+            >
+              🎯 Resolver Simulados
+            </Link>
+            <Link
               to="/ranking"
               className="btn btn-ghost"
               onMouseEnter={() => prefetchRoute(() => import('./Ranking'), 'Ranking')}

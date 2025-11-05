@@ -25,6 +25,7 @@ export default function DatabaseMonitor() {
     'provas',
     'questoes',
     'alternativas',
+    'temas',
     'imagens',
     'respostas_usuarios',
     'resultados_usuarios',

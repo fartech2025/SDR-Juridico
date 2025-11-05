@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import BasePage from "./BasePage";
-import SimuladosSidebar from "./SimuladosSidebar";
+import Sidenav from "./Sidenav";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
@@ -31,6 +31,21 @@ type PainelAluno = {
   xp_total?: number;
   streak_dias?: number;
 };
+
+// Função para formatar segundos no formato HH:MM:SS
+function formatarTempo(segundos: number): string {
+  // Validação: se o tempo for maior que 1 hora (3600s), algo está errado nos dados
+  // Tempo razoável para uma questão ENEM: 3-5 minutos (180-300s)
+  if (segundos > 3600 || segundos < 0 || !isFinite(segundos)) {
+    return '00:00:00'; // Retorna zero se dados inválidos
+  }
+  
+  const horas = Math.floor(segundos / 3600);
+  const minutos = Math.floor((segundos % 3600) / 60);
+  const segs = Math.floor(segundos % 60);
+  
+  return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segs).padStart(2, '0')}`;
+}
 
 export default function DashboardAluno_dark() {
   const [dados, setDados] = useState<{
@@ -87,6 +102,10 @@ export default function DashboardAluno_dark() {
 
         const dificuldadeFormatada: DificuldadeDesempenho[] = agruparPorDificuldade(temasFormatados.length ? temasFormatados : [], dificuldades ?? []);
         const progresso = calcularSerieTemporal(respostas ?? []);
+
+        // Debug: verificar valor do tempo médio
+        console.log('DEBUG tempo_medio_resposta_ms:', desempenhoGeral?.tempo_medio_resposta_ms);
+        console.log('DEBUG total_questoes:', desempenhoGeral?.total_questoes);
 
         setDados({
           aluno: {
@@ -154,75 +173,138 @@ export default function DashboardAluno_dark() {
     : '-';
 
   return (
-    <div className="flex h-screen bg-gray-950">
-      {/* Sidebar de Simulados */}
-      <SimuladosSidebar isOpen={true} />
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-950">
+      {/* Sidenav - Sempre visível, mas com controle de collapse */}
+      <Sidenav isOpen={true} />
 
       {/* Conteúdo Principal */}
-      <BasePage className="flex-1">
-        <div className="w-full px-6 py-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-blue-400">Painel do Estudante</h1>
-              <p className="text-sm text-gray-400">
+      <div className="flex-1 overflow-y-auto">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
+            <div className="flex-1 min-w-0 w-full sm:w-auto">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-400 truncate">
+                Painel do Estudante
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">
                 Bem-vindo, {dados.aluno.nome}
                 {dados.aluno.nivel !== undefined ? ` • Nível ${dados.aluno.nivel}` : null}
               </p>
               {dados.aluno.xp_total !== undefined ? (
-                <p className="text-xs text-gray-500">XP total: {dados.aluno.xp_total}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                  XP total: {dados.aluno.xp_total}
+                </p>
               ) : null}
             </div>
-            <Link to="/" className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">Voltar</Link>
+            <Link 
+              to="/" 
+              className="bg-blue-700 hover:bg-blue-600 px-3 sm:px-4 md:px-6 py-2 md:py-2.5 rounded-lg text-sm sm:text-base whitespace-nowrap transition-colors flex-shrink-0 w-full sm:w-auto text-center"
+            >
+              ← Voltar
+            </Link>
           </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {/* KPIs - Grid Responsivo */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
           <KPI title="Aproveitamento" value={`${dados.aluno.media_geral ?? 0}%`} />
-          <KPI title="Questões Respondidas" value={dados.aluno.provas_respondidas} />
-          <KPI title="Tempo Médio" value={`${dados.aluno.tempo_medio_segundos}s`} />
-          <KPI title="Última atualização" value={ultimaAtualizacao} />
+          <KPI title="Questões" value={dados.aluno.provas_respondidas} />
+          <KPI title="Tempo por Questão" value={formatarTempo(dados.aluno.tempo_medio_segundos)} />
+          <KPI title="Atualização" value={ultimaAtualizacao} />
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+        {/* Gráficos - Grid Responsivo */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6 mb-4 md:mb-6">
           <ChartCard title="Desempenho por Tema">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={dados.temas}>
-                <XAxis dataKey="nome_tema" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
-                <Tooltip />
-                <Bar dataKey="percentual" fill="#60a5fa" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[250px] sm:h-[280px] md:h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dados.temas}>
+                  <XAxis 
+                    dataKey="nome_tema" 
+                    stroke="#9ca3af" 
+                    fontSize={9}
+                    angle={-45}
+                    textAnchor="end"
+                    height={70}
+                  />
+                  <YAxis stroke="#9ca3af" fontSize={10} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      fontSize: '11px'
+                    }}
+                  />
+                  <Bar dataKey="percentual" fill="#60a5fa" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
 
           <ChartCard title="Por Dificuldade">
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={dados.dificuldade} dataKey="percentual" nameKey="tipo" outerRadius={90}>
-                  {dados.dificuldade.map((_, i) => (
-                    <Cell key={i} fill={["#22c55e", "#eab308", "#ef4444"][i % 3]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-[250px] sm:h-[280px] md:h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={dados.dificuldade} 
+                    dataKey="percentual" 
+                    nameKey="tipo" 
+                    outerRadius={70}
+                    label={(entry) => `${entry.tipo}: ${entry.percentual}%`}
+                  >
+                    {dados.dificuldade.map((_, i) => (
+                      <Cell key={i} fill={["#22c55e", "#eab308", "#ef4444"][i % 3]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      fontSize: '11px'
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '10px' }}
+                    iconSize={10}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
 
-          <ChartCard title="Evolução diária">
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={dados.progresso}>
-                <XAxis dataKey="periodo" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
-                <Tooltip />
-                <Line type="monotone" dataKey="percentual" stroke="#a78bfa" strokeWidth={3} />
-              </LineChart>
-            </ResponsiveContainer>
+          <ChartCard title="Evolução diária" className="lg:col-span-2 xl:col-span-1">
+            <div className="h-[250px] sm:h-[280px] md:h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={dados.progresso}>
+                  <XAxis 
+                    dataKey="periodo" 
+                    stroke="#9ca3af" 
+                    fontSize={9}
+                    angle={-45}
+                    textAnchor="end"
+                    height={70}
+                  />
+                  <YAxis stroke="#9ca3af" fontSize={10} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      fontSize: '11px'
+                    }}
+                  />
+                  <Line type="monotone" dataKey="percentual" stroke="#a78bfa" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Cards de Insights - Grid Responsivo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-6 mb-6">
           <InsightCard title="💡 Insights">
-            <ul className="list-disc pl-4 text-sm text-gray-300 space-y-1">
+            <ul className="list-disc pl-4 sm:pl-5 text-xs sm:text-sm text-gray-300 space-y-1.5 sm:space-y-2">
               <li>Pontos fortes: {pontosFortes.join(', ') || '—'}</li>
               <li>Pontos fracos: {pontosFracos.join(', ') || '—'}</li>
               <li>Sugestão: revisar {pontosFracos[0] || 'temas críticos'}.</li>
@@ -230,15 +312,15 @@ export default function DashboardAluno_dark() {
           </InsightCard>
 
           <InsightCard title="🎯 Meta Semanal">
-            <ul className="list-disc pl-4 text-sm text-gray-300 space-y-1">
+            <ul className="list-disc pl-4 sm:pl-5 text-xs sm:text-sm text-gray-300 space-y-1.5 sm:space-y-2">
               <li>Revisar 2 temas fracos</li>
               <li>Praticar 20 questões</li>
               <li>Refazer 1 simulado completo</li>
             </ul>
           </InsightCard>
         </div>
+        </div>
       </div>
-    </BasePage>
     </div>
   );
 }
@@ -250,9 +332,9 @@ interface KPIProps {
 
 function KPI({ title, value }: KPIProps) {
   return (
-    <div className="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center">
-      <p className="text-sm text-gray-400">{title}</p>
-      <p className="text-2xl font-bold text-gray-100">{value}</p>
+    <div className="bg-gray-900 p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl border border-gray-800 text-center hover:border-gray-700 transition-colors">
+      <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate">{title}</p>
+      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-100">{value}</p>
     </div>
   );
 }
@@ -260,12 +342,13 @@ function KPI({ title, value }: KPIProps) {
 interface ChartCardProps {
   title: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-function ChartCard({ title, children }: ChartCardProps) {
+function ChartCard({ title, children, className = '' }: ChartCardProps) {
   return (
-    <div className="bg-gray-900 p-5 rounded-2xl border border-gray-800">
-      <h3 className="font-semibold mb-3">{title}</h3>
+    <div className={`bg-gray-900 p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors ${className}`}>
+      <h3 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg text-gray-100">{title}</h3>
       {children}
     </div>
   );
@@ -278,8 +361,8 @@ interface InsightCardProps {
 
 function InsightCard({ title, children }: InsightCardProps) {
   return (
-    <div className="bg-gray-900 p-5 rounded-2xl border border-gray-800">
-      <h3 className="font-semibold mb-3">{title}</h3>
+    <div className="bg-gray-900 p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors">
+      <h3 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg text-gray-100 flex items-center gap-2">{title}</h3>
       {children}
     </div>
   );

@@ -782,6 +782,19 @@ export default function DatabaseInspetor() {
     setLoading(true);
     setError(null);
     setSelectedTable(table);
+    
+    // Filtrar tabelas que não estão no schema public
+    const storageSystemTables = ['buckets', 'objects', 'buckets_analytics', 's3_multipart_uploads', 's3_multipart_uploads_parts'];
+    const internalTables = ['schema_migrations', 'messages', 'subscription', 'prefixes'];
+    const excludedTables = [...storageSystemTables, ...internalTables];
+    
+    if (excludedTables.includes(table)) {
+      setError(`A tabela "${table}" não está disponível para consulta direta (tabela do sistema ou schema storage)`);
+      setRows([]);
+      setLoading(false);
+      return;
+    }
+    
     try {
       const { data, error } = await supabase.from(table).select('*').limit(100);
       if (error) throw error;
@@ -2907,7 +2920,7 @@ export default function DatabaseInspetor() {
                         {analysis.recommendations.map((rec, idx) => (
                           <div key={idx} className={`p-4 rounded-lg border ${
                             rec.priority === 'alta' ? 'border-red-600/50 bg-red-900/20' :
-                            rec.priority === 'média' ? 'border-yellow-600/50 bg-yellow-900/20' :
+                            rec.priority === 'media' ? 'border-yellow-600/50 bg-yellow-900/20' :
                             'border-slate-600/50 bg-slate-800/30'
                           }`}>
                             <div className="flex items-start justify-between mb-2">
@@ -2915,7 +2928,7 @@ export default function DatabaseInspetor() {
                                 <span className="font-medium text-slate-200">{rec.table}</span>
                                 <span className={`text-xs px-2 py-1 rounded ${
                                   rec.priority === 'alta' ? 'bg-red-600/30 text-red-300' :
-                                  rec.priority === 'média' ? 'bg-yellow-600/30 text-yellow-300' :
+                                  rec.priority === 'media' ? 'bg-yellow-600/30 text-yellow-300' :
                                   'bg-slate-600/30 text-slate-300'
                                 }`}>
                                   {rec.priority.toUpperCase()}
@@ -2926,7 +2939,7 @@ export default function DatabaseInspetor() {
                             <p className="text-slate-400 text-sm mb-2">{rec.reason}</p>
                             <p className={`text-sm font-medium ${
                               rec.priority === 'alta' ? 'text-red-300' :
-                              rec.priority === 'média' ? 'text-yellow-300' :
+                              rec.priority === 'media' ? 'text-yellow-300' :
                               'text-slate-300'
                             }`}>
                               💡 {rec.action}
@@ -2950,7 +2963,7 @@ export default function DatabaseInspetor() {
                         <div className="flex items-center gap-2">
                           <span className="w-3 h-3 bg-yellow-500 rounded-full"></span>
                           <span className="text-slate-300">
-                            <strong>Média prioridade:</strong> {analysis.recommendations.filter(r => r.priority === 'média').length} tabela(s) - 
+                            <strong>Média prioridade:</strong> {analysis.recommendations.filter(r => r.priority === 'media').length} tabela(s) - 
                             Revisar se funcionalidade será implementada
                           </span>
                         </div>
@@ -3010,7 +3023,7 @@ export default function DatabaseInspetor() {
                         <button
                           onClick={() => {
                             const mediumPriorityTables = analysis.recommendations
-                              .filter(r => r.priority === 'média')
+                              .filter(r => r.priority === 'media')
                               .map(r => r.table);
                             
                             if (mediumPriorityTables.length > 0) {
@@ -3029,7 +3042,7 @@ export default function DatabaseInspetor() {
                         >
                           ⚠️ Remover Média Prioridade
                           <span className="text-xs bg-yellow-800 px-2 py-1 rounded">
-                            {analysis.recommendations.filter(r => r.priority === 'média').length}
+                            {analysis.recommendations.filter(r => r.priority === 'media').length}
                           </span>
                         </button>
 

@@ -213,26 +213,26 @@ export default function ResolverSimulado() {
 
   return (
     <BasePage>
-      <div className="max-w-5xl mx-auto py-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-7xl mx-auto py-4 md:py-8 px-2 md:px-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-sm md:text-base"
           >
-            <ArrowLeftIcon className="w-5 h-5" />
+            <ArrowLeftIcon className="w-4 h-4 md:w-5 md:h-5" />
             Voltar
           </button>
-          <span className="text-sm text-slate-400">
+          <span className="text-xs md:text-sm text-slate-400">
             Usuário #{usuario.id_usuario} | Respostas salvas automaticamente
           </span>
         </div>
 
-        <div className="glass-card p-6">
+        <div className="glass-card p-3 md:p-6">
           <SimuladoRenderer id_simulado={simuladoId} onSimuladoCompleto={handleSimuladoCompleto} />
         </div>
 
         {enviando && (
-          <div className="mt-4 text-sm text-blue-300">
+          <div className="mt-4 text-xs md:text-sm text-blue-300 text-center">
             Salvando suas respostas, aguarde...
           </div>
         )}

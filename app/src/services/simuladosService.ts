@@ -17,6 +17,7 @@ export interface QuestaoCompleta {
   id_questao: number;
   id_prova: number;
   id_tema: number | null;
+  nome_tema?: string | null;
   enunciado: string;
   dificuldade: string | null;
   tem_imagem: boolean;
@@ -127,6 +128,9 @@ static async buscarSimuladosPorProvas(): Promise<SimuladoDoEnem[]> {
          tem_imagem,
          nr_questao,
          peso_dificuldade,
+         temas:temas (
+           nome_tema
+         ),
          alternativas:alternativas (
            id_alternativa,
            letra,
@@ -144,10 +148,11 @@ static async buscarSimuladosPorProvas(): Promise<SimuladoDoEnem[]> {
       throw error;
     }
 
-    return (data ?? []).map((linha) => ({
+    return (data ?? []).map((linha: any) => ({
       id_questao: linha.id_questao,
       id_prova: linha.id_prova,
       id_tema: linha.id_tema ?? null,
+      nome_tema: linha.temas?.nome_tema ?? null,
       enunciado: linha.enunciado,
       dificuldade: linha.dificuldade ?? null,
       tem_imagem: Boolean(linha.tem_imagem),
