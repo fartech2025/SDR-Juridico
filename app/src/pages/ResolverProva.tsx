@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { refreshMaterializedViews } from "../services/supabaseService";
 
 export default function ResolverProva() {
   const { ano } = useParams();
@@ -169,7 +170,7 @@ export default function ResolverProva() {
 
     const acertou = correta?.[0]?.correta ?? false;
 
-    await supabase.from("respostas_usuarios").upsert({
+    const { error: respostaError } = await supabase.from("respostas_usuarios").upsert({
       id_usuario: userId,
       id_questao: current.id_questao,
       id_alternativa: idAlternativa,
@@ -177,6 +178,13 @@ export default function ResolverProva() {
       correta: acertou,
       tempo_resposta_ms: Date.now() - inicio,
     });
+
+    if (respostaError) {
+      console.error("Erro ao salvar resposta do usuario:", respostaError);
+      return;
+    }
+
+    void refreshMaterializedViews();
 
     setRespostas((prev) => ({ ...prev, [current.id_questao]: acertou }));
     setSelecionadas((prev) => ({ ...prev, [current.id_questao]: idAlternativa }));
@@ -342,3 +350,6 @@ export default function ResolverProva() {
     </div>
   );
 }
+
+
+

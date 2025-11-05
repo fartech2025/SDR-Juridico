@@ -3,7 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { SimuladoRenderer } from '../components/QuestaoRenderer';
 import BasePage from '../components/BasePage';
 import { supabase } from '../lib/supabaseClient';
-import { ensureUsuarioRegistro, fetchQuestoesPorProvaTema } from '../services/supabaseService';
+import {
+  ensureUsuarioRegistro,
+  fetchQuestoesPorProvaTema,
+  refreshMaterializedViews,
+} from '../services/supabaseService';
 import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 interface RespostaUsuario {
@@ -119,6 +123,8 @@ export default function ResolverSimulado() {
       if (erroInsercao) {
         throw erroInsercao;
       }
+
+      await refreshMaterializedViews();
 
       const percentualAcertos = (totalAcertos / respostas.length) * 100;
       setResultado({

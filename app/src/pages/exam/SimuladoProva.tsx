@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { ensureUsuarioRegistro, fetchQuestoesPorProvaTema, fetchQuestoesIdsPorProvaTema, fetchQuestaoById } from '../../services/supabaseService';
+import {
+  ensureUsuarioRegistro,
+  fetchQuestoesIdsPorProvaTema,
+  fetchQuestaoById,
+  refreshMaterializedViews,
+} from '../../services/supabaseService';
 import type { Questao } from '../../types';
 import BasePage from '../../components/BasePage';
 import QuestionSkeleton from '../../components/ui/QuestionSkeleton';
@@ -261,11 +266,16 @@ export default function SimuladoProva() {
             const resposta = respostas[id];
             if (!resposta) return null;
             const q = questoesCache.current.get(id);
-            const correta = !!q?.alternativas.find((alt) => alt.letra === resposta)?.correta;
+            const respostaNormalizada = resposta.toUpperCase();
+            const alternativaSelecionada = q?.alternativas.find(
+              (alt) => alt.letra === respostaNormalizada
+            );
+            const correta = !!alternativaSelecionada?.correta;
             return {
               id_usuario: usuarioId,
               id_questao: id,
-              alternativa_marcada: resposta,
+              id_alternativa: alternativaSelecionada?.id_alternativa ?? null,
+              alternativa_marcada: respostaNormalizada,
               correta,
               data_resposta: now,
               tempo_resposta_ms: null,
@@ -274,6 +284,7 @@ export default function SimuladoProva() {
           .filter(Boolean) as Array<{
             id_usuario: number;
             id_questao: number;
+            id_alternativa: number | null;
             alternativa_marcada: string;
             correta: boolean;
             data_resposta: string;
@@ -284,10 +295,12 @@ export default function SimuladoProva() {
           const { error } = await supabase.from('respostas_usuarios').insert(payload);
           if (error) {
             console.error('Erro ao salvar respostas:', error);
-            setErro('Não foi possível salvar suas respostas. Tente novamente.');
+            setErro('Nao foi possivel salvar suas respostas. Tente novamente.');
             setSalvando(false);
             return;
           }
+
+          await refreshMaterializedViews();
         }
       }
 
@@ -449,3 +462,4 @@ export default function SimuladoProva() {
     </BasePage>
   );
 }
+
