@@ -268,19 +268,24 @@ export async function listarUsuarios(): Promise<SelectResponse<Usuario>> {
   return { data, error };
 }
 
-export async function refreshMaterializedViews(): Promise<void> {
+export async function refreshMaterializedViews(): Promise<boolean> {
   const rpc = (supabase as any)?.rpc;
   if (typeof rpc !== 'function') {
-    return;
+    console.warn('Supabase client sem suporte a RPC; refresh das views foi ignorado.');
+    return false;
   }
 
   try {
     const { error } = await supabase.rpc('fn_refresh_all_materialized');
     if (error) {
       console.error('Erro ao atualizar views materializadas:', error);
+      return false;
     }
+
+    return true;
   } catch (err) {
     console.error('Falha inesperada ao atualizar views materializadas:', err);
+    return false;
   }
 }
 

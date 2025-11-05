@@ -14,6 +14,7 @@ export default function ResolverProva() {
   const [respostas, setRespostas] = useState<Record<number, boolean | null>>({});
   const [selecionadas, setSelecionadas] = useState<Record<number, number | null>>({});
   const [zoomImagem, setZoomImagem] = useState<string | null>(null);
+  const [refreshAviso, setRefreshAviso] = useState<string | null>(null);
   const userId = Number(import.meta.env.VITE_USER_ID || 1);
 
   // -------------------- TIMER --------------------
@@ -184,7 +185,12 @@ export default function ResolverProva() {
       return;
     }
 
-    void refreshMaterializedViews();
+    const refreshOk = await refreshMaterializedViews();
+    if (!refreshOk) {
+      setRefreshAviso("Resposta registrada. As estatisticas podem levar alguns minutos para atualizar.");
+    } else if (refreshAviso) {
+      setRefreshAviso(null);
+    }
 
     setRespostas((prev) => ({ ...prev, [current.id_questao]: acertou }));
     setSelecionadas((prev) => ({ ...prev, [current.id_questao]: idAlternativa }));
@@ -233,6 +239,11 @@ export default function ResolverProva() {
 
       {/* Corpo da questão */}
       <div className="bg-slate-900/70 rounded-xl p-6 border border-slate-800 relative">
+        {refreshAviso && (
+          <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-900/30 p-3 text-amber-200 text-sm">
+            {refreshAviso}
+          </div>
+        )}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-slate-100">
             Prova ENEM {ano}
@@ -350,6 +361,7 @@ export default function ResolverProva() {
     </div>
   );
 }
+
 
 
 

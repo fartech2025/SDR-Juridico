@@ -30,6 +30,7 @@ export default function ResolverSimulado() {
   const [usuario, setUsuario] = useState<any>(null);
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoFinal | null>(null);
+  const [avisoEstatisticas, setAvisoEstatisticas] = useState<string | null>(null);
   const [tempoInicio, setTempoInicio] = useState<number>(Date.now());
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function ResolverSimulado() {
 
     try {
       setEnviando(true);
+      setAvisoEstatisticas(null);
 
       const { data: questoesData, error: erroQuestoes } = await fetchQuestoesPorProvaTema(simuladoId);
       if (erroQuestoes) {
@@ -124,7 +126,10 @@ export default function ResolverSimulado() {
         throw erroInsercao;
       }
 
-      await refreshMaterializedViews();
+      const refreshOk = await refreshMaterializedViews();
+      if (!refreshOk) {
+        setAvisoEstatisticas('Respostas salvas. As estatísticas podem levar alguns minutos para refletir este simulado.');
+      }
 
       const percentualAcertos = (totalAcertos / respostas.length) * 100;
       setResultado({
@@ -212,6 +217,9 @@ export default function ResolverSimulado() {
               </button>
             </div>
           </div>
+          {avisoEstatisticas && (
+            <p className="text-sm text-amber-300 text-center">{avisoEstatisticas}</p>
+          )}
         </div>
       </BasePage>
     );
@@ -240,6 +248,11 @@ export default function ResolverSimulado() {
         {enviando && (
           <div className="mt-4 text-xs md:text-sm text-blue-300 text-center">
             Salvando suas respostas, aguarde...
+          </div>
+        )}
+        {avisoEstatisticas && (
+          <div className="mt-3 text-xs md:text-sm text-amber-300 text-center">
+            {avisoEstatisticas}
           </div>
         )}
       </div>

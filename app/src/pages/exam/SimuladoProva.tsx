@@ -24,6 +24,7 @@ export default function SimuladoProva() {
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [avisoEstatisticas, setAvisoEstatisticas] = useState<string | null>(null);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
   const [finalizado, setFinalizado] = useState(false);
   const [resumo, setResumo] = useState<{ total: number; acertos: number; erros: number; percentual: number }>({
@@ -231,6 +232,7 @@ export default function SimuladoProva() {
 
   const finalizarSimulado = async () => {
     if (salvando || finalizado) return;
+    setAvisoEstatisticas(null);
     setSalvando(true);
 
   // total de questões do simulado
@@ -291,6 +293,8 @@ export default function SimuladoProva() {
             tempo_resposta_ms: number | null;
           }>;
 
+        let refreshOk = true;
+
         if (payload.length) {
           const { error } = await supabase.from('respostas_usuarios').insert(payload);
           if (error) {
@@ -300,7 +304,11 @@ export default function SimuladoProva() {
             return;
           }
 
-          await refreshMaterializedViews();
+          refreshOk = await refreshMaterializedViews();
+        }
+
+        if (!refreshOk) {
+          setAvisoEstatisticas('Respostas salvas. Suas estatisticas podem levar alguns minutos para refletir os novos resultados.');
         }
       }
 
@@ -328,6 +336,9 @@ export default function SimuladoProva() {
           <p className="text-green-400 font-semibold">Acertos: {resumo.acertos}</p>
           <p className="text-red-400 font-semibold">Erros: {resumo.erros}</p>
           <p>Aproveitamento: {resumo.percentual}%</p>
+          {avisoEstatisticas && (
+            <p className="text-amber-300 text-sm">{avisoEstatisticas}</p>
+          )}
           <button
             onClick={() => navigate('/')}
             className="btn btn-primary w-full"
@@ -462,4 +473,5 @@ export default function SimuladoProva() {
     </BasePage>
   );
 }
+
 
