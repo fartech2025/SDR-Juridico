@@ -95,9 +95,16 @@ export default function DashboardAluno_dark() {
               .order("data_resposta", { ascending: true }),
           ]);
 
-        const temasFormatados: TemaDesempenho[] = (temas ?? []).map((t: any) => ({
-          nome_tema: t.temas?.nome_tema || "Tema não informado",
-          percentual: Number(t.percentual ?? 0),
+        type TemaResultado = {
+          percentual?: number | null;
+          temas?: {
+            nome_tema?: string | null;
+          } | null;
+        };
+
+        const temasFormatados: TemaDesempenho[] = (temas ?? []).map((tema: TemaResultado) => ({
+          nome_tema: tema.temas?.nome_tema || "Tema não informado",
+          percentual: Number(tema.percentual ?? 0),
         }));
 
         const dificuldadeFormatada: DificuldadeDesempenho[] = agruparPorDificuldade(temasFormatados.length ? temasFormatados : [], dificuldades ?? []);

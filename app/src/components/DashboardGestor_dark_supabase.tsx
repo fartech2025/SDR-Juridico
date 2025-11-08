@@ -104,7 +104,12 @@ export default function DashboardGestor_dark() {
             : 0;
 
         const temasMap = new Map<string, number[]>();
-        (resultadosTemas ?? []).forEach((tema: any) => {
+        type ResultadoTema = {
+          percentual?: number | null;
+          temas?: { nome_tema?: string | null } | null;
+        };
+
+        (resultadosTemas ?? []).forEach((tema: ResultadoTema) => {
           const nomeTema = tema.temas?.nome_tema || "Tema não informado";
           if (!temasMap.has(nomeTema)) {
             temasMap.set(nomeTema, []);

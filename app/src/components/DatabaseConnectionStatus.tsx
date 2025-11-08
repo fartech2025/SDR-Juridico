@@ -42,7 +42,7 @@ export default function DatabaseConnectionStatus() {
     for (const tableName of TABLES) {
       const startTime = performance.now();
       try {
-        const { data, error, count } = await supabase
+        const { error, count } = await supabase
           .from(tableName)
           .select('*', { count: 'exact', head: true });
 
@@ -63,12 +63,13 @@ export default function DatabaseConnectionStatus() {
             responseTime
           });
         }
-      } catch (err: any) {
+      } catch (err) {
         const responseTime = performance.now() - startTime;
+        const message = err instanceof Error ? err.message : 'Erro desconhecido';
         results.push({
           name: tableName,
           status: 'error',
-          error: err?.message || 'Erro desconhecido',
+          error: message,
           responseTime
         });
       }

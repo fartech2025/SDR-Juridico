@@ -41,7 +41,7 @@ export default function Home() {
             <Link to="/painel-gestor" className="btn btn-ghost">👔 Painel do Gestor</Link>
             <Link to="/painel-aluno" className="btn btn-ghost">🎒 Painel do Aluno</Link>
             <Link to="/selecionar-prova" className="btn btn-ghost">📝 Selecionar Prova</Link>
-            <Link to="/simulado/1/1" className="btn btn-ghost">🧪 Simulado (Exemplo)</Link>
+            <Link to="/simulados" className="btn btn-ghost">🧪 Simulado (Exemplo)</Link>
             <Link to="/monitor" className="btn btn-ghost">🖥️ Monitor</Link>
             <Link to="/sec-educacao" className="btn btn-ghost">🏛️ Sec. Educação</Link>
             <Link to="/database-inspetor" className="btn btn-ghost">🗄️ Database Inspetor</Link>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 interface TableStatus {
@@ -14,55 +14,30 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
+const TABLE_NAMES = [
+  'usuarios',
+  'provas',
+  'questoes',
+  'alternativas',
+  'temas',
+  'imagens',
+  'respostas_usuarios',
+  'resultados_usuarios',
+  'resultados_por_tema',
+  'resultados_por_dificuldade',
+];
+
 export default function DatabaseMonitor() {
   const [tableStatuses, setTableStatuses] = useState<TableStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [overallStatus, setOverallStatus] = useState<'connected' | 'partial' | 'error'>('partial');
 
-  const tables = [
-    'usuarios',
-    'provas',
-    'questoes',
-    'alternativas',
-    'temas',
-    'imagens',
-    'respostas_usuarios',
-    'resultados_usuarios',
-    'resultados_por_tema',
-    'resultados_por_dificuldade',
-  ];
-
-  useEffect(() => {
-    checkAllTables();
-    const interval = setInterval(checkAllTables, 30000); // Atualizar a cada 30 segundos
-    return () => clearInterval(interval);
-  }, []);
-
-  const checkAllTables = async () => {
-    setLoading(true);
-    const results: TableStatus[] = [];
-
-    for (const table of tables) {
-      const status = await checkTable(table);
-      results.push(status);
-    }
-
-    setTableStatuses(results);
-    setLastUpdate(new Date());
-
-    // Determinar status geral
-    const allConnected = results.every(r => r.status === 'connected');
-    const anyConnected = results.some(r => r.status === 'connected');
-    setOverallStatus(allConnected ? 'connected' : anyConnected ? 'partial' : 'error');
-    setLoading(false);
-  };
-
-  const checkTable = async (tableName: string): Promise<TableStatus> => {
+  const checkTable = useCallback(async (tableName: string): Promise<TableStatus> => {
     const startTime = performance.now();
     
     try {
-      const { data, error, count } = await supabase
+      const { error, count } = await supabase
         .from(tableName)
         .select('*', { count: 'exact', head: true });
 
@@ -84,17 +59,43 @@ export default function DatabaseMonitor() {
         rowCount: count || 0,
         responseTime,
       };
-    } catch (err: any) {
+    } catch (err) {
       const responseTime = Math.round(performance.now() - startTime);
+      const message = err instanceof Error ? err.message : 'Unknown error';
       return {
         name: tableName,
         status: 'error',
         rowCount: null,
-        error: err?.message || 'Unknown error',
+        error: message,
         responseTime,
       };
     }
-  };
+  }, []);
+
+  const checkAllTables = useCallback(async () => {
+    setLoading(true);
+    const results: TableStatus[] = [];
+
+    for (const table of TABLE_NAMES) {
+      const status = await checkTable(table);
+      results.push(status);
+    }
+
+    setTableStatuses(results);
+    setLastUpdate(new Date());
+
+    // Determinar status geral
+    const allConnected = results.every(r => r.status === 'connected');
+    const anyConnected = results.some(r => r.status === 'connected');
+    setOverallStatus(allConnected ? 'connected' : anyConnected ? 'partial' : 'error');
+    setLoading(false);
+  }, [checkTable]);
+
+  useEffect(() => {
+    void checkAllTables();
+    const interval = setInterval(checkAllTables, 30000); // Atualizar a cada 30 segundos
+    return () => clearInterval(interval);
+  }, [checkAllTables]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

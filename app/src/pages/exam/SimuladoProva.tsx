@@ -90,46 +90,91 @@ export default function SimuladoProva() {
 
   useEffect(() => {
     async function carregarQuestoesIds() {
+      setLoading(true);
+      setErro(null);
+      setAvisoEstatisticas(null);
+      setQuestaoAtual(0);
+      setRespostas({});
+      setFinalizado(false);
+      setResumo({ total: 0, acertos: 0, erros: 0, percentual: 0 });
+      questoesCache.current.clear();
+      setCacheVersion((v) => v + 1);
+
       try {
         const provaId = Number(id_prova);
         if (!Number.isFinite(provaId) || provaId <= 0) {
-          setErro('Prova selecionada é inválida.');
+          setErro('Prova selecionada nao e valida.');
           setQuestaoIds([]);
-          setLoading(false);
           return;
         }
+
         const temaId = id_tema === 'completa' ? undefined : Number(id_tema);
-        const normalizedTemaId = temaId !== undefined && Number.isFinite(temaId) && temaId > 0 ? temaId : undefined;
+        const normalizedTemaId =
+          temaId !== undefined && Number.isFinite(temaId) && temaId > 0 ? temaId : undefined;
 
         const { data, error } = await fetchQuestoesIdsPorProvaTema(provaId, normalizedTemaId);
         if (error) {
-          console.error('Erro ao carregar ids das questões:', error);
-          setErro('Não foi possível carregar as questões deste simulado.');
+          console.error('Erro ao carregar ids das questoes:', error);
+          setErro('Nao foi possivel carregar as questoes deste simulado.');
           setQuestaoIds([]);
-        } else {
-          const ids = (data ?? []).map((r: any) => r.id_questao);
-          setQuestaoIds(ids);
-          // prefetch primeira questão
-          if (ids.length) {
-            const firstId = ids[0];
-            const { data: q } = await fetchQuestaoById(firstId);
-            if (q) questoesCache.current.set(firstId, q);
-            // prefetch next
-            if (ids.length > 1) {
-              const nextId = ids[1];
-              void fetchQuestaoById(nextId).then((res) => { if (res.data) questoesCache.current.set(nextId, res.data); });
+          return;
+        }
+
+        let ids = (data ?? []).map((r: any) => r.id_questao);
+        let fallbackAtivado = false;
+
+        if (!ids.length && normalizedTemaId !== undefined) {
+          const fallback = await fetchQuestoesIdsPorProvaTema(provaId);
+          if (fallback.error) {
+            console.error('Erro no fallback para prova completa:', fallback.error);
+          } else {
+            const fallbackIds = (fallback.data ?? []).map((r: any) => r.id_questao);
+            if (fallbackIds.length) {
+              ids = fallbackIds;
+              fallbackAtivado = true;
             }
           }
         }
+
+        if (!ids.length) {
+          if (normalizedTemaId !== undefined) {
+            setAvisoEstatisticas(
+              'Tema selecionado nao possui questoes cadastradas. Tente outro tema ou responda a prova completa.'
+            );
+          } else {
+            setAvisoEstatisticas('Nenhuma questao cadastrada para esta prova.');
+          }
+          setQuestaoIds([]);
+          return;
+        }
+
+        setAvisoEstatisticas(
+          fallbackAtivado
+            ? 'Tema selecionado nao possui questoes cadastradas. Exibindo a prova completa.'
+            : null
+        );
+
+        setQuestaoIds(ids);
+
+        const [firstId, secondId] = ids;
+        const { data: q } = await fetchQuestaoById(firstId);
+        if (q) {
+          questoesCache.current.set(firstId, q);
+        }
+        if (secondId) {
+          void fetchQuestaoById(secondId).then((res) => {
+            if (res.data) questoesCache.current.set(secondId, res.data);
+          });
+        }
       } catch (error) {
-        console.error('Erro ao carregar questões:', error);
-        setErro('Erro inesperado ao carregar questões.');
+        console.error('Erro ao carregar questoes:', error);
+        setErro('Erro inesperado ao carregar questoes.');
         setQuestaoIds([]);
       } finally {
         setLoading(false);
       }
     }
-    carregarQuestoesIds();
+    void carregarQuestoesIds();
   }, [id_prova, id_tema]);
 
   const proximaQuestao = () => {
@@ -184,8 +229,9 @@ export default function SimuladoProva() {
         <div className="glass-card p-6 text-center">
           <h1 className="ds-heading mb-6 text-blue-400">🎓 Simulado ENEM</h1>
           <p className="ds-muted mb-4">
-            Nenhuma questão encontrada para esta prova/tema.<br/>
-            <span className="text-xs text-gray-500">Total de questões disponíveis: 0</span>
+            {avisoEstatisticas ?? 'Nenhuma questao encontrada para esta prova/tema.'}
+            <br />
+            <span className="text-xs text-gray-500">Total de questoes disponiveis: 0</span>
           </p>
           <button 
             onClick={() => navigate('/')} 

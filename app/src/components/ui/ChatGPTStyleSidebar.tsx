@@ -2,6 +2,11 @@ import React from 'react'
 import { Prova, Tema } from '@/types'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 
+type AproveitamentoTema = {
+  nome_tema?: string | null;
+  percentual?: number | null;
+};
+
 interface ChatGPTStyleSidebarProps {
   provas: Prova[]
   temas: Tema[]
@@ -9,7 +14,7 @@ interface ChatGPTStyleSidebarProps {
   temaSelecionado: string
   onProvaChange: (prova: string) => void
   onTemaChange: (tema: string) => void
-  aproveitamentoPorTema: any[]
+  aproveitamentoPorTema: AproveitamentoTema[]
 }
 
 export default function ChatGPTStyleSidebar({

@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { testarConexaoBanco, verificarDadosSimulados } from '../services/testeBanco';
-import { analisarQuestoesPorAno, criarSimuladosVirtuais } from '../services/analisarQuestoesPorAno';
 import { analisarProvasEQuestoes, verificarEstruturaBanco } from '../services/analisarProvas';
-import { verificarColunasTabelas, buscarQuestoesComDetalhes } from '../services/verificarEstrutura';
+import { verificarColunasTabelas } from '../services/verificarEstrutura';
 import { verificarIdProva } from '../services/verificarIdProva';
 import { testeSimplesDados } from '../services/testeSimplesDados';
 import { SimuladosService } from '../services/simuladosService';
@@ -15,6 +14,23 @@ export default function DebugSupabase() {
     setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
   };
 
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return 'Erro desconhecido';
+    }
+  };
+
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
   const testMock = async () => {
     addLog("🧪 Testando configuração atual...");
     
@@ -23,7 +39,7 @@ export default function DebugSupabase() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const useMock = import.meta.env.VITE_USE_SUPABASE_MOCK;
       
-      addLog(`� URL Supabase: ${supabaseUrl}`);
+      addLog(`🌐 URL Supabase: ${supabaseUrl}`);
       addLog(`🔧 Usando Mock: ${useMock || 'false'}`);
       
       if (useMock === 'true') {
@@ -48,15 +64,15 @@ export default function DebugSupabase() {
           if (!error && data) {
             addLog(`✅ Acesso ao banco real funcionando - ${data.length} questão(ões) encontrada(s)`);
           } else {
-            addLog(`⚠️ Erro ao acessar questões: ${error?.message}`);
+            addLog(`⚠️ Erro ao acessar questões: ${getErrorMessage(error)}`);
           }
-        } catch (err: any) {
-          addLog(`⚠️ Erro na consulta: ${err.message}`);
+        } catch (err) {
+          addLog(`⚠️ Erro na consulta: ${getErrorMessage(err)}`);
         }
       }
       
-    } catch (error: any) {
-      addLog(`💥 Erro na verificação: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro na verificação: ${getErrorMessage(error)}`);
     }
   };
 
@@ -75,45 +91,20 @@ export default function DebugSupabase() {
         const simulados = await verificarDadosSimulados();
         addLog(`📋 Simulados encontrados: ${simulados.simulados.length}`);
         
-        simulados.simulados.forEach((sim: any) => {
-          addLog(`📝 ${sim.nome} (ID: ${sim.id_simulado})`);
+        const simuladosEncontrados = Array.isArray(simulados.simulados) ? simulados.simulados : [];
+        simuladosEncontrados.forEach((sim) => {
+          if (!isRecord(sim)) {
+            return;
+          }
+          const nome = typeof sim.nome === 'string' ? sim.nome : 'Simulado sem nome';
+          const idSimulado = sim.id_simulado != null ? String(sim.id_simulado) : 'n/d';
+          addLog(`📝 ${nome} (ID: ${idSimulado})`);
         });
       } else {
         addLog(`❌ Falha na conexão: ${resultado.erro}`);
       }
-    } catch (error: any) {
-      addLog(`💥 Erro ao testar banco: ${error.message}`);
-    }
-  };
-
-  const analisarQuestoes = async () => {
-    addLog("📚 Analisando questões por ano...");
-    
-    try {
-      const analise = await analisarQuestoesPorAno();
-      
-      if (analise.sucesso) {
-        addLog(`✅ Análise concluída! Encontrados ${analise.simulados.length} anos com questões`);
-        
-        analise.simulados.forEach(simulado => {
-          addLog(`📅 ${simulado.ano}: ${simulado.totalQuestoes} questões`);
-          addLog(`   📑 Áreas: ${simulado.areas.join(', ')}`);
-          addLog(`   📚 Disciplinas: ${simulado.disciplinas.join(', ')}`);
-        });
-        
-        // Criar simulados virtuais
-        addLog("🔧 Criando simulados virtuais...");
-        const simuladosVirtuais = await criarSimuladosVirtuais();
-        
-        if (simuladosVirtuais.sucesso) {
-          addLog(`✅ ${simuladosVirtuais.simuladosCriados.length} simulados virtuais criados!`);
-        }
-        
-      } else {
-        addLog(`❌ Falha na análise: ${analise.erro}`);
-      }
-    } catch (error: any) {
-      addLog(`💥 Erro ao analisar questões: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro ao testar banco: ${getErrorMessage(error)}`);
     }
   };
 
@@ -124,8 +115,11 @@ export default function DebugSupabase() {
       const simulados = await SimuladosService.listarSimulados();
       addLog(`📚 Simulados encontrados via service: ${simulados.length}`);
       
-      simulados.forEach((sim: any) => {
-        addLog(`📖 ${sim.nome}: ${sim.total_questoes} questões (Prova ID: ${sim.id_prova})`);
+      simulados.forEach((sim) => {
+        const nome = typeof sim.nome === 'string' ? sim.nome : 'Simulado sem nome';
+        const totalQuestoes = typeof sim.total_questoes === 'number' ? sim.total_questoes : Number(sim.total_questoes ?? 0);
+        const idProva = sim.id_prova != null ? String(sim.id_prova) : 'n/d';
+        addLog(`📖 ${nome}: ${totalQuestoes} questões (Prova ID: ${idProva})`);
       });
       
       // Testar estatísticas
@@ -133,8 +127,8 @@ export default function DebugSupabase() {
       addLog(`📊 Estatísticas: ${stats.simuladosDisponiveis} simulados, ${stats.totalQuestoes} questões total`);
       addLog(`🎯 Provas: ${stats.provasDisponiveis.join(', ')}`);
       
-    } catch (error: any) {
-      addLog(`💥 Erro no SimuladosService: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro no SimuladosService: ${getErrorMessage(error)}`);
     }
   };
 
@@ -163,8 +157,8 @@ export default function DebugSupabase() {
       } else {
         addLog(`❌ Falha na análise: ${analise.erro}`);
       }
-    } catch (error: any) {
-      addLog(`💥 Erro ao analisar provas: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro ao analisar provas: ${getErrorMessage(error)}`);
     }
   };
 
@@ -201,13 +195,13 @@ export default function DebugSupabase() {
       } else {
         addLog(`❌ Falha na verificação: ${verificacao.erro}`);
       }
-    } catch (error: any) {
-      addLog(`💥 Erro ao verificar estrutura: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro ao verificar estrutura: ${getErrorMessage(error)}`);
     }
   };
 
   const testarIdProva = async () => {
-    addLog("� Testando especificamente a coluna id_prova...");
+    addLog("🧾 Testando especificamente a coluna id_prova...");
     
     try {
       const verificacao = await verificarIdProva();
@@ -233,8 +227,15 @@ export default function DebugSupabase() {
         if (resultado.provas) {
           if (resultado.provas.existe) {
             addLog(`✅ Tabela provas existe com ${resultado.provas.total} registros`);
-            resultado.provas.exemplos?.forEach((prova: any) => {
-              addLog(`   🏛️ Prova ${prova.id_prova}: ${prova.descricao || 'Sem descrição'} (${prova.ano || 'Sem ano'})`);
+            const exemplosDeProvas = Array.isArray(resultado.provas?.exemplos) ? resultado.provas.exemplos : [];
+            exemplosDeProvas.forEach((prova) => {
+              if (!isRecord(prova)) {
+                return;
+              }
+              const idProva = prova.id_prova != null ? String(prova.id_prova) : 'n/d';
+              const descricao = typeof prova.descricao === 'string' ? prova.descricao : 'Sem descrição';
+              const ano = prova.ano != null ? String(prova.ano) : 'Sem ano';
+              addLog(`   🏛️ Prova ${idProva}: ${descricao} (${ano})`);
             });
           } else {
             addLog(`❌ Tabela provas não existe ou está vazia`);
@@ -246,8 +247,14 @@ export default function DebugSupabase() {
         if (resultado.correlacao) {
           if (resultado.correlacao.funciona) {
             addLog(`✅ Correlação entre questões e provas FUNCIONA!`);
-            resultado.correlacao.exemplos?.forEach((item: any) => {
-              addLog(`   🔗 Questão id_prova ${item.id_prova} → Prova: ${item.provas?.descricao}`);
+            const exemplosCorrelacao = Array.isArray(resultado.correlacao?.exemplos) ? resultado.correlacao.exemplos : [];
+            exemplosCorrelacao.forEach((item) => {
+              if (!isRecord(item)) {
+                return;
+              }
+              const idProva = item.id_prova != null ? String(item.id_prova) : 'n/d';
+              const descricaoProva = isRecord(item.provas) && typeof item.provas.descricao === 'string' ? item.provas.descricao : 'Sem descrição';
+              addLog(`   🔗 Questão id_prova ${idProva} → Prova: ${descricaoProva}`);
             });
           } else {
             addLog(`❌ Correlação entre questões e provas NÃO FUNCIONA`);
@@ -264,8 +271,8 @@ export default function DebugSupabase() {
       } else {
         addLog(`❌ Falha na verificação: ${verificacao.erro}`);
       }
-    } catch (error: any) {
-      addLog(`💥 Erro ao testar id_prova: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro ao testar id_prova: ${getErrorMessage(error)}`);
     }
   };
 
@@ -275,8 +282,8 @@ export default function DebugSupabase() {
     try {
       const session = await supabase.auth.getSession();
       addLog(`📋 Sessão: ${JSON.stringify(session, null, 2)}`);
-    } catch (error: any) {
-      addLog(`💥 Erro ao buscar sessão: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro ao buscar sessão: ${getErrorMessage(error)}`);
     }
   };
 
@@ -308,16 +315,30 @@ export default function DebugSupabase() {
       // Amostras de provas
       if (resultado.amostrasProvas?.length > 0) {
         addLog("📋 Amostras de provas:");
-        resultado.amostrasProvas.forEach((prova: any) => {
-          addLog(`   🏛️ ID ${prova.id_prova}: ${prova.ano} - ${prova.descricao || 'Sem descrição'}`);
+        const amostrasProvas = Array.isArray(resultado.amostrasProvas) ? resultado.amostrasProvas : [];
+        amostrasProvas.forEach((prova) => {
+          if (!isRecord(prova)) {
+            return;
+          }
+          const id = prova.id_prova != null ? String(prova.id_prova) : 'n/d';
+          const ano = prova.ano != null ? String(prova.ano) : 'n/d';
+          const descricao = typeof prova.descricao === 'string' ? prova.descricao : 'Sem descrição';
+          addLog(`   🏛️ ID ${id}: ${ano} - ${descricao}`);
         });
       }
       
       // Amostras de questões
       if (resultado.amostrasQuestoes?.length > 0) {
         addLog("📋 Amostras de questões:");
-        resultado.amostrasQuestoes.forEach((questao: any) => {
-          addLog(`   📝 Questão ${questao.id_questao} (Prova ID: ${questao.id_prova}) - Nr: ${questao.nr_questao}`);
+        const amostrasQuestoes = Array.isArray(resultado.amostrasQuestoes) ? resultado.amostrasQuestoes : [];
+        amostrasQuestoes.forEach((questao) => {
+          if (!isRecord(questao)) {
+            return;
+          }
+          const idQuestao = questao.id_questao != null ? String(questao.id_questao) : 'n/d';
+          const idProva = questao.id_prova != null ? String(questao.id_prova) : 'n/d';
+          const numero = questao.nr_questao != null ? String(questao.nr_questao) : 'n/d';
+          addLog(`   📝 Questão ${idQuestao} (Prova ID: ${idProva}) - Nr: ${numero}`);
         });
       }
       
@@ -326,8 +347,8 @@ export default function DebugSupabase() {
         addLog(`🔗 IDs de prova únicos: ${resultado.idsProvaUnicos.join(', ')}`);
       }
       
-    } catch (error: any) {
-      addLog(`💥 Erro ao testar dados: ${error.message}`);
+    } catch (error) {
+      addLog(`💥 Erro ao testar dados: ${getErrorMessage(error)}`);
     }
   };
 
@@ -365,7 +386,7 @@ export default function DebugSupabase() {
           onClick={testarIdProva}
           className="px-3 py-2 bg-orange-600 hover:bg-orange-700 rounded text-sm"
         >
-          � ID Prova
+          🧾 ID Prova
         </button>
         
         <button 

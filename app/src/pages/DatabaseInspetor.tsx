@@ -507,7 +507,7 @@ export default function DatabaseInspetor() {
           addDebugLog(`   📊 Simulados encontrados: ${resultado.simulados}`);
         }
         if (resultado.usuarios !== undefined) {
-          addDebugLog(`   � Usuários encontrados: ${resultado.usuarios}`);
+          addDebugLog(`   👥 Usuários encontrados: ${resultado.usuarios}`);
         }
       } else {
         addDebugLog(`❌ Erro na configuração: ${resultado.erro}`);
@@ -528,7 +528,7 @@ export default function DatabaseInspetor() {
       } else {
         addDebugLog("✅ Conectado ao BANCO REAL!");
         addDebugLog(`   🌐 Supabase Cloud ativo`);
-        addDebugLog(`   � Query executada com sucesso`);
+        addDebugLog(`   🧮 Query executada com sucesso`);
       }
     } catch (error: any) {
       addDebugLog(`💥 Erro ao testar banco real: ${error.message}`);
@@ -646,10 +646,10 @@ export default function DatabaseInspetor() {
         addDebugLog("✅ Análise concluída!");
         
         if (analise.provas) {
-          addDebugLog(`� Total de provas: ${analise.provas.total || 0}`);
+          addDebugLog(`📚 Total de provas: ${analise.provas.total || 0}`);
           
           if (analise.provas.anos && analise.provas.anos.length > 0) {
-            addDebugLog(`� Anos disponíveis: ${analise.provas.anos.join(', ')}`);
+            addDebugLog(`📅 Anos disponíveis: ${analise.provas.anos.join(', ')}`);
           }
           
           if (analise.provas.exemplos && analise.provas.exemplos.length > 0) {
@@ -661,7 +661,7 @@ export default function DatabaseInspetor() {
         }
         
         if (analise.questoes) {
-          addDebugLog(`� Total de questões: ${analise.questoes.total || 0}`);
+          addDebugLog(`📝 Total de questões: ${analise.questoes.total || 0}`);
         }
         
       } else {

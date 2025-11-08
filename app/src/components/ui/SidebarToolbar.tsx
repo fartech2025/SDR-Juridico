@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, CalendarIcon, BookOpenIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Prova, Tema } from '@/types';
@@ -10,7 +10,7 @@ interface SidebarToolbarProps {
   temaSelecionado: string;
   onProvaChange: (provaId: string) => void;
   onTemaChange: (temaId: string) => void;
-  aproveitamentoPorTema?: any[];
+  aproveitamentoPorTema?: AproveitamentoTema[];
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -40,12 +40,17 @@ export default function SidebarToolbar({
   };
 
   // Dados demo para o gráfico se não houver dados reais
-  const chartData = aproveitamentoPorTema.length > 0 ? aproveitamentoPorTema : [
-    { nome: 'Literatura', percentual: 85 },
-    { nome: 'Gramática', percentual: 72 },
-    { nome: 'Interpretação', percentual: 68 },
-    { nome: 'Redação', percentual: 45 }
-  ];
+  const chartData = (aproveitamentoPorTema.length > 0
+    ? aproveitamentoPorTema.map((item) => ({
+        nome: item.nome ?? item.nome_tema ?? 'Sem tema',
+        percentual: typeof item.percentual === 'number' ? item.percentual : Number(item.percentual ?? 0),
+      }))
+    : [
+        { nome: 'Literatura', percentual: 85 },
+        { nome: 'Gramática', percentual: 72 },
+        { nome: 'Interpretação', percentual: 68 },
+        { nome: 'Redação', percentual: 45 },
+      ]);
 
   if (isCollapsed) {
     return (

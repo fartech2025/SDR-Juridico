@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Mock do Supabase para desenvolvimento offline (movido para _mocks)
 // Este arquivo contém implementações mínimas usadas apenas para desenvolvimento local
 // e testes rápidos. Para ativar o mock defina VITE_USE_SUPABASE_MOCK=true.

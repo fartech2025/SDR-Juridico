@@ -63,7 +63,7 @@ export default function HomeModern() {
         const usuarioId = 0;
         console.log('ðŸ‘¤ Buscando dados do usuÃ¡rio ID:', usuarioId)
         setResumo(demoResumo)
-        // Buscar anos ǧnicos das quest��es
+        // Buscar anos únicos das questões
         console.log('ðŸ“š Buscando anos disponÃ­veis...')
         setFiltersLoading(true)
         

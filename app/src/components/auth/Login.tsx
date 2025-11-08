@@ -42,6 +42,7 @@ export default function Login() {
         navigate('/home');
       }
     } catch (error) {
+      console.error('Erro inesperado ao fazer login:', error);
       setErro('Erro inesperado ao fazer login');
     }
   };

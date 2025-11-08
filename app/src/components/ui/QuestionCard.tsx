@@ -31,7 +31,7 @@ interface QuestionCardProps {
 }
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({
-  id,
+  id: _id,
   year,
   subject,
   theme,
@@ -299,7 +299,7 @@ export const QuestionGrid: React.FC<QuestionGridProps> = ({
 
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
-      {questions.map((question, index) => (
+      {questions.map((question) => (
         <QuestionCard
           key={question.id}
           {...question}

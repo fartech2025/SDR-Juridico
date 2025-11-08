@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
+import type { Prova, Tema } from '@/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+type AproveitamentoTema = {
+  nome?: string | null;
+  nome_tema?: string | null;
+  percentual?: number | null;
+};
+
 interface SidebarProps {
-  provas: any[];
-  temas: any[];
+  provas: Prova[];
+  temas: Tema[];
   provaSelecionada: string;
   temaSelecionado: string;
   onProvaChange: (provaId: string) => void;
   onTemaChange: (temaId: string) => void;
-  aproveitamentoPorTema?: any[];
+  aproveitamentoPorTema?: AproveitamentoTema[];
 }
 
 export default function Sidebar({
@@ -21,7 +28,12 @@ export default function Sidebar({
   aproveitamentoPorTema = []
 }: SidebarProps) {
   // Dados demo para o gráfico se não houver dados reais
-  const chartData = aproveitamentoPorTema.length > 0 ? aproveitamentoPorTema : [
+  const chartData: { nome: string; percentual: number }[] = aproveitamentoPorTema.length > 0
+    ? aproveitamentoPorTema.map((item) => ({
+        nome: item.nome ?? item.nome_tema ?? 'Sem tema',
+        percentual: typeof item.percentual === 'number' ? item.percentual : Number(item.percentual ?? 0),
+      }))
+    : [
     { nome: 'Literatura', percentual: 85 },
     { nome: 'Gramática', percentual: 72 },
     { nome: 'Interpretação', percentual: 68 },

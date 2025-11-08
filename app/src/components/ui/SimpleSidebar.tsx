@@ -1,8 +1,9 @@
 import React from 'react';
+import type { Prova, Tema } from '@/types';
 
 interface SimpleSidebarProps {
-  provas: any[];
-  temas: any[];
+  provas: Prova[];
+  temas: Tema[];
   provaSelecionada: string;
   temaSelecionado: string;
   onProvaChange: (provaId: string) => void;

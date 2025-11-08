@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   buscarQuestaoComImagens,
   QuestaoComImagens,
@@ -37,15 +37,7 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
   const [respostaConfirmada, setRespostaConfirmada] = useState(false);
   const [acertou, setAcertou] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    loadQuestao();
-    // Resetar estado ao mudar de questão
-    setRespostaSelecionada(null);
-    setRespostaConfirmada(false);
-    setAcertou(null);
-  }, [id_questao]);
-
-  const loadQuestao = async () => {
+  const loadQuestao = useCallback(async () => {
     try {
       setLoading(true);
       const q = await buscarQuestaoComImagens(id_questao);
@@ -58,7 +50,15 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [id_questao]);
+
+  useEffect(() => {
+    loadQuestao();
+    // Resetar estado ao mudar de questão
+    setRespostaSelecionada(null);
+    setRespostaConfirmada(false);
+    setAcertou(null);
+  }, [loadQuestao]);
 
   // Função para extrair URLs do texto e separá-las do conteúdo
   const processarTextoComImagens = (texto: string): { texto: string; urls: string[] } => {
@@ -92,7 +92,7 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
               src={img.caminho_arquivo}
               alt={img.descricao || `Imagem da ${tipo}`}
               className="max-w-full h-auto rounded-lg border border-slate-700"
-              onError={(e) => {
+              onError={() => {
                 console.error(`Erro ao carregar imagem: ${img.caminho_arquivo}`);
               }}
             />
@@ -120,7 +120,7 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
               src={url}
               alt={`Imagem da questão ${index + 1}`}
               className="max-w-full h-auto rounded-lg border border-slate-700"
-              onError={(e) => {
+              onError={() => {
                 console.error(`Erro ao carregar imagem: ${url}`);
               }}
             />
@@ -344,30 +344,22 @@ export function SimuladoRenderer({
   const [sidebarAberta, setSidebarAberta] = useState(true);
   const [temaFiltrado, setTemaFiltrado] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadSimulado();
-  }, [id_simulado]);
-
-  const loadSimulado = async () => {
+  const loadSimulado = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Buscar informações do simulado (prova)
       const simuladoInfo = await SimuladosService.buscarSimulado(id_simulado);
       if (!simuladoInfo) throw new Error('Simulado não encontrado');
-      
-      // Buscar questões da prova
+
       const questoes = await SimuladosService.buscarQuestoesSimulado(id_simulado);
       if (!questoes || questoes.length === 0) throw new Error('Nenhuma questão encontrada');
-      
-      // Montar objeto simulado
+
       const s: SimuladoComQuestoes = {
         id_prova: simuladoInfo.id_prova,
         nome: simuladoInfo.nome,
         descricao: simuladoInfo.descricao ?? undefined,
-        questoes: questoes
+        questoes
       };
-      
+
       setSimulado(s);
       setErro(null);
       setQuestaoAtual(0);
@@ -378,7 +370,11 @@ export function SimuladoRenderer({
     } finally {
       setLoading(false);
     }
-  };
+  }, [id_simulado]);
+
+  useEffect(() => {
+    loadSimulado();
+  }, [loadSimulado]);
 
   const handleResposta = (resposta: string) => {
     const questaoAtualObj = simulado!.questoes[questaoAtual];
@@ -585,7 +581,7 @@ export function SimuladoRenderer({
               Questões {temaFiltrado && `(${questoesFiltradas.length})`}
             </label>
             <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-5 gap-1.5 md:gap-2">
-              {questoesFiltradas.map((questao, idx) => {
+              {questoesFiltradas.map((questao) => {
                 const questaoIdxGlobal = simulado.questoes.findIndex((q) => q.id_questao === questao.id_questao);
                 const respostaUsuario = respostas.find((r) => r.questao_id === questao.id_questao);
                 const respondida = !!respostaUsuario;

@@ -31,7 +31,7 @@ export const FormattedTextRenderer: React.FC<FormattedTextProps> = ({
   const [imageZoom, setImageZoom] = useState<string | null>(null);
   
   // Função para detectar referências de imagens no texto
-  const detectImageReferences = (text: string): Array<{ref: string, url: string}> => {
+  const detectImageReferences = (_text: string): Array<{ref: string, url: string}> => {
     const imageRefs: Array<{ref: string, url: string}> = [];
     
     // Priorizar questionNumber sobre questionId

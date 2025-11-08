@@ -10,12 +10,12 @@ export default function Sidenav({ isOpen = true }: SidenavProps) {
   const location = useLocation();
 
   const menuItems = [
-    { icon: '🏠', label: 'Início', path: '/' },
+    { icon: '🏠', label: 'Início', path: '/home' },
     { icon: '🎯', label: 'Simulados', path: '/simulados' },
     { icon: '🎒', label: 'Painel do Aluno', path: '/painel-aluno' },
     { icon: '', label: 'Estatísticas', path: '/estatisticas' },
     { icon: '🏆', label: 'Ranking', path: '/ranking' },
-    { icon: '📚', label: 'Questões', path: '/questoes' },
+    { icon: '📚', label: 'Questões', path: '/database-inspetor' },
   ];
 
   const isActive = (path: string) => location.pathname === path;

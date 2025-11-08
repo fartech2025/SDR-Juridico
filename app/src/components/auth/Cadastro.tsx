@@ -48,8 +48,8 @@ export default function Cadastro() {
 
       if (error) {
         // Mensagens mais amigáveis para alguns casos comuns
-        if ((error as any)?.message?.toLowerCase?.().includes('already registered') ||
-            (error as any)?.message?.toLowerCase?.().includes('user already exists')) {
+        if (error.message.toLowerCase().includes('already registered') ||
+            error.message.toLowerCase().includes('user already exists')) {
           setErro('Este e-mail já está cadastrado. Tente fazer login.');
         } else {
           setErro(error.message);
@@ -70,6 +70,7 @@ export default function Cadastro() {
         navigate('/login');
       }
     } catch (error) {
+      console.error('Erro inesperado ao cadastrar:', error);
       setErro('Erro inesperado ao cadastrar');
     }
   };

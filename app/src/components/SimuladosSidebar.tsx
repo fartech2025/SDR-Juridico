@@ -55,9 +55,15 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
         return;
       }
 
+      type RespostaLinha = {
+        id_questao: number;
+        correta: boolean | null;
+        questoes?: { id_prova?: number | null } | null;
+      };
+
       const agregados = new Map<number, ResultadoAgrupado>();
 
-      (respostasData ?? []).forEach((linha: any) => {
+      (respostasData ?? []).forEach((linha: RespostaLinha) => {
         const idProva = linha.questoes?.id_prova;
         if (!idProva) return;
 

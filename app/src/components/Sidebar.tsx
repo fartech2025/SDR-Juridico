@@ -7,7 +7,7 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen: _isOpen = true, onClose }: SidebarProps) {
   const { pathname } = useLocation()
   
   const Item = ({ to, icon: Icon, children, badge }: { 
