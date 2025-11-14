@@ -1,14 +1,28 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import LiquidGlassButton from './LiquidGlassButton';
+import PortugueseCorrectorWidget from './PortugueseCorrectorWidget';
+import ThemeSwitcher from './ThemeSwitcher';
 
 interface BasePageProps {
   children: React.ReactNode;
   title?: string;
   logo?: string;
   className?: string;
+  contentClassName?: string;
+  fullWidth?: boolean;
 }
 
-export default function BasePage({ children, title = 'ENEM - Sistema de Estudos', logo, className }: BasePageProps) {
+export default function BasePage({
+  children,
+  title = 'ENEM - Sistema de Estudos',
+  logo,
+  className,
+  contentClassName,
+  fullWidth = false
+}: BasePageProps) {
+  const location = useLocation();
+  const showBackHome = !['/', '/home'].includes(location.pathname);
   const [logoUrl, setLogoUrl] = React.useState<string>('/favicon.svg');
   const [imgError, setImgError] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(new Date());
@@ -32,6 +46,7 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden flex flex-col">
+      <PortugueseCorrectorWidget />
       {/* Premium Background Effects with Enhanced Depth */}
       <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
         {/* Animated Mesh Gradient - Enhanced */}
@@ -118,13 +133,24 @@ export default function BasePage({ children, title = 'ENEM - Sistema de Estudos'
                 </div>
               </LiquidGlassButton>
             </div>
+            <ThemeSwitcher />
           </div>
         </div>
       </header>
 
       {/* Main Content - Enhanced with Glass Cards Support */}
       <main className={`flex-1 relative z-10 overflow-y-auto ${className || ''}`}>
-        <div className="container-max px-8 py-10">
+        <div className={`${fullWidth ? 'w-full' : 'container-max px-8 py-10'} ${contentClassName || ''}`}>
+          {showBackHome && (
+            <div className="mb-6">
+              <Link
+                to="/home"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:border-blue-400/40 hover:text-blue-200 transition"
+              >
+                ← Voltar para Home
+              </Link>
+            </div>
+          )}
           {children}
         </div>
       </main>

@@ -27,7 +27,7 @@ describe('Componentes', () => {
     expect(componenteExiste).toBe(true);
   });
 
-  test('SimuladosPage deve estar disponível', () => {
+  test('UserLandingPage deve estar disponível', () => {
     const componenteExiste = true;
     expect(componenteExiste).toBe(true);
   });

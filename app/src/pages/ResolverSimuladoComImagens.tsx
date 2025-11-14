@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { SimuladoRenderer } from '../components/QuestaoRenderer';
+import { SimuladoRenderer, type RespostaUsuario } from '../components/QuestaoRenderer';
 import BasePage from '../components/BasePage';
 import { supabase } from '../lib/supabaseClient';
+import SidebarPerformance, { type SimuladoSidebarData } from '../components/pages/simulation/SidebarPerformance';
+import SidebarInsights from '../components/pages/simulation/SidebarInsights';
 import {
   ensureUsuarioRegistro,
   fetchQuestoesPorProvaTema,
   refreshMaterializedViews,
 } from '../services/supabaseService';
 import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
-
-interface RespostaUsuario {
-  questao_id: number;
-  resposta: string;
-  timestamp: number;
-}
 
 interface ResultadoFinal {
   total: number;
@@ -32,6 +28,12 @@ export default function ResolverSimulado() {
   const [resultado, setResultado] = useState<ResultadoFinal | null>(null);
   const [avisoEstatisticas, setAvisoEstatisticas] = useState<string | null>(null);
   const [tempoInicio, setTempoInicio] = useState<number>(Date.now());
+  const [sidebarMetrics, setSidebarMetrics] = useState<SimuladoSidebarData>({
+    respondidas: 0,
+    total: 0,
+    corretas: 0,
+    tempoMedio: 0,
+  });
 
   useEffect(() => {
     const fetchUsuario = async () => {
@@ -55,6 +57,10 @@ export default function ResolverSimulado() {
 
     void fetchUsuario();
   }, [id_simulado]);
+
+  const handleProgressUpdate = useCallback((metrics: SimuladoSidebarData) => {
+    setSidebarMetrics(metrics);
+  }, []);
 
   const handleSimuladoCompleto = async (respostas: RespostaUsuario[]) => {
     if (!usuario || !simuladoId) {
@@ -117,7 +123,7 @@ export default function ResolverSimulado() {
           alternativa_marcada: alternativaMarcada,
           correta,
           data_resposta: new Date().toISOString(),
-          tempo_resposta_ms: resposta.timestamp ?? null,
+          tempo_resposta_ms: resposta.tempoRespostaMs ?? null,
         };
       });
 
@@ -212,8 +218,8 @@ export default function ResolverSimulado() {
               >
                 Refazer simulado
               </button>
-              <button onClick={() => navigate('/simulados')} className="btn btn-primary">
-                Voltar aos simulados
+              <button onClick={() => navigate('/inicio')} className="btn btn-primary">
+                Voltar ao início
               </button>
             </div>
           </div>
@@ -226,35 +232,51 @@ export default function ResolverSimulado() {
   }
 
   return (
-    <BasePage>
-      <div className="max-w-7xl mx-auto py-4 md:py-8 px-2 md:px-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-sm md:text-base"
-          >
-            <ArrowLeftIcon className="w-4 h-4 md:w-5 md:h-5" />
-            Voltar
-          </button>
-          <span className="text-xs md:text-sm text-slate-400">
-            Usuário #{usuario.id_usuario} | Respostas salvas automaticamente
-          </span>
-        </div>
+    <BasePage fullWidth contentClassName="py-8">
+      <div className="w-full px-4 md:px-8 2xl:px-16">
+        <div className="grid gap-5 2xl:gap-6 xl:[grid-template-columns:280px_minmax(0,1fr)_280px]">
+          <aside className="order-2 xl:order-1 w-full xl:w-auto xl:sticky xl:top-28 self-start">
+            <SidebarPerformance data={sidebarMetrics} />
+          </aside>
 
-        <div className="glass-card p-3 md:p-6">
-          <SimuladoRenderer id_simulado={simuladoId} onSimuladoCompleto={handleSimuladoCompleto} />
-        </div>
+          <div className="order-1 xl:order-2 flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
+              <button
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-sm md:text-base"
+              >
+                <ArrowLeftIcon className="w-4 h-4 md:w-5 md:h-5" />
+                Voltar
+              </button>
+              <span className="text-xs md:text-sm text-slate-400">
+                Usuário #{usuario.id_usuario} | Respostas salvas automaticamente
+              </span>
+            </div>
 
-        {enviando && (
-          <div className="mt-4 text-xs md:text-sm text-blue-300 text-center">
-            Salvando suas respostas, aguarde...
+            <div className="glass-card p-3 md:p-6">
+              <SimuladoRenderer
+                id_simulado={simuladoId}
+                onSimuladoCompleto={handleSimuladoCompleto}
+                onProgressUpdate={handleProgressUpdate}
+              />
+            </div>
+
+            {enviando && (
+              <div className="mt-4 text-xs md:text-sm text-blue-300 text-center">
+                Salvando suas respostas, aguarde...
+              </div>
+            )}
+            {avisoEstatisticas && (
+              <div className="mt-3 text-xs md:text-sm text-amber-300 text-center">
+                {avisoEstatisticas}
+              </div>
+            )}
           </div>
-        )}
-        {avisoEstatisticas && (
-          <div className="mt-3 text-xs md:text-sm text-amber-300 text-center">
-            {avisoEstatisticas}
-          </div>
-        )}
+
+          <aside className="order-3 w-full xl:w-auto xl:sticky xl:top-28 self-start">
+            <SidebarInsights data={sidebarMetrics} />
+          </aside>
+        </div>
       </div>
     </BasePage>
   );

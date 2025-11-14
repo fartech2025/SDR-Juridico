@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   buscarQuestaoComImagens,
   QuestaoComImagens,
   Imagem,
 } from '../services/questoesService';
 import { SimuladosService, QuestaoCompleta } from '../services/simuladosService';
+import type { SimuladoSidebarData } from './pages/simulation/SidebarPerformance';
+
+const EMPTY_QUESTOES: QuestaoCompleta[] = [];
 
 // Interface temporária para compatibilidade
 interface SimuladoComQuestoes {
@@ -19,11 +22,12 @@ interface QuestaoRendererProps {
   onResposta?: (resposta: string) => void;
 }
 
-interface RespostaUsuario {
+export interface RespostaUsuario {
   questao_id: number;
   resposta: string;
-  timestamp: number;
+  tempoRespostaMs: number;
   correta?: boolean;
+  answeredAt?: number;
 }
 
 /**
@@ -147,6 +151,29 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
     onResposta?.(respostaSelecionada);
   };
 
+  const alternativas = useMemo(() => {
+    if (!questao) {
+      return [];
+    }
+
+    const base = [
+      { letra: 'A', texto: questao.alternativa_a },
+      { letra: 'B', texto: questao.alternativa_b },
+      { letra: 'C', texto: questao.alternativa_c },
+      { letra: 'D', texto: questao.alternativa_d },
+      { letra: 'E', texto: questao.alternativa_e },
+    ].map((alt) => {
+      const { texto, urls } = processarTextoComImagens(alt.texto || '');
+      return { ...alt, texto, imagensExtraidas: urls };
+    });
+
+    for (let i = base.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [base[i], base[j]] = [base[j], base[i]];
+    }
+    return base;
+  }, [questao?.id_questao]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -166,17 +193,7 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
   // Processar enunciado para extrair URLs de imagens
   const { texto: enunciadoLimpo, urls: imagensNoEnunciado } = processarTextoComImagens(questao.enunciado || '');
 
-  // Processar alternativas para extrair URLs
-  const alternativas = [
-    { letra: 'A', texto: questao.alternativa_a },
-    { letra: 'B', texto: questao.alternativa_b },
-    { letra: 'C', texto: questao.alternativa_c },
-    { letra: 'D', texto: questao.alternativa_d },
-    { letra: 'E', texto: questao.alternativa_e },
-  ].map((alt) => {
-    const { texto, urls } = processarTextoComImagens(alt.texto || '');
-    return { ...alt, texto, imagensExtraidas: urls };
-  });
+  const numeroQuestao = questao.nr_questao ?? questao.id_questao;
 
   return (
     <div className="w-full space-y-6">
@@ -184,7 +201,7 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-lg font-bold text-slate-100">
-            Questão {questao.id_questao}
+            Questão {numeroQuestao}
           </h2>
           <div className="flex gap-3 text-sm">
             <span className="px-3 py-1 bg-blue-500/10 text-blue-300 rounded-full border border-blue-500/20">
@@ -327,6 +344,7 @@ export function QuestaoRenderer({ id_questao, onResposta }: QuestaoRendererProps
 interface SimuladoRendererProps {
   id_simulado: number;
   onSimuladoCompleto?: (respostas: RespostaUsuario[]) => void;
+  onProgressUpdate?: (data: SimuladoSidebarData) => void;
 }
 
 /**
@@ -335,6 +353,7 @@ interface SimuladoRendererProps {
 export function SimuladoRenderer({
   id_simulado,
   onSimuladoCompleto,
+  onProgressUpdate,
 }: SimuladoRendererProps) {
   const [simulado, setSimulado] = useState<SimuladoComQuestoes | null>(null);
   const [loading, setLoading] = useState(true);
@@ -343,6 +362,7 @@ export function SimuladoRenderer({
   const [respostas, setRespostas] = useState<RespostaUsuario[]>([]);
   const [sidebarAberta, setSidebarAberta] = useState(true);
   const [temaFiltrado, setTemaFiltrado] = useState<number | null>(null);
+  const [tempoQuestaoInicio, setTempoQuestaoInicio] = useState(() => Date.now());
 
   const loadSimulado = useCallback(async () => {
     try {
@@ -376,31 +396,63 @@ export function SimuladoRenderer({
     loadSimulado();
   }, [loadSimulado]);
 
+  useEffect(() => {
+    setTempoQuestaoInicio(Date.now());
+  }, [questaoAtual]);
+
+  useEffect(() => {
+    if (!simulado) return;
+    setTempoQuestaoInicio(Date.now());
+  }, [simulado?.id_prova]);
+
   const handleResposta = (resposta: string) => {
-    const questaoAtualObj = simulado!.questoes[questaoAtual];
-    const alternativaCorreta = questaoAtualObj.alternativas.find(a => a.correta);
-    
+    if (!simulado) return;
+    const questaoAtualObj = simulado.questoes[questaoAtual];
+    const alternativaCorreta = questaoAtualObj.alternativas.find((a) => a.correta);
+    const tempoRespostaMs = Math.max(Date.now() - tempoQuestaoInicio, 0);
+
     const novaResposta: RespostaUsuario = {
       questao_id: questaoAtualObj.id_questao,
       resposta,
-      timestamp: Date.now(),
+      tempoRespostaMs,
       correta: resposta === alternativaCorreta?.letra,
+      answeredAt: Date.now(),
     };
 
-    const respostasAtualizado = respostas.filter(
-      (r) => r.questao_id !== novaResposta.questao_id
+    setRespostas((prev) => {
+      const filtradas = prev.filter((r) => r.questao_id !== novaResposta.questao_id);
+      return [...filtradas, novaResposta];
+    });
+  };
+
+  const irParaQuestaoFiltrada = (offset: number) => {
+    if (!temaFiltrado) return false;
+    const questaoAtualGlobal = simulado!.questoes[questaoAtual];
+    const indiceFiltradoAtual = questoesFiltradas.findIndex(
+      (q) => q.id_questao === questaoAtualGlobal.id_questao
     );
-    respostasAtualizado.push(novaResposta);
-    setRespostas(respostasAtualizado);
+    if (indiceFiltradoAtual === -1) return false;
+    const destino = questoesFiltradas[indiceFiltradoAtual + offset];
+    if (!destino) return false;
+    const indiceGlobal = simulado!.questoes.findIndex((q) => q.id_questao === destino.id_questao);
+    if (indiceGlobal === -1) return false;
+    setQuestaoAtual(indiceGlobal);
+    return true;
   };
 
   const irProxima = () => {
+    if (temaFiltrado && irParaQuestaoFiltrada(1)) {
+      return;
+    }
     if (questaoAtual < simulado!.questoes.length - 1) {
       setQuestaoAtual(questaoAtual + 1);
     }
   };
 
   const irAnterior = () => {
+    if (temaFiltrado && irParaQuestaoFiltrada(-1)) {
+      return;
+    }
     if (questaoAtual > 0) {
       setQuestaoAtual(questaoAtual - 1);
     }
@@ -409,6 +461,58 @@ export function SimuladoRenderer({
   const finalizarSimulado = () => {
     onSimuladoCompleto?.(respostas);
   };
+
+  const questoesBase = simulado?.questoes ?? EMPTY_QUESTOES;
+
+  const questoesFiltradas = useMemo(() => {
+    return temaFiltrado
+      ? questoesBase.filter((q) => q.id_tema === temaFiltrado)
+      : questoesBase;
+  }, [questoesBase, temaFiltrado]);
+
+  const questaoAtualObj = questoesBase[questaoAtual];
+  const temRespostaAtual = questaoAtualObj
+    ? respostas.some((r) => r.questao_id === questaoAtualObj.id_questao)
+    : false;
+
+  useEffect(() => {
+    if (!temaFiltrado) return;
+    if (!questoesFiltradas.length) return;
+    const pertenceAoFiltro = questoesFiltradas.some(
+      (q) => q.id_questao === questaoAtualObj?.id_questao
+    );
+    if (!pertenceAoFiltro) {
+      const primeira = questoesFiltradas[0];
+      const indiceGlobal = questoesBase.findIndex(
+        (q) => q.id_questao === primeira.id_questao
+      );
+      if (indiceGlobal !== -1) {
+        setQuestaoAtual(indiceGlobal);
+      }
+    }
+  }, [temaFiltrado, questoesFiltradas, questaoAtualObj?.id_questao, questoesBase]);
+
+  useEffect(() => {
+    if (!simulado || !onProgressUpdate) return;
+    const total = simulado.questoes.length;
+    const respondidas = respostas.length;
+    const corretas = respostas.filter((r) => r.correta).length;
+    const tempoMedioSegundos =
+      respondidas > 0
+        ? respostas.reduce((acc, r) => acc + (r.tempoRespostaMs ?? 0), 0) / respondidas / 1000
+        : 0;
+    const tempoNormalizado = Number.isFinite(tempoMedioSegundos)
+      ? Number(tempoMedioSegundos.toFixed(1))
+      : 0;
+
+    const payload: SimuladoSidebarData = {
+      total,
+      respondidas,
+      corretas,
+      tempoMedio: tempoNormalizado,
+    };
+    onProgressUpdate(payload);
+  }, [simulado, respostas, onProgressUpdate]);
 
   if (loading) {
     return (
@@ -426,11 +530,6 @@ export function SimuladoRenderer({
     );
   }
 
-  const questaoAtualObj = simulado.questoes[questaoAtual];
-  const temRespostaAtual = respostas.some(
-    (r) => r.questao_id === questaoAtualObj.id_questao
-  );
-
   // Extrair temas únicos das questões
   const temasUnicos = Array.from(
     new Map(
@@ -445,33 +544,9 @@ export function SimuladoRenderer({
     return nomeA.localeCompare(nomeB);
   });
 
-  // Debug: verificar temas
-  console.log('📚 Temas únicos encontrados:', temasUnicos);
-  console.log('📊 Total de questões:', simulado.questoes.length);
-  console.log('🔍 Questões com tema:', simulado.questoes.filter(q => q.id_tema !== null).length);
-  console.log('🎯 IDs de tema presentes:', [...new Set(simulado.questoes.map(q => q.id_tema).filter(id => id !== null))]);
-  console.log('📋 Amostra de questões:', simulado.questoes.slice(0, 5).map(q => ({
-    id: q.id_questao,
-    id_tema: q.id_tema,
-    nome_tema: q.nome_tema
-  })));
-  console.log('🗂️ Distribuição:', temasUnicos.map(t => ({
-    id: t.id,
-    nome: t.nome,
-    qtd: simulado.questoes.filter(q => q.id_tema === t.id).length
-  })));
-
-  // Filtrar questões por tema
-  const questoesFiltradas = temaFiltrado
-    ? simulado.questoes.filter((q) => q.id_tema === temaFiltrado)
-    : simulado.questoes;
-
-  // Calcular aproveitamento
   const respostasCorretas = respostas.filter((r) => r.correta === true).length;
-  
-  const percentualAproveitamento = respostas.length > 0 
-    ? Math.round((respostasCorretas / respostas.length) * 100)
-    : 0;
+  const percentualAproveitamento =
+    respostas.length > 0 ? Math.round((respostasCorretas / respostas.length) * 100) : 0;
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full">
@@ -559,8 +634,6 @@ export function SimuladoRenderer({
                     tema.nome?.toLowerCase().includes('natureza') ? '🔬' :
                     tema.nome?.toLowerCase().includes('humanas') ? '🌍' :
                     '📝';
-                  
-                  console.log(`Renderizando tema: ${tema.id} - ${tema.nome} (${questoesTema.length} questões)`);
                   
                   return (
                     <option key={tema.id} value={tema.id}>

@@ -118,74 +118,73 @@
 }
 
 /* Button Variants */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 3rem;
+  padding: 0 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  white-space: normal;
+  min-width: 3.5rem;
+  max-width: 100%;
+  text-wrap: balance;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
 .btn-primary {
   background: var(--gradient-primary);
   color: white;
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--radius-lg);
   border: none;
-  font-weight: 600;
-  font-size: var(--font-size-base);
-  transition: all var(--transition-fast);
-  cursor: pointer;
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-glow);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
 }
 
 .btn-primary::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left var(--transition-slow);
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform var(--transition-slow);
 }
 
 .btn-primary:hover::before {
-  left: 100%;
+  transform: translateX(100%);
+}
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-glow);
 }
 
 .btn-secondary {
   background: rgba(59, 130, 246, 0.1);
-  color: var(--primary-400);
+  color: var(--primary-300);
   border: 1px solid rgba(59, 130, 246, 0.3);
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  cursor: pointer;
 }
 
 .btn-secondary:hover {
   background: rgba(59, 130, 246, 0.2);
-  border-color: var(--primary-500);
-  transform: translateY(-1px);
+  border-color: rgba(59,130,246,0.5);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--surface-300);
+  color: var(--surface-200);
   border: 1px solid transparent;
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  cursor: pointer;
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.05);
   color: white;
 }
 

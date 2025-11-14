@@ -15,10 +15,10 @@ const Estatisticas = React.lazy(() => import('./pages/dashboard/Estatisticas'))
 const SimuladoProva = React.lazy(() => import('./pages/exam/SimuladoProva'))
 const DashboardAluno = React.lazy(() => import('./components/DashboardAluno_dark_supabase'))
 const DashboardGestor = React.lazy(() => import('./components/DashboardGestor_dark_supabase'))
-const SelecionarProva = React.lazy(() => import('./pages/SelecionarProva'))
 const SecEducacao = React.lazy(() => import('./pages/SecEducacao'))
-const SimuladosPage = React.lazy(() => import('./pages/SimuladosPage'))
+const UserLandingPage = React.lazy(() => import('./pages/UserLandingPage'))
 const ResolverSimulado = React.lazy(() => import('./pages/ResolverSimuladoComImagens'))
+const CentralOperacional = React.lazy(() => import('./pages/dashboard/CentralOperacional'))
 import { ExamProvider } from './contexts/ExamContext';
 import LandingPage from './pages/LandingPage';
 import Monitor from './pages/Monitor';
@@ -45,17 +45,6 @@ export default function AppWrapper() {
                 <ProtectedRoute>
                   <Suspense fallback={<div className="p-6">Carregando...</div>}>
                     <DashboardHome />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/selecionar-prova"
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
-                    <SelecionarProva />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -95,6 +84,16 @@ export default function AppWrapper() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/central-operacional"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <CentralOperacional />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/painel-aluno"
@@ -116,13 +115,13 @@ export default function AppWrapper() {
               }
             />
 
-            {/* Novas rotas de simulados com imagens */}
+            {/* Landing autenticada do estudante */}
             <Route
-              path="/simulados"
+              path="/inicio"
               element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="p-6">Carregando...</div>}>
-                    <SimuladosPage />
+                    <UserLandingPage />
                   </Suspense>
                 </ProtectedRoute>
               }

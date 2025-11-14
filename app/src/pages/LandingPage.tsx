@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AcademicCapIcon,
@@ -14,14 +14,35 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import BasePage from '../components/BasePage';
+import MapaMinas from '../components/MapaMinas';
 
 export default function LandingPage() {
   // Logo é gerenciado por BasePage agora - sem necessidade de carregar aqui
   // Apenas renderizamos o conteúdo da landing page
+  const [hoveredFeature, setHoveredFeature] = useState<any | null>(null);
+  const layer = hoveredFeature?.properties?.layer;
+  const hoverTitle =
+    layer === 'municipio'
+      ? hoveredFeature?.properties?.nome || 'Município'
+      : layer === 'macroregiao'
+      ? `Macroregião ${hoveredFeature?.properties?.nome ?? ''}`.trim()
+      : 'Minas Gerais';
+  const hoverSubtitle =
+    layer === 'municipio'
+      ? [
+          hoveredFeature?.properties?.microrregiao,
+          hoveredFeature?.properties?.mesorregiao,
+          hoveredFeature?.properties?.regiao_intermediaria,
+        ]
+          .filter(Boolean)
+          .join(' • ') || 'Rede municipal monitorada'
+      : layer === 'macroregiao'
+      ? 'Abrange dezenas de municípios atendidos'
+      : 'Cobertura completa do estado';
 
   return (
-    <BasePage>
-      <div className="flex flex-col gap-8 items-center w-full">
+    <BasePage fullWidth contentClassName="py-10">
+      <div className="w-full max-w-[1680px] mx-auto flex flex-col gap-12 px-4 md:px-8 2xl:px-16 items-center">
         <header className="w-full flex justify-between items-center py-6 px-6 border-b border-slate-700">
           <div className="flex-1" />
           <nav className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
@@ -51,10 +72,30 @@ export default function LandingPage() {
               <PlayIcon className="w-6 h-6" />
               <span>Começar Agora</span>
             </Link>
-            <Link to="/selecionar-prova" className="btn btn-ghost flex items-center gap-3 text-lg">
+            <Link to="/inicio" className="btn btn-ghost flex items-center gap-3 text-lg">
               <BookOpenIcon className="w-6 h-6" />
               <span>Ver Simulados</span>
             </Link>
+          </div>
+        </section>
+
+        {/* Mapa Minas Gerais (SVG + d3-geo) */}
+        <section className="w-full">
+          <div className="glass-card p-4 md:p-6">
+            <h2 className="ds-heading text-xl mb-3">Presença em Minas Gerais</h2>
+            <p className="ds-muted mb-4">Municípios atendidos e áreas de atuação. Passe o mouse para destacar.</p>
+            <MapaMinas className="w-full" onFeatureHover={setHoveredFeature} />
+            <div className="glass-card mt-4 p-3 flex flex-col sm:flex-row justify-between gap-2">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Área selecionada</p>
+                <p className="text-lg font-semibold text-white">{hoverTitle}</p>
+                <p className="text-xs text-slate-400">{hoverSubtitle}</p>
+              </div>
+              <div className="text-xs text-slate-400 self-end sm:text-right">
+                Fonte: IBGE &mdash; Malhas territoriais (municípios + mesorregiões) <br className="hidden sm:block" />
+                Arquivo: <code>/public/geo/minas-municipios-macro.geojson</code>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -165,7 +206,7 @@ export default function LandingPage() {
               <h4 className="text-white font-semibold mb-4">Plataforma</h4>
               <ul className="space-y-2 text-slate-400 text-sm">
                 <li><Link to="/home" className="hover:text-white transition-colors">Dashboard</Link></li>
-                <li><Link to="/selecionar-prova" className="hover:text-white transition-colors">Simulados</Link></li>
+                <li><Link to="/inicio" className="hover:text-white transition-colors">Simulados</Link></li>
                 <li><Link to="/ranking" className="hover:text-white transition-colors">Ranking</Link></li>
                 <li><Link to="/estatisticas" className="hover:text-white transition-colors">Estatísticas</Link></li>
               </ul>

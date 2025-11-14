@@ -11,6 +11,7 @@ export interface Imagem {
 
 export interface QuestaoComImagens {
   id_questao: number;
+  nr_questao: number | null;
   enunciado: string;
   alternativa_a: string;
   alternativa_b: string;
@@ -113,7 +114,7 @@ async function carregarQuestoesDetalhadas(filtro: QuestoesFiltro = {}) {
 
   let filtradas = data ?? [];
 
-  // Se o filtro vier pelo nome do tema, aplicar em memÃ³ria (evita mÃºltiplas consultas)
+  // Se o filtro vier pelo nome do tema, aplicar em memória (evita múltiplas consultas)
   if (filtro.temaNome) {
     const nomeNormalizado = filtro.temaNome.trim().toLowerCase();
     filtradas = filtradas.filter((questao: any) =>
@@ -232,6 +233,7 @@ function montarQuestaoComImagens(
 
   return {
     id_questao: questao.id_questao,
+    nr_questao: questao.nr_questao ?? null,
     enunciado: questao.enunciado,
     alternativa_a: porLetra.A ?? '',
     alternativa_b: porLetra.B ?? '',
@@ -239,8 +241,8 @@ function montarQuestaoComImagens(
     alternativa_d: porLetra.D ?? '',
     alternativa_e: porLetra.E ?? '',
     resposta_correta: respostaCorreta || '',
-    tema: questao.temas?.nome_tema ?? 'Tema nÃ£o informado',
-    dificuldade: questao.dificuldade ?? 'MÃ©dio',
+    tema: questao.temas?.nome_tema ?? 'Tema não informado',
+    dificuldade: questao.dificuldade ?? 'Médio',
     ano: questao.provas?.ano ?? null,
     conteudo: null,
     ano_enem: questao.provas?.ano ?? null,
@@ -390,7 +392,7 @@ export async function deletarImagemQuestao(id_imagem: number): Promise<void> {
 }
 
 /**
- * Busca um simulado com todas suas questÃµes e imagens
+ * Busca um simulado com todas suas questões e imagens
  */
 export async function buscarSimuladoComQuestoes(
   id_simulado: number
@@ -417,9 +419,8 @@ export async function buscarSimuladoComQuestoes(
   }
 }
 /**
- * Busca todos os simulados com contagem de questÃµes
+ * Busca todos os simulados com contagem de questões
  */
 export async function buscarSimuladosDisponveis(): Promise<SimuladoDoEnem[]> {
   return SimuladosService.listarSimulados();
 }
-

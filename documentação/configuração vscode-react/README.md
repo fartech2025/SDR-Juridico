@@ -18,7 +18,7 @@ Arquivo: `setup_enem_workspace.bat`
   - Alternativa: arquivo com o mesmo nome na raiz do workspace.
 - Cria/atualiza as configurações do VS Code:
   - `.vscode/tasks.json`: tarefas para iniciar/encerrar o Supabase, resetar o DB, gerar tipos e rodar o Vite.
-  - `.vscode/launch.json`: depuração no Edge apontando para `http://localhost:5173` com `preLaunchTask` para iniciar o Vite.
+  - `.vscode/launch.json`: depuração no Edge apontando para `http://localhost:5173` com `preLaunchTask` para iniciar o Vite (uso exclusivo no ambiente local).
 - Cria `app/.env.local` (com URL local do Supabase) e `app/src/lib/supabaseClient.ts`.
 - Suporta flags opcionais:
   - `--start`     Inicia Supabase e Vite.
@@ -42,6 +42,7 @@ Arquivo: `setup_enem_workspace.bat`
 Arquivo: `app/.env.local`
 - `VITE_SUPABASE_URL=https://mskvucuaarutehslvhsp.supabase.co`
 - `VITE_SUPABASE_ANON_KEY=` (preencha com a chave anon do dashboard Supabase)
+- Variáveis opcionais para comandos locais (`VITE_LOCAL_DB_HOST`, `VITE_LOCAL_DB_PORT`, `VITE_LOCAL_DB_NAME`, `VITE_LOCAL_DB_USER`) alinham os scripts de backup com o seu ambiente.
 
 ## Estrutura criada
 - `app/` – Aplicação React (Vite + TS)

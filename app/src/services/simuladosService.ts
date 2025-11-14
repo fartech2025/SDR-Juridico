@@ -67,7 +67,7 @@ export class SimuladosService {
         .eq('id_prova', prova.id_prova);
 
       if (countError) {
-        console.error(`Falha ao contar questÃµes da prova ${prova.id_prova}:`, countError);
+        console.error(`Falha ao contar questões da prova ${prova.id_prova}:`, countError);
         continue;
       }
 
@@ -144,7 +144,7 @@ static async buscarSimuladosPorProvas(): Promise<SimuladoDoEnem[]> {
       .order('id_questao', { ascending: true });
 
     if (error) {
-      console.error(`Erro ao buscar questÃµes da prova ${idProva}:`, error);
+      console.error(`Erro ao buscar questões da prova ${idProva}:`, error);
       throw error;
     }
 
@@ -189,7 +189,7 @@ static async buscarSimuladosPorProvas(): Promise<SimuladoDoEnem[]> {
       .eq('id_usuario', idUsuario);
 
     if (error) {
-      console.error('Erro ao agrupar respostas por usuÃ¡rio:', error);
+      console.error('Erro ao agrupar respostas por usuário:', error);
       throw error;
     }
 

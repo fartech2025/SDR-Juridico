@@ -54,6 +54,7 @@ npm run dev
 
 # Acesse em http://localhost:5173
 ```
+> Endereço acessível apenas a partir da máquina do desenvolvedor enquanto o Vite estiver rodando.
 
 ### 3. Criar Funções RPC (Se Necessário)
 
@@ -244,7 +245,7 @@ git push origin feature/sua-feature
 - [ ] Instale dependências (`npm install`)
 - [ ] Configure `.env.local` com credenciais Supabase
 - [ ] Execute `npm run dev`
-- [ ] Acesse http://localhost:5173
+- [ ] Acesse http://localhost:5173 (somente local)
 - [ ] Teste algumas páginas
 - [ ] Verifique console (F12) sem erros
 
@@ -254,4 +255,3 @@ git push origin feature/sua-feature
 **Stack:** React 19 + TypeScript + Vite + Supabase + Vercel  
 **Versão:** Cloud-Only (sem Docker)  
 **Atualizado:** 04/11/2025
-

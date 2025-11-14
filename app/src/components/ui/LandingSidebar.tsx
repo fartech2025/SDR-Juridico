@@ -15,7 +15,7 @@ export default function LandingSidebar() {
         <h4 className="text-sm font-semibold mb-3">Ações</h4>
         <div className="flex flex-col gap-2">
           <Link
-            to="/selecionar-prova"
+            to="/inicio"
             className="btn btn-primary w-full"
             onMouseEnter={() => prefetchRoute(() => import('../../pages/SelecionarProva'), 'SelecionarProva')}
             onFocus={() => prefetchRoute(() => import('../../pages/SelecionarProva'), 'SelecionarProva')}

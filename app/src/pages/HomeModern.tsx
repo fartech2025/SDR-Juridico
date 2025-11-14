@@ -26,8 +26,8 @@ const demoResumo: UsuarioResumo = {
   total_erros: 27,
   percentual_acertos: 71.6,
   tempo_medio_resposta_ms: 145000,
-  pontosFortes: ['Literatura', 'InterpretaÃ§Ã£o de texto', 'GramÃ¡tica'],
-  pontosFracos: ['MatemÃ¡tica', 'FÃ­sica', 'QuÃ­mica']
+  pontosFortes: ['Literatura', 'Interpretação de texto', 'Gramática'],
+  pontosFracos: ['Matemática', 'Física', 'Química']
 };
 
 const demoProvas: Prova[] = [
@@ -37,8 +37,8 @@ const demoProvas: Prova[] = [
 
 const demoTemas: Tema[] = [
   { id_tema: 1, nome_tema: 'Literatura' },
-  { id_tema: 2, nome_tema: 'InterpretaÃ§Ã£o de texto' },
-  { id_tema: 3, nome_tema: 'GramÃ¡tica' }
+  { id_tema: 2, nome_tema: 'Interpretação de texto' },
+  { id_tema: 3, nome_tema: 'Gramática' }
 ]
 
 export default function HomeModern() {
@@ -54,17 +54,17 @@ export default function HomeModern() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log('ðŸ”„ Carregando dados reais do Supabase...')
+        console.log('🔄 Carregando dados reais do Supabase...')
         
 
 
 
-        // Buscar dados reais do usuÃ¡rio (ID demo: 0)
+        // Buscar dados reais do usuário (ID demo: 0)
         const usuarioId = 0;
-        console.log('ðŸ‘¤ Buscando dados do usuÃ¡rio ID:', usuarioId)
+        console.log('👤 Buscando dados do usuário ID:', usuarioId)
         setResumo(demoResumo)
         // Buscar anos únicos das questões
-        console.log('ðŸ“š Buscando anos disponÃ­veis...')
+        console.log('📚 Buscando anos disponíveis...')
         setFiltersLoading(true)
         
         const { data: questoesData, error: questoesError } = await supabase
@@ -73,10 +73,10 @@ export default function HomeModern() {
           .not('id_prova', 'is', null)
 
         if (questoesError) {
-          console.error('âŒ Erro ao buscar questÃµes:', questoesError)
+          console.error('❌ Erro ao buscar questões:', questoesError)
           setProvas(demoProvas)
         } else {
-          console.log('âœ… QuestÃµes encontradas:', questoesData)
+          console.log('✅ Questões encontradas:', questoesData)
           // Agrupar por ano e contar
           const anosCount = questoesData.reduce((acc: Record<number, number>, item: any) => {
             const ano = item.provas?.ano
@@ -89,7 +89,7 @@ export default function HomeModern() {
             .map(([ano, count]) => ({
               id_prova: parseInt(ano),
               ano: parseInt(ano),
-              descricao: `ENEM ${ano} - ${count} questÃµes`
+              descricao: `ENEM ${ano} - ${count} questões`
             }));
 
   if (loading) {
@@ -109,7 +109,7 @@ export default function HomeModern() {
             Dashboard ENEM
           </h1>
           <p className="ds-muted mb-8">Bem-vindo de volta, {resumo?.nome || 'Estudante'}!</p>
-          {/* ...restante do conteÃºdo da HomeModern, jÃ¡ refatorado para o padrÃ£o central... */}
+          {/* ...restante do conteúdo da HomeModern, já refatorado para o padrão central... */}
         </div>
       </div>
     </div>

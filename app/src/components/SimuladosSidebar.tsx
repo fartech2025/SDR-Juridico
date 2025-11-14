@@ -36,7 +36,7 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
       const { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
       if (!user) {
-        setError('UsuÃ¡rio nÃ£o autenticado');
+        setError('Usuário não autenticado');
         return;
       }
 
@@ -51,7 +51,7 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
         .eq('id_usuario', perfil.id_usuario);
 
       if (respostasError) {
-        console.error('Erro ao buscar respostas do usuÃ¡rio:', respostasError);
+        console.error('Erro ao buscar respostas do usuário:', respostasError);
         return;
       }
 
@@ -114,7 +114,7 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
 
     const mensagem = [
       `Simulado: ${simulado.nome}`,
-      `QuestÃµes respondidas: ${resultado.total_respondidas}/${simulado.total_questoes}`,
+      `Questões respondidas: ${resultado.total_respondidas}/${simulado.total_questoes}`,
       `Acertos: ${resultado.total_acertos}`,
       `Aproveitamento: ${resultado.percentual.toFixed(1)}%`,
     ].join('\n');
@@ -185,8 +185,8 @@ export default function SimuladosSidebar({ isOpen = true, onClose }: SimuladosSi
                     )}
 
                     <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>{simulado.total_questoes} questÃµes</span>
-                      <span>{progresso.toFixed(0)}% concluÃ­do</span>
+                      <span>{simulado.total_questoes} questões</span>
+                      <span>{progresso.toFixed(0)}% concluído</span>
                     </div>
                     <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
                       <div

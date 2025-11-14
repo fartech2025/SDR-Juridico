@@ -28,6 +28,24 @@ const DEFAULT_TABLES = [
   'resultados_por_hora',
 ];
 
+const LOCAL_DB_CONFIG = {
+  host: import.meta.env.VITE_LOCAL_DB_HOST?.trim(),
+  port: import.meta.env.VITE_LOCAL_DB_PORT?.trim(),
+  name: import.meta.env.VITE_LOCAL_DB_NAME?.trim(),
+  user: import.meta.env.VITE_LOCAL_DB_USER?.trim()
+};
+
+const hasLocalDbConfig = Boolean(
+  LOCAL_DB_CONFIG.host &&
+  LOCAL_DB_CONFIG.port &&
+  LOCAL_DB_CONFIG.name &&
+  LOCAL_DB_CONFIG.user
+);
+
+const LOCAL_DB_FLAGS = hasLocalDbConfig
+  ? `-h ${LOCAL_DB_CONFIG.host} -p ${LOCAL_DB_CONFIG.port} -U ${LOCAL_DB_CONFIG.user} -d ${LOCAL_DB_CONFIG.name}`
+  : null;
+
 export default function DatabaseInspetor() {
   const [activeTab, setActiveTab] = useState<string>('monitor');
   const [tables, setTables] = useState<string[]>([]);
@@ -3099,10 +3117,20 @@ export default function DatabaseInspetor() {
                       <div className="mt-4 flex gap-3">
                         <button
                           onClick={() => {
+                            const missingConfigNotice = [
+                              '-- CONFIGURAÇÃO PENDENTE --',
+                              'Defina VITE_LOCAL_DB_HOST, VITE_LOCAL_DB_PORT, VITE_LOCAL_DB_NAME e VITE_LOCAL_DB_USER',
+                              'com as credenciais do banco que deseja inspecionar antes de executar backups.'
+                            ].join('\n');
+
                             const commands = [
                               '-- BACKUP DAS TABELAS',
-                              'pg_dump -h localhost -U postgres -d enem_db --schema-only > backup_schema.sql',
-                              'pg_dump -h localhost -U postgres -d enem_db --data-only > backup_data.sql',
+                              LOCAL_DB_FLAGS
+                                ? `pg_dump ${LOCAL_DB_FLAGS} --schema-only > backup_schema.sql`
+                                : missingConfigNotice,
+                              LOCAL_DB_FLAGS
+                                ? `pg_dump ${LOCAL_DB_FLAGS} --data-only > backup_data.sql`
+                                : '',
                               '',
                               '-- ANÁLISE DE DEPENDÊNCIAS',
                               "SELECT conname, conrelid::regclass, confrelid::regclass FROM pg_constraint WHERE confrelid::regclass::text IN ('resultados_questoes');",
@@ -3111,7 +3139,9 @@ export default function DatabaseInspetor() {
                               ...analysis.recommendations
                                 .filter(r => r.priority === 'alta')
                                 .map(r => `DROP TABLE IF EXISTS ${r.table} CASCADE;`)
-                            ].join('\n');
+                            ]
+                              .filter(Boolean)
+                              .join('\n');
                             
                             navigator.clipboard.writeText(commands);
                             alert('📋 Comandos SQL copiados para o clipboard!\n\nInclui:\n- Comandos de backup\n- Análise de dependências\n- Comandos de remoção');

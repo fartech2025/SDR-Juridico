@@ -17,24 +17,27 @@ html, body, #root {
 @layer components {
   /* Container responsivo */
   .container-max {
-    max-width: 80rem;
+    width: 100%;
+    max-width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
     .container-max {
-      padding-left: 1rem;
-      padding-right: 1rem;
+      max-width: 960px;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
     }
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 1280px) {
     .container-max {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
+      max-width: 1200px;
+      padding-left: 2rem;
+      padding-right: 2rem;
     }
   }
 
@@ -64,41 +67,6 @@ html, body, #root {
     backdrop-filter: blur(12px);
   }
 
-  /* Buttons responsivos */
-  .btn {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    border-radius: 0.5rem;
-    background-color: rgb(30 41 59 / 0.8);
-    border: 1px solid rgb(51 65 85 / 1);
-    font-size: 0.75rem;
-    transition-property: background-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-  }
-
-  .btn:hover {
-    background-color: rgb(30 41 59 / 0.6);
-  }
-
-  @media (min-width: 640px) {
-    .btn {
-      padding-left: 1rem;
-      padding-right: 1rem;
-      font-size: 0.875rem;
-    }
-  }
-
-  .btn-primary {
-    background-color: rgb(37 99 235 / 0.9);
-    border-color: rgb(59 130 246 / 1);
-  }
-
-  .btn-primary:hover {
-    background-color: rgb(59 130 246 / 1);
-  }
 }
 
 @layer utilities {
@@ -298,4 +266,35 @@ html, body, #root {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(45deg, #2563eb, #7c3aed);
+}
+
+body {
+  background-color: #030711;
+  color: #e2e8f0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.theme-light body {
+  background-color: #f5f6fb;
+  color: #0f172a;
+}
+
+.theme-light .glass-card {
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 45px -20px rgba(15, 23, 42, 0.3);
+}
+
+.theme-light header,
+.theme-light footer {
+  background-color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+.theme-light .btn-primary {
+  box-shadow: 0 10px 30px -12px rgba(37, 99, 235, 0.4);
+}
+
+.theme-light .btn-secondary {
+  color: #1d4ed8;
 }

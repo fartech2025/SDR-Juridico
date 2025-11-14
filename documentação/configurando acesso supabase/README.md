@@ -17,12 +17,15 @@ Guia rápido para apontar o frontend React (Vite) ao seu banco Supabase (local o
 VITE_SUPABASE_URL=http://localhost:54321
 VITE_SUPABASE_ANON_KEY=<cole_a_sua_anon_key>
 ```
+*(Somente para ambiente local quando a instância Supabase CLI estiver rodando. Não use esse host em produção.)*
 - Produção (build apontando para projeto remoto): arquivo `app/.env.production`
 ```
 VITE_SUPABASE_URL=https://<SEU-PROJECT-REF>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon_key_do_dashboard>
 ```
 Observação: variáveis do Vite precisam começar com `VITE_` para serem expostas ao frontend.
+
+> **Dica:** defina também `VITE_LOCAL_DB_HOST`, `VITE_LOCAL_DB_PORT`, `VITE_LOCAL_DB_NAME` e `VITE_LOCAL_DB_USER` para sincronizar os comandos de backup/diagnóstico do Database Inspetor com o seu ambiente local.
 
 ### 3) Reiniciar o servidor de desenvolvimento
 - Após alterar `.env.local`, reinicie o Vite:
@@ -56,4 +59,3 @@ const { data, error } = await supabase.from('sua_tabela').select('*')
 ### 7) Problemas comuns
 - Chaves erradas: 401/403 nas requisições → confira `.env.local`/`.env.production`.
 - OneDrive pode atrasar hot reload; se necessário, mova o projeto para fora do OneDrive.
-

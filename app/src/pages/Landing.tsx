@@ -14,7 +14,7 @@ export default function Landing() {
           {/* Top bar (desktop): ações principais no lado direito */}
           <nav className="hidden lg:flex items-center gap-2">
             <Link
-              to="/selecionar-prova"
+              to="/inicio"
               className="btn btn-primary"
               onMouseEnter={() => prefetchRoute(() => import('./SelecionarProva'), 'SelecionarProva')}
               onFocus={() => prefetchRoute(() => import('./SelecionarProva'), 'SelecionarProva')}
@@ -100,7 +100,7 @@ export default function Landing() {
             </Link>
           </Card>
           <Card title="Simulados ENEM" desc="Provas por ano/tema com correção automática e análise de acertos.">
-            <Link to="/selecionar-prova" className="btn">Selecionar prova</Link>
+            <Link to="/inicio" className="btn">Ver simulados</Link>
           </Card>
         </section>
         {user && (

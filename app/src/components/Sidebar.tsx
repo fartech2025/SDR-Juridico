@@ -75,7 +75,7 @@ export default function Sidebar({ isOpen: _isOpen = true, onClose }: SidebarProp
           Estudante
         </div>
         <Item to="/aluno" icon={User}>Área do Aluno</Item>
-        <Item to="/aluno/selecionar-prova" icon={Settings}>Configurações</Item>
+        <Item to="/aluno/opcoes" icon={Settings}>Configurações</Item>
       </nav>
       
       {/* Status */}

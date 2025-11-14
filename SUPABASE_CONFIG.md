@@ -46,7 +46,7 @@ VITE_DEV_MODE=false
 ## ✅ **Status:**
 - ✅ Arquivo `.env` local criado
 - ✅ Deploy de produção atualizado
-- ✅ Aplicação rodando em `localhost:5173`
+- ✅ Aplicação rodando em `localhost:5173` *(somente ao executar `npm run dev` localmente)*
 - ✅ Supabase configurado e pronto para uso
 
 ## 🎯 **Funcionalidades Ativas:**

@@ -11,7 +11,7 @@ export default function Sidenav({ isOpen = true }: SidenavProps) {
 
   const menuItems = [
     { icon: '🏠', label: 'Início', path: '/home' },
-    { icon: '🎯', label: 'Simulados', path: '/simulados' },
+    { icon: '🎯', label: 'Central do Aluno', path: '/inicio' },
     { icon: '🎒', label: 'Painel do Aluno', path: '/painel-aluno' },
     { icon: '', label: 'Estatísticas', path: '/estatisticas' },
     { icon: '🏆', label: 'Ranking', path: '/ranking' },

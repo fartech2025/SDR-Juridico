@@ -394,7 +394,7 @@ export class SimuladosService {
 - [ ] Remover `buscarSimuladosDisponveis()` de `questoesService.ts`
 - [ ] Consolidar tudo em `SimuladosService`
 - [ ] Atualizar `SelecionarProva.tsx` para usar novo serviço
-- [ ] Atualizar `SimuladosPage.tsx` para usar novo serviço
+- [ ] Atualizar `UserLandingPage.tsx` para usar novo serviço
 - [ ] Atualizar `QuestaoRenderer.tsx` para usar `id_prova`
 - [ ] Criar interface `SimuladoDoEnem` unificada
 

@@ -60,12 +60,16 @@ npm run dev
 ```bash
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_ANON_KEY=sua-chave-anon
+# Opcional: sobrescreve o endpoint do corretor (padrão usa LanguageTool público)
+VITE_TEXT_CORRECTOR_API_URL=https://api.languagetool.org/v2/check
 ```
+Se precisar copiar comandos de backup pelo Database Inspetor, preencha também `VITE_LOCAL_DB_HOST`, `VITE_LOCAL_DB_PORT`, `VITE_LOCAL_DB_NAME` e `VITE_LOCAL_DB_USER` com as credenciais reais do banco (ex.: Supabase).
 
 ### 4. Acessar Aplicação
 ```
 http://localhost:5173
 ```
+Somente disponível quando o servidor Vite está ativo no seu ambiente local; em produção use o domínio do deploy.
 
 ---
 
@@ -77,7 +81,7 @@ Projeto-ENEM/
 │   ├── src/
 │   │   ├── components/               # Componentes React
 │   │   │   ├── SimuladosSidebar.tsx    ← Sidebar de simulados
-│   │   │   ├── SimuladosPage.tsx       ← Lista de simulados
+│   │   │   ├── UserLandingPage.tsx     ← Central do estudante (lista de simulados)
 │   │   │   ├── QuestaoRenderer.tsx     ← Renderiza questões
 │   │   │   └── ResolverSimuladoComImagens.tsx ← Resolve prova
 │   │   ├── pages/                    # Páginas da aplicação
@@ -147,7 +151,7 @@ Este projeto está configurado para deploy automático:
 ### URLs de Acesso
 
 - **Produção**: [Link do Deploy](https://seu-projeto.vercel.app)
-- **Desenvolvimento**: http://localhost:5173
+- **Desenvolvimento**: http://localhost:5173 *(apenas no ambiente local durante `npm run dev`)*
 
 ---
 
@@ -162,6 +166,7 @@ Este projeto está configurado para deploy automático:
 - [x] Análise de desempenho
 - [x] Interface responsiva
 - [x] Deploy automático
+- [x] Corretor ortográfico/gramatical em português integrado (LanguageTool)
 
 ### � Em Desenvolvimento
 - [ ] Sistema de ranking
@@ -194,7 +199,16 @@ Para contribuir com o projeto:
 **Solução**: Execute `npm run lint` e corrija os erros
 
 **Problema**: Aplicação não carrega
-**Solução**: Verifique se o servidor está rodando em `localhost:5173`
+**Solução**: Verifique se o servidor local (`npm run dev`) está rodando em `localhost:5173` — esse endereço não fica acessível em produção
+
+---
+
+## 📝 Corretor de Português Global
+
+- Disponível em todas as páginas pelo botão circular no canto inferior direito.
+- Baseado no [LanguageTool](https://languagetool.org/) configurado para `pt-BR`.
+- Permite colar qualquer texto, visualizar as sugestões e aplicá-las automaticamente.
+- Para usar outro endpoint (self-host ou proxy), configure `VITE_TEXT_CORRECTOR_API_URL` no `.env.local`/variáveis do deploy.
 
 ---
 
