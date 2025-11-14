@@ -212,7 +212,7 @@ Para contribuir com o projeto:
 
 ---
 
-**🎯 Projeto ENEM - Sistema de Estudos Completo**  
+**🎯 Projeto FARTECH**  
 📅 Última atualização: 4 Nov 2025  
 🏆 Status: PRONTO PARA PRODUÇÃO  
 🔗 [GitHub](https://github.com/AlanMerlini/Projeto-ENEM)

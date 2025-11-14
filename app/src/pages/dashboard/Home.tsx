@@ -4,11 +4,11 @@ import { prefetchRoute } from '../../lib/prefetch';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
 
 const NAV_QUICK_ACTIONS = [
-  { label: 'Matrícula Online', path: '/inicio', icon: '📝', desc: 'Fluxo de inscrição municipal' },
+  { label: 'Matrícula Online', path: '/matricula', icon: '📝', desc: 'Fluxo de inscrição municipal' },
   { label: 'Painel da Secretaria', path: '/painel-gestor', icon: '🏛️', desc: 'Indicadores em tempo real' },
-  { label: 'Gestão Escolar', path: '/painel-aluno', icon: '🏫', desc: 'Visão por unidade' },
-  { label: 'Avaliações ENEM', path: '/inicio', icon: '🎯', desc: 'Simulados e diagnósticos' },
-  { label: 'Logística Escolar', path: '/monitor', icon: '🚌', desc: 'Transporte, merenda, estoques' },
+  { label: 'Gestão Escolar', path: '/gestao-escolar', icon: '🏫', desc: 'Visão por unidade' },
+  { label: 'Avaliações ENEM', path: '/avaliacoes-enem', icon: '🎯', desc: 'Simulados e diagnósticos' },
+  { label: 'Logística Escolar', path: '/logistica-escolar', icon: '🚌', desc: 'Transporte, merenda, estoques' },
   { label: 'Relatórios Estratégicos', path: '/estatisticas', icon: '📊', desc: 'KPIs institucionais' }
 ];
 
@@ -38,16 +38,28 @@ const STRATEGIC_DASHBOARDS = [
   {
     title: 'Painel da Secretaria',
     highlights: ['Indicadores de frequência por bairro', 'Integração SIGEduc + SGP', 'Alertas de evasão'],
-    cta: { label: 'Abrir painel', path: '/painel-gestor' }
+    cta: { label: 'Abrir painel', path: '/painel-estrategico' }
   },
   {
     title: 'Rede Municipal Inteligente',
     highlights: ['Mapa de calor das escolas', 'Índice de conectividade', 'Status da infraestrutura'],
-    cta: { label: 'Ver mapa', path: '/monitor' }
+    cta: { label: 'Ver mapa', path: '/rede-inteligente' }
   }
 ];
 
+const ADVANCED_SHORTCUTS = [
+  { label: 'Painel do Gestor', description: 'Visão institucional', path: '/painel-gestor', icon: '👔' },
+  { label: 'Sec. Educação', description: 'Projetos parceiros', path: '/sec-educacao', icon: '🏛️' },
+  { label: 'Database Inspetor', description: 'Audite dados e tabelas', path: '/database-inspetor', icon: '🗃️' },
+  { label: 'Relações de Tabelas', description: 'Documentação técnica', path: '/database-relations', icon: '🔗' },
+  { label: 'Documentação', description: 'Guias e procedimentos', path: '/documentacao-relacionamentos', icon: '📚' },
+];
+
+const MONITOR_SHORTCUT = { label: 'Monitor', description: 'Status em tempo real', path: '/monitor', icon: '🖥️' };
+
 export default function Home() {
+  const leftShortcuts = ADVANCED_SHORTCUTS.slice(0, 3);
+  const rightShortcuts = [...ADVANCED_SHORTCUTS.slice(3), MONITOR_SHORTCUT];
   return (
     <BasePage fullWidth contentClassName="py-8">
       <div className="relative w-full px-4 md:px-8 2xl:px-16 space-y-10">
@@ -100,6 +112,27 @@ export default function Home() {
               ))}
             </ul>
           </div>
+          <div className="glass-card p-4 space-y-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Ferramentas e suporte</p>
+              <h3 className="text-sm font-semibold text-white">Atalhos avançados</h3>
+            </div>
+            <div className="space-y-3">
+              {leftShortcuts.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 flex items-center gap-2 text-left hover:border-blue-400/40 transition"
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  <div>
+                    <p className="text-sm text-white font-semibold">{item.label}</p>
+                    <p className="text-xs text-slate-400">{item.description}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </aside>
         <aside className="hidden 2xl:flex flex-col gap-4 w-64 fixed right-8 top-32 bottom-8 overflow-y-auto pl-2">
           <div className="glass-card p-4 space-y-3">
@@ -138,6 +171,27 @@ export default function Home() {
                     <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.value}%` }} />
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+          <div className="glass-card p-4 space-y-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Acesso rápido</p>
+              <h3 className="text-sm font-semibold text-white">Operações críticas</h3>
+            </div>
+            <div className="space-y-3">
+              {rightShortcuts.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 flex items-center gap-2 hover:border-purple-400/40 transition"
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  <div>
+                    <p className="text-sm text-white font-semibold">{item.label}</p>
+                    <p className="text-xs text-slate-400">{item.description}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -253,65 +307,27 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Seleção de provas + Paineis */}
-        <section className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-          <div className="glass-card p-6 space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Biblioteca ENEM</p>
-                <h2 className="text-xl font-semibold text-white">Selecione uma prova para iniciar um simulado</h2>
-              </div>
-            <Link to="/inicio" className="btn-primary h-11 px-5">
-              Central de Simulados
-            </Link>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {['ENEM 2024', 'ENEM 2023', 'ENEM 2022'].map((prova) => (
-              <div key={prova} className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-400">Exame Nacional</p>
-                    <p className="text-lg font-semibold text-white">{prova}</p>
-                  </div>
-                  <span className="text-sm text-blue-300">Disponível</span>
-                </div>
-                <select className="input-field w-full">
-                  <option>Escolha o caderno</option>
-                  <option>Linguagens</option>
-                  <option>Matemática</option>
-                </select>
-              <div className="flex gap-3">
-                <Link to="/inicio" className="btn-primary flex-1 justify-center h-11">
-                    Iniciar
-                  </Link>
-                  <Link to="/inicio" className="btn-ghost flex-1 justify-center h-11">
-                    Ver detalhes
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-          </div>
-          <div className="space-y-4">
-            {STRATEGIC_DASHBOARDS.map((panel) => (
-              <div key={panel.title} className="glass-card p-5 space-y-3">
-                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Painel estratégico</p>
-                <h3 className="text-xl font-semibold text-white">{panel.title}</h3>
-                <ul className="space-y-2 text-sm text-slate-300">
-                  {panel.highlights.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-400" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Link to={panel.cta.path} className="btn-secondary h-10 justify-center">
-                  {panel.cta.label}
-                </Link>
-              </div>
-            ))}
-          </div>
+        {/* Painéis estratégicos */}
+        <section className="grid gap-6 lg:grid-cols-2">
+          {STRATEGIC_DASHBOARDS.map((panel) => (
+            <div key={panel.title} className="glass-card p-5 space-y-3">
+              <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Painel estratégico</p>
+              <h3 className="text-xl font-semibold text-white">{panel.title}</h3>
+              <ul className="space-y-2 text-sm text-slate-300">
+                {panel.highlights.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-400" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link to={panel.cta.path} className="btn-primary h-10 px-4 inline-flex items-center justify-center text-sm">
+                {panel.cta.label}
+              </Link>
+            </div>
+          ))}
         </section>
+
         </div>
       </div>
     </BasePage>

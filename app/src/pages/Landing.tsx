@@ -103,18 +103,6 @@ export default function Landing() {
             <Link to="/inicio" className="btn">Ver simulados</Link>
           </Card>
         </section>
-        {user && (
-          <section className="text-center w-full">
-            <p className="ds-muted mb-3">Você já está autenticado.</p>
-            <div className="flex justify-center gap-3">
-              <Link
-                to="/home"
-                className="btn btn-success"
-                onMouseEnter={() => prefetchRoute(() => import('./dashboard/Home'), 'DashboardHome')}
-                onFocus={() => prefetchRoute(() => import('./dashboard/Home'), 'DashboardHome')}
-              >
-                Ir para Home
-              </Link>
               <Link
                 to="/painel-aluno"
                 className="btn btn-ghost"

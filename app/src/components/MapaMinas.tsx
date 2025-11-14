@@ -38,6 +38,8 @@ interface Props {
   selectedMacroId?: string | null
   onFeatureClick?: (f: any) => void
   onFeatureHover?: (f: any | null) => void
+  macroOnly?: boolean
+  showLabels?: boolean
 }
 
 export default function MapaMinas({
@@ -49,6 +51,8 @@ export default function MapaMinas({
   selectedMacroId = null,
   onFeatureClick,
   onFeatureHover,
+  macroOnly = false,
+  showLabels = true,
 }: Props) {
   const projectionMemo = useMemo(() => {
     return geoMercator().center(center).scale(projectionScale).translate([MAP_SIZE / 2, MAP_SIZE / 2])
@@ -72,6 +76,9 @@ export default function MapaMinas({
             <>
               {geographies.map((geo) => {
                 const layer = geo.properties?.layer ?? 'municipio'
+                if (macroOnly && layer === 'municipio') {
+                  return null
+                }
                 const rawId = geo.properties?.cod_meso ?? geo.properties?.codarea ?? ''
                 const macroId = rawId ? String(rawId) : ''
                 const colors = (LAYER_STYLES[layer] ?? LAYER_STYLES.municipio)(geo.properties)
@@ -142,7 +149,8 @@ export default function MapaMinas({
                 )
               })}
 
-              {geographies
+              {showLabels &&
+                geographies
                 .filter((geo) => geo.properties?.layer === 'macroregiao')
                 .map((geo) => {
                   const centroid = geoCentroid(geo)

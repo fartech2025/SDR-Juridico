@@ -108,7 +108,7 @@ grant execute on function pg_foreign_keys() to anon;
           <div className="text-slate-400">Nenhuma relação encontrada.</div>
         )}
         <div className="flex justify-end pt-6">
-          <a href="/" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">Voltar para Home</a>
+          <a href="/" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">Sair</a>
         </div>
       </div>
     </BasePage>

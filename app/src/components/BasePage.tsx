@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import LiquidGlassButton from './LiquidGlassButton';
 import PortugueseCorrectorWidget from './PortugueseCorrectorWidget';
 import ThemeSwitcher from './ThemeSwitcher';
@@ -15,14 +16,24 @@ interface BasePageProps {
 
 export default function BasePage({
   children,
-  title = 'ENEM - Sistema de Estudos',
+  title = 'FARTECH',
   logo,
   className,
   contentClassName,
   fullWidth = false
 }: BasePageProps) {
   const location = useLocation();
+  const isLanding = location.pathname === '/';
   const showBackHome = !['/', '/home'].includes(location.pathname);
+  const isHome = location.pathname === '/home';
+  const renderBackHome = showBackHome && (
+    <Link
+      to="/"
+      className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 via-red-500 to-orange-400 px-5 py-2 text-white font-semibold shadow-lg shadow-rose-500/30 transition hover:shadow-rose-500/50"
+    >
+      ← Sair
+    </Link>
+  );
   const [logoUrl, setLogoUrl] = React.useState<string>('/favicon.svg');
   const [imgError, setImgError] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(new Date());
@@ -83,8 +94,8 @@ export default function BasePage({
         {/* Inner Glow */}
         <div className="absolute inset-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] pointer-events-none" />
         
-        <div className="container-max px-8 py-6 relative">
-          <div className="flex items-center justify-between">
+        <div className="w-full px-8 py-6 relative">
+          <div className="flex flex-wrap items-center justify-between gap-6 w-full">
             {/* Brand Section - Enhanced */}
             <div className="flex items-center gap-5 flex-1">
               {(logo || logoUrl) && !imgError && (
@@ -105,6 +116,40 @@ export default function BasePage({
                 <p className="text-xs text-slate-500 font-medium">Plataforma Educacional de Excelência</p>
               </div>
             </div>
+
+            <nav className="flex items-center gap-4 text-sm font-medium">
+              {!isLanding && renderBackHome}
+              {isLanding && (
+                <Link
+                  to="/inicio"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-white hover:border-blue-400/40 hover:text-blue-200 transition"
+                >
+                  <span role="img" aria-label="cadeado">🔐</span>
+                  Login
+                </Link>
+              )}
+              {isLanding && <div className="hidden md:block w-px h-6 bg-white/15" />}
+              {isLanding && (
+                <Link
+                  to="/home"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400 px-5 py-2 text-white font-semibold shadow-lg shadow-blue-500/30 transition hover:shadow-blue-500/50"
+                >
+                  <span role="img" aria-label="administrativo">👨‍💼</span>
+                  Administrativo
+                  <ArrowRightIcon className="w-4 h-4" />
+                </Link>
+              )}
+              {isLanding && (
+                <Link
+                  to="/sec-educacao"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-400 px-5 py-2 text-white font-semibold shadow-lg shadow-purple-500/30 transition hover:shadow-purple-500/50"
+                >
+                  <span role="img" aria-label="secretaria">🏫</span>
+                  Sec. Educação
+                  <ArrowRightIcon className="w-4 h-4" />
+                </Link>
+              )}
+            </nav>
 
             {/* Right Section - Liquid Glass Buttons */}
             <div className="flex items-center gap-4">
@@ -132,8 +177,16 @@ export default function BasePage({
                   <span className="text-sm font-bold tracking-wide">ONLINE</span>
                 </div>
               </LiquidGlassButton>
+              {isHome && (
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-white hover:border-rose-400/40 hover:text-rose-200 transition"
+                >
+                  ↩️ Sair
+                </Link>
+              )}
+              <ThemeSwitcher />
             </div>
-            <ThemeSwitcher />
           </div>
         </div>
       </header>
@@ -141,16 +194,7 @@ export default function BasePage({
       {/* Main Content - Enhanced with Glass Cards Support */}
       <main className={`flex-1 relative z-10 overflow-y-auto ${className || ''}`}>
         <div className={`${fullWidth ? 'w-full' : 'container-max px-8 py-10'} ${contentClassName || ''}`}>
-          {showBackHome && (
-            <div className="mb-6">
-              <Link
-                to="/home"
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:border-blue-400/40 hover:text-blue-200 transition"
-              >
-                ← Voltar para Home
-              </Link>
-            </div>
-          )}
+          {showBackHome && !isLanding && <div className="mb-6" />}
           {children}
         </div>
       </main>

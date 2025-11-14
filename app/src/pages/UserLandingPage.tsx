@@ -35,13 +35,6 @@ const PRIMARY_NAV: NavItem[] = [
   { label: 'Monitor', description: 'Status em tempo real', path: '/monitor', icon: '🖥️' },
 ];
 
-const SECONDARY_NAV: NavItem[] = [
-  { label: 'Painel do Gestor', description: 'Visão institucional', path: '/painel-gestor', icon: '👔' },
-  { label: 'Sec. Educação', description: 'Projetos parceiros', path: '/sec-educacao', icon: '🏛️' },
-  { label: 'Database Inspetor', description: 'Audite dados e tabelas', path: '/database-inspetor', icon: '🗃️' },
-  { label: 'Relações de Tabelas', description: 'Documentação técnica', path: '/database-relations', icon: '🔗' },
-  { label: 'Documentação', description: 'Guias e procedimentos', path: '/documentacao-relacionamentos', icon: '📚' },
-];
 
 export default function UserLandingPage() {
   const navigate = useNavigate();
@@ -372,7 +365,6 @@ export default function UserLandingPage() {
         </main>
 
         <div className="flex flex-1 flex-col gap-4 xl:max-w-sm 2xl:max-w-md shrink-0">
-          {renderNavList('Atalhos Avançados', 'Ferramentas e suporte', SECONDARY_NAV)}
           <aside className="glass-card p-4 space-y-3">
             <h2 className="text-lg font-semibold text-slate-100">Precisa de ajuda?</h2>
             <p className="text-sm text-slate-400">

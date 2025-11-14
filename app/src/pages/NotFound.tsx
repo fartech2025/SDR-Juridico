@@ -27,7 +27,7 @@ export default function NotFound() {
           to="/" 
           className="group relative overflow-hidden bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 px-8 py-4 rounded-xl font-semibold text-white shadow-lg hover:shadow-red-500/25 transition-all duration-300 hover:scale-105 inline-flex items-center gap-3"
         >
-          <span className="relative z-10">🏠 Voltar para Home</span>
+          <span className="relative z-10">🏠 Sair</span>
           <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
         </Link>
 
