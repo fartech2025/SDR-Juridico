@@ -1,10 +1,5 @@
-import React, { useMemo } from 'react'
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-} from 'react-simple-maps'
-import { geoCentroid, geoMercator } from 'd3-geo'
+import React, { useEffect, useMemo, useState } from 'react'
+import { geoCentroid, geoMercator, geoPath } from 'd3-geo'
 import { MACRO_REGIOES_PERFORMANCE, MEDIA_GERAL } from '../data/macroRegioesPerformance'
 
 const LAYER_STYLES: Record<string, (props?: any) => { fill: string; stroke: string }> = {
@@ -54,153 +49,154 @@ export default function MapaMinas({
   macroOnly = false,
   showLabels = true,
 }: Props) {
+  const [features, setFeatures] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let isActive = true
+    setIsLoading(true)
+    fetch(dataUrl)
+      .then((response) => response.json())
+      .then((geojson) => {
+        if (!isActive) return
+        setFeatures(Array.isArray(geojson?.features) ? geojson.features : [])
+      })
+      .catch((error) => {
+        console.error('Erro ao carregar mapa de MG', error)
+        if (isActive) setFeatures([])
+      })
+      .finally(() => {
+        if (isActive) setIsLoading(false)
+      })
+    return () => {
+      isActive = false
+    }
+  }, [dataUrl])
+
   const projectionMemo = useMemo(() => {
     return geoMercator().center(center).scale(projectionScale).translate([MAP_SIZE / 2, MAP_SIZE / 2])
   }, [center, projectionScale])
 
+  const pathGenerator = useMemo(() => geoPath(projectionMemo), [projectionMemo])
+
+  const emitHover = (feature: any | null, enhancedProperties?: any) => {
+    if (!onFeatureHover) return
+    if (!feature) {
+      onFeatureHover(null)
+      return
+    }
+    onFeatureHover({
+      ...feature,
+      properties: enhancedProperties ?? feature.properties,
+    })
+  }
+
   return (
-    <div className={className} style={{ minHeight, background: 'transparent' }}>
-      <ComposableMap
-        projection="geoMercator"
-        projectionConfig={{ scale: projectionScale, center }}
-        width={MAP_SIZE}
-        height={MAP_SIZE}
+    <div className={className} style={{ minHeight, background: 'transparent', position: 'relative' }}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
+          Carregando mapa...
+        </div>
+      )}
+      <svg
+        viewBox={`0 0 ${MAP_SIZE} ${MAP_SIZE}`}
+        preserveAspectRatio="xMidYMid meet"
         style={{
           width: '100%',
           height: '100%',
           background: 'transparent',
         }}
       >
-        <Geographies geography={dataUrl}>
-          {({ geographies }) => (
-            <>
-              {geographies.map((geo) => {
-                const layer = geo.properties?.layer ?? 'municipio'
-                if (macroOnly && layer === 'municipio') {
-                  return null
-                }
-                const rawId = geo.properties?.cod_meso ?? geo.properties?.codarea ?? ''
-                const macroId = rawId ? String(rawId) : ''
-                const colors = (LAYER_STYLES[layer] ?? LAYER_STYLES.municipio)(geo.properties)
-                const isSelected =
-                  layer === 'macroregiao' &&
-                  selectedMacroId &&
-                  selectedMacroId === macroId
-                const macroPerformance =
-                  layer === 'macroregiao'
-                    ? MACRO_REGIOES_PERFORMANCE.find(
-                        (m) => m.id === macroId
-                      )
-                    : undefined
-                const enhancedProperties =
-                  layer === 'macroregiao' && macroPerformance
-                    ? {
-                        ...geo.properties,
-                        nome: macroPerformance.nome,
-                        municipios: `${macroPerformance.municipios.length} municípios monitorados`,
-                        mediaEnem: macroPerformance.mediaEnem,
-                      }
-                    : geo.properties
-                const handleHover = (feature: any | null) => {
-                  if (!onFeatureHover) return
-                  if (!feature) {
-                    onFeatureHover(null)
-                    return
-                  }
-                  onFeatureHover({
-                    ...feature,
-                    properties: enhancedProperties,
-                  })
-                }
-                const handleClick = () => {
-                  if (!onFeatureClick) return
-                  onFeatureClick({
-                    ...geo,
-                    properties: enhancedProperties,
-                  })
-                }
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    onMouseEnter={() => handleHover(geo)}
-                    onMouseLeave={() => handleHover(null)}
-                    onClick={handleClick}
-                    style={{
-                      default: {
-                        fill: colors.fill,
-                        stroke: isSelected ? '#fef08a' : colors.stroke,
-                        strokeWidth: layer === 'estado' ? 1.2 : layer === 'macroregiao' ? (isSelected ? 1.2 : 0.8) : 0.35,
-                        outline: 'none',
-                      },
-                      hover: {
-                        fill: 'transparent',
-                        stroke: '#7dd3fc',
-                        strokeWidth: layer === 'estado' ? 1.4 : 0.9,
-                        outline: 'none',
-                      },
-                      pressed: {
-                        fill: 'transparent',
-                        stroke: '#a5b4fc',
-                        outline: 'none',
-                      },
-                    }}
-                  />
-                )
-              })}
+        {features.map((feature, index) => {
+          const layer = feature.properties?.layer ?? 'municipio'
+          if (macroOnly && layer === 'municipio') {
+            return null
+          }
 
-              {showLabels &&
-                geographies
-                .filter((geo) => geo.properties?.layer === 'macroregiao')
-                .map((geo) => {
-                  const centroid = geoCentroid(geo)
-                  const projected = projectionMemo(centroid as [number, number])
-                  const performance = MACRO_REGIOES_PERFORMANCE.find(
-                    (m) => m.id === String(geo.properties?.cod_meso ?? geo.properties?.codarea ?? '')
-                  )
-                  if (!performance || !projected) return null
-                  const [x, y] = projected
-                  const labelWidth = 120
-                  const labelHeight = 34
-                  return (
-                    <g key={`label-${geo.rsmKey}`}>
-                      <rect
-                        x={x - labelWidth / 2}
-                        y={y - labelHeight / 2}
-                        width={labelWidth}
-                        height={labelHeight}
-                        rx={8}
-                        fill="rgba(2,6,23,0.75)"
-                        stroke="rgba(15,23,42,0.8)"
-                        strokeWidth={0.6}
-                      />
-                      <text
-                        x={x}
-                        y={y - 4}
-                        textAnchor="middle"
-                        fontSize={9}
-                        fontWeight={500}
-                        fill="#cbd5f5"
-                      >
-                        {performance.nome}
-                      </text>
-                      <text
-                        x={x}
-                        y={y + 9}
-                        textAnchor="middle"
-                        fontSize={12}
-                        fontWeight={700}
-                        fill="#f8fafc"
-                      >
-                        {performance.mediaEnem} pts
-                      </text>
-                    </g>
-                  )
-                })}
-            </>
-          )}
-        </Geographies>
-      </ComposableMap>
+          const rawId = feature.properties?.cod_meso ?? feature.properties?.codarea ?? ''
+          const macroId = rawId ? String(rawId) : ''
+          const colors = (LAYER_STYLES[layer] ?? LAYER_STYLES.municipio)(feature.properties)
+          const isSelected = layer === 'macroregiao' && selectedMacroId && macroId === selectedMacroId
+          const macroPerformance =
+            layer === 'macroregiao' ? MACRO_REGIOES_PERFORMANCE.find((m) => m.id === macroId) : undefined
+          const enhancedProperties =
+            layer === 'macroregiao' && macroPerformance
+              ? {
+                  ...feature.properties,
+                  nome: macroPerformance.nome,
+                  municipios: `${macroPerformance.municipios.length} municípios monitorados`,
+                  mediaEnem: macroPerformance.mediaEnem,
+                }
+              : feature.properties
+          const path = pathGenerator(feature as any)
+          if (!path) return null
+
+          const strokeWidth =
+            layer === 'estado' ? 1.2 : layer === 'macroregiao' ? (isSelected ? 1.2 : 0.8) : 0.35
+
+          const handleClick = () => {
+            if (!onFeatureClick) return
+            onFeatureClick({
+              ...feature,
+              properties: enhancedProperties,
+            })
+          }
+
+          return (
+            <path
+              key={`feature-${feature.id ?? index}`}
+              d={path}
+              fill={colors.fill}
+              stroke={isSelected ? '#fef08a' : colors.stroke}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              onMouseEnter={() => emitHover(feature, enhancedProperties)}
+              onMouseLeave={() => emitHover(null)}
+              onClick={handleClick}
+              style={{
+                cursor: layer === 'macroregiao' && onFeatureClick ? 'pointer' : 'default',
+                transition: 'stroke 0.2s ease',
+              }}
+            />
+          )
+        })}
+
+        {showLabels &&
+          features
+            .filter((feature) => feature.properties?.layer === 'macroregiao')
+            .map((feature, index) => {
+              const centroid = geoCentroid(feature as any)
+              const projected = projectionMemo(centroid as [number, number])
+              const performance = MACRO_REGIOES_PERFORMANCE.find(
+                (m) => m.id === String(feature.properties?.cod_meso ?? feature.properties?.codarea ?? '')
+              )
+              if (!performance || !projected) return null
+              const [x, y] = projected
+              const labelWidth = 120
+              const labelHeight = 34
+              return (
+                <g key={`label-${feature.id ?? index}`}>
+                  <rect
+                    x={x - labelWidth / 2}
+                    y={y - labelHeight / 2}
+                    width={labelWidth}
+                    height={labelHeight}
+                    rx={8}
+                    fill="rgba(2,6,23,0.75)"
+                    stroke="rgba(15,23,42,0.8)"
+                    strokeWidth={0.6}
+                  />
+                  <text x={x} y={y - 4} textAnchor="middle" fontSize={9} fontWeight={500} fill="#cbd5f5">
+                    {performance.nome}
+                  </text>
+                  <text x={x} y={y + 9} textAnchor="middle" fontSize={12} fontWeight={700} fill="#f8fafc">
+                    {performance.mediaEnem} pts
+                  </text>
+                </g>
+              )
+            })}
+      </svg>
     </div>
   )
 }

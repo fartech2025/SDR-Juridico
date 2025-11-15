@@ -9,6 +9,7 @@ const NAV_QUICK_ACTIONS = [
   { label: 'Gestão Escolar', path: '/gestao-escolar', icon: '🏫', desc: 'Visão por unidade' },
   { label: 'Avaliações ENEM', path: '/avaliacoes-enem', icon: '🎯', desc: 'Simulados e diagnósticos' },
   { label: 'Logística Escolar', path: '/logistica-escolar', icon: '🚌', desc: 'Transporte, merenda, estoques' },
+  { label: 'Dados ENEM Minas', path: '/dados-enem-mg', icon: '📂', desc: 'Microdados e integrações oficiais' },
   { label: 'Relatórios Estratégicos', path: '/estatisticas', icon: '📊', desc: 'KPIs institucionais' }
 ];
 

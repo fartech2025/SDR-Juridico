@@ -22,6 +22,7 @@ const AvaliacoesEnem = React.lazy(() => import('./pages/AvaliacoesEnem'))
 const LogisticaEscolar = React.lazy(() => import('./pages/LogisticaEscolar'))
 const PainelEstrategico = React.lazy(() => import('./pages/PainelEstrategico'))
 const RedeInteligente = React.lazy(() => import('./pages/RedeInteligente'))
+const DadosEnemMG = React.lazy(() => import('./pages/DadosEnemMG'))
 const UserLandingPage = React.lazy(() => import('./pages/UserLandingPage'))
 const ResolverSimulado = React.lazy(() => import('./pages/ResolverSimuladoComImagens'))
 const CentralOperacional = React.lazy(() => import('./pages/dashboard/CentralOperacional'))
@@ -117,6 +118,17 @@ export default function AppWrapper() {
                 <ProtectedRoute>
                   <Suspense fallback={<div className="p-6">Carregando...</div>}>
                     <RedeInteligente />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/dados-enem-mg"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-6">Carregando...</div>}>
+                    <DadosEnemMG />
                   </Suspense>
                 </ProtectedRoute>
               }

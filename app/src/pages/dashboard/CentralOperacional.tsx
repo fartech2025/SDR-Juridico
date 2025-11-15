@@ -129,8 +129,9 @@ export default function CentralOperacional() {
               com base no mapa oficial da rede municipal.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap justify-end">
             <Link to="/" className="btn-ghost px-5 h-12">↩️ Sair</Link>
+            <Link to="/dados-enem-mg" className="btn-secondary px-6 h-12">📂 Dados ENEM MG</Link>
             <Link to="/estatisticas" className="btn-primary px-6 h-12">📊 Ver estatísticas detalhadas</Link>
           </div>
         </header>
