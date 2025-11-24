@@ -1,0 +1,30 @@
+name: Style Lint (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  style-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install deps (optional)
+        run: npm ci
+
+      - name: Run style lint (no arbitrary colors)
+        run: npm run lint:style
+
+      - name: Build (sanity)
+        run: npm run build

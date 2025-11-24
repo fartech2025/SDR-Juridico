@@ -1,0 +1,1 @@
+export { default as component } from "../../../../src/routes/quem-somos/+page.svelte";
