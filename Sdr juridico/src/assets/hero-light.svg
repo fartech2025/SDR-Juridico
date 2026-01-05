@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320" fill="none">
+  <defs>
+    <linearGradient id="wavePink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff7fb0"/>
+      <stop offset="60%" stop-color="#ff8fc0"/>
+      <stop offset="100%" stop-color="#ffb0d2"/>
+    </linearGradient>
+    <linearGradient id="waveBlue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6a8dff"/>
+      <stop offset="100%" stop-color="#9bb2ff"/>
+    </linearGradient>
+    <linearGradient id="scaleGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e7eeff"/>
+      <stop offset="100%" stop-color="#c8d6ff"/>
+    </linearGradient>
+  </defs>
+  <path d="M420 210C520 180 640 168 760 158C860 150 920 130 980 112" stroke="url(#wavePink)" stroke-width="22" stroke-linecap="round"/>
+  <path d="M420 236C520 208 640 195 760 186C862 178 930 164 990 150" stroke="url(#waveBlue)" stroke-width="12" stroke-linecap="round" opacity="0.5"/>
+  <g opacity="0.6">
+    <path d="M600 95C600 72 624 58 648 58C672 58 696 72 696 95V110H600V95Z" fill="url(#scaleGlow)"/>
+    <path d="M592 110H704L682 176C676 196 620 196 614 176L592 110Z" fill="url(#scaleGlow)"/>
+    <rect x="646" y="110" width="5" height="96" fill="#9bb2ff"/>
+    <path d="M552 130L648 130" stroke="#9bb2ff" stroke-width="3"/>
+    <path d="M648 130L744 130" stroke="#9bb2ff" stroke-width="3"/>
+    <path d="M552 130L538 162H566L552 130Z" fill="#9bb2ff"/>
+    <path d="M744 130L730 162H758L744 130Z" fill="#9bb2ff"/>
+  </g>
+  <g opacity="0.35">
+    <circle cx="760" cy="64" r="18" fill="#e7eeff"/>
+    <circle cx="804" cy="86" r="10" fill="#e7eeff"/>
+    <circle cx="832" cy="56" r="14" fill="#e7eeff"/>
+  </g>
+</svg>
