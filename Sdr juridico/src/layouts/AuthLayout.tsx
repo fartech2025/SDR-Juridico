@@ -20,7 +20,7 @@ export const AuthLayout = ({
 }: AuthLayoutProps) => (
   <div
     className={cn(
-      'relative min-h-screen px-6 py-12 text-[color:var(--auth-text)]',
+      'relative min-h-screen px-6 py-12 text-(--auth-text)',
       className,
     )}
     style={{
@@ -31,7 +31,7 @@ export const AuthLayout = ({
   >
     <div className="mx-auto max-w-6xl">
       {title ? (
-        <h1 className="text-center text-4xl font-semibold tracking-[0.35em] text-[color:var(--auth-text)]">
+        <h1 className="text-center text-4xl font-semibold tracking-[0.35em] text-(--auth-text)">
           {title}
         </h1>
       ) : null}
@@ -51,7 +51,7 @@ export const AuthLayout = ({
           {children}
         </div>
         <div
-          className="relative min-h-[560px] overflow-hidden rounded-2xl border bg-white shadow-soft"
+          className="relative min-h-140 overflow-hidden rounded-2xl border bg-white shadow-soft"
           style={{
             borderColor: 'var(--auth-border)',
             boxShadow: 'var(--auth-shadow)',
@@ -59,7 +59,7 @@ export const AuthLayout = ({
               'linear-gradient(135deg, rgba(248, 250, 255, 0.9) 0%, rgba(243, 244, 255, 0.9) 55%, rgba(255, 235, 243, 0.9) 100%)',
           }}
         >
-          <div className="absolute right-6 top-6 flex items-center gap-3 text-xs text-[color:var(--auth-text-muted)]">
+          <div className="absolute right-6 top-6 flex items-center gap-3 text-xs text-(--auth-text-muted)">
             <span>{sideTitle}</span>
             <button
               type="button"
@@ -72,16 +72,16 @@ export const AuthLayout = ({
             <img
               src={authHero}
               alt="Ilustracao juridica"
-              className="max-h-[420px] w-full object-contain"
+              className="max-h-105 w-full object-contain"
             />
           </div>
           {sideSubtitle ? (
-            <div className="absolute left-10 top-16 max-w-sm space-y-3 text-[color:var(--auth-text)]">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--auth-text-muted)]">
+            <div className="absolute left-10 top-16 max-w-sm space-y-3 text-(--auth-text)">
+              <p className="text-xs uppercase tracking-[0.3em] text-(--auth-text-muted)">
                 SDR Juridico Online
               </p>
               <h2 className="text-2xl font-semibold">{sideSubtitle}</h2>
-              <p className="text-sm text-[color:var(--auth-text-muted)]">
+              <p className="text-sm text-(--auth-text-muted)">
                 Inteligencia juridica e produtividade em um unico painel.
               </p>
             </div>

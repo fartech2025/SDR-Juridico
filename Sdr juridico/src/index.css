@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
+@import "./styles/dark-mode.css";
 
 :root {
   color-scheme: light;
@@ -8,11 +9,44 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Font Size Scale - Controle de Acessibilidade */
+  --font-scale: 1;
+  --font-xs: calc(10px * var(--font-scale));
+  --font-sm: calc(12px * var(--font-scale));
+  --font-base: calc(14px * var(--font-scale));
+  --font-lg: calc(16px * var(--font-scale));
+  --font-xl: calc(20px * var(--font-scale));
+  --font-2xl: calc(24px * var(--font-scale));
+  --font-3xl: calc(32px * var(--font-scale));
+  --font-4xl: calc(40px * var(--font-scale));
+
+  /* Light Mode Colors */
+  --color-base: #f7f8fc;
+  --color-base-secondary: #ffffff;
+  --color-base-tertiary: #f1f5f9;
+  --color-text: #23263b;
+  --color-text-subtle: #64748b;
+  --color-border: #e9ecf5;
+  --color-bg-hover: #f1f5f9;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  /* Dark Mode Colors */
+  --color-base: #0f172a;
+  --color-base-secondary: #1e293b;
+  --color-base-tertiary: #334155;
+  --color-text: #f1f5f9;
+  --color-text-subtle: #cbd5e1;
+  --color-border: #334155;
+  --color-bg-hover: #1e293b;
 }
 
 @layer base {
   *, ::before, ::after {
-    border-color: var(--agenda-border, #e9ecf5);
+    border-color: var(--agenda-border, var(--color-border));
   }
 }
 
@@ -24,14 +58,23 @@ body {
   margin: 0;
   min-height: 100vh;
   position: relative;
-  background-color: var(--color-base, #f7f8fc);
+  background-color: #f7f8fc;
   background-image:
     radial-gradient(820px 520px at 85% 5%, rgba(255, 170, 210, 0.22), transparent 55%),
     radial-gradient(820px 520px at 10% -10%, rgba(156, 141, 255, 0.2), transparent 55%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 248, 252, 1) 100%);
   background-attachment: fixed;
-  color: var(--color-text, #23263b);
+  color: #23263b;
   font-family: 'Manrope', system-ui, sans-serif;
+  font-size: var(--font-base);
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark body {
+  background-color: #0f172a;
+  background-image: none;
+  color: #f1f5f9;
 }
 
 body::before {
@@ -58,5 +101,10 @@ a {
 
 ::selection {
   background: rgba(76, 96, 255, 0.2);
-  color: var(--color-text, #23263b);
+  color: var(--color-text);
+}
+
+html.dark ::selection {
+  background: rgba(76, 96, 255, 0.4);
+  color: #f1f5f9;
 }

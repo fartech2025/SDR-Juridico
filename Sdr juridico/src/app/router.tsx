@@ -11,6 +11,8 @@ import { DocumentosPage } from '@/pages/DocumentosPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { IndicadoresPage } from '@/pages/IndicadoresPage'
 import { LeadsPage } from '@/pages/LeadsPage'
+import { LeadsRealPage } from '@/pages/LeadsPage.example'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
@@ -18,7 +20,7 @@ import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/app/dashboard" replace />,
   },
   {
     path: '/login',
@@ -34,7 +36,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/app',
-    element: <AppShell />,
+    element: (
+      <ProtectedRoute>
+        <AppShell />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
@@ -47,6 +53,10 @@ export const router = createBrowserRouter([
       {
         path: 'leads',
         element: <LeadsPage />,
+      },
+      {
+        path: 'leads-real',
+        element: <LeadsRealPage />,
       },
       {
         path: 'clientes',

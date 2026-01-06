@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import heroLight from '@/assets/hero-light.svg'
 import { casos, documentos } from '@/data/mock'
 import { formatDateTime } from '@/utils/format'
+import type { Documento } from '@/types/domain'
 
 const resolveStatus = (
   value: string | null,

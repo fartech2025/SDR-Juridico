@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
@@ -36,6 +37,16 @@ const config: Config = {
       fontFamily: {
         display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         body: ['"Manrope"', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        xs: 'var(--font-xs)',
+        sm: 'var(--font-sm)',
+        base: 'var(--font-base)',
+        lg: 'var(--font-lg)',
+        xl: 'var(--font-xl)',
+        '2xl': 'var(--font-2xl)',
+        '3xl': 'var(--font-3xl)',
+        '4xl': 'var(--font-4xl)',
       },
     },
   },

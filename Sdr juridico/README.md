@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# 🏛️ SDR Jurídico - Sistema de Gestão Jurídica
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema completo de gestão para escritórios de advocacia com foco em eficiência e experiência do usuário.
 
-Currently, two official plugins are available:
+## ✨ Características Principais
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🎨 **Interface Moderna**: Design system completo com dark mode nativo
+- 📊 **Dashboard Inteligente**: KPIs, métricas e insights em tempo real
+- 👥 **Gestão de Leads**: Funil de vendas e acompanhamento de prospecção
+- ⚖️ **Gestão de Casos**: Controle completo de processos jurídicos
+- 📄 **Gestão de Documentos**: Sistema integrado de arquivos
+- 📅 **Agenda Integrada**: Calendário com eventos e compromissos
+- 🔔 **Sistema de Notificações**: Alertas inteligentes com prioridades
+- 🌙 **Dark Mode Otimizado**: Tema escuro com transições suaves
+- 📱 **Totalmente Responsivo**: Mobile, tablet e desktop
 
-## React Compiler
+## 🚀 Stack Tecnológico
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19.2 + TypeScript 5.9
+- **Build**: Vite 7.3
+- **Styling**: Tailwind CSS 4.1
+- **Backend**: Supabase
+- **Routing**: React Router 7.11
 
-## Expanding the ESLint configuration
+## 🔧 Instalação
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🗄️ Configurar Banco de Dados
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Crie conta no [Supabase](https://supabase.com)
+2. Crie arquivo `.env`:
+```env
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-aqui
 ```
+3. Execute migrations: `supabase/migrations/00_create_all_tables.sql`
+
+Veja [GUIA_CONEXAO_SUPABASE.md](./GUIA_CONEXAO_SUPABASE.md) para detalhes.
+
+## 🚀 Desenvolvimento
+
+```bash
+npm run dev
+```
+
+## 📦 Build
+
+```bash
+npm run build
+```
+
+## 📚 Documentação
+
+- [Guia Conexão Supabase](./GUIA_CONEXAO_SUPABASE.md)
+- [Guia Identidade Visual](./GUIA_IDENTIDADE_VISUAL.md)
+- [Deploy Produção](./DEPLOY_PRODUCAO.md)
+
+---
+
+Desenvolvido com ❤️ para modernizar a gestão jurídica

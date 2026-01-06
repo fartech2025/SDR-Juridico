@@ -16,15 +16,20 @@ import {
   ChevronDown,
   UserRound,
   Users,
+  Menu,
+  X,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
+import { FontSizeButton } from '@/components/FontSizeControl'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/utils/cn'
 
 const navItems = [
   { label: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
   { label: 'Leads', to: '/app/leads', icon: Users },
+  { label: 'Leads (Supabase)', to: '/app/leads-real', icon: Users },
   { label: 'Clientes', to: '/app/clientes', icon: UserRound },
   { label: 'Casos', to: '/app/casos', icon: Briefcase },
   { label: 'Agenda', to: '/app/agenda', icon: CalendarClock },
@@ -36,17 +41,20 @@ const navItems = [
 export const AppShell = () => {
   const navigate = useNavigate()
   const [logoutOpen, setLogoutOpen] = React.useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setLogoutOpen(false)
-    navigate('/login')
+    // Supabase desabilitado - apenas redireciona
+    navigate('/login', { replace: true })
   }
 
   return (
     <div className="min-h-screen text-text">
-      <aside className="fixed left-0 top-0 z-30 flex h-screen w-[240px] flex-col border-r border-border bg-gradient-to-b from-[#f7f8fc] via-[#f7f8fc] to-[#eef2fb] shadow-soft">
+      {/* Sidebar - Responsivo */}
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col border-r border-border bg-linear-to-b from-[#f7f8fc] via-[#f7f8fc] to-[#eef2fb] shadow-soft lg:flex">
         <div className="flex items-center gap-3 px-6 py-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff6aa2] via-[#ff8fb1] to-[#6aa8ff] text-white shadow-soft">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-[#ff6aa2] via-[#ff8fb1] to-[#6aa8ff] text-white shadow-soft">
             <Scale className="h-5 w-5" />
           </div>
           <div>
@@ -105,8 +113,62 @@ export const AppShell = () => {
         </div>
       </aside>
 
-      <header className="fixed left-[240px] right-0 top-0 z-20 flex h-16 items-center justify-between border-b border-border/70 bg-white/90 px-8 shadow-soft backdrop-blur">
-        <div className="flex items-center gap-3">
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-20 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute left-0 top-16 w-64 max-h-[calc(100vh-64px)] flex-col overflow-y-auto border-r border-border bg-white shadow-soft">
+            <nav className="space-y-2 p-4">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
+                      isActive
+                        ? 'bg-[#E9EEFF] text-primary'
+                        : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <item.icon
+                        className={cn(
+                          'h-4 w-4',
+                          isActive
+                            ? 'text-primary'
+                            : 'text-text-subtle group-hover:text-primary',
+                        )}
+                      />
+                      <span>{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Header - Responsivo */}
+      <header className="fixed left-0 right-0 top-0 z-20 flex h-16 items-center justify-between border-b border-border/70 bg-white/90 px-4 shadow-soft backdrop-blur lg:left-60 lg:px-8">
+        {/* Logo/Menu Mobile */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="rounded-full"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+
+        {/* Desktop greeting */}
+        <div className="hidden items-center gap-3 lg:flex">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
             PA
           </div>
@@ -115,7 +177,9 @@ export const AppShell = () => {
             <p className="text-sm font-semibold text-text">SDR Juridico Online</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* Right actions - Responsivo */}
+        <div className="flex items-center gap-2 lg:gap-3">
           <div className="relative hidden items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm text-text-muted shadow-soft md:flex">
             <Search className="h-4 w-4 text-text-subtle" />
             <input
@@ -126,24 +190,39 @@ export const AppShell = () => {
               3
             </span>
           </div>
+
+          {/* Controle de Tamanho de Fonte */}
+          <FontSizeButton />
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           <Button variant="ghost" size="sm" className="relative rounded-full">
             <Bell className="h-4 w-4" />
             <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger" />
           </Button>
-          <Button variant="ghost" size="sm" className="rounded-full">
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="rounded-full hidden sm:inline-flex"
+            onClick={() => navigate('/app/config')}
+          >
             <SlidersHorizontal className="h-4 w-4" />
-            Preferencias
+            <span className="hidden md:inline ml-1">Preferencias</span>
           </Button>
+
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-full"
+            className="rounded-full hidden sm:inline-flex"
             onClick={() => setLogoutOpen(true)}
           >
             <LogOut className="h-4 w-4" />
-            Sair
+            <span className="hidden md:inline ml-1">Sair</span>
           </Button>
-          <div className="flex items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs text-text shadow-soft">
+
+          <div className="hidden items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs text-text shadow-soft sm:flex">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
               PA
             </div>
@@ -153,8 +232,8 @@ export const AppShell = () => {
         </div>
       </header>
 
-      <main className="min-h-screen bg-transparent pl-[240px] pt-16">
-        <div className="px-8 py-6">
+      <main className="min-h-screen bg-transparent pt-16 lg:pl-60">
+        <div className="px-4 py-6 md:px-8">
           <Outlet />
         </div>
       </main>

@@ -1,0 +1,171 @@
+/* Dark Mode Global Styles */
+
+html.dark {
+  /* Background */
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+html.dark body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* FORCE dark on ANY element with white background */
+/* (removido bloco vazio que gerava aviso) */
+
+html.dark [style*="background-color: white"],
+html.dark [style*="background-color: #fff"],
+html.dark [style*="background-color: #ffffff"],
+html.dark [style*="background: white"],
+html.dark [style*="background: #fff"],
+html.dark [style*="background: #ffffff"] {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* ALL elements with bg-white - Force dark mode */
+html.dark div[class*="bg-white"],
+html.dark section[class*="bg-white"],
+html.dark article[class*="bg-white"],
+html.dark form[class*="bg-white"],
+html.dark [role="region"][class*="bg-white"],
+html.dark .bg-white,
+html.dark [class*="rounded"][style*="white"] {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Cards and Containers */
+html.dark [class*="bg-white"],
+html.dark [class*="bg-base"],
+html.dark [class*="bg-surface"],
+html.dark [class*="rounded-2xl"],
+html.dark [class*="rounded-xl"],
+html.dark [class*="card"],
+html.dark [class*="Card"] {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+/* Text Colors */
+html.dark .text-text {
+  color: #f1f5f9;
+}
+
+html.dark .text-text-muted {
+  color: #cbd5e1;
+}
+
+html.dark .text-text-subtle {
+  color: #94a3b8;
+}
+
+/* Borders */
+html.dark .border-border,
+html.dark [class*="border"] {
+  border-color: #334155;
+}
+
+/* Sidebar */
+html.dark aside {
+  background: linear-gradient(to bottom, #1e293b, #1e293b);
+  border-right-color: #334155;
+}
+
+/* Header */
+html.dark header {
+  background-color: rgba(30, 41, 59, 0.9);
+  border-bottom-color: #334155;
+}
+
+/* Inputs and Forms */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-color: #334155;
+}
+
+html.dark input::placeholder {
+  color: #94a3b8;
+}
+
+/* Buttons */
+html.dark .bg-\[#E9EEFF\] {
+  background-color: #334155;
+  color: #f1f5f9;
+}
+
+html.dark .hover\:bg-\[#F2F5FF\]:hover {
+  background-color: #334155;
+}
+
+/* Cards */
+html.dark .bg-\[#f7f8fc\],
+html.dark .from-\[#f7f8fc\],
+html.dark .via-\[#f7f8fc\],
+html.dark .to-\[#eef2fb\],
+html.dark .from-white,
+html.dark .to-\[#FDE9F2\],
+html.dark .via-white,
+html.dark [class*="bg-gradient"],
+html.dark [class*="from-white"],
+html.dark [class*="to-white"],
+html.dark [class*="via-white"] {
+  background-color: #1e293b !important;
+  background-image: none !important;
+  color: #f1f5f9;
+}
+
+/* Badges and Tags */
+html.dark [class*="bg-\[#FFE1E1\]"],
+html.dark [class*="bg-\[#FDE2E2\]"],
+html.dark [class*="bg-\[#E6F7EF\]"] {
+  background-color: rgba(30, 41, 59, 0.8);
+  border-color: #334155;
+}
+
+html.dark [class*="text-\[#9B3B3B\]"],
+html.dark [class*="text-\[#B24B4B\]"],
+html.dark [class*="text-\[#2F7A5C\]"] {
+  color: #cbd5e1;
+}
+
+/* Modal Overlay */
+html.dark [class*="bg-black/50"] {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Links */
+html.dark a {
+  color: #60a5fa;
+}
+
+html.dark a:hover {
+  color: #93c5fd;
+}
+
+/* Selection */
+html.dark ::selection {
+  background-color: rgba(96, 165, 250, 0.4);
+  color: #f1f5f9;
+}
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar {
+  background-color: #0f172a;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background-color: #1e293b;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: #475569;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b;
+}
