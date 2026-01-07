@@ -23,13 +23,13 @@ import { cn } from '@/utils/cn'
 type TipoBusca = 'numero' | 'parte' | 'classe' | 'avancada'
 
 const tribunais = [
-  // Tribunais Superiores
+  // Tribunais Superiores (4)
   { id: 'stj', nome: 'STJ - Superior Tribunal de Justiça' },
   { id: 'tst', nome: 'TST - Tribunal Superior do Trabalho' },
   { id: 'tse', nome: 'TSE - Tribunal Superior Eleitoral' },
   { id: 'stm', nome: 'STM - Superior Tribunal Militar' },
   
-  // Tribunais Regionais Federais
+  // Tribunais Regionais Federais (6)
   { id: 'trf1', nome: 'TRF1 - Tribunal Regional Federal 1ª Região' },
   { id: 'trf2', nome: 'TRF2 - Tribunal Regional Federal 2ª Região' },
   { id: 'trf3', nome: 'TRF3 - Tribunal Regional Federal 3ª Região' },
@@ -37,7 +37,33 @@ const tribunais = [
   { id: 'trf5', nome: 'TRF5 - Tribunal Regional Federal 5ª Região' },
   { id: 'trf6', nome: 'TRF6 - Tribunal Regional Federal 6ª Região' },
   
-  // Tribunais de Justiça Estaduais (ordem alfabética)
+  // Tribunais Regionais do Trabalho (24)
+  { id: 'trt1', nome: 'TRT1 - Tribunal Regional do Trabalho 1ª Região (RJ)' },
+  { id: 'trt2', nome: 'TRT2 - Tribunal Regional do Trabalho 2ª Região (SP)' },
+  { id: 'trt3', nome: 'TRT3 - Tribunal Regional do Trabalho 3ª Região (MG)' },
+  { id: 'trt4', nome: 'TRT4 - Tribunal Regional do Trabalho 4ª Região (RS)' },
+  { id: 'trt5', nome: 'TRT5 - Tribunal Regional do Trabalho 5ª Região (BA)' },
+  { id: 'trt6', nome: 'TRT6 - Tribunal Regional do Trabalho 6ª Região (PE)' },
+  { id: 'trt7', nome: 'TRT7 - Tribunal Regional do Trabalho 7ª Região (CE)' },
+  { id: 'trt8', nome: 'TRT8 - Tribunal Regional do Trabalho 8ª Região (PA/AP)' },
+  { id: 'trt9', nome: 'TRT9 - Tribunal Regional do Trabalho 9ª Região (PR)' },
+  { id: 'trt10', nome: 'TRT10 - Tribunal Regional do Trabalho 10ª Região (DF/TO)' },
+  { id: 'trt11', nome: 'TRT11 - Tribunal Regional do Trabalho 11ª Região (AM/RR)' },
+  { id: 'trt12', nome: 'TRT12 - Tribunal Regional do Trabalho 12ª Região (SC)' },
+  { id: 'trt13', nome: 'TRT13 - Tribunal Regional do Trabalho 13ª Região (PB)' },
+  { id: 'trt14', nome: 'TRT14 - Tribunal Regional do Trabalho 14ª Região (RO/AC)' },
+  { id: 'trt15', nome: 'TRT15 - Tribunal Regional do Trabalho 15ª Região (Campinas-SP)' },
+  { id: 'trt16', nome: 'TRT16 - Tribunal Regional do Trabalho 16ª Região (MA)' },
+  { id: 'trt17', nome: 'TRT17 - Tribunal Regional do Trabalho 17ª Região (ES)' },
+  { id: 'trt18', nome: 'TRT18 - Tribunal Regional do Trabalho 18ª Região (GO)' },
+  { id: 'trt19', nome: 'TRT19 - Tribunal Regional do Trabalho 19ª Região (AL)' },
+  { id: 'trt20', nome: 'TRT20 - Tribunal Regional do Trabalho 20ª Região (SE)' },
+  { id: 'trt21', nome: 'TRT21 - Tribunal Regional do Trabalho 21ª Região (RN)' },
+  { id: 'trt22', nome: 'TRT22 - Tribunal Regional do Trabalho 22ª Região (PI)' },
+  { id: 'trt23', nome: 'TRT23 - Tribunal Regional do Trabalho 23ª Região (MT)' },
+  { id: 'trt24', nome: 'TRT24 - Tribunal Regional do Trabalho 24ª Região (MS)' },
+  
+  // Tribunais de Justiça Estaduais (27)
   { id: 'tjac', nome: 'TJAC - Tribunal de Justiça do Acre' },
   { id: 'tjal', nome: 'TJAL - Tribunal de Justiça de Alagoas' },
   { id: 'tjap', nome: 'TJAP - Tribunal de Justiça do Amapá' },
