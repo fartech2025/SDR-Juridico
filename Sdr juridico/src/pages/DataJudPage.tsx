@@ -568,6 +568,7 @@ export const DataJudPage = () => {
                   className="rounded-2xl border border-border bg-white p-6 shadow-soft hover:shadow-md transition-shadow"
                 >
                   <div className="space-y-4">
+                    {/* Cabeçalho do Processo */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-2 flex-1">
                         <p className="font-mono text-base font-bold text-primary">
@@ -577,21 +578,62 @@ export const DataJudPage = () => {
                           <Badge variant="info" className="text-xs">{info.tribunal}</Badge>
                           <Badge className="text-xs">{renderValue(info.classe)}</Badge>
                           <Badge variant="default" className="text-xs">{processo.grau}</Badge>
+                          {processo.sistema && (
+                            <Badge variant="default" className="text-xs">
+                              {renderValue(processo.sistema)}
+                            </Badge>
+                          )}
+                          {processo.formato && (
+                            <Badge variant="default" className="text-xs">
+                              {renderValue(processo.formato)}
+                            </Badge>
+                          )}
+                          {processo.nivelSigilo !== undefined && (
+                            <Badge variant={processo.nivelSigilo === 0 ? "success" : "warning"} className="text-xs">
+                              {processo.nivelSigilo === 0 ? "Público" : `Sigilo ${processo.nivelSigilo}`}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Informações Principais */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                       <div>
                         <p className="text-text-muted text-xs mb-1">Órgão Julgador</p>
                         <p className="text-text font-medium">{renderValue(info.orgao)}</p>
+                        {processo.orgaoJulgador?.codigoMunicipioIBGE && (
+                          <p className="text-text-muted text-[10px] mt-0.5">
+                            IBGE: {processo.orgaoJulgador.codigoMunicipioIBGE}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <p className="text-text-muted text-xs mb-1">Data Ajuizamento</p>
                         <p className="text-text font-medium">{info.dataAjuizamento}</p>
                       </div>
+                      <div>
+                        <p className="text-text-muted text-xs mb-1">Última Atualização</p>
+                        <p className="text-text font-medium">
+                          {processo.dataHoraUltimaAtualizacao
+                            ? new Date(processo.dataHoraUltimaAtualizacao).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '-'}
+                        </p>
+                      </div>
                     </div>
+
+                    {/* ID e Sistema */}
+                    {processo.id && (
+                      <div className="text-xs text-text-muted font-mono bg-gray-50 p-2 rounded border">
+                        <span className="font-semibold">ID:</span> {processo.id}
+                      </div>
+                    )}
 
                     {/* Assuntos */}
                     {processo.assuntos && processo.assuntos.length > 0 && (
@@ -599,7 +641,7 @@ export const DataJudPage = () => {
                         <p className="text-text-muted text-xs mb-2">Assuntos</p>
                         <div className="flex flex-wrap gap-1.5">
                           {processo.assuntos.map((assunto, idx) => (
-                            <Badge key={idx} variant="default" className="text-xs">
+                            <Badge key={idx} variant="default" className="text-xs" title={`Código: ${assunto.codigo}`}>
                               {assunto.nome}
                             </Badge>
                           ))}
@@ -645,34 +687,79 @@ export const DataJudPage = () => {
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-3 mb-1">
-                                    <p className="text-sm font-semibold text-text leading-snug">
-                                      {mov.nome}
-                                    </p>
-                                    <Badge variant="default" className="text-[10px] flex-shrink-0">
-                                      {mov.dataHora
-                                        ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                          })
-                                        : 'Sem data'}
-                                    </Badge>
+                                  <div className="flex items-start justify-between gap-3 mb-2">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-semibold text-text leading-snug">
+                                        {mov.nome}
+                                      </p>
+                                      {mov.codigo && (
+                                        <p className="text-[10px] text-text-muted mt-0.5 font-mono">
+                                          Código: {mov.codigo}
+                                          {mov.codigoNacional && ` • Nacional: ${mov.codigoNacional}`}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                      <Badge variant="default" className="text-[10px] flex-shrink-0">
+                                        {mov.dataHora
+                                          ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
+                                              day: '2-digit',
+                                              month: '2-digit',
+                                              year: 'numeric',
+                                            })
+                                          : 'Sem data'}
+                                      </Badge>
+                                      {mov.dataHora && (
+                                        <span className="text-[10px] text-text-muted">
+                                          {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          })}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                  {mov.dataHora && (
-                                    <p className="text-xs text-text-muted mb-1">
-                                      {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })}
-                                    </p>
+                                  
+                                  {/* Complemento em texto */}
+                                  {mov.complemento && (
+                                    <div className="mb-2 p-2 bg-gray-50 rounded text-xs text-text border-l-2 border-primary/30">
+                                      {mov.complemento}
+                                    </div>
                                   )}
+                                  
+                                  {/* Complementos Tabelados Detalhados */}
                                   {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
                                     <div className="mt-2 pt-2 border-t border-border/50">
-                                      <p className="text-xs text-text-muted font-medium mb-1">Detalhes:</p>
-                                      <p className="text-xs text-text">
-                                        {mov.complementosTabelados.map((c: any) => c.nome).join(' • ')}
-                                      </p>
+                                      <p className="text-xs text-text-muted font-medium mb-2">📋 Detalhes:</p>
+                                      <div className="space-y-1.5">
+                                        {mov.complementosTabelados.map((c: any, cIdx: number) => (
+                                          <div key={cIdx} className="text-xs bg-blue-50 p-2 rounded border border-blue-100">
+                                            <div className="flex items-start gap-2">
+                                              <span className="text-blue-600 font-semibold">•</span>
+                                              <div className="flex-1">
+                                                <p className="text-text font-medium">{c.nome}</p>
+                                                {c.descricao && (
+                                                  <p className="text-text-muted text-[10px] mt-0.5">
+                                                    {c.descricao.replace(/_/g, ' ')}
+                                                  </p>
+                                                )}
+                                                <div className="flex gap-3 mt-1">
+                                                  {c.codigo && (
+                                                    <span className="text-[10px] text-text-muted font-mono">
+                                                      Cód: {c.codigo}
+                                                    </span>
+                                                  )}
+                                                  {c.valor && (
+                                                    <span className="text-[10px] text-text-muted font-mono">
+                                                      Val: {c.valor}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
                                   )}
                                 </div>

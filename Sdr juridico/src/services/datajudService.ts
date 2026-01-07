@@ -18,10 +18,13 @@ export interface ProcessoDataJud {
   orgaoJulgador?: any
   dataAjuizamento?: string
   dataAtualizacao?: string
+  dataHoraUltimaAtualizacao?: string
   grau?: string
-  sistema?: string
-  formato?: string
+  sistema?: any
+  formato?: any
   nivelSigilo?: number
+  id?: string
+  '@timestamp'?: string
   // Estrutura real da API DataJud
   dadosBasicos?: {
     numero?: string

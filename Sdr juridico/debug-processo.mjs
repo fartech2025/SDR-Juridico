@@ -35,20 +35,33 @@ fetch(`https://api-publica.datajud.cnj.jus.br/api_publica_${tribunal}/_search`, 
     console.log(JSON.stringify(processo, null, 2));
     console.log('');
     console.log('═══════════════════════════════════════════');
-    console.log('📊 CAMPOS PRINCIPAIS:');
+    console.log('📊 TODOS OS CAMPOS DISPONÍVEIS:');
     console.log('═══════════════════════════════════════════');
-    console.log('numeroProcesso:', processo.numeroProcesso);
-    console.log('tribunal:', processo.tribunal);
-    console.log('grau:', processo.grau);
-    console.log('dataAjuizamento:', processo.dataAjuizamento);
-    console.log('dadosBasicos?.dataAjuizamento:', processo.dadosBasicos?.dataAjuizamento);
+    Object.keys(processo).forEach(campo => {
+      const valor = processo[campo];
+      if (Array.isArray(valor)) {
+        console.log(`${campo}: Array[${valor.length}]`);
+      } else if (typeof valor === 'object' && valor !== null) {
+        console.log(`${campo}:`, JSON.stringify(valor, null, 2));
+      } else {
+        console.log(`${campo}:`, valor);
+      }
+    });
     console.log('');
     console.log('═══════════════════════════════════════════');
-    console.log('🔄 MOVIMENTAÇÕES:');
+    console.log('🔄 MOVIMENTOS:');
     console.log('═══════════════════════════════════════════');
-    console.log('Total:', processo.movimentacoes?.length || 0);
-    if (processo.movimentacoes?.length > 0) {
-      console.log('Primeira movimentação:', JSON.stringify(processo.movimentacoes[0], null, 2));
+    console.log('Total:', processo.movimentos?.length || 0);
+    if (processo.movimentos?.length > 0) {
+      console.log('Primeiro movimento:', JSON.stringify(processo.movimentos[0], null, 2));
+      console.log('Último movimento:', JSON.stringify(processo.movimentos[processo.movimentos.length - 1], null, 2));
+    }
+    console.log('');
+    console.log('═══════════════════════════════════════════');
+    console.log('📝 ASSUNTOS:');
+    console.log('═══════════════════════════════════════════');
+    if (processo.assuntos?.length > 0) {
+      processo.assuntos.forEach(a => console.log(`- ${a.nome} (${a.codigo})`));
     }
   } else {
     console.log('❌ Processo não encontrado');
