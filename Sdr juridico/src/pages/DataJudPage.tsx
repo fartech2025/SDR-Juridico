@@ -558,7 +558,11 @@ export const DataJudPage = () => {
                         </p>
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="info" className="text-xs">{info.tribunal}</Badge>
-                          <Badge className="text-xs">{info.classe}</Badge>
+                          <Badge className="text-xs">
+                            {typeof info.classe === 'object' && info.classe !== null 
+                              ? (info.classe as any).nome || String(info.classe)
+                              : info.classe}
+                          </Badge>
                           <Badge variant="default" className="text-xs">{processo.grau}</Badge>
                         </div>
                       </div>
