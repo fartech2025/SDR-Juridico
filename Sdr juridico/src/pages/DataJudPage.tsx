@@ -602,11 +602,19 @@ export const DataJudPage = () => {
 
                     {/* Histórico de Movimentações */}
                     {processo.movimentacoes && processo.movimentacoes.length > 0 && (
-                      <div>
-                        <p className="text-text-muted text-xs mb-3 font-semibold">
-                          📋 Histórico de Movimentações ({processo.movimentacoes.length})
-                        </p>
-                        <div className="max-h-96 overflow-y-auto space-y-2 border rounded-lg p-3 bg-gray-50">
+                      <div className="mt-4 pt-4 border-t border-border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          <p className="text-text font-semibold text-base">
+                            Histórico de Movimentações
+                          </p>
+                          <Badge variant="info" className="ml-auto">
+                            {processo.movimentacoes.length} movimentações
+                          </Badge>
+                        </div>
+                        <div className="max-h-[500px] overflow-y-auto space-y-3 border rounded-lg p-4 bg-gradient-to-br from-gray-50 to-white shadow-inner">
                           {processo.movimentacoes
                             .filter((m: any) => m.nome)
                             .sort((a: any, b: any) => {
@@ -617,25 +625,48 @@ export const DataJudPage = () => {
                             .map((mov: any, idx: number) => (
                               <div
                                 key={idx}
-                                className="flex gap-3 pb-2 border-b last:border-0 last:pb-0"
+                                className="flex gap-4 p-3 rounded-lg bg-white border border-border hover:border-primary/30 hover:shadow-sm transition-all"
                               >
-                                <div className="flex-shrink-0 w-28 text-xs text-text-muted">
-                                  {mov.dataHora
-                                    ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
+                                <div className="flex-shrink-0 flex flex-col items-center">
+                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <span className="text-xs font-bold text-primary">
+                                      {idx + 1}
+                                    </span>
+                                  </div>
+                                  {idx < (processo.movimentacoes?.filter((m: any) => m.nome).length || 0) - 1 && (
+                                    <div className="w-px h-full bg-border mt-2"></div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-3 mb-1">
+                                    <p className="text-sm font-semibold text-text leading-snug">
+                                      {mov.nome}
+                                    </p>
+                                    <Badge variant="default" className="text-[10px] flex-shrink-0">
+                                      {mov.dataHora
+                                        ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                          })
+                                        : 'Sem data'}
+                                    </Badge>
+                                  </div>
+                                  {mov.dataHora && (
+                                    <p className="text-xs text-text-muted mb-1">
+                                      {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
                                         hour: '2-digit',
                                         minute: '2-digit',
-                                      })
-                                    : 'Sem data'}
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm text-text font-medium">{mov.nome}</p>
-                                  {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
-                                    <p className="text-xs text-text-muted mt-0.5">
-                                      {mov.complementosTabelados.map((c: any) => c.nome).join(', ')}
+                                      })}
                                     </p>
+                                  )}
+                                  {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-border/50">
+                                      <p className="text-xs text-text-muted font-medium mb-1">Detalhes:</p>
+                                      <p className="text-xs text-text">
+                                        {mov.complementosTabelados.map((c: any) => c.nome).join(' • ')}
+                                      </p>
+                                    </div>
                                   )}
                                 </div>
                               </div>
