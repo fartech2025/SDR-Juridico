@@ -334,6 +334,35 @@ export const DataJudPage = () => {
       }
       y += 5
 
+      // Partes do Processo
+      if (processo.dadosBasicos?.polo && processo.dadosBasicos.polo.length > 0) {
+        addText('PARTES DO PROCESSO', 14, true)
+        
+        // Polo Ativo
+        const poloAtivo = processo.dadosBasicos.polo.filter((p: any) => p.polo?.toLowerCase() === 'ativo')
+        if (poloAtivo.length > 0) {
+          addText('Polo Ativo (Autor/Reclamante):', 11, true)
+          poloAtivo.forEach((parte: any) => {
+            let texto = `- ${parte.nome || 'Nome nao informado'}`
+            if (parte.tipo) texto += ` (${parte.tipo})`
+            addText(texto, 10)
+          })
+          y += 2
+        }
+
+        // Polo Passivo
+        const poloPassivo = processo.dadosBasicos.polo.filter((p: any) => p.polo?.toLowerCase() === 'passivo')
+        if (poloPassivo.length > 0) {
+          addText('Polo Passivo (Reu/Reclamado):', 11, true)
+          poloPassivo.forEach((parte: any) => {
+            let texto = `- ${parte.nome || 'Nome nao informado'}`
+            if (parte.tipo) texto += ` (${parte.tipo})`
+            addText(texto, 10)
+          })
+        }
+        y += 5
+      }
+
       // Assuntos
       if (processo.assuntos && processo.assuntos.length > 0) {
         addText('ASSUNTOS', 14, true)
@@ -776,6 +805,63 @@ export const DataJudPage = () => {
                     {processo.id && (
                       <div className="text-xs text-text-muted font-mono bg-surface p-2 rounded border">
                         <span className="font-semibold">ID:</span> {processo.id}
+                      </div>
+                    )}
+
+                    {/* Partes do Processo (Polo Ativo e Passivo) */}
+                    {(processo.dadosBasicos?.polo && processo.dadosBasicos.polo.length > 0) && (
+                      <div className="border-t border-border pt-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Users className="w-5 h-5 text-primary" />
+                          <p className="text-text font-semibold text-base">Partes do Processo</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Polo Ativo */}
+                          <div className="bg-surface-2 rounded-lg p-3 border border-border">
+                            <p className="text-xs font-semibold text-success mb-2 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-success rounded-full"></span>
+                              POLO ATIVO (Autor/Reclamante)
+                            </p>
+                            <div className="space-y-2">
+                              {processo.dadosBasicos.polo
+                                .filter((parte: any) => parte.polo?.toLowerCase() === 'ativo')
+                                .map((parte: any, idx: number) => (
+                                  <div key={idx} className="text-sm bg-surface rounded p-2">
+                                    <p className="font-medium text-text">{parte.nome}</p>
+                                    {parte.tipo && (
+                                      <p className="text-xs text-text-muted mt-0.5">Tipo: {parte.tipo}</p>
+                                    )}
+                                  </div>
+                                ))}
+                              {processo.dadosBasicos.polo.filter((p: any) => p.polo?.toLowerCase() === 'ativo').length === 0 && (
+                                <p className="text-xs text-text-muted italic">Nenhuma parte no polo ativo</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Polo Passivo */}
+                          <div className="bg-surface-2 rounded-lg p-3 border border-border">
+                            <p className="text-xs font-semibold text-danger mb-2 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-danger rounded-full"></span>
+                              POLO PASSIVO (Réu/Reclamado)
+                            </p>
+                            <div className="space-y-2">
+                              {processo.dadosBasicos.polo
+                                .filter((parte: any) => parte.polo?.toLowerCase() === 'passivo')
+                                .map((parte: any, idx: number) => (
+                                  <div key={idx} className="text-sm bg-surface rounded p-2">
+                                    <p className="font-medium text-text">{parte.nome}</p>
+                                    {parte.tipo && (
+                                      <p className="text-xs text-text-muted mt-0.5">Tipo: {parte.tipo}</p>
+                                    )}
+                                  </div>
+                                ))}
+                              {processo.dadosBasicos.polo.filter((p: any) => p.polo?.toLowerCase() === 'passivo').length === 0 && (
+                                <p className="text-xs text-text-muted italic">Nenhuma parte no polo passivo</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
 
