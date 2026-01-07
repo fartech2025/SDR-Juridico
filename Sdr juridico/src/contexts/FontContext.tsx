@@ -21,16 +21,16 @@ interface FontContextType {
 const FontContext = createContext<FontContextType | undefined>(undefined)
 
 const fontScales: Record<FontSize, number> = {
-  xs: 0.75,
-  sm: 0.85,
+  xs: 0.8,
+  sm: 0.9,
   md: 0.95,
   lg: 1.05,
   normal: 1,
-  xl: 1.15,
-  xxl: 1.3,
-  xxxl: 1.45,
-  huge: 1.6,
-  mega: 2.5,
+  xl: 1.2,
+  xxl: 1.4,
+  xxxl: 1.6,
+  huge: 1.85,
+  mega: 2.2,
 }
 
 const fontSizeOrder: FontSize[] = ['xs', 'sm', 'md', 'lg', 'normal', 'xl', 'xxl', 'xxxl', 'huge', 'mega']
