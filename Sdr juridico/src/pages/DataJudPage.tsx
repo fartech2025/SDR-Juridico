@@ -1,7 +1,8 @@
 import * as React from 'react'
-import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar } from 'lucide-react'
+import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import jsPDF from 'jspdf'
 
 import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
@@ -267,6 +268,158 @@ export const DataJudPage = () => {
     setDataFim('')
     setResultados([])
     setTotalEncontrado(0)
+  }
+
+  const renderValue = (value: any): string => {
+    if (typeof value === 'object' && value !== null) {
+      return value.nome || value.codigo || JSON.stringify(value)
+    }
+    return String(value || '-')
+  }
+
+  const exportarProcessoParaPDF = (processo: ProcessoDataJud) => {
+    try {
+      const doc = new jsPDF()
+      const info = extrairInfoProcesso(processo)
+      let y = 20
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const margin = 20
+      const maxWidth = pageWidth - 2 * margin
+
+      // Configurações de fonte
+      const addText = (text: string, fontSize = 10, isBold = false) => {
+        if (y > 280) {
+          doc.addPage()
+          y = 20
+        }
+        doc.setFontSize(fontSize)
+        doc.setFont('helvetica', isBold ? 'bold' : 'normal')
+        const lines = doc.splitTextToSize(text, maxWidth)
+        doc.text(lines, margin, y)
+        y += lines.length * (fontSize * 0.5) + 3
+      }
+
+      // Título
+      addText('RELATORIO COMPLETO DO PROCESSO', 16, true)
+      y += 5
+      addText(`Processo: ${formatarNumeroProcesso(info.numero)}`, 12, true)
+      y += 3
+
+      // Informações básicas
+      addText('DADOS GERAIS', 14, true)
+      addText(`Tribunal: ${info.tribunal}`)
+      addText(`Classe: ${renderValue(info.classe)}`)
+      addText(`Grau: ${processo.grau || '-'}`)
+      addText(`Sistema: ${renderValue(processo.sistema)}`)
+      addText(`Formato: ${renderValue(processo.formato)}`)
+      addText(`Nivel de Sigilo: ${processo.nivelSigilo === 0 ? 'Publico' : 'Restrito'}`)
+      if (processo.id) addText(`ID do Processo: ${processo.id}`)
+      y += 5
+
+      // Órgão Julgador
+      if (processo.orgaoJulgador) {
+        addText('ORGAO JULGADOR', 14, true)
+        addText(`Nome: ${renderValue(processo.orgaoJulgador)}`)
+        if (processo.orgaoJulgador.codigoMunicipioIBGE) {
+          addText(`Codigo IBGE: ${processo.orgaoJulgador.codigoMunicipioIBGE}`)
+        }
+        y += 5
+      }
+
+      // Datas
+      addText('DATAS', 14, true)
+      addText(`Data de Ajuizamento: ${info.dataAjuizamento}`)
+      if (processo.dataHoraUltimaAtualizacao) {
+        addText(`Ultima Atualizacao: ${new Date(processo.dataHoraUltimaAtualizacao).toLocaleString('pt-BR')}`)
+      }
+      y += 5
+
+      // Assuntos
+      if (processo.assuntos && processo.assuntos.length > 0) {
+        addText('ASSUNTOS', 14, true)
+        processo.assuntos.forEach((assunto: any) => {
+          const txt = `- ${renderValue(assunto)}`
+          if (assunto.codigo) {
+            addText(`${txt} (Codigo: ${assunto.codigo})`)
+          } else {
+            addText(txt)
+          }
+        })
+        y += 5
+      }
+
+      // Movimentações
+      if (processo.movimentos && processo.movimentos.length > 0) {
+        addText('HISTORICO DE MOVIMENTACOES', 14, true)
+        addText(`Total: ${processo.movimentos.length} movimentacoes`, 10, true)
+        y += 3
+
+        processo.movimentos.forEach((mov: any, index: number) => {
+          if (y > 250) {
+            doc.addPage()
+            y = 20
+          }
+
+          addText(`${index + 1}. ${mov.nome}`, 11, true)
+          
+          if (mov.codigo || mov.codigoNacional) {
+            let codigos = []
+            if (mov.codigo) codigos.push(`Codigo: ${mov.codigo}`)
+            if (mov.codigoNacional) codigos.push(`Cod. Nacional: ${mov.codigoNacional}`)
+            addText(codigos.join(' | '), 9)
+          }
+
+          if (mov.dataHora) {
+            const data = new Date(mov.dataHora)
+            addText(`Data/Hora: ${data.toLocaleDateString('pt-BR')} as ${data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, 9)
+          }
+
+          if (mov.complemento) {
+            addText(`Complemento: ${mov.complemento}`, 9)
+          }
+
+          if (mov.complementosTabelados && mov.complementosTabelados.length > 0) {
+            addText('Detalhes:', 9, true)
+            mov.complementosTabelados.forEach((c: any) => {
+              addText(`  - ${c.nome}`, 9)
+              if (c.descricao) {
+                addText(`    ${c.descricao.replace(/_/g, ' ')}`, 8)
+              }
+              if (c.codigo || c.valor) {
+                let detalhes = []
+                if (c.codigo) detalhes.push(`Cod: ${c.codigo}`)
+                if (c.valor) detalhes.push(`Val: ${c.valor}`)
+                addText(`    ${detalhes.join(' | ')}`, 8)
+              }
+            })
+          }
+          
+          y += 5
+        })
+      }
+
+      // Rodapé
+      const totalPages = doc.getNumberOfPages()
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.text(
+          `Gerado em: ${new Date().toLocaleString('pt-BR')} - Pagina ${i} de ${totalPages}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        )
+      }
+
+      // Salvar PDF
+      const nomeArquivo = `processo_${formatarNumeroProcesso(info.numero).replace(/[^0-9]/g, '')}.pdf`
+      doc.save(nomeArquivo)
+      toast.success('PDF gerado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error)
+      toast.error('Erro ao gerar PDF')
+    }
   }
 
   return (
@@ -553,15 +706,6 @@ export const DataJudPage = () => {
               
               const info = extrairInfoProcesso(processo)
               
-              // Helper para renderizar valores que podem ser objetos
-              const renderValue = (value: any): string => {
-                if (!value) return '-'
-                if (typeof value === 'object' && value !== null) {
-                  return value.nome || value.codigo || JSON.stringify(value)
-                }
-                return String(value)
-              }
-              
               return (
                 <div
                   key={index}
@@ -779,6 +923,15 @@ export const DataJudPage = () => {
                         }}
                       >
                         Copiar Número
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportarProcessoParaPDF(processo)}
+                        className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
+                      >
+                        <FileDown className="h-4 w-4" />
+                        Exportar PDF
                       </Button>
                       <Button
                         variant="outline"
