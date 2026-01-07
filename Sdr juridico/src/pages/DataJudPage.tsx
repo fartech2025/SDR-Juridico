@@ -11,11 +11,12 @@ import { Badge } from '@/components/ui/badge'
 import {
   isDataJudConfigured,
   testarConexao,
-  buscarProcessoPorNumero,
   buscarProcessosPorParte,
   buscarProcessosPorClasse,
   buscaAvancada,
   extrairInfoProcesso,
+  buscarProcessoAutomatico,
+  formatarNumeroProcesso,
   type ProcessoDataJud,
 } from '@/services/datajudService'
 import { cn } from '@/utils/cn'
@@ -185,14 +186,31 @@ export const DataJudPage = () => {
         case 'numero':
           if (!numeroProcesso.trim()) {
             toast.error('Digite o número do processo')
+            setBuscando(false)
             return
           }
-          resultado = await buscarProcessoPorNumero(numeroProcesso, tribunal)
-          break
+
+          // Busca automática detectando o tribunal
+          toast.info('Detectando tribunal automaticamente...')
+          const buscaAuto = await buscarProcessoAutomatico(numeroProcesso)
+
+          if (buscaAuto.sucesso && buscaAuto.processo) {
+            setResultados([buscaAuto.processo])
+            setTotalEncontrado(1)
+            setTribunal(buscaAuto.tribunal!)
+            toast.success(`Processo encontrado no ${buscaAuto.tribunal?.toUpperCase()}`)
+            setBuscando(false)
+            return
+          } else {
+            toast.error(buscaAuto.erro || 'Processo não encontrado')
+            setBuscando(false)
+            return
+          }
 
         case 'parte':
           if (!nomeParte.trim()) {
             toast.error('Digite o nome da parte')
+            setBuscando(false)
             return
           }
           resultado = await buscarProcessosPorParte(nomeParte, tribunal, 20)
@@ -530,55 +548,98 @@ export const DataJudPage = () => {
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-border bg-white p-4 shadow-soft hover:shadow-md transition-shadow"
+                  className="rounded-2xl border border-border bg-white p-6 shadow-soft hover:shadow-md transition-shadow"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="font-mono text-sm font-semibold text-primary">
-                          {info.numero}
+                      <div className="space-y-2 flex-1">
+                        <p className="font-mono text-base font-bold text-primary">
+                          {formatarNumeroProcesso(info.numero)}
                         </p>
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          <Badge variant="info">{info.tribunal}</Badge>
-                          <Badge>{info.classe}</Badge>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="info" className="text-xs">{info.tribunal}</Badge>
+                          <Badge className="text-xs">{info.classe}</Badge>
+                          <Badge variant="default" className="text-xs">{processo.grau}</Badge>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1 text-xs">
-                      <p>
-                        <span className="text-text-muted">Órgão:</span>{' '}
-                        <span className="text-text">{info.orgao}</span>
-                      </p>
-                      <p>
-                        <span className="text-text-muted">Assunto:</span>{' '}
-                        <span className="text-text">{info.assunto}</span>
-                      </p>
-                      <p>
-                        <span className="text-text-muted">Data Ajuizamento:</span>{' '}
-                        <span className="text-text">{info.dataAjuizamento}</span>
-                      </p>
-                      {info.partes.length > 0 && (
-                        <p>
-                          <span className="text-text-muted">Partes:</span>{' '}
-                          <span className="text-text">
-                            {info.partes.map((p) => p.nome).join(', ')}
-                          </span>
-                        </p>
-                      )}
-                      <p>
-                        <span className="text-text-muted">Movimentações:</span>{' '}
-                        <span className="text-text">{info.totalMovimentacoes}</span>
-                      </p>
+                    {/* Informações Principais */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-text-muted text-xs mb-1">Órgão Julgador</p>
+                        <p className="text-text font-medium">{info.orgao}</p>
+                      </div>
+                      <div>
+                        <p className="text-text-muted text-xs mb-1">Data Ajuizamento</p>
+                        <p className="text-text font-medium">{info.dataAjuizamento}</p>
+                      </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    {/* Assuntos */}
+                    {processo.assuntos && processo.assuntos.length > 0 && (
+                      <div>
+                        <p className="text-text-muted text-xs mb-2">Assuntos</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {processo.assuntos.map((assunto, idx) => (
+                            <Badge key={idx} variant="default" className="text-xs">
+                              {assunto.nome}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Histórico de Movimentações */}
+                    {processo.movimentacoes && processo.movimentacoes.length > 0 && (
+                      <div>
+                        <p className="text-text-muted text-xs mb-3 font-semibold">
+                          📋 Histórico de Movimentações ({processo.movimentacoes.length})
+                        </p>
+                        <div className="max-h-96 overflow-y-auto space-y-2 border rounded-lg p-3 bg-gray-50">
+                          {processo.movimentacoes
+                            .filter((m: any) => m.nome)
+                            .sort((a: any, b: any) => {
+                              const dateA = a.dataHora ? new Date(a.dataHora).getTime() : 0
+                              const dateB = b.dataHora ? new Date(b.dataHora).getTime() : 0
+                              return dateB - dateA // Mais recente primeiro
+                            })
+                            .map((mov: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className="flex gap-3 pb-2 border-b last:border-0 last:pb-0"
+                              >
+                                <div className="flex-shrink-0 w-28 text-xs text-text-muted">
+                                  {mov.dataHora
+                                    ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })
+                                    : 'Sem data'}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm text-text font-medium">{mov.nome}</p>
+                                  {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
+                                    <p className="text-xs text-text-muted mt-0.5">
+                                      {mov.complementosTabelados.map((c: any) => c.nome).join(', ')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2 border-t">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // Copiar número do processo
-                          navigator.clipboard.writeText(info.numero)
+                          navigator.clipboard.writeText(formatarNumeroProcesso(info.numero))
                           toast.success('Número copiado!')
                         }}
                       >
@@ -588,7 +649,6 @@ export const DataJudPage = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // TODO: Importar para casos
                           toast.info('Funcionalidade em desenvolvimento')
                         }}
                       >

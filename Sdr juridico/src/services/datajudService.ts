@@ -378,7 +378,119 @@ export function formatarNumeroProcesso(numero: string): string {
   // Formato: NNNNNNN-DD.AAAA.J.TR.OOOO
   return `${limpo.slice(0, 7)}-${limpo.slice(7, 9)}.${limpo.slice(9, 13)}.${limpo.slice(13, 14)}.${limpo.slice(14, 16)}.${limpo.slice(16, 20)}`
 }
+/**
+ * Detecta o tribunal pelo número do processo (segmento TR)
+ */
+export function detectarTribunal(numeroProcesso: string): string | null {
+  const limpo = numeroProcesso.replace(/\D/g, '')
+  if (limpo.length !== 20) return null
 
+  const segmentoTR = limpo.slice(13, 16) // JTR
+  const justica = segmentoTR[0]
+  const tribunal = segmentoTR.slice(1)
+
+  // Justiça Federal (4)
+  if (justica === '4') {
+    return `trf${tribunal}`
+  }
+
+  // Justiça do Trabalho (5)
+  if (justica === '5') {
+    return `trt${tribunal}`
+  }
+
+  // Justiça Eleitoral (6)
+  if (justica === '6') {
+    const estadoCodigo = limpo.slice(14, 16)
+    const mapa: Record<string, string> = {
+      '01': 'ac', '02': 'al', '03': 'ap', '04': 'am', '05': 'ba',
+      '06': 'ce', '07': 'df', '08': 'es', '09': 'go', '10': 'ma',
+      '11': 'mt', '12': 'ms', '13': 'mg', '14': 'pa', '15': 'pb',
+      '16': 'pr', '17': 'pe', '18': 'pi', '19': 'rj', '20': 'rn',
+      '21': 'rs', '22': 'ro', '23': 'rr', '24': 'sc', '25': 'se',
+      '26': 'sp', '27': 'to', '53': 'dft'
+    }
+    return mapa[estadoCodigo] ? `tre-${mapa[estadoCodigo]}` : null
+  }
+
+  // Justiça Militar Estadual (7)
+  if (justica === '7') {
+    const estadoCodigo = limpo.slice(14, 16)
+    if (estadoCodigo === '13') return 'tjmmg'
+    if (estadoCodigo === '21') return 'tjmrs'
+    if (estadoCodigo === '26') return 'tjmsp'
+    return null
+  }
+
+  // Justiça Estadual (8)
+  if (justica === '8') {
+    const estadoCodigo = limpo.slice(14, 16)
+    const mapa: Record<string, string> = {
+      '01': 'tjac', '02': 'tjal', '03': 'tjap', '04': 'tjam', '05': 'tjba',
+      '06': 'tjce', '07': 'tjdft', '08': 'tjes', '09': 'tjgo', '10': 'tjma',
+      '11': 'tjmt', '12': 'tjms', '13': 'tjmg', '14': 'tjpa', '15': 'tjpb',
+      '16': 'tjpr', '17': 'tjpe', '18': 'tjpi', '19': 'tjrj', '20': 'tjrn',
+      '21': 'tjrs', '22': 'tjro', '23': 'tjrr', '24': 'tjsc', '25': 'tjse',
+      '26': 'tjsp', '27': 'tjto', '53': 'tjdft'
+    }
+    return mapa[estadoCodigo] || null
+  }
+
+  // Tribunais Superiores (3)
+  if (justica === '3') {
+    if (tribunal === '00') return 'stj'
+    if (tribunal === '01') return 'tst'
+    if (tribunal === '02') return 'tse'
+    if (tribunal === '03') return 'stm'
+  }
+
+  return null
+}
+
+/**
+ * Busca processo automaticamente detectando o tribunal pelo número
+ */
+export async function buscarProcessoAutomatico(
+  numeroProcesso: string
+): Promise<{
+  sucesso: boolean
+  tribunal?: string
+  processo?: ProcessoDataJud
+  erro?: string
+}> {
+  const tribunalDetectado = detectarTribunal(numeroProcesso)
+
+  if (!tribunalDetectado) {
+    return {
+      sucesso: false,
+      erro: 'Não foi possível detectar o tribunal pelo número do processo',
+    }
+  }
+
+  try {
+    const resultado = await buscarProcessoPorNumero(numeroProcesso, tribunalDetectado)
+    
+    if (resultado.hits.total.value > 0) {
+      return {
+        sucesso: true,
+        tribunal: tribunalDetectado,
+        processo: resultado.hits.hits[0]._source,
+      }
+    }
+
+    return {
+      sucesso: false,
+      tribunal: tribunalDetectado,
+      erro: 'Processo não encontrado na base DataJud',
+    }
+  } catch (error) {
+    return {
+      sucesso: false,
+      tribunal: tribunalDetectado,
+      erro: error instanceof Error ? error.message : 'Erro ao buscar processo',
+    }
+  }
+}
 /**
  * Extrai informações básicas do processo
  */
