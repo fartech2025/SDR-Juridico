@@ -23,16 +23,48 @@ import { cn } from '@/utils/cn'
 type TipoBusca = 'numero' | 'parte' | 'classe' | 'avancada'
 
 const tribunais = [
+  // Tribunais Superiores
+  { id: 'stj', nome: 'STJ - Superior Tribunal de Justiça' },
+  { id: 'tst', nome: 'TST - Tribunal Superior do Trabalho' },
+  { id: 'tse', nome: 'TSE - Tribunal Superior Eleitoral' },
+  { id: 'stm', nome: 'STM - Superior Tribunal Militar' },
+  
+  // Tribunais Regionais Federais
   { id: 'trf1', nome: 'TRF1 - Tribunal Regional Federal 1ª Região' },
   { id: 'trf2', nome: 'TRF2 - Tribunal Regional Federal 2ª Região' },
   { id: 'trf3', nome: 'TRF3 - Tribunal Regional Federal 3ª Região' },
   { id: 'trf4', nome: 'TRF4 - Tribunal Regional Federal 4ª Região' },
   { id: 'trf5', nome: 'TRF5 - Tribunal Regional Federal 5ª Região' },
   { id: 'trf6', nome: 'TRF6 - Tribunal Regional Federal 6ª Região' },
-  { id: 'tst', nome: 'TST - Tribunal Superior do Trabalho' },
-  { id: 'stj', nome: 'STJ - Superior Tribunal de Justiça' },
-  { id: 'tse', nome: 'TSE - Tribunal Superior Eleitoral' },
-  { id: 'stm', nome: 'STM - Superior Tribunal Militar' },
+  
+  // Tribunais de Justiça Estaduais (ordem alfabética)
+  { id: 'tjac', nome: 'TJAC - Tribunal de Justiça do Acre' },
+  { id: 'tjal', nome: 'TJAL - Tribunal de Justiça de Alagoas' },
+  { id: 'tjap', nome: 'TJAP - Tribunal de Justiça do Amapá' },
+  { id: 'tjam', nome: 'TJAM - Tribunal de Justiça do Amazonas' },
+  { id: 'tjba', nome: 'TJBA - Tribunal de Justiça da Bahia' },
+  { id: 'tjce', nome: 'TJCE - Tribunal de Justiça do Ceará' },
+  { id: 'tjdft', nome: 'TJDFT - Tribunal de Justiça do Distrito Federal' },
+  { id: 'tjes', nome: 'TJES - Tribunal de Justiça do Espírito Santo' },
+  { id: 'tjgo', nome: 'TJGO - Tribunal de Justiça de Goiás' },
+  { id: 'tjma', nome: 'TJMA - Tribunal de Justiça do Maranhão' },
+  { id: 'tjmt', nome: 'TJMT - Tribunal de Justiça de Mato Grosso' },
+  { id: 'tjms', nome: 'TJMS - Tribunal de Justiça de Mato Grosso do Sul' },
+  { id: 'tjmg', nome: 'TJMG - Tribunal de Justiça de Minas Gerais' },
+  { id: 'tjpa', nome: 'TJPA - Tribunal de Justiça do Pará' },
+  { id: 'tjpb', nome: 'TJPB - Tribunal de Justiça da Paraíba' },
+  { id: 'tjpr', nome: 'TJPR - Tribunal de Justiça do Paraná' },
+  { id: 'tjpe', nome: 'TJPE - Tribunal de Justiça de Pernambuco' },
+  { id: 'tjpi', nome: 'TJPI - Tribunal de Justiça do Piauí' },
+  { id: 'tjrj', nome: 'TJRJ - Tribunal de Justiça do Rio de Janeiro' },
+  { id: 'tjrn', nome: 'TJRN - Tribunal de Justiça do Rio Grande do Norte' },
+  { id: 'tjrs', nome: 'TJRS - Tribunal de Justiça do Rio Grande do Sul' },
+  { id: 'tjro', nome: 'TJRO - Tribunal de Justiça de Rondônia' },
+  { id: 'tjrr', nome: 'TJRR - Tribunal de Justiça de Roraima' },
+  { id: 'tjsc', nome: 'TJSC - Tribunal de Justiça de Santa Catarina' },
+  { id: 'tjsp', nome: 'TJSP - Tribunal de Justiça de São Paulo' },
+  { id: 'tjse', nome: 'TJSE - Tribunal de Justiça de Sergipe' },
+  { id: 'tjto', nome: 'TJTO - Tribunal de Justiça do Tocantins' },
 ]
 
 export const DataJudPage = () => {
