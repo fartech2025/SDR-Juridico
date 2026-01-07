@@ -545,6 +545,16 @@ export const DataJudPage = () => {
           <CardContent className="space-y-3">
             {resultados.map((processo, index) => {
               const info = extrairInfoProcesso(processo)
+              
+              // Helper para renderizar valores que podem ser objetos
+              const renderValue = (value: any): string => {
+                if (!value) return '-'
+                if (typeof value === 'object' && value !== null) {
+                  return value.nome || value.codigo || JSON.stringify(value)
+                }
+                return String(value)
+              }
+              
               return (
                 <div
                   key={index}
@@ -558,11 +568,7 @@ export const DataJudPage = () => {
                         </p>
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="info" className="text-xs">{info.tribunal}</Badge>
-                          <Badge className="text-xs">
-                            {typeof info.classe === 'object' && info.classe !== null 
-                              ? (info.classe as any).nome || String(info.classe)
-                              : info.classe}
-                          </Badge>
+                          <Badge className="text-xs">{renderValue(info.classe)}</Badge>
                           <Badge variant="default" className="text-xs">{processo.grau}</Badge>
                         </div>
                       </div>
@@ -572,7 +578,7 @@ export const DataJudPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                       <div>
                         <p className="text-text-muted text-xs mb-1">Órgão Julgador</p>
-                        <p className="text-text font-medium">{info.orgao}</p>
+                        <p className="text-text font-medium">{renderValue(info.orgao)}</p>
                       </div>
                       <div>
                         <p className="text-text-muted text-xs mb-1">Data Ajuizamento</p>
