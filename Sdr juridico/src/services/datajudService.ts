@@ -11,30 +11,48 @@ const DATAJUD_API_URL = import.meta.env.DEV
 const DATAJUD_API_KEY = import.meta.env.VITE_DATAJUD_API_KEY || ''
 
 export interface ProcessoDataJud {
-  numeroProcesso: string
-  classe?: string
+  numeroProcesso?: string
+  classe?: any
   assunto?: string
-  tribunal: string
-  orgaoJulgador?: string
+  tribunal?: string
+  orgaoJulgador?: any
   dataAjuizamento?: string
   dataAtualizacao?: string
   grau?: string
   sistema?: string
   formato?: string
   nivelSigilo?: number
-  partes?: Array<{
-    nome: string
-    tipo: string
-    polo?: string
-  }>
-  movimentacoes?: Array<{
+  // Estrutura real da API DataJud
+  dadosBasicos?: {
+    numero?: string
+    classeProcessual?: any
+    assunto?: any
+    orgaoJulgador?: any
+    dataAjuizamento?: string
+    procEl?: string
+    grau?: string
+    polo?: Array<{
+      nome?: string
+      tipo?: string
+      polo?: string
+    }>
+  }
+  movimentos?: Array<{
     codigo?: number
+    codigoNacional?: number
     nome?: string
     dataHora?: string
     complemento?: string
+    complementosTabelados?: Array<{
+      codigo?: number
+      nome?: string
+      descricao?: string
+      valor?: number
+    }>
   }>
   assuntos?: Array<{
     codigo?: number
+    codigoNacional?: number
     nome?: string
   }>
 }
@@ -495,16 +513,33 @@ export async function buscarProcessoAutomatico(
  * Extrai informações básicas do processo
  */
 export function extrairInfoProcesso(processo: ProcessoDataJud) {
+  // Converter data do formato YYYYMMDDHHmmss para Date
+  const parseDataAjuizamento = (data: string | undefined): string => {
+    if (!data) return 'Não informada'
+    // Formato: YYYYMMDDHHmmss (ex: 20251111042431)
+    if (data.length === 14) {
+      const ano = data.substring(0, 4)
+      const mes = data.substring(4, 6)
+      const dia = data.substring(6, 8)
+      return `${dia}/${mes}/${ano}`
+    }
+    // Tenta parsear como ISO date
+    try {
+      return new Date(data).toLocaleDateString('pt-BR')
+    } catch {
+      return data
+    }
+  }
+  
   return {
-    numero: formatarNumeroProcesso(processo.numeroProcesso),
-    tribunal: processo.tribunal,
+    numero: processo.numeroProcesso || '',
+    tribunal: processo.tribunal || 'Não informado',
     classe: processo.classe || 'Não informada',
-    assunto: processo.assunto || 'Não informado',
+    assunto: processo.assuntos?.[0] || processo.assunto || 'Não informado',
     orgao: processo.orgaoJulgador || 'Não informado',
-    dataAjuizamento: processo.dataAjuizamento
-      ? new Date(processo.dataAjuizamento).toLocaleDateString('pt-BR')
-      : 'Não informada',
-    partes: processo.partes || [],
-    totalMovimentacoes: processo.movimentacoes?.length || 0,
+    dataAjuizamento: parseDataAjuizamento(processo.dataAjuizamento),
+    partes: processo.dadosBasicos?.polo || [],
+    totalMovimentacoes: processo.movimentos?.length || 0,
   }
 }
+
