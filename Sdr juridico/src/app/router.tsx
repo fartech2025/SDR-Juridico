@@ -7,6 +7,7 @@ import { CasosPage } from '@/pages/CasosPage'
 import { ClientesPage } from '@/pages/ClientesPage'
 import { ConfigPage } from '@/pages/ConfigPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { DataJudPage } from '@/pages/DataJudPage'
 import { DocumentosPage } from '@/pages/DocumentosPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { IndicadoresPage } from '@/pages/IndicadoresPage'
@@ -85,6 +86,10 @@ export const router = createBrowserRouter([
       {
         path: 'config',
         element: <ConfigPage />,
+      },
+      {
+        path: 'datajud',
+        element: <DataJudPage />,
       },
     ],
   },

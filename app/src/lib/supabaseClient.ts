@@ -74,16 +74,12 @@ function createSupabaseClient(): SupabaseClient {
     return supabaseInstance;
   }
 
-  if (!supabaseUrl) {
-    throw new Error(
-      "Supabase URL ausente. Defina VITE_SUPABASE_URL no arquivo .env."
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn(
+      "Supabase env ausente. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY. Usando mock para evitar tela branca."
     );
-  }
-
-  if (!supabaseAnonKey) {
-    throw new Error(
-      "Chave anon do Supabase ausente. Defina VITE_SUPABASE_ANON_KEY no arquivo .env."
-    );
+    supabaseInstance = mockSupabase as unknown as SupabaseClient;
+    return supabaseInstance;
   }
 
   supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);

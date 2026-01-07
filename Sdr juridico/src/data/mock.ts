@@ -694,8 +694,8 @@ export const integrationsEssential: Integration[] = [
 export const integrationsAdvanced: Integration[] = [
   {
     id: 'int-4',
-    name: 'API de processos',
-    description: 'Consulta automatica de tribunais.',
+    name: 'API DataJud - CNJ',
+    description: 'Base Nacional de Dados do Poder Judiciario.',
     status: 'mock',
   },
   {

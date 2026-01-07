@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { Database } from 'lucide-react'
 
 import heroLight from '@/assets/hero-light.svg'
 import { PageState } from '@/components/PageState'
@@ -33,6 +34,7 @@ const statusVariant = (
 
 export const ConfigPage = () => {
   const [params] = useSearchParams()
+  const navigate = useNavigate()
   const state = resolveStatus(params.get('state'))
   const [activeTab, setActiveTab] = React.useState<TabKey>('Essencial')
   const [selectedIntegration, setSelectedIntegration] =
@@ -105,14 +107,25 @@ export const ConfigPage = () => {
                     {integration.description}
                   </p>
                 </CardHeader>
-                <CardContent>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedIntegration(integration)}
-                  >
-                    Configurar
-                  </Button>
+                <CardContent className="flex gap-2">
+                  {integration.id === 'int-4' ? (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => navigate('/app/datajud')}
+                    >
+                      <Database className="h-4 w-4 mr-2" />
+                      Acessar API
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedIntegration(integration)}
+                    >
+                      Configurar
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
