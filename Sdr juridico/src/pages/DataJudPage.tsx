@@ -272,7 +272,7 @@ export const DataJudPage = () => {
   return (
     <div className="space-y-6">
       <header
-        className="relative overflow-hidden rounded-2xl border border-border bg-white p-7 shadow-soft"
+        className="relative overflow-hidden rounded-2xl border border-border bg-surface p-7 shadow-soft"
         style={{
           backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 70%, rgba(216,232,255,0.3) 100%), url(${heroLight})`,
           backgroundRepeat: 'no-repeat',
@@ -412,7 +412,7 @@ export const DataJudPage = () => {
           <select
             value={tribunal}
             onChange={(e) => setTribunal(e.target.value)}
-            className="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             {tribunais.map((t) => (
               <option key={t.id} value={t.id}>
@@ -565,7 +565,7 @@ export const DataJudPage = () => {
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-border bg-white p-6 shadow-soft hover:shadow-md transition-shadow"
+                  className="rounded-2xl border border-border bg-surface p-6 shadow-soft hover:shadow-md transition-shadow"
                 >
                   <div className="space-y-4">
                     {/* Cabeçalho do Processo */}
@@ -630,7 +630,7 @@ export const DataJudPage = () => {
 
                     {/* ID e Sistema */}
                     {processo.id && (
-                      <div className="text-xs text-text-muted font-mono bg-gray-50 p-2 rounded border">
+                      <div className="text-xs text-text-muted font-mono bg-surface p-2 rounded border">
                         <span className="font-semibold">ID:</span> {processo.id}
                       </div>
                     )}
@@ -663,7 +663,7 @@ export const DataJudPage = () => {
                             {processo.movimentos.length} movimentações
                           </Badge>
                         </div>
-                        <div className="max-h-[500px] overflow-y-auto space-y-3 border rounded-lg p-4 bg-gradient-to-br from-gray-50 to-white shadow-inner">
+                        <div className="max-h-[500px] overflow-y-auto space-y-3 border rounded-lg p-4 bg-surface shadow-inner">
                           {processo.movimentos
                             .filter((m: any) => m.nome)
                             .sort((a: any, b: any) => {
@@ -674,7 +674,7 @@ export const DataJudPage = () => {
                             .map((mov: any, idx: number) => (
                               <div
                                 key={idx}
-                                className="flex gap-4 p-3 rounded-lg bg-white border border-border hover:border-primary/30 hover:shadow-sm transition-all"
+                                className="flex gap-4 p-3 rounded-lg bg-surface-2 border border-border hover:border-primary/30 hover:shadow-sm transition-all"
                               >
                                 <div className="flex-shrink-0 flex flex-col items-center">
                                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -722,7 +722,7 @@ export const DataJudPage = () => {
                                   
                                   {/* Complemento em texto */}
                                   {mov.complemento && (
-                                    <div className="mb-2 p-2 bg-gray-50 rounded text-xs text-text border-l-2 border-primary/30">
+                                    <div className="mb-2 p-2 bg-surface rounded text-xs text-text border-l-2 border-primary/30">
                                       {mov.complemento}
                                     </div>
                                   )}
@@ -733,9 +733,9 @@ export const DataJudPage = () => {
                                       <p className="text-xs text-text-muted font-medium mb-2">📋 Detalhes:</p>
                                       <div className="space-y-1.5">
                                         {mov.complementosTabelados.map((c: any, cIdx: number) => (
-                                          <div key={cIdx} className="text-xs bg-blue-50 p-2 rounded border border-blue-100">
+                                          <div key={cIdx} className="text-xs bg-info/10 p-2 rounded border border-info/20">
                                             <div className="flex items-start gap-2">
-                                              <span className="text-blue-600 font-semibold">•</span>
+                                              <span className="text-info font-semibold">•</span>
                                               <div className="flex-1">
                                                 <p className="text-text font-medium">{c.nome}</p>
                                                 {c.descricao && (
