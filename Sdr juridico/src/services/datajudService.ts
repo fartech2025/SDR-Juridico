@@ -3,7 +3,11 @@
  * Base Nacional de Dados do Poder Judiciário
  */
 
-const DATAJUD_API_URL = 'https://api-publica.datajud.cnj.jus.br'
+// Em desenvolvimento, usa o proxy do Vite para evitar CORS
+// Em produção, deve usar um backend proxy ou configurar CORS
+const DATAJUD_API_URL = import.meta.env.DEV 
+  ? '/api-datajud'
+  : 'https://api-publica.datajud.cnj.jus.br'
 const DATAJUD_API_KEY = import.meta.env.VITE_DATAJUD_API_KEY || ''
 
 export interface ProcessoDataJud {
@@ -86,7 +90,7 @@ export async function testarConexao(): Promise<{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `ApiKey ${DATAJUD_API_KEY}`,
+        Authorization: `APIKey ${DATAJUD_API_KEY}`,
       },
       body: JSON.stringify({
         size: 1,
@@ -137,7 +141,7 @@ export async function buscarProcessoPorNumero(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `ApiKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${DATAJUD_API_KEY}`,
     },
     body: JSON.stringify({
       query: {
@@ -172,7 +176,7 @@ export async function buscarProcessosPorParte(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `ApiKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${DATAJUD_API_KEY}`,
     },
     body: JSON.stringify({
       size: tamanho,
@@ -213,7 +217,7 @@ export async function buscarProcessosPorOrgao(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `ApiKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${DATAJUD_API_KEY}`,
     },
     body: JSON.stringify({
       size: tamanho,
@@ -249,7 +253,7 @@ export async function buscarProcessosPorClasse(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `ApiKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${DATAJUD_API_KEY}`,
     },
     body: JSON.stringify({
       size: tamanho,
@@ -343,7 +347,7 @@ export async function buscaAvancada(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `ApiKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${DATAJUD_API_KEY}`,
     },
     body: JSON.stringify({
       size: tamanho,
