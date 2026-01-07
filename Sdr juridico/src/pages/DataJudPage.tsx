@@ -925,10 +925,9 @@ export const DataJudPage = () => {
                         Copiar Número
                       </Button>
                       <Button
-                        variant="outline"
                         size="sm"
                         onClick={() => exportarProcessoParaPDF(processo)}
-                        className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
+                        className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90 border-0"
                       >
                         <FileDown className="h-4 w-4" />
                         Exportar PDF
