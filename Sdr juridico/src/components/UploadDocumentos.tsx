@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { supabase } from '@/lib/supabaseClient'
 import { documentosService, formatarTamanhoArquivo, obterIconeArquivo } from '@/services/documentosService'
+import { FormularioContestacao } from '@/components/FormularioContestacao'
 
 interface UploadDocumentosProps {
   casoId?: string
@@ -57,6 +58,68 @@ interface DadosProcuracao {
   testemunhas: string
 }
 
+interface DadosContestacao {
+  status: string
+  numeroProcesso: string
+  classeProcessual: string
+  varaOrgao: string
+  comarca: string
+  areaDireito: string
+  dataCriacao: string
+  dataProtocolo: string
+  prazoFinal: string
+  situacaoPrazo: string
+  autores: Array<{
+    nome: string
+    cpfCnpj: string
+  }>
+  reus: Array<{
+    nome: string
+    cpfCnpj: string
+  }>
+  advogadosReu: Array<{
+    nome: string
+    oab: string
+    uf: string
+  }>
+  advogadosContrarios: string
+  resumoPeticaoInicial: string
+  pedidosAutor: string[]
+  valorCausa: string
+  riscoJuridico: string
+  impactoFinanceiro: string
+  probabilidadeAcordo: string
+  tesePrincipais: string[]
+  tesePreliminares: string
+  teseMerito: string
+  jurisprudencias: Array<{
+    tribunal: string
+    numeroProcesso: string
+    ementa: string
+  }>
+  fundamentacaoLegal: string
+  pedidosContestacao: string[]
+  documentosAnexados: Array<{
+    tipo: string
+    origem: string
+  }>
+  documentosPendentes: string[]
+  validacaoInterna: string
+  tipoProvaRequerida: string[]
+  testemunhas: Array<{
+    nome: string
+    cpf: string
+    contato: string
+    observacoes: string
+  }>
+  meioProtocolo: string
+  numeroProtocolo: string
+  comprovanteAnexado: boolean
+  confirmacaoProtocolo: boolean
+  usuarioProtocolo: string
+  dataHoraEnvio: string
+}
+
 export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
@@ -85,6 +148,45 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
     reconhecimentoFirma: false,
     cartorio: '',
     testemunhas: '',
+  })
+  const [dadosContestacao, setDadosContestacao] = React.useState<DadosContestacao>({
+    status: 'rascunho',
+    numeroProcesso: '',
+    classeProcessual: '',
+    varaOrgao: '',
+    comarca: '',
+    areaDireito: '',
+    dataCriacao: '',
+    dataProtocolo: '',
+    prazoFinal: '',
+    situacaoPrazo: 'no_prazo',
+    autores: [{ nome: '', cpfCnpj: '' }],
+    reus: [{ nome: '', cpfCnpj: '' }],
+    advogadosReu: [{ nome: '', oab: '', uf: '' }],
+    advogadosContrarios: '',
+    resumoPeticaoInicial: '',
+    pedidosAutor: [],
+    valorCausa: '',
+    riscoJuridico: 'medio',
+    impactoFinanceiro: '',
+    probabilidadeAcordo: '',
+    tesePrincipais: [],
+    tesePreliminares: '',
+    teseMerito: '',
+    jurisprudencias: [],
+    fundamentacaoLegal: '',
+    pedidosContestacao: [],
+    documentosAnexados: [],
+    documentosPendentes: [],
+    validacaoInterna: 'pendente',
+    tipoProvaRequerida: [],
+    testemunhas: [],
+    meioProtocolo: '',
+    numeroProtocolo: '',
+    comprovanteAnexado: false,
+    confirmacaoProtocolo: false,
+    usuarioProtocolo: '',
+    dataHoraEnvio: '',
   })
   const inputFileRef = React.useRef<HTMLInputElement>(null)
   const inputCameraRef = React.useRef<HTMLInputElement>(null)
@@ -174,10 +276,12 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
         )
       )
 
-      // Preparar descrição com dados da procuração se aplicável
+      // Preparar descrição com dados da procuração ou contestação se aplicável
       let descricaoCompleta = observacao || ''
       if (tipoDocumento === 'procuracao') {
         descricaoCompleta = JSON.stringify({ observacao, dadosProcuracao })
+      } else if (tipoDocumento === 'contestacao') {
+        descricaoCompleta = JSON.stringify({ observacao, dadosContestacao })
       }
 
       // Fazer upload
@@ -772,6 +876,14 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
             </div>
           </Card>
         </div>
+      )}
+
+      {/* Campos específicos para Contestação */}
+      {tipoDocumento === 'contestacao' && (
+        <FormularioContestacao 
+          dados={dadosContestacao} 
+          onChange={setDadosContestacao} 
+        />
       )}
 
       {/* Área de drop */}
