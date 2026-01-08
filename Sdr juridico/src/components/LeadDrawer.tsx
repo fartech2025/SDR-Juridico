@@ -7,6 +7,7 @@ import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
 import type { Caso, Lead } from '@/types/domain'
 import { formatDateTime, formatPhone } from '@/utils/format'
+import { useMensagens } from '@/hooks/useMensagens'
 
 export interface LeadDrawerProps {
   open: boolean
@@ -15,29 +16,9 @@ export interface LeadDrawerProps {
   onClose: () => void
 }
 
-const mockMessages = [
-  {
-    id: 'msg-001',
-    author: 'SDR',
-    content: 'Envio de proposta inicial e coleta de documentos.',
-    date: '2024-04-12T14:10:00Z',
-  },
-  {
-    id: 'msg-002',
-    author: 'Cliente',
-    content: 'Confirmo recebimento. Vou encaminhar o contrato hoje.',
-    date: '2024-04-12T18:20:00Z',
-  },
-  {
-    id: 'msg-003',
-    author: 'SDR',
-    content: 'Reforco agenda para alinhamento final.',
-    date: '2024-04-13T09:40:00Z',
-  },
-]
-
 export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps) => {
   const navigate = useNavigate()
+  const { mensagens, loading } = useMensagens(lead?.id)
 
   React.useEffect(() => {
     if (!open) return
@@ -136,7 +117,17 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
               Ultimas mensagens
             </p>
             <div className="space-y-2">
-              {mockMessages.map((message) => (
+              {loading && (
+                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
+                  Carregando mensagens...
+                </div>
+              )}
+              {!loading && mensagens.length === 0 && (
+                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
+                  Nenhuma mensagem registrada ainda.
+                </div>
+              )}
+              {mensagens.map((message) => (
                 <div
                   key={message.id}
                   className="rounded-2xl border border-border bg-white px-4 py-3 shadow-soft transition hover:bg-surface-2"

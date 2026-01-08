@@ -4,10 +4,12 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { leadsService } from '@/services/leadsService'
-import type { Leads } from '@/lib/supabaseClient'
+import type { LeadRow } from '@/lib/supabaseClient'
+import type { Lead } from '@/types/domain'
+import { mapLeadRowToLead } from '@/lib/mappers'
 
 interface UseLeadsState {
-  leads: Leads[]
+  leads: Lead[]
   loading: boolean
   error: Error | null
 }
@@ -24,7 +26,11 @@ export function useLeads() {
     setState((prev) => ({ ...prev, loading: true, error: null }))
     try {
       const leads = await leadsService.getLeads()
-      setState((prev) => ({ ...prev, leads, loading: false }))
+      setState((prev) => ({
+        ...prev,
+        leads: leads.map(mapLeadRowToLead),
+        loading: false,
+      }))
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -32,11 +38,15 @@ export function useLeads() {
   }, [])
 
   // Buscar leads por status
-  const fetchByStatus = useCallback(async (status: string) => {
+  const fetchByStatus = useCallback(async (status: LeadRow['status']) => {
     setState((prev) => ({ ...prev, loading: true, error: null }))
     try {
       const leads = await leadsService.getLeadsByStatus(status)
-      setState((prev) => ({ ...prev, leads, loading: false }))
+      setState((prev) => ({
+        ...prev,
+        leads: leads.map(mapLeadRowToLead),
+        loading: false,
+      }))
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -48,7 +58,11 @@ export function useLeads() {
     setState((prev) => ({ ...prev, loading: true, error: null }))
     try {
       const leads = await leadsService.getHotLeads()
-      setState((prev) => ({ ...prev, leads, loading: false }))
+      setState((prev) => ({
+        ...prev,
+        leads: leads.map(mapLeadRowToLead),
+        loading: false,
+      }))
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -57,14 +71,14 @@ export function useLeads() {
 
   // Criar novo lead
   const createLead = useCallback(
-    async (lead: Omit<Leads, 'id' | 'created_at' | 'updated_at'>) => {
+    async (lead: Omit<LeadRow, 'id' | 'created_at'>) => {
       try {
         const newLead = await leadsService.createLead(lead)
         setState((prev) => ({
           ...prev,
-          leads: [newLead, ...prev.leads],
+          leads: [mapLeadRowToLead(newLead), ...prev.leads],
         }))
-        return newLead
+        return mapLeadRowToLead(newLead)
       } catch (error) {
         const err = error instanceof Error ? error : new Error('Erro desconhecido')
         setState((prev) => ({ ...prev, error: err }))
@@ -75,20 +89,25 @@ export function useLeads() {
   )
 
   // Atualizar lead
-  const updateLead = useCallback(async (id: string, updates: Partial<Leads>) => {
-    try {
-      const updated = await leadsService.updateLead(id, updates)
-      setState((prev) => ({
-        ...prev,
-        leads: prev.leads.map((lead) => (lead.id === id ? updated : lead)),
-      }))
-      return updated
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Erro desconhecido')
-      setState((prev) => ({ ...prev, error: err }))
-      throw err
-    }
-  }, [])
+  const updateLead = useCallback(
+    async (id: string, updates: Partial<Omit<LeadRow, 'id' | 'created_at'>>) => {
+      try {
+        const updated = await leadsService.updateLead(id, updates)
+        setState((prev) => ({
+          ...prev,
+          leads: prev.leads.map((lead) =>
+            lead.id === id ? mapLeadRowToLead(updated) : lead
+          ),
+        }))
+        return mapLeadRowToLead(updated)
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error('Erro desconhecido')
+        setState((prev) => ({ ...prev, error: err }))
+        throw err
+      }
+    },
+    []
+  )
 
   // Deletar lead
   const deleteLead = useCallback(async (id: string) => {

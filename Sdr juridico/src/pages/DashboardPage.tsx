@@ -10,17 +10,14 @@ import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  agendaItems,
-  casos,
-  documentos,
-  kpis,
-  leads,
-  notifications,
-  timelineEvents,
-} from '@/data/mock'
 import { formatDateTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import { useAgenda } from '@/hooks/useAgenda'
+import { useCasos } from '@/hooks/useCasos'
+import { useDocumentos } from '@/hooks/useDocumentos'
+import { useLeads } from '@/hooks/useLeads'
+import { useNotas } from '@/hooks/useNotas'
+import type { KPI, Notification } from '@/types/domain'
 
 const resolveStatus = (
   value: string | null,
@@ -61,30 +58,183 @@ const categoryBadgeClass = (value: string) => {
   return 'border-[#EDF0F7] bg-[#EDF0F7] text-[#6B7280]'
 }
 
+const toIsoDate = (value: Date) => {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const countInRange = <T,>(
+  items: T[],
+  getDate: (item: T) => string | null | undefined,
+  start: Date,
+  end: Date
+) =>
+  items.filter((item) => {
+    const value = getDate(item)
+    if (!value) return false
+    const date = new Date(value)
+    return date >= start && date < end
+  }).length
+
+const buildKpi = (
+  id: string,
+  label: string,
+  value: number,
+  delta: number,
+  period: string
+): KPI => ({
+  id,
+  label,
+  value,
+  delta,
+  trend: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+  period,
+})
+
+const buildNotifications = (
+  leadsCount: number,
+  pendingDocs: number,
+  criticalCases: number,
+  nextAgendaCount: number
+): Notification[] => [
+  {
+    id: 'nt-001',
+    title: 'Documentos pendentes',
+    description: `${pendingDocs} documentos aguardando validacao.`,
+    priority: pendingDocs > 3 ? 'P0' : 'P1',
+    date: new Date().toISOString(),
+    actionLabel: 'Abrir documentos',
+    actionHref: '/app/documentos',
+    read: false,
+  },
+  {
+    id: 'nt-002',
+    title: 'Casos em risco',
+    description: `${criticalCases} casos com prioridade alta.`,
+    priority: criticalCases > 0 ? 'P0' : 'P2',
+    date: new Date().toISOString(),
+    actionLabel: 'Ver casos',
+    actionHref: '/app/casos',
+    read: false,
+  },
+  {
+    id: 'nt-003',
+    title: 'Leads ativos',
+    description: `${leadsCount} leads em acompanhamento.`,
+    priority: 'P2',
+    date: new Date().toISOString(),
+    actionLabel: 'Abrir leads',
+    actionHref: '/app/leads',
+    read: false,
+  },
+  {
+    id: 'nt-004',
+    title: 'Agenda do dia',
+    description: `${nextAgendaCount} compromissos para hoje.`,
+    priority: nextAgendaCount > 5 ? 'P1' : 'P2',
+    date: new Date().toISOString(),
+    actionLabel: 'Ver agenda',
+    actionHref: '/app/agenda',
+    read: true,
+  },
+]
+
 export const DashboardPage = () => {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const status = resolveStatus(params.get('state'))
+  const { leads, loading: leadsLoading, error: leadsError } = useLeads()
+  const { casos, loading: casosLoading, error: casosError } = useCasos()
+  const { documentos, loading: docsLoading, error: docsError } = useDocumentos()
+  const { eventos: agendaItems, loading: agendaLoading, error: agendaError } = useAgenda()
+  const { notas, loading: notasLoading, error: notasError } = useNotas()
 
-  const leadHot = React.useMemo(
-    () =>
-      leads.find((lead) => lead.heat === 'quente' && lead.status !== 'ganho') ??
-      leads[0],
-    [],
+  const baseState =
+    leadsLoading || casosLoading || docsLoading || agendaLoading || notasLoading
+      ? 'loading'
+      : leadsError || casosError || docsError || agendaError || notasError
+        ? 'error'
+        : leads.length || casos.length || documentos.length || agendaItems.length
+          ? 'ready'
+          : 'empty'
+  const pageState = status !== 'ready' ? status : baseState
+
+  const leadHot =
+    leads.find((lead) => lead.heat === 'quente' && lead.status !== 'ganho') ??
+    leads[0]
+  const docPending =
+    documentos.find((doc) => doc.status === 'pendente') ?? documentos[0]
+  const criticalEvents = React.useMemo(() => {
+    const caseIds = new Set(casos.map((caso) => caso.id))
+    return [...notas]
+      .filter((event) => caseIds.has(event.casoId))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 4)
+  }, [casos, notas])
+  const todayIso = toIsoDate(new Date())
+  const agendaToday = React.useMemo(
+    () => agendaItems.filter((item) => item.date === todayIso).slice(0, 3),
+    [agendaItems, todayIso],
   )
-  const docPending = React.useMemo(
-    () => documentos.find((doc) => doc.status === 'pendente') ?? documentos[0],
-    [],
-  )
-  const criticalEvents = React.useMemo(
-    () =>
-      [...timelineEvents]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 4),
-    [],
-  )
-  const agendaToday = React.useMemo(() => agendaItems.slice(0, 3), [])
   const nextCase = casos[0]
+
+  const kpis = React.useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(weekStart.getDate() - 7)
+    const prevWeekStart = new Date(now)
+    prevWeekStart.setDate(prevWeekStart.getDate() - 14)
+
+    const leadsActive = leads.filter(
+      (lead) => lead.status !== 'perdido' && lead.status !== 'ganho'
+    )
+    const currentLeads = countInRange(leadsActive, (lead) => lead.createdAt, weekStart, now)
+    const prevLeads = countInRange(leadsActive, (lead) => lead.createdAt, prevWeekStart, weekStart)
+
+    const totalLeads = leads.length
+    const convertedLeads = leads.filter((lead) => lead.status === 'ganho').length
+    const conversionRate = totalLeads ? Math.round((convertedLeads / totalLeads) * 100) : 0
+
+    const casesActive = casos.filter((caso) => caso.status === 'ativo').length
+    const pendingDocs = documentos.filter((doc) => doc.status === 'pendente').length
+
+    const avgResponseHours = (() => {
+      const valid = leads.filter((lead) => lead.lastContactAt)
+      if (valid.length === 0) return 0
+      const total = valid.reduce((acc, lead) => {
+        const start = new Date(lead.createdAt).getTime()
+        const end = new Date(lead.lastContactAt as string).getTime()
+        const diff = Math.max(0, end - start)
+        return acc + diff
+      }, 0)
+      return Math.round(total / valid.length / (1000 * 60 * 60))
+    })()
+
+    const receita = Math.round(
+      casos.reduce((acc, caso) => acc + (Number.isFinite(caso.value) ? caso.value : 0), 0)
+    )
+
+    return [
+      buildKpi('kpi-001', 'Leads ativos', leadsActive.length, currentLeads - prevLeads, 'vs semana anterior'),
+      buildKpi('kpi-002', 'Taxa de conversao', conversionRate, 0, 'ultimos 30 dias'),
+      buildKpi('kpi-003', 'Casos em andamento', casesActive, 0, 'mes atual'),
+      buildKpi('kpi-004', 'Pendencias criticas', pendingDocs, 0, 'ultimas 24h'),
+      buildKpi('kpi-005', 'Tempo medio de resposta (h)', avgResponseHours, 0, 'ultimos 7 dias'),
+      buildKpi('kpi-006', 'Receita potencial', receita, 0, 'pipeline atual'),
+    ]
+  }, [casos, documentos, leads])
+
+  const notifications = React.useMemo(() => {
+    const pendingDocs = documentos.filter((doc) => doc.status === 'pendente').length
+    const criticalCases = casos.filter((caso) => caso.slaRisk === 'critico').length
+    const leadActiveCount = leads.filter(
+      (lead) => lead.status !== 'perdido' && lead.status !== 'ganho'
+    ).length
+    const agendaCount = agendaItems.filter((item) => item.date === todayIso).length
+    return buildNotifications(leadActiveCount, pendingDocs, criticalCases, agendaCount)
+  }, [agendaItems, casos, documentos, leads, todayIso])
 
   return (
     <div className="space-y-6">
@@ -108,7 +258,7 @@ export const DashboardPage = () => {
         </div>
       </header>
 
-      <PageState status={status}>
+      <PageState status={pageState}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {kpis.slice(0, 4).map((item) => (
             <StatCard
@@ -127,19 +277,27 @@ export const DashboardPage = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <ActionCard
                 title="Lead quente aguardando retorno"
-                description={`Contato pendente: ${leadHot.name} (${leadHot.area}).`}
+                description={
+                  leadHot
+                    ? `Contato pendente: ${leadHot.name} (${leadHot.area}).`
+                    : 'Nenhum lead quente identificado.'
+                }
                 priority="P0"
                 actionLabel="Acelerar lead"
                 href="/app/leads"
               />
               <ActionCard
                 title="Documento pendente de validacao"
-                description={`${docPending.title} para ${docPending.cliente}.`}
+                description={
+                  docPending
+                    ? `${docPending.title} para ${docPending.cliente}.`
+                    : 'Nenhum documento pendente.'
+                }
                 priority="P1"
                 actionLabel="Validar agora"
                 href="/app/documentos"
                 secondaryActionLabel="Abrir dossie"
-                secondaryHref={`/app/caso/${docPending.casoId ?? 'caso-1001'}`}
+                secondaryHref={`/app/caso/${docPending?.casoId ?? 'caso-sem-dados'}`}
               />
             </div>
 
@@ -149,19 +307,24 @@ export const DashboardPage = () => {
                   <Flag className="h-4 w-4 text-warning" />
                   <CardTitle className="text-sm">Eventos criticos hoje</CardTitle>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    navigate(`/app/caso/${criticalEvents[0]?.casoId ?? 'caso-1001'}`)
-                  }
-                  className="px-0 text-primary hover:text-primary"
-                >
-                  Ver caso
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                {criticalEvents[0]?.casoId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/app/caso/${criticalEvents[0].casoId}`)}
+                    className="px-0 text-primary hover:text-primary"
+                  >
+                    Ver caso
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-3 px-6 pb-6">
+                {criticalEvents.length === 0 && (
+                  <div className="rounded-2xl border border-border bg-white px-4 py-6 text-center text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                    Nenhum evento critico registrado hoje.
+                  </div>
+                )}
                 {criticalEvents.map((event) => (
                   <div
                     key={event.id}
@@ -207,22 +370,28 @@ export const DashboardPage = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 px-6 pb-6 text-sm text-text-muted">
-                <div className="rounded-2xl border border-border bg-white px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
-                  <p className="text-sm font-semibold text-text">
-                    {nextCase.title}
-                  </p>
-                  <p className="text-xs text-text-subtle">
-                    Cliente: {nextCase.cliente} - Area {nextCase.area}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Badge className={cn('uppercase', slaBadgeClass(nextCase.slaRisk))}>
-                      {nextCase.slaRisk}
-                    </Badge>
-                    <Badge className={cn('uppercase', stageBadgeClass(nextCase.stage))}>
-                      {nextCase.stage}
-                    </Badge>
+                {nextCase ? (
+                  <div className="rounded-2xl border border-border bg-white px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                    <p className="text-sm font-semibold text-text">
+                      {nextCase.title}
+                    </p>
+                    <p className="text-xs text-text-subtle">
+                      Cliente: {nextCase.cliente} - Area {nextCase.area}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Badge className={cn('uppercase', slaBadgeClass(nextCase.slaRisk))}>
+                        {nextCase.slaRisk}
+                      </Badge>
+                      <Badge className={cn('uppercase', stageBadgeClass(nextCase.stage))}>
+                        {nextCase.stage}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                    Nenhum caso ativo encontrado.
+                  </div>
+                )}
                 <p className="text-xs text-text-muted">
                   Atualize o dossie e registre as pendencias prioritarias.
                 </p>
@@ -230,8 +399,9 @@ export const DashboardPage = () => {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => navigate(`/app/caso/${nextCase.id}`)}
+                    onClick={() => nextCase && navigate(`/app/caso/${nextCase.id}`)}
                     className="rounded-full px-4"
+                    disabled={!nextCase}
                   >
                     Abrir dossie
                     <ChevronRight className="h-4 w-4" />

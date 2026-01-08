@@ -7,9 +7,10 @@ import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import heroLight from '@/assets/hero-light.svg'
-import { casos, documentos } from '@/data/mock'
 import { formatDateTime } from '@/utils/format'
 import type { Documento } from '@/types/domain'
+import { useDocumentos } from '@/hooks/useDocumentos'
+import { useCasos } from '@/hooks/useCasos'
 
 const resolveStatus = (
   value: string | null,
@@ -28,6 +29,8 @@ const statusPill = (status: Documento['status']) => {
 }
 
 export const DocumentosPage = () => {
+  const { documentos, loading, error } = useDocumentos()
+  const { casos } = useCasos()
   const [params] = useSearchParams()
   const [statusFilter, setStatusFilter] = React.useState('todos')
   const [typeFilter, setTypeFilter] = React.useState('todos')
@@ -42,7 +45,7 @@ export const DocumentosPage = () => {
       type: Array.from(new Set(documentos.map((doc) => doc.type))),
       cliente: Array.from(new Set(documentos.map((doc) => doc.cliente))),
     }),
-    [],
+    [documentos],
   )
 
   const filteredDocs = React.useMemo(() => {
@@ -53,11 +56,17 @@ export const DocumentosPage = () => {
         clienteFilter === 'todos' || doc.cliente === clienteFilter
       return matchesStatus && matchesType && matchesCliente
     })
-  }, [statusFilter, typeFilter, clienteFilter])
+  }, [statusFilter, typeFilter, clienteFilter, documentos])
 
   const forcedState = resolveStatus(params.get('state'))
-  const pageState =
-    forcedState !== 'ready' ? forcedState : filteredDocs.length === 0 ? 'empty' : 'ready'
+  const baseState = loading
+    ? 'loading'
+    : error
+      ? 'error'
+      : filteredDocs.length === 0
+        ? 'empty'
+        : 'ready'
+  const pageState = forcedState !== 'ready' ? forcedState : baseState
 
   const selectedCase =
     clienteFilter !== 'todos'

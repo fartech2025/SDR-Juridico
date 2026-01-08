@@ -1,17 +1,30 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Agenda } from '@/lib/supabaseClient'
+import type { AgendamentoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
 export const agendaService = {
+  resolveMetaDefaults(evento: Omit<AgendamentoRow, 'id' | 'created_at'>) {
+    const existingMeta =
+      evento.meta && typeof evento.meta === 'object'
+        ? (evento.meta as Record<string, unknown>)
+        : {}
+    const status = (existingMeta.status as string | undefined) || 'confirmado'
+    const tipo = (existingMeta.tipo as string | undefined) || 'compromisso'
+    return {
+      ...existingMeta,
+      status,
+      tipo,
+    }
+  },
   /**
    * Busca todos os eventos da agenda
    */
-  async getEventos(): Promise<Agenda[]> {
+  async getEventos(): Promise<AgendamentoRow[]> {
     try {
       const { data, error } = await supabase
-        .from('agenda')
-        .select()
-        .order('data_inicio', { ascending: true })
+        .from('agendamentos')
+        .select('*, cliente:clientes(nome)')
+        .order('start_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -23,11 +36,11 @@ export const agendaService = {
   /**
    * Busca um evento específico
    */
-  async getEvento(id: string): Promise<Agenda> {
+  async getEvento(id: string): Promise<AgendamentoRow> {
     try {
       const { data, error } = await supabase
-        .from('agenda')
-        .select()
+        .from('agendamentos')
+        .select('*, cliente:clientes(nome)')
         .eq('id', id)
         .single()
 
@@ -43,14 +56,14 @@ export const agendaService = {
   /**
    * Busca eventos de um período específico
    */
-  async getEventosPorPeriodo(dataInicio: Date, dataFim: Date): Promise<Agenda[]> {
+  async getEventosPorPeriodo(dataInicio: Date, dataFim: Date): Promise<AgendamentoRow[]> {
     try {
       const { data, error } = await supabase
-        .from('agenda')
-        .select()
-        .gte('data_inicio', dataInicio.toISOString())
-        .lte('data_inicio', dataFim.toISOString())
-        .order('data_inicio', { ascending: true })
+        .from('agendamentos')
+        .select('*, cliente:clientes(nome)')
+        .gte('start_at', dataInicio.toISOString())
+        .lte('start_at', dataFim.toISOString())
+        .order('start_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -62,7 +75,7 @@ export const agendaService = {
   /**
    * Busca eventos de hoje
    */
-  async getEventosHoje(): Promise<Agenda[]> {
+  async getEventosHoje(): Promise<AgendamentoRow[]> {
     try {
       const hoje = new Date()
       const amanha = new Date(hoje)
@@ -77,7 +90,7 @@ export const agendaService = {
   /**
    * Busca eventos de um período (semana, mês)
    */
-  async getEventosDaSemana(): Promise<Agenda[]> {
+  async getEventosDaSemana(): Promise<AgendamentoRow[]> {
     try {
       const hoje = new Date()
       const proximoSabado = new Date(hoje)
@@ -92,16 +105,13 @@ export const agendaService = {
   /**
    * Busca eventos por tipo
    */
-  async getEventosByTipo(tipo: 'reuniao' | 'ligacao' | 'visita'): Promise<Agenda[]> {
+  async getEventosByTipo(tipo: string): Promise<AgendamentoRow[]> {
     try {
-      const { data, error } = await supabase
-        .from('agenda')
-        .select()
-        .eq('tipo', tipo)
-        .order('data_inicio', { ascending: true })
-
-      if (error) throw new AppError(error.message, 'database_error')
-      return data || []
+      const eventos = await this.getEventos()
+      return eventos.filter((evento) => {
+        if (!evento.meta || typeof evento.meta !== 'object') return false
+        return (evento.meta as { tipo?: string }).tipo === tipo
+      })
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar eventos', 'database_error')
     }
@@ -110,17 +120,14 @@ export const agendaService = {
   /**
    * Cria um novo evento
    */
-  async createEvento(evento: Omit<Agenda, 'id' | 'created_at' | 'updated_at'>): Promise<Agenda> {
+  async createEvento(
+    evento: Omit<AgendamentoRow, 'id' | 'created_at'>
+  ): Promise<AgendamentoRow> {
     try {
+      const meta = this.resolveMetaDefaults(evento)
       const { data, error } = await supabase
-        .from('agenda')
-        .insert([
-          {
-            ...evento,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
+        .from('agendamentos')
+        .insert([{ ...evento, meta }])
         .select()
         .single()
 
@@ -136,14 +143,14 @@ export const agendaService = {
   /**
    * Atualiza um evento existente
    */
-  async updateEvento(id: string, updates: Partial<Omit<Agenda, 'id' | 'created_at' | 'updated_at'>>): Promise<Agenda> {
+  async updateEvento(
+    id: string,
+    updates: Partial<Omit<AgendamentoRow, 'id' | 'created_at' | 'org_id'>>
+  ): Promise<AgendamentoRow> {
     try {
       const { data, error } = await supabase
-        .from('agenda')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .from('agendamentos')
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
@@ -163,7 +170,7 @@ export const agendaService = {
   async deleteEvento(id: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('agenda')
+        .from('agendamentos')
         .delete()
         .eq('id', id)
 
@@ -176,7 +183,7 @@ export const agendaService = {
   /**
    * Busca próximos eventos
    */
-  async getProximosEventos(dias: number = 7): Promise<Agenda[]> {
+  async getProximosEventos(dias: number = 7): Promise<AgendamentoRow[]> {
     try {
       const hoje = new Date()
       const futuro = new Date(hoje)
@@ -191,7 +198,7 @@ export const agendaService = {
   /**
    * Busca eventos passados
    */
-  async getEventosPassados(dias: number = 7): Promise<Agenda[]> {
+  async getEventosPassados(dias: number = 7): Promise<AgendamentoRow[]> {
     try {
       const hoje = new Date()
       const passado = new Date(hoje)

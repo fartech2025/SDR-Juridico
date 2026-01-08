@@ -18,10 +18,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { casos, documentos, leads, timelineEvents } from '@/data/mock'
 import type { Caso } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
+import { useCasos } from '@/hooks/useCasos'
+import { useLeads } from '@/hooks/useLeads'
+import { useDocumentos } from '@/hooks/useDocumentos'
+import { useNotas } from '@/hooks/useNotas'
 
 const resolveStatus = (
   value: string | null,
@@ -62,17 +65,56 @@ const statusBadge = (status: Caso['status']) => {
 export const CasoPage = () => {
   const { id } = useParams()
   const [params] = useSearchParams()
+  const { casos, loading: casosLoading, error: casosError } = useCasos()
+  const { leads, loading: leadsLoading, error: leadsError } = useLeads()
+  const { documentos, loading: docsLoading, error: docsError } = useDocumentos()
+  const {
+    notas,
+    loading: notasLoading,
+    error: notasError,
+    fetchNotasByEntidade,
+  } = useNotas()
   const status = resolveStatus(params.get('state'))
   const [activeTab, setActiveTab] = React.useState<TabKey>('Tudo')
   const [modalOpen, setModalOpen] = React.useState(false)
 
-  const caso = casos.find((item) => item.id === id) ?? casos[0]
-  const lead = leads.find((item) => item.id === caso.leadId)
-  const caseDocs = documentos.filter((doc) => doc.casoId === caso.id)
-  const caseEvents = timelineEvents.filter((event) => event.casoId === caso.id)
+  const fallbackCaso: Caso = {
+    id: 'caso-sem-dados',
+    title: 'Sem caso',
+    cliente: 'Sem cliente',
+    area: 'Geral',
+    status: 'ativo',
+    heat: 'morno',
+    stage: 'triagem',
+    value: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    tags: [],
+    slaRisk: 'ok',
+  }
+
+  const caso = casos.find((item) => item.id === id) ?? casos[0] ?? fallbackCaso
+  const lead = leads.find((item) => item.id === caso?.leadId)
+  const caseDocs = documentos.filter((doc) => doc.casoId === caso?.id)
+  const caseEvents = notas
   const filteredEvents = categoryMap[activeTab]
     ? caseEvents.filter((event) => event.category === categoryMap[activeTab])
     : caseEvents
+
+  React.useEffect(() => {
+    if (!id) return
+    fetchNotasByEntidade('caso', id).catch(() => null)
+  }, [id, fetchNotasByEntidade])
+
+  const baseState =
+    casosLoading || leadsLoading || docsLoading || notasLoading
+      ? 'loading'
+      : casosError || leadsError || docsError || notasError
+        ? 'error'
+        : casos.length
+          ? 'ready'
+          : 'empty'
+  const pageState = status !== 'ready' ? status : baseState
 
   const highlights = [
     {
@@ -131,7 +173,7 @@ export const CasoPage = () => {
         </div>
       </header>
 
-      <PageState status={status}>
+      <PageState status={pageState}>
         <div className="grid gap-6 xl:grid-cols-[2.4fr_1fr]">
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -323,7 +365,7 @@ export const CasoPage = () => {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title="Adicionar evento"
-        description="Registre um novo evento juridico (mock)."
+        description="Registre um novo evento juridico."
         footer={
           <>
             <Button variant="ghost" onClick={() => setModalOpen(false)}>

@@ -2,11 +2,19 @@ import { useState } from 'react'
 import { useLeads } from '@/hooks/useLeads'
 import { useFont } from '@/contexts/FontContext'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { Trash2, Edit2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface LeadFilters {
-  status: 'todos' | 'novo' | 'em_contato' | 'qualificado' | 'proposta' | 'ganho' | 'perdido'
+  status:
+    | 'todos'
+    | 'novo'
+    | 'em_contato'
+    | 'qualificado'
+    | 'proposta'
+    | 'ganho'
+    | 'perdido'
   heat: 'todos' | 'quente' | 'morno' | 'frio'
 }
 
@@ -14,6 +22,7 @@ export function LeadsRealPage() {
   const { leads, loading, error, createLead, updateLead, deleteLead } = useLeads()
   const { fontSize } = useFont()
   const { theme } = useTheme()
+  const { orgId } = useCurrentUser()
   
   const [filters, setFilters] = useState<LeadFilters>({
     status: 'todos',
@@ -26,7 +35,8 @@ export function LeadsRealPage() {
     nome: '',
     email: '',
     telefone: '',
-    empresa: '',
+    origem: '',
+    assunto: '',
     status: 'novo' as const,
     heat: 'frio' as const,
   })
@@ -63,12 +73,44 @@ export function LeadsRealPage() {
       return
     }
 
+    const statusMap: Record<string, string> = {
+      novo: 'novo',
+      em_contato: 'em_triagem',
+      qualificado: 'qualificado',
+      proposta: 'qualificado',
+      ganho: 'convertido',
+      perdido: 'perdido',
+    }
+    const sqlStatus = statusMap[formData.status] ?? 'novo'
+
     try {
       if (editingId) {
-        await updateLead(editingId, formData)
+        await updateLead(editingId, {
+          nome: formData.nome,
+          email: formData.email,
+          telefone: formData.telefone,
+          origem: formData.origem,
+          assunto: formData.assunto,
+          status: sqlStatus as any,
+          qualificacao: { heat: formData.heat },
+        })
         toast.success('Lead atualizado!')
       } else {
-        await createLead(formData)
+        if (!orgId) {
+          toast.error('Sem org ativa para criar lead')
+          return
+        }
+        await createLead({
+          org_id: orgId,
+          canal: 'whatsapp',
+          nome: formData.nome,
+          email: formData.email,
+          telefone: formData.telefone,
+          origem: formData.origem,
+          assunto: formData.assunto,
+          status: sqlStatus as any,
+          qualificacao: { heat: formData.heat },
+        })
         toast.success('Lead criado!')
       }
       
@@ -78,7 +120,8 @@ export function LeadsRealPage() {
         nome: '',
         email: '',
         telefone: '',
-        empresa: '',
+        origem: '',
+        assunto: '',
         status: 'novo',
         heat: 'frio',
       })
@@ -89,10 +132,11 @@ export function LeadsRealPage() {
 
   const handleEdit = (lead: typeof leads[0]) => {
     setFormData({
-      nome: lead.nome,
+      nome: lead.name,
       email: lead.email,
-      telefone: lead.telefone || '',
-      empresa: lead.empresa || '',
+      telefone: lead.phone || '',
+      origem: lead.origin || '',
+      assunto: lead.area || '',
       status: lead.status as any,
       heat: lead.heat as any,
     })
@@ -137,7 +181,8 @@ export function LeadsRealPage() {
               nome: '',
               email: '',
               telefone: '',
-              empresa: '',
+              origem: '',
+              assunto: '',
               status: 'novo',
               heat: 'frio',
             })
@@ -180,9 +225,17 @@ export function LeadsRealPage() {
               
               <input
                 type="text"
-                placeholder="Empresa"
-                value={formData.empresa}
-                onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
+                placeholder="Origem"
+                value={formData.origem}
+                onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
+                className={`px-4 py-2 border rounded-lg ${inputBg}`}
+              />
+
+              <input
+                type="text"
+                placeholder="Assunto/Area"
+                value={formData.assunto}
+                onChange={(e) => setFormData({ ...formData, assunto: e.target.value })}
                 className={`px-4 py-2 border rounded-lg ${inputBg}`}
               />
               
@@ -289,7 +342,7 @@ export function LeadsRealPage() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="text-lg font-bold">{lead.nome}</h3>
+                      <h3 className="text-lg font-bold">{lead.name}</h3>
                       <p className={isDark ? 'text-slate-400' : 'text-slate-600'}>{lead.email}</p>
                     </div>
                     
@@ -320,15 +373,15 @@ export function LeadsRealPage() {
                     </span>
                   </div>
 
-                  {lead.empresa && (
+                  {lead.area && (
                     <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                      📌 {lead.empresa}
+                      📌 {lead.area}
                     </p>
                   )}
 
-                  {lead.telefone && (
+                  {lead.phone && (
                     <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                      📞 {lead.telefone}
+                      📞 {lead.phone}
                     </p>
                   )}
                 </div>

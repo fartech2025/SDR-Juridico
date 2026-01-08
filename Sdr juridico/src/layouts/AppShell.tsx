@@ -20,6 +20,8 @@ import {
   X,
 } from 'lucide-react'
 
+import { useAuth } from '@/contexts/AuthContext'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { FontSizeButton } from '@/components/FontSizeControl'
@@ -40,12 +42,14 @@ const navItems = [
 
 export const AppShell = () => {
   const navigate = useNavigate()
+  const { signOut } = useAuth()
+  const { displayName, shortName, initials, roleLabel, orgName } = useCurrentUser()
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
   const handleLogout = async () => {
     setLogoutOpen(false)
-    // Supabase desabilitado - apenas redireciona
+    await signOut()
     navigate('/login', { replace: true })
   }
 
@@ -102,12 +106,12 @@ export const AppShell = () => {
             <p className="mt-1">Automacoes e triagens em tempo real.</p>
           </div>
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-white px-3 py-3 shadow-soft">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              PA
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+              {initials}
             </div>
             <div className="text-xs">
-              <p className="font-semibold text-text">Dr. Pedro Almeida</p>
-              <p className="text-text-subtle">Advogado</p>
+              <p className="font-semibold text-text">{displayName}</p>
+              <p className="text-text-subtle">{roleLabel}</p>
             </div>
           </div>
         </div>
@@ -170,11 +174,11 @@ export const AppShell = () => {
         {/* Desktop greeting */}
         <div className="hidden items-center gap-3 lg:flex">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-            PA
+            {initials}
           </div>
           <div>
-            <p className="text-xs text-text-subtle">Bom dia, Dr. Pedro Almeida</p>
-            <p className="text-sm font-semibold text-text">SDR Juridico Online</p>
+            <p className="text-xs text-text-subtle">Bom dia, {displayName}</p>
+            <p className="text-sm font-semibold text-text">{orgName}</p>
           </div>
         </div>
 
@@ -224,9 +228,9 @@ export const AppShell = () => {
 
           <div className="hidden items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs text-text shadow-soft sm:flex">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-              PA
+              {initials}
             </div>
-            <span>Dr. Pedro</span>
+            <span>{shortName}</span>
             <ChevronDown className="h-3 w-3 text-text-subtle" />
           </div>
         </div>

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { agendaService } from '@/services/agendaService'
-import type { Agenda } from '@/lib/supabaseClient'
+import type { AgendamentoRow } from '@/lib/supabaseClient'
+import type { AgendaItem } from '@/types/domain'
+import { mapAgendamentoRowToAgendaItem } from '@/lib/mappers'
 
 interface UseAgendaState {
-  eventos: Agenda[]
+  eventos: AgendaItem[]
   loading: boolean
   error: Error | null
 }
@@ -30,7 +32,11 @@ export function useAgenda() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const eventos = await agendaService.getEventos()
-      setState((prev) => ({ ...prev, eventos, loading: false }))
+      setState((prev) => ({
+        ...prev,
+        eventos: eventos.map(mapAgendamentoRowToAgendaItem),
+        loading: false,
+      }))
     } catch (error) {
       setState((prev) => ({
         ...prev,
@@ -47,7 +53,7 @@ export function useAgenda() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const evento = await agendaService.getEvento(id)
-      return evento
+      return mapAgendamentoRowToAgendaItem(evento)
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -62,8 +68,9 @@ export function useAgenda() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const eventos = await agendaService.getEventosPorPeriodo(dataInicio, dataFim)
-      setState((prev) => ({ ...prev, eventos, loading: false }))
-      return eventos
+      const mapped = eventos.map(mapAgendamentoRowToAgendaItem)
+      setState((prev) => ({ ...prev, eventos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -78,8 +85,9 @@ export function useAgenda() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const eventos = await agendaService.getEventosHoje()
-      setState((prev) => ({ ...prev, eventos, loading: false }))
-      return eventos
+      const mapped = eventos.map(mapAgendamentoRowToAgendaItem)
+      setState((prev) => ({ ...prev, eventos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -94,8 +102,9 @@ export function useAgenda() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const eventos = await agendaService.getEventosDaSemana()
-      setState((prev) => ({ ...prev, eventos, loading: false }))
-      return eventos
+      const mapped = eventos.map(mapAgendamentoRowToAgendaItem)
+      setState((prev) => ({ ...prev, eventos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -106,12 +115,13 @@ export function useAgenda() {
   /**
    * Busca eventos por tipo
    */
-  const fetchByTipo = useCallback(async (tipo: 'reuniao' | 'ligacao' | 'visita') => {
+  const fetchByTipo = useCallback(async (tipo: string) => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const eventos = await agendaService.getEventosByTipo(tipo)
-      setState((prev) => ({ ...prev, eventos, loading: false }))
-      return eventos
+      const mapped = eventos.map(mapAgendamentoRowToAgendaItem)
+      setState((prev) => ({ ...prev, eventos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -126,8 +136,9 @@ export function useAgenda() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const eventos = await agendaService.getProximosEventos(dias)
-      setState((prev) => ({ ...prev, eventos, loading: false }))
-      return eventos
+      const mapped = eventos.map(mapAgendamentoRowToAgendaItem)
+      setState((prev) => ({ ...prev, eventos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -142,8 +153,9 @@ export function useAgenda() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const eventos = await agendaService.getEventosPassados(dias)
-      setState((prev) => ({ ...prev, eventos, loading: false }))
-      return eventos
+      const mapped = eventos.map(mapAgendamentoRowToAgendaItem)
+      setState((prev) => ({ ...prev, eventos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -154,37 +166,45 @@ export function useAgenda() {
   /**
    * Cria um novo evento (com atualização otimista)
    */
-  const createEvento = useCallback(async (evento: Omit<Agenda, 'id' | 'created_at' | 'updated_at'>) => {
+  const createEvento = useCallback(
+    async (evento: Omit<AgendamentoRow, 'id' | 'created_at'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoEvento = await agendaService.createEvento(evento)
-      setState((prev) => ({ ...prev, eventos: [novoEvento, ...prev.eventos] }))
-      return novoEvento
+      const mapped = mapAgendamentoRowToAgendaItem(novoEvento)
+      setState((prev) => ({ ...prev, eventos: [mapped, ...prev.eventos] }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err }))
       throw err
     }
-  }, [])
+    },
+    []
+  )
 
   /**
    * Atualiza um evento (com atualização otimista)
    */
-  const updateEvento = useCallback(async (id: string, updates: Partial<Omit<Agenda, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateEvento = useCallback(
+    async (id: string, updates: Partial<Omit<AgendamentoRow, 'id' | 'created_at' | 'org_id'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const eventoAtualizado = await agendaService.updateEvento(id, updates)
+      const mapped = mapAgendamentoRowToAgendaItem(eventoAtualizado)
       setState((prev) => ({
         ...prev,
-        eventos: prev.eventos.map((e) => (e.id === id ? eventoAtualizado : e)),
+        eventos: prev.eventos.map((e) => (e.id === id ? mapped : e)),
       }))
-      return eventoAtualizado
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err }))
       throw err
     }
-  }, [])
+    },
+    []
+  )
 
   /**
    * Deleta um evento (com atualização otimista)

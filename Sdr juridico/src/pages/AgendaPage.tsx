@@ -7,10 +7,11 @@ import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Modal } from '@/components/ui/modal'
-import { agendaItems } from '@/data/mock'
 import type { AgendaItem } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
+import { useAgenda } from '@/hooks/useAgenda'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 const resolveStatus = (
   value: string | null,
@@ -22,63 +23,14 @@ const resolveStatus = (
 }
 
 const timeSlots = ['09:00', '10:00', '11:00', '12:00', '14:00', '16:00', '18:00']
-const days = [
-  { label: 'Dom', date: 14 },
-  { label: 'Seg', date: 15 },
-  { label: 'Ter', date: 16 },
-  { label: 'Qua', date: 17 },
-  { label: 'Qui', date: 18 },
-  { label: 'Sex', date: 19 },
-  { label: 'Sab', date: 20 },
-]
+const weekDayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
 
-const calendarEvents = [
-  {
-    id: 'evt-a',
-    agendaId: 'ag-001',
-    title: 'Mariana Souza',
-    subtitle: 'Alinhamento de estrategia',
-    status: 'Confirmada',
-    dayIndex: 2,
-    time: '10:00',
-  },
-  {
-    id: 'evt-b',
-    agendaId: 'ag-004',
-    title: 'Audiencia aguardando protocolo',
-    subtitle: 'Atencao',
-    status: 'Atencao',
-    dayIndex: 3,
-    time: '14:00',
-  },
-  {
-    id: 'evt-c',
-    agendaId: 'ag-002',
-    title: 'Carlos Martins',
-    subtitle: 'Reuniao interna',
-    status: 'Confirmada',
-    dayIndex: 4,
-    time: '10:00',
-  },
-  {
-    id: 'evt-d',
-    agendaId: 'ag-003',
-    title: 'Rafael Souza',
-    subtitle: 'Reuniao com ex-empregado',
-    status: 'Em andamento',
-    dayIndex: 5,
-    time: '14:00',
-  },
-  {
-    id: 'evt-e',
-    agendaId: 'ag-005',
-    title: 'SLA em risco',
-    subtitle: 'Contrato pendente',
-    status: 'Em atraso',
-    dayIndex: 6,
-    time: '11:30',
-  },
-]
+const toIsoDate = (value: Date) => {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const statusStyles: Record<
   string,
@@ -107,11 +59,71 @@ const statusStyles: Record<
 }
 
 export const AgendaPage = () => {
+  const { eventos: agendaItems, loading, error } = useAgenda()
+  const { displayName } = useCurrentUser()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [selectedItem, setSelectedItem] = React.useState<AgendaItem | null>(null)
   const state = resolveStatus(params.get('state'))
-  const pageState = state !== 'ready' ? state : agendaItems.length ? 'ready' : 'empty'
+  const baseState = loading
+    ? 'loading'
+    : error
+      ? 'error'
+      : agendaItems.length
+        ? 'ready'
+        : 'empty'
+  const pageState = state !== 'ready' ? state : baseState
+
+  const days = React.useMemo(() => {
+    const today = new Date()
+    const start = new Date(today)
+    start.setHours(0, 0, 0, 0)
+    start.setDate(start.getDate() - start.getDay())
+    const todayIso = toIsoDate(today)
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(start)
+      date.setDate(start.getDate() + index)
+      return {
+        label: weekDayLabels[date.getDay()],
+        date: date.getDate(),
+        iso: toIsoDate(date),
+        isToday: toIsoDate(date) === todayIso,
+      }
+    })
+  }, [])
+
+  const calendarEvents = React.useMemo(() => {
+    return agendaItems
+      .map((item) => {
+        const dayIndex = days.findIndex((day) => day.iso === item.date)
+        if (dayIndex === -1) return null
+        const statusLabel =
+          item.status === 'confirmado'
+            ? 'Confirmada'
+            : item.status === 'pendente'
+              ? 'Atencao'
+              : 'Em atraso'
+        return {
+          id: item.id,
+          agendaId: item.id,
+          title: item.cliente,
+          subtitle: item.title,
+          status: statusLabel,
+          dayIndex,
+          time: item.time,
+        }
+      })
+      .filter(Boolean) as Array<{
+        id: string
+        agendaId: string
+        title: string
+        subtitle: string
+        status: string
+        dayIndex: number
+        time: string
+      }>
+  }, [agendaItems, days])
 
   return (
     <div className="space-y-6">
@@ -132,7 +144,7 @@ export const AgendaPage = () => {
             Agenda juridica
           </p>
           <h2 className="font-display text-3xl text-text">Agenda juridica</h2>
-          <p className="text-sm text-text-muted">Bom dia, Dr. Pedro Almeida</p>
+          <p className="text-sm text-text-muted">Bom dia, {displayName}</p>
         </div>
       </header>
 
@@ -201,7 +213,7 @@ export const AgendaPage = () => {
                       key={day.label}
                       className={cn(
                         'rounded-xl py-1 text-center text-sm text-text',
-                        day.date === 16 && 'bg-primary/10 text-primary',
+                        day.isToday && 'bg-primary/10 text-primary',
                       )}
                     >
                       {day.label} {day.date}
@@ -223,6 +235,9 @@ export const AgendaPage = () => {
                     const rowIndex = timeSlots.findIndex((slot) =>
                       event.time.startsWith(slot.split(':')[0]),
                     )
+                    if (rowIndex < 0) {
+                      return null
+                    }
                     const row = rowIndex + 2
                     const col = event.dayIndex + 2
                     const agendaItem =
@@ -388,7 +403,7 @@ export const AgendaPage = () => {
         open={Boolean(selectedItem)}
         onClose={() => setSelectedItem(null)}
         title={selectedItem?.title}
-        description="Detalhes do compromisso (mock)."
+        description="Detalhes do compromisso."
         footer={
           <>
             <Button variant="ghost" onClick={() => setSelectedItem(null)}>

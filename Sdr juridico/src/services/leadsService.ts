@@ -3,8 +3,18 @@
  * CRUD operations para gerenciar leads
  */
 
-import { supabase, type Leads } from '@/lib/supabaseClient'
+import { supabase, type LeadRow } from '@/lib/supabaseClient'
+import type { LeadStatus } from '@/types/domain'
 import { AppError } from '@/utils/errors'
+
+const uiStatusBySqlStatus: Record<LeadRow['status'], LeadStatus> = {
+  novo: 'novo',
+  em_triagem: 'em_contato',
+  qualificado: 'qualificado',
+  nao_qualificado: 'perdido',
+  convertido: 'ganho',
+  perdido: 'perdido',
+}
 
 export const leadsService = {
   // Buscar todos os leads
@@ -16,7 +26,7 @@ export const leadsService = {
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data as Leads[]
+      return data as LeadRow[]
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao buscar leads',
@@ -35,7 +45,7 @@ export const leadsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data as Leads
+      return data as LeadRow
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao buscar lead',
@@ -45,7 +55,7 @@ export const leadsService = {
   },
 
   // Buscar leads por status
-  async getLeadsByStatus(status: string) {
+  async getLeadsByStatus(status: LeadRow['status']) {
     try {
       const { data, error } = await supabase
         .from('leads')
@@ -54,7 +64,7 @@ export const leadsService = {
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data as Leads[]
+      return data as LeadRow[]
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao buscar leads',
@@ -66,14 +76,11 @@ export const leadsService = {
   // Buscar leads quentes
   async getHotLeads() {
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('heat', 'quente')
-        .order('created_at', { ascending: false })
-
-      if (error) throw new AppError(error.message, 'database_error')
-      return data as Leads[]
+      const leads = await this.getLeads()
+      return leads.filter((lead) => {
+        if (!lead.qualificacao || typeof lead.qualificacao !== 'object') return false
+        return (lead.qualificacao as { heat?: string }).heat === 'quente'
+      })
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao buscar leads quentes',
@@ -83,20 +90,35 @@ export const leadsService = {
   },
 
   // Criar novo lead
-  async createLead(lead: Omit<Leads, 'id' | 'created_at' | 'updated_at'>) {
+  async createLead(lead: Omit<LeadRow, 'id' | 'created_at'>) {
     try {
+      const existingQualificacao =
+        lead.qualificacao && typeof lead.qualificacao === 'object'
+          ? (lead.qualificacao as Record<string, unknown>)
+          : {}
+      const qualStatus =
+        (existingQualificacao.status as LeadStatus | undefined) ??
+        uiStatusBySqlStatus[lead.status]
+      const qualHeat =
+        (existingQualificacao.heat as string | undefined) ?? 'morno'
+
+      const payload = {
+        ...lead,
+        qualificacao: {
+          ...existingQualificacao,
+          status: qualStatus,
+          heat: qualHeat,
+        },
+      }
+
       const { data, error } = await supabase
         .from('leads')
-        .insert({
-          ...lead,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .insert(payload)
         .select()
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data as Leads
+      return data as LeadRow
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao criar lead',
@@ -106,20 +128,17 @@ export const leadsService = {
   },
 
   // Atualizar lead
-  async updateLead(id: string, updates: Partial<Leads>) {
+  async updateLead(id: string, updates: Partial<Omit<LeadRow, 'id' | 'created_at'>>) {
     try {
       const { data, error } = await supabase
         .from('leads')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data as Leads
+      return data as LeadRow
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao atualizar lead',

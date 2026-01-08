@@ -6,9 +6,10 @@ import heroLight from '@/assets/hero-light.svg'
 import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { casos } from '@/data/mock'
 import type { Caso } from '@/types/domain'
 import { cn } from '@/utils/cn'
+import { useCasos } from '@/hooks/useCasos'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 const resolveStatus = (
   value: string | null,
@@ -31,14 +32,10 @@ const slaTone = (sla: Caso['slaRisk']) => {
   return 'bg-[#6BC5B3]'
 }
 
-const slaPercentById: Record<string, number> = {
-  'caso-1007': 12,
-  'caso-1006': 78,
-  'caso-1005': 46,
-  'caso-1004': 32,
-  'caso-1003': 9,
-  'caso-1002': 0,
-  'caso-1001': 4,
+const slaPercentByRisk = (sla: Caso['slaRisk']) => {
+  if (sla === 'critico') return 85
+  if (sla === 'atencao') return 55
+  return 25
 }
 
 const areaPill = (area: Caso['area']) => {
@@ -65,6 +62,8 @@ const heatPill = (heat: Caso['heat']) => {
 }
 
 export const CasosPage = () => {
+  const { casos, loading, error } = useCasos()
+  const { displayName } = useCurrentUser()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const status = resolveStatus(params.get('state'))
@@ -83,7 +82,7 @@ export const CasosPage = () => {
       const matchesHeat = heatFilter === 'todos' || caso.heat === heatFilter
       return matchesQuery && matchesArea && matchesHeat
     })
-  }, [query, areaFilter, heatFilter])
+  }, [query, areaFilter, heatFilter, casos])
 
   const chips = [
     { id: 'chip-1', label: 'Trabalhista', tone: 'bg-[#DFF1F0] text-[#2F7A5C]' },
@@ -91,6 +90,15 @@ export const CasosPage = () => {
     { id: 'chip-3', label: 'Empresarial', tone: 'bg-[#FFE9C2] text-[#B88220]' },
     { id: 'chip-4', label: 'e-mails', tone: 'bg-[#E5EEFF] text-[#4C6FFF]' },
   ]
+
+  const baseState = loading
+    ? 'loading'
+    : error
+      ? 'error'
+      : filtered.length
+        ? 'ready'
+        : 'empty'
+  const pageState = status !== 'ready' ? status : baseState
 
   return (
     <div className="space-y-6">
@@ -111,7 +119,7 @@ export const CasosPage = () => {
             <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white">
               <ChevronLeft className="h-4 w-4 text-text-subtle" />
             </span>
-            <span>Bom dia, Dr. Pedro Almeida</span>
+            <span>Bom dia, {displayName}</span>
           </div>
           <h2 className="font-display text-2xl text-text">Casos</h2>
         </div>
@@ -209,7 +217,7 @@ export const CasosPage = () => {
           </div>
 
           <PageState
-            status={status !== 'ready' ? status : filtered.length ? 'ready' : 'empty'}
+            status={pageState}
             emptyTitle="Nenhum caso encontrado"
             emptyDescription="Ajuste os filtros para localizar um caso."
           >
@@ -228,7 +236,7 @@ export const CasosPage = () => {
                 </thead>
                 <tbody>
                   {filtered.map((caso) => {
-                    const percent = slaPercentById[caso.id] ?? 12
+                    const percent = slaPercentByRisk(caso.slaRisk)
                     const initials = caso.cliente
                       .split(' ')
                       .map((part) => part[0])

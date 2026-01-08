@@ -6,10 +6,10 @@ import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import heroLight from '@/assets/hero-light.svg'
-import { clientes } from '@/data/mock'
 import type { Cliente } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
+import { useClientes } from '@/hooks/useClientes'
 
 const resolveStatus = (
   value: string | null,
@@ -41,6 +41,7 @@ const healthPill = (health: Cliente['health']) => {
 }
 
 export const ClientesPage = () => {
+  const { clientes, loading, error } = useClientes()
   const [params] = useSearchParams()
   const [query, setQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('todos')
@@ -65,7 +66,7 @@ export const ClientesPage = () => {
       area: Array.from(new Set(clientes.map((cliente) => cliente.area))),
       owner: Array.from(new Set(clientes.map((cliente) => cliente.owner))),
     }),
-    [],
+    [clientes],
   )
 
   const filteredClientes = React.useMemo(() => {
@@ -83,11 +84,17 @@ export const ClientesPage = () => {
         matchesQuery && matchesStatus && matchesHealth && matchesArea && matchesOwner
       )
     })
-  }, [query, statusFilter, healthFilter, areaFilter, ownerFilter])
+  }, [query, statusFilter, healthFilter, areaFilter, ownerFilter, clientes])
 
   const forcedState = resolveStatus(params.get('state'))
-  const pageState =
-    forcedState !== 'ready' ? forcedState : filteredClientes.length === 0 ? 'empty' : 'ready'
+  const baseState = loading
+    ? 'loading'
+    : error
+      ? 'error'
+      : filteredClientes.length === 0
+        ? 'empty'
+        : 'ready'
+  const pageState = forcedState !== 'ready' ? forcedState : baseState
 
   const resetFilters = () => {
     setQuery('')

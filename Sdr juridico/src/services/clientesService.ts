@@ -1,12 +1,12 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Clientes } from '@/lib/supabaseClient'
+import type { ClienteRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
 export const clientesService = {
   /**
    * Busca todos os clientes
    */
-  async getClientes(): Promise<Clientes[]> {
+  async getClientes(): Promise<ClienteRow[]> {
     try {
       const { data, error } = await supabase
         .from('clientes')
@@ -23,7 +23,7 @@ export const clientesService = {
   /**
    * Busca um cliente específico
    */
-  async getCliente(id: string): Promise<Clientes> {
+  async getCliente(id: string): Promise<ClienteRow> {
     try {
       const { data, error } = await supabase
         .from('clientes')
@@ -43,12 +43,12 @@ export const clientesService = {
   /**
    * Busca clientes por empresa
    */
-  async getClientesByEmpresa(empresa: string): Promise<Clientes[]> {
+  async getClientesByEmpresa(empresa: string): Promise<ClienteRow[]> {
     try {
       const { data, error } = await supabase
         .from('clientes')
         .select()
-        .ilike('empresa', `%${empresa}%`)
+        .ilike('nome', `%${empresa}%`)
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -61,12 +61,12 @@ export const clientesService = {
   /**
    * Busca cliente por CNPJ
    */
-  async getClienteByCnpj(cnpj: string): Promise<Clientes | null> {
+  async getClienteByCnpj(cnpj: string): Promise<ClienteRow | null> {
     try {
       const { data, error } = await supabase
         .from('clientes')
         .select()
-        .eq('cnpj', cnpj)
+        .eq('documento', cnpj)
         .single()
 
       if (error && error.code !== 'PGRST116') throw new AppError(error.message, 'database_error')
@@ -79,17 +79,11 @@ export const clientesService = {
   /**
    * Cria um novo cliente
    */
-  async createCliente(cliente: Omit<Clientes, 'id' | 'created_at' | 'updated_at'>): Promise<Clientes> {
+  async createCliente(cliente: Omit<ClienteRow, 'id' | 'created_at'>): Promise<ClienteRow> {
     try {
       const { data, error } = await supabase
         .from('clientes')
-        .insert([
-          {
-            ...cliente,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
+        .insert([cliente])
         .select()
         .single()
 
@@ -105,14 +99,14 @@ export const clientesService = {
   /**
    * Atualiza um cliente existente
    */
-  async updateCliente(id: string, updates: Partial<Omit<Clientes, 'id' | 'created_at' | 'updated_at'>>): Promise<Clientes> {
+  async updateCliente(
+    id: string,
+    updates: Partial<Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>>
+  ): Promise<ClienteRow> {
     try {
       const { data, error } = await supabase
         .from('clientes')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
@@ -145,7 +139,7 @@ export const clientesService = {
   /**
    * Busca clientes com contagem de casos
    */
-  async getClientesComCasos(): Promise<(Clientes & { casos_count: number })[]> {
+  async getClientesComCasos(): Promise<(ClienteRow & { casos_count: number })[]> {
     try {
       const { data, error } = await supabase
         .from('clientes')

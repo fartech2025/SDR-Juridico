@@ -1,16 +1,16 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Casos } from '@/lib/supabaseClient'
+import type { CasoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
 export const casosService = {
   /**
    * Busca todos os casos
    */
-  async getCasos(): Promise<Casos[]> {
+  async getCasos(): Promise<CasoRow[]> {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select()
+        .select('*, cliente:clientes(nome)')
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -23,11 +23,11 @@ export const casosService = {
   /**
    * Busca um caso específico
    */
-  async getCaso(id: string): Promise<Casos> {
+  async getCaso(id: string): Promise<CasoRow> {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select()
+        .select('*, cliente:clientes(nome)')
         .eq('id', id)
         .single()
 
@@ -43,11 +43,11 @@ export const casosService = {
   /**
    * Busca casos por status
    */
-  async getCasosByStatus(status: 'aberto' | 'em_andamento' | 'resolvido' | 'fechado'): Promise<Casos[]> {
+  async getCasosByStatus(status: CasoRow['status']): Promise<CasoRow[]> {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select()
+        .select('*, cliente:clientes(nome)')
         .eq('status', status)
         .order('created_at', { ascending: false })
 
@@ -61,12 +61,12 @@ export const casosService = {
   /**
    * Busca casos críticos (alta prioridade)
    */
-  async getCasosCriticos(): Promise<Casos[]> {
+  async getCasosCriticos(): Promise<CasoRow[]> {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select()
-        .eq('prioridade', 'critica')
+        .select('*, cliente:clientes(nome)')
+        .gte('prioridade', 3)
         .order('created_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -79,11 +79,11 @@ export const casosService = {
   /**
    * Busca casos de um cliente específico
    */
-  async getCasosByCliente(clienteId: string): Promise<Casos[]> {
+  async getCasosByCliente(clienteId: string): Promise<CasoRow[]> {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select()
+        .select('*, cliente:clientes(nome)')
         .eq('cliente_id', clienteId)
         .order('created_at', { ascending: false })
 
@@ -97,17 +97,11 @@ export const casosService = {
   /**
    * Cria um novo caso
    */
-  async createCaso(caso: Omit<Casos, 'id' | 'created_at' | 'updated_at'>): Promise<Casos> {
+  async createCaso(caso: Omit<CasoRow, 'id' | 'created_at'>): Promise<CasoRow> {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .insert([
-          {
-            ...caso,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
+        .insert([caso])
         .select()
         .single()
 
@@ -123,14 +117,14 @@ export const casosService = {
   /**
    * Atualiza um caso existente
    */
-  async updateCaso(id: string, updates: Partial<Omit<Casos, 'id' | 'created_at' | 'updated_at'>>): Promise<Casos> {
+  async updateCaso(
+    id: string,
+    updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'org_id'>>
+  ): Promise<CasoRow> {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
@@ -163,14 +157,14 @@ export const casosService = {
   /**
    * Muda status de um caso
    */
-  async mudarStatus(id: string, novoStatus: 'aberto' | 'em_andamento' | 'resolvido' | 'fechado'): Promise<Casos> {
+  async mudarStatus(id: string, novoStatus: CasoRow['status']): Promise<CasoRow> {
     return this.updateCaso(id, { status: novoStatus })
   },
 
   /**
    * Muda prioridade de um caso
    */
-  async mudarPrioridade(id: string, novaPrioridade: 'baixa' | 'media' | 'alta' | 'critica'): Promise<Casos> {
+  async mudarPrioridade(id: string, novaPrioridade: number): Promise<CasoRow> {
     return this.updateCaso(id, { prioridade: novaPrioridade })
   },
 
@@ -180,9 +174,12 @@ export const casosService = {
   async getEstatisticas(): Promise<{
     total: number
     abertos: number
-    em_andamento: number
-    resolvidos: number
-    fechados: number
+    triagem: number
+    negociacao: number
+    contrato: number
+    andamento: number
+    encerrados: number
+    arquivados: number
     criticos: number
   }> {
     try {
@@ -197,10 +194,13 @@ export const casosService = {
       return {
         total: casos.length,
         abertos: casos.filter((c) => c.status === 'aberto').length,
-        em_andamento: casos.filter((c) => c.status === 'em_andamento').length,
-        resolvidos: casos.filter((c) => c.status === 'resolvido').length,
-        fechados: casos.filter((c) => c.status === 'fechado').length,
-        criticos: casos.filter((c) => c.prioridade === 'critica').length,
+        triagem: casos.filter((c) => c.status === 'triagem').length,
+        negociacao: casos.filter((c) => c.status === 'negociacao').length,
+        contrato: casos.filter((c) => c.status === 'contrato').length,
+        andamento: casos.filter((c) => c.status === 'andamento').length,
+        encerrados: casos.filter((c) => c.status === 'encerrado').length,
+        arquivados: casos.filter((c) => c.status === 'arquivado').length,
+        criticos: casos.filter((c) => c.prioridade >= 3).length,
       }
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar estatísticas', 'database_error')

@@ -7,9 +7,10 @@ import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import heroLight from '@/assets/hero-light.svg'
-import { casos, leads } from '@/data/mock'
 import type { Lead } from '@/types/domain'
 import { formatDateTime, formatPhone } from '@/utils/format'
+import { useLeads } from '@/hooks/useLeads'
+import { useCasos } from '@/hooks/useCasos'
 
 const resolveStatus = (
   value: string | null,
@@ -39,6 +40,8 @@ const heatPill = (heat: Lead['heat']) => {
 }
 
 export const LeadsPage = () => {
+  const { leads, loading, error } = useLeads()
+  const { casos } = useCasos()
   const [params] = useSearchParams()
   const [query, setQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('todos')
@@ -57,7 +60,7 @@ export const LeadsPage = () => {
       area: Array.from(new Set(leads.map((lead) => lead.area))),
       origin: Array.from(new Set(leads.map((lead) => lead.origin))),
     }),
-    [],
+    [leads],
   )
 
   const filteredLeads = React.useMemo(() => {
@@ -74,11 +77,17 @@ export const LeadsPage = () => {
       const matchesOrigin = originFilter === 'todos' || lead.origin === originFilter
       return matchesQuery && matchesStatus && matchesHeat && matchesArea && matchesOrigin
     })
-  }, [query, statusFilter, heatFilter, areaFilter, originFilter])
+  }, [query, statusFilter, heatFilter, areaFilter, originFilter, leads])
 
   const forcedState = resolveStatus(params.get('state'))
-  const pageState =
-    forcedState !== 'ready' ? forcedState : filteredLeads.length === 0 ? 'empty' : 'ready'
+  const baseState = loading
+    ? 'loading'
+    : error
+      ? 'error'
+      : filteredLeads.length === 0
+        ? 'empty'
+        : 'ready'
+  const pageState = forcedState !== 'ready' ? forcedState : baseState
 
   const relatedCase = selectedLead
     ? casos.find((caso) => caso.leadId === selectedLead.id)

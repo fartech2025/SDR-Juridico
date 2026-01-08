@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { documentosService } from '@/services/documentosService'
-import type { Documentos } from '@/lib/supabaseClient'
+import type { DocumentoRow } from '@/lib/supabaseClient'
+import type { Documento } from '@/types/domain'
+import { mapDocumentoRowToDocumento } from '@/lib/mappers'
 
 interface UseDocumentosState {
-  documentos: Documentos[]
+  documentos: Documento[]
   loading: boolean
   error: Error | null
 }
@@ -28,7 +30,11 @@ export function useDocumentos() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const documentos = await documentosService.getDocumentos()
-      setState((prev) => ({ ...prev, documentos, loading: false }))
+      setState((prev) => ({
+        ...prev,
+        documentos: documentos.map(mapDocumentoRowToDocumento),
+        loading: false,
+      }))
     } catch (error) {
       setState((prev) => ({
         ...prev,
@@ -45,7 +51,7 @@ export function useDocumentos() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const documento = await documentosService.getDocumento(id)
-      return documento
+      return mapDocumentoRowToDocumento(documento)
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -60,8 +66,9 @@ export function useDocumentos() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const documentos = await documentosService.getDocumentosByCaso(casoId)
-      setState((prev) => ({ ...prev, documentos, loading: false }))
-      return documentos
+      const mapped = documentos.map(mapDocumentoRowToDocumento)
+      setState((prev) => ({ ...prev, documentos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -72,12 +79,13 @@ export function useDocumentos() {
   /**
    * Busca documentos por status
    */
-  const fetchByStatus = useCallback(async (status: 'pendente' | 'completo') => {
+  const fetchByStatus = useCallback(async (status: string) => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const documentos = await documentosService.getDocumentosByStatus(status)
-      setState((prev) => ({ ...prev, documentos, loading: false }))
-      return documentos
+      const mapped = documentos.map(mapDocumentoRowToDocumento)
+      setState((prev) => ({ ...prev, documentos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -92,8 +100,9 @@ export function useDocumentos() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const documentos = await documentosService.getDocumentosByTipo(tipo)
-      setState((prev) => ({ ...prev, documentos, loading: false }))
-      return documentos
+      const mapped = documentos.map(mapDocumentoRowToDocumento)
+      setState((prev) => ({ ...prev, documentos: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -111,12 +120,13 @@ export function useDocumentos() {
   /**
    * Cria um novo documento (com atualização otimista)
    */
-  const createDocumento = useCallback(async (documento: Omit<Documentos, 'id' | 'created_at' | 'updated_at'>) => {
+  const createDocumento = useCallback(async (documento: Omit<DocumentoRow, 'id' | 'created_at'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoDocumento = await documentosService.createDocumento(documento)
-      setState((prev) => ({ ...prev, documentos: [novoDocumento, ...prev.documentos] }))
-      return novoDocumento
+      const mapped = mapDocumentoRowToDocumento(novoDocumento)
+      setState((prev) => ({ ...prev, documentos: [mapped, ...prev.documentos] }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err }))
@@ -127,21 +137,25 @@ export function useDocumentos() {
   /**
    * Atualiza um documento (com atualização otimista)
    */
-  const updateDocumento = useCallback(async (id: string, updates: Partial<Omit<Documentos, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateDocumento = useCallback(
+    async (id: string, updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const documentoAtualizado = await documentosService.updateDocumento(id, updates)
+      const mapped = mapDocumentoRowToDocumento(documentoAtualizado)
       setState((prev) => ({
         ...prev,
-        documentos: prev.documentos.map((d) => (d.id === id ? documentoAtualizado : d)),
+        documentos: prev.documentos.map((d) => (d.id === id ? mapped : d)),
       }))
-      return documentoAtualizado
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err }))
       throw err
     }
-  }, [])
+    },
+    []
+  )
 
   /**
    * Deleta um documento (com atualização otimista)
@@ -165,14 +179,14 @@ export function useDocumentos() {
    * Marca documento como completo
    */
   const marcarCompleto = useCallback(async (id: string) => {
-    return updateDocumento(id, { status: 'completo' })
+    return updateDocumento(id, { meta: { status: 'aprovado' } })
   }, [updateDocumento])
 
   /**
    * Marca documento como pendente
    */
   const marcarPendente = useCallback(async (id: string) => {
-    return updateDocumento(id, { status: 'pendente' })
+    return updateDocumento(id, { meta: { status: 'pendente' } })
   }, [updateDocumento])
 
   /**

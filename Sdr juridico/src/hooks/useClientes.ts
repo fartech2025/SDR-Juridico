@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { clientesService } from '@/services/clientesService'
-import type { Clientes } from '@/lib/supabaseClient'
+import { casosService } from '@/services/casosService'
+import type { CasoRow, ClienteRow } from '@/lib/supabaseClient'
+import type { Cliente } from '@/types/domain'
+import { mapClienteRowToCliente } from '@/lib/mappers'
 
 interface UseClientesState {
-  clientes: Clientes[]
+  clientes: Cliente[]
   loading: boolean
   error: Error | null
 }
@@ -21,8 +24,39 @@ export function useClientes() {
   const fetchClientes = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
-      const clientes = await clientesService.getClientes()
-      setState((prev) => ({ ...prev, clientes, loading: false }))
+      const [clientes, casos] = await Promise.all([
+        clientesService.getClientesComCasos(),
+        casosService.getCasos(),
+      ])
+
+      const casosPorCliente = new Map<string, CasoRow[]>()
+      casos.forEach((caso) => {
+        if (!caso.cliente_id) return
+        const lista = casosPorCliente.get(caso.cliente_id) || []
+        lista.push(caso)
+        casosPorCliente.set(caso.cliente_id, lista)
+      })
+
+      const mapped = clientes.map((cliente) => {
+        const casosCliente = casosPorCliente.get(cliente.id) || []
+        const sorted = [...casosCliente].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        const latest = sorted[0]
+        const caseCount = cliente.casos_count ?? casosCliente.length
+        const hasCritico = casosCliente.some((caso) => caso.prioridade >= 3)
+        const hasAtencao = casosCliente.some((caso) => caso.prioridade === 2)
+
+        return mapClienteRowToCliente(cliente, {
+          caseCount,
+          area: latest?.area || 'Geral',
+          status: caseCount === 0 ? 'inativo' : hasCritico ? 'em_risco' : 'ativo',
+          health: hasCritico ? 'critico' : hasAtencao ? 'atencao' : 'ok',
+          lastUpdate: latest?.created_at || cliente.created_at,
+        })
+      })
+
+      setState((prev) => ({ ...prev, clientes: mapped, loading: false }))
     } catch (error) {
       setState((prev) => ({
         ...prev,
@@ -39,7 +73,13 @@ export function useClientes() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const cliente = await clientesService.getCliente(id)
-      return cliente
+      return mapClienteRowToCliente(cliente, {
+        caseCount: 0,
+        area: 'Geral',
+        status: 'ativo',
+        health: 'ok',
+        lastUpdate: cliente.created_at,
+      })
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -54,8 +94,17 @@ export function useClientes() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const clientes = await clientesService.getClientesByEmpresa(empresa)
-      setState((prev) => ({ ...prev, clientes, loading: false }))
-      return clientes
+      const mapped = clientes.map((cliente) =>
+        mapClienteRowToCliente(cliente, {
+          caseCount: 0,
+          area: 'Geral',
+          status: 'ativo',
+          health: 'ok',
+          lastUpdate: cliente.created_at,
+        })
+      )
+      setState((prev) => ({ ...prev, clientes: mapped, loading: false }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -72,6 +121,14 @@ export function useClientes() {
       const cliente = await clientesService.getClienteByCnpj(cnpj)
       setState((prev) => ({ ...prev, loading: false }))
       return cliente
+        ? mapClienteRowToCliente(cliente, {
+            caseCount: 0,
+            area: 'Geral',
+            status: 'ativo',
+            health: 'ok',
+            lastUpdate: cliente.created_at,
+          })
+        : null
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err, loading: false }))
@@ -82,12 +139,19 @@ export function useClientes() {
   /**
    * Cria um novo cliente (com atualização otimista)
    */
-  const createCliente = useCallback(async (cliente: Omit<Clientes, 'id' | 'created_at' | 'updated_at'>) => {
+  const createCliente = useCallback(async (cliente: Omit<ClienteRow, 'id' | 'created_at'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoCliente = await clientesService.createCliente(cliente)
-      setState((prev) => ({ ...prev, clientes: [novoCliente, ...prev.clientes] }))
-      return novoCliente
+      const mapped = mapClienteRowToCliente(novoCliente, {
+        caseCount: 0,
+        area: 'Geral',
+        status: 'ativo',
+        health: 'ok',
+        lastUpdate: novoCliente.created_at,
+      })
+      setState((prev) => ({ ...prev, clientes: [mapped, ...prev.clientes] }))
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err }))
@@ -98,21 +162,31 @@ export function useClientes() {
   /**
    * Atualiza um cliente (com atualização otimista)
    */
-  const updateCliente = useCallback(async (id: string, updates: Partial<Omit<Clientes, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateCliente = useCallback(
+    async (id: string, updates: Partial<Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const clienteAtualizado = await clientesService.updateCliente(id, updates)
+      const mapped = mapClienteRowToCliente(clienteAtualizado, {
+        caseCount: 0,
+        area: 'Geral',
+        status: 'ativo',
+        health: 'ok',
+        lastUpdate: clienteAtualizado.created_at,
+      })
       setState((prev) => ({
         ...prev,
-        clientes: prev.clientes.map((c) => (c.id === id ? clienteAtualizado : c)),
+        clientes: prev.clientes.map((c) => (c.id === id ? mapped : c)),
       }))
-      return clienteAtualizado
+      return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
       setState((prev) => ({ ...prev, error: err }))
       throw err
     }
-  }, [])
+    },
+    []
+  )
 
   /**
    * Deleta um cliente (com atualização otimista)

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Database } from 'lucide-react'
+import { toast } from 'sonner'
 
 import heroLight from '@/assets/hero-light.svg'
 import { PageState } from '@/components/PageState'
@@ -8,9 +9,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Modal } from '@/components/ui/modal'
-import { integrationsAdvanced, integrationsEssential } from '@/data/mock'
 import type { Integration, IntegrationStatus } from '@/types/domain'
 import { cn } from '@/utils/cn'
+import { useIntegrations } from '@/hooks/useIntegrations'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 const tabs = ['Essencial', 'Avancado'] as const
 type TabKey = (typeof tabs)[number]
@@ -32,6 +34,12 @@ const statusVariant = (
   return 'info'
 }
 
+const matchesKey = (value: string, key: string) => {
+  const lower = value.toLowerCase()
+  if (lower.includes(key)) return true
+  return lower.replace(/\s+/g, '_').includes(key)
+}
+
 export const ConfigPage = () => {
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -39,12 +47,29 @@ export const ConfigPage = () => {
   const [activeTab, setActiveTab] = React.useState<TabKey>('Essencial')
   const [selectedIntegration, setSelectedIntegration] =
     React.useState<Integration | null>(null)
+  const { orgId } = useCurrentUser()
+  const { integrations, loading, error, createDefaultIntegrations } = useIntegrations()
 
-  const integrations =
-    activeTab === 'Essencial' ? integrationsEssential : integrationsAdvanced
+  const filteredIntegrations = React.useMemo(() => {
+    if (activeTab === 'Essencial') {
+      return integrations.filter((integration) =>
+        ['whatsapp', 'google_calendar', 'email'].some((key) =>
+          matchesKey(integration.name, key),
+        ),
+      )
+    }
+    return integrations.filter((integration) => !integration.name.toLowerCase().includes('whatsapp'))
+  }, [activeTab, integrations])
 
-  const pageState =
-    state !== 'ready' ? state : integrations.length === 0 ? 'empty' : 'ready'
+  const baseState = loading
+    ? 'loading'
+    : error
+      ? 'error'
+      : filteredIntegrations.length === 0
+        ? 'empty'
+        : 'ready'
+  const pageState = state !== 'ready' ? state : baseState
+  const canSeed = !loading && integrations.length === 0 && Boolean(orgId)
 
   return (
     <div className="space-y-5">
@@ -87,12 +112,31 @@ export const ConfigPage = () => {
             {tab}
           </button>
         ))}
+        {canSeed && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={async () => {
+              if (!orgId) return
+              try {
+                await createDefaultIntegrations(orgId)
+                toast.success('Integracoes padrao criadas.')
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Erro ao criar integracoes'
+                toast.error(message)
+              }
+            }}
+            className="rounded-full"
+          >
+            Criar integracoes padrao
+          </Button>
+        )}
       </div>
 
       <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           <div className="grid gap-4 lg:grid-cols-2">
-            {integrations.map((integration) => (
+            {filteredIntegrations.map((integration) => (
               <Card key={integration.id}>
                 <CardHeader className="space-y-2">
                   <div className="flex items-center justify-between gap-3">
@@ -108,7 +152,7 @@ export const ConfigPage = () => {
                   </p>
                 </CardHeader>
                 <CardContent className="flex gap-2">
-                  {integration.id === 'int-4' ? (
+                  {integration.name.toLowerCase().includes('datajud') ? (
                     <Button
                       variant="primary"
                       size="sm"
@@ -162,7 +206,7 @@ export const ConfigPage = () => {
         open={Boolean(selectedIntegration)}
         onClose={() => setSelectedIntegration(null)}
         title={selectedIntegration?.name}
-        description="Configuracao mock da integracao."
+        description="Configuracao da integracao."
         footer={
           <>
             <Button variant="ghost" onClick={() => setSelectedIntegration(null)}>
