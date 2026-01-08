@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Upload, FileUp, Image, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -20,6 +21,7 @@ interface ArquivoUpload {
 }
 
 export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
+  const navigate = useNavigate()
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null)
@@ -33,9 +35,6 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
   async function checkAuthentication() {
     const { data: { session } } = await supabase.auth.getSession()
     setIsAuthenticated(!!session?.user)
-    if (!session?.user) {
-      toast.error('Você precisa estar logado para fazer upload de documentos')
-    }
   }
 
   const handleDrag = (e: React.DragEvent) => {
@@ -173,8 +172,15 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
                 Você precisa estar logado para fazer upload de documentos. Por favor, faça login e tente novamente.
               </p>
             </div>
-          </div>
-        </Card>
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate('/login', { state: { from: window.location.pathname } })}
+            >
+              Fazer Login
+            </Button
       )}
 
       {/* Área de drop */}
