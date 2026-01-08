@@ -1,11 +1,12 @@
 import * as React from 'react'
-import { Check, Plus, X } from 'lucide-react'
+import { Check, Plus, X, Upload as UploadIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { UploadDocumentos } from '@/components/UploadDocumentos'
 import heroLight from '@/assets/hero-light.svg'
 import { casos, documentos } from '@/data/mock'
 import { formatDateTime } from '@/utils/format'
@@ -33,6 +34,7 @@ export const DocumentosPage = () => {
   const [typeFilter, setTypeFilter] = React.useState('todos')
   const [clienteFilter, setClienteFilter] = React.useState('todos')
   const [activeTab, setActiveTab] = React.useState('Tudo')
+  const [mostrarUpload, setMostrarUpload] = React.useState(false)
 
   const tabs = ['Tudo', 'Docs', 'Agenda', 'Comercial', 'Juridico', 'Automacao']
 
@@ -74,6 +76,15 @@ export const DocumentosPage = () => {
     setClienteFilter('todos')
   }
 
+  const handleUploadComplete = () => {
+    toast.success('Documento enviado com sucesso!')
+    // Aqui você pode recarregar a lista de documentos
+    // Por enquanto, apenas fechamos o modal
+    setTimeout(() => {
+      setMostrarUpload(false)
+    }, 1500)
+  }
+
   return (
     <div className="space-y-5">
       <header
@@ -105,6 +116,28 @@ export const DocumentosPage = () => {
         emptyDescription="Ajuste os filtros para localizar os documentos."
       >
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+          {/* Seção de Upload */}
+          {mostrarUpload && (
+            <Card className="xl:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Upload de Documentos</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMostrarUpload(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <UploadDocumentos
+                  casoId={clienteFilter !== 'todos' ? selectedCase?.id : undefined}
+                  onUploadComplete={handleUploadComplete}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -114,9 +147,20 @@ export const DocumentosPage = () => {
                   <span>Exibindo: {filteredDocs.length}</span>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="h-10 rounded-full px-4">
-                Nova solicitacao
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="h-10 rounded-full px-4"
+                  onClick={() => setMostrarUpload(!mostrarUpload)}
+                >
+                  <UploadIcon className="h-4 w-4 mr-2" />
+                  {mostrarUpload ? 'Ocultar Upload' : 'Upload Documento'}
+                </Button>
+                <Button variant="outline" size="sm" className="h-10 rounded-full px-4">
+                  Nova solicitacao
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white px-3 py-2 shadow-soft">

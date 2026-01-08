@@ -4,6 +4,9 @@ export type AppErrorCode =
   | 'database_error'
   | 'unauthorized'
   | 'forbidden'
+  | 'auth_error'
+  | 'storage_error'
+  | 'unknown_error'
   | 'unknown'
 
 export class AppError extends Error {

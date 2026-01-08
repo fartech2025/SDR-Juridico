@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
 
+import { BotaoFavorito } from '@/components/BotaoFavorito'
+import { registrarConsulta } from '@/services/favoritosService'
+
 import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -244,6 +247,16 @@ export const DataJudPage = () => {
       const processos = resultado.hits.hits.map((hit) => hit._source)
       setResultados(processos)
       setTotalEncontrado(resultado.hits.total.value)
+
+      // Registrar consulta no histórico
+      if (processos.length > 0 && processos[0].numeroProcesso) {
+        registrarConsulta({
+          numero_processo: processos[0].numeroProcesso,
+          tribunal: tribunal || 'Detectado automaticamente',
+          tipo_busca: tipoBusca,
+          sucesso: true
+        }).catch(console.error)
+      }
 
       if (processos.length === 0) {
         toast.info('Nenhum processo encontrado')
@@ -924,6 +937,9 @@ export const DataJudPage = () => {
                       >
                         Copiar Número
                       </Button>
+                      
+                      <BotaoFavorito processo={processo} />
+                      
                       <Button
                         size="sm"
                         onClick={() => exportarProcessoParaPDF(processo)}
