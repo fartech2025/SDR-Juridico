@@ -81,7 +81,19 @@ export function useCurrentUser() {
       }
 
       setProfile((profileResult.data?.[0] as ProfileRow) || null)
-      setMember((memberResult.data?.[0] as MemberWithOrg) || null)
+      
+      // Tratar org como array e pegar primeiro elemento
+      const memberData = memberResult.data?.[0]
+      if (memberData) {
+        if (Array.isArray(memberData.org) && memberData.org.length > 0) {
+          setMember({ ...memberData, org: memberData.org[0] } as MemberWithOrg)
+        } else {
+          setMember({ ...memberData, org: null } as MemberWithOrg)
+        }
+      } else {
+        setMember(null)
+      }
+      
       setLoading(false)
     }
 

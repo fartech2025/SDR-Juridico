@@ -239,7 +239,7 @@ export const documentosService = {
     casoId?: string
     tags?: string[]
     descricao?: string
-  }): Promise<Documentos> {
+  }): Promise<DocumentoRow> {
     try {
       const { arquivo, categoria = 'geral', casoId, tags, descricao } = params
 

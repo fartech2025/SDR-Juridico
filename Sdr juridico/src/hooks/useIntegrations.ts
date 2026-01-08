@@ -28,14 +28,14 @@ export function useIntegrations() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const rows = await integrationsService.getIntegrations()
-      const mapped = rows.map((row) => ({
+      const mapped: Integration[] = rows.map((row) => ({
         id: row.id,
         name: row.name || row.provider,
         description:
           (row.settings && (row.settings as { description?: string }).description) ||
           descriptionByProvider[row.provider] ||
           'Integracao configurada.',
-        status: row.enabled ? 'connected' : 'disconnected',
+        status: (row.enabled ? 'connected' : 'disconnected') as 'connected' | 'disconnected',
       }))
       setState((prev) => ({ ...prev, integrations: mapped, loading: false }))
     } catch (error) {

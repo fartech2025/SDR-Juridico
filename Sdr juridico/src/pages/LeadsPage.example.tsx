@@ -110,6 +110,11 @@ export function LeadsRealPage() {
           assunto: formData.assunto,
           status: sqlStatus as any,
           qualificacao: { heat: formData.heat },
+          cliente_id: null,
+          resumo: null,
+          assigned_user_id: null,
+          remote_id: null,
+          last_contact_at: null,
         })
         toast.success('Lead criado!')
       }

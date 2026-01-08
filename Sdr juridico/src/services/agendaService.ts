@@ -228,9 +228,9 @@ export const agendaService = {
 
       return {
         total: eventos.length,
-        reunioes: eventos.filter((e) => e.tipo === 'reuniao').length,
-        ligacoes: eventos.filter((e) => e.tipo === 'ligacao').length,
-        visitas: eventos.filter((e) => e.tipo === 'visita').length,
+        reunioes: eventos.filter((e) => (e as any).tipo === 'reuniao').length,
+        ligacoes: eventos.filter((e) => (e as any).tipo === 'ligacao').length,
+        visitas: eventos.filter((e) => (e as any).tipo === 'visita').length,
         proximos_7_dias: proximos.length,
       }
     } catch (error) {
