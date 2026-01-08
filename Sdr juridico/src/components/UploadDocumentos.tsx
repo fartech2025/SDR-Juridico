@@ -21,7 +21,8 @@ interface ArquivoUpload {
 export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
-  const inputRef = React.useRef<HTMLInputElement>(null)
+  const inputFileRef = React.useRef<HTMLInputElement>(null)
+  const inputCameraRef = React.useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -175,7 +176,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
             <Button
               variant="outline"
               size="sm"
-              onClick={() => inputRef.current?.click()}
+              onClick={() => inputFileRef.current?.click()}
             >
               <FileUp className="h-4 w-4 mr-2" />
               Selecionar Arquivos
@@ -184,26 +185,31 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                if (inputRef.current) {
-                  inputRef.current.accept = 'image/*'
-                  inputRef.current.capture = 'environment'
-                  inputRef.current.click()
-                }
-              }}
+              onClick={() => inputCameraRef.current?.click()}
             >
               <Image className="h-4 w-4 mr-2" />
               Tirar Foto
             </Button>
           </div>
 
+          {/* Input para selecionar arquivos */}
           <input
-            ref={inputRef}
+            ref={inputFileRef}
             type="file"
             multiple
             className="hidden"
             onChange={handleFileInput}
             accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"
+          />
+
+          {/* Input para capturar foto */}
+          <input
+            ref={inputCameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileInput}
           />
 
           <p className="text-xs text-text-muted mt-4">
