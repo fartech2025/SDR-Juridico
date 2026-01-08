@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { Upload, FileUp, Image, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Upload, FileUp, Image, X, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -21,21 +20,12 @@ interface ArquivoUpload {
 }
 
 export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
-  const navigate = useNavigate()
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
-  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null)
+  const [tipoDocumento, setTipoDocumento] = React.useState('')
+  const [observacao, setObservacao] = React.useState('')
   const inputFileRef = React.useRef<HTMLInputElement>(null)
   const inputCameraRef = React.useRef<HTMLInputElement>(null)
-
-  React.useEffect(() => {
-    checkAuthentication()
-  }, [])
-
-  async function checkAuthentication() {
-    const { data: { session } } = await supabase.auth.getSession()
-    setIsAuthenticated(!!session?.user)
-  }
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -64,6 +54,12 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
   }
 
   const handleArquivos = (novosArquivos: File[]) => {
+    // Validar se tipo de documento foi selecionado
+    if (!tipoDocumento) {
+      toast.error('Por favor, selecione o tipo de documento antes de fazer o upload')
+      return
+    }
+
     const arquivosValidos = novosArquivos.filter((arquivo) => {
       // Validar tamanho
       if (arquivo.size > 10 * 1024 * 1024) {
@@ -120,7 +116,8 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
       await documentosService.uploadDocumento({
         arquivo: upload.arquivo,
         casoId,
-        categoria: 'geral',
+        categoria: tipoDocumento || 'geral',
+        descricao: observacao || undefined,
       })
 
       // Sucesso
@@ -131,6 +128,15 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
       )
 
       toast.success(`${upload.arquivo.name} enviado com sucesso!`)
+      
+      // Limpar campos se todos os uploads foram concluídos
+      const todosCompletos = arquivos.every((a, i) => 
+        i === index ? true : a.status === 'sucesso' || a.status === 'erro'
+      )
+      if (todosCompletos) {
+        setTipoDocumento('')
+        setObservacao('')
+      }
       
       // Chamar callback se fornecido
       if (onUploadComplete) {
@@ -159,29 +165,49 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
 
   return (
     <div className={className}>
-      {/* Aviso de não autenticado */}
-      {isAuthenticated === false && (
-        <Card className="mb-4 border-orange-200 bg-orange-50">
-          <div className="p-4 flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-orange-900">
-                Autenticação necessária
-              </p>
-              <p className="text-xs text-orange-700 mt-1">
-                Você precisa estar logado para fazer upload de documentos.
-              </p>
-            </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate('/login', { state: { from: window.location.pathname } })}
+      {/* Campos de informação do documento */}
+      <div>
+        <Card className="mb-4 p-4 space-y-4">
+          <div>
+            <label htmlFor="tipoDocumento" className="block text-sm font-medium text-text mb-2">
+              Tipo de Documento *
+            </label>
+            <select
+              id="tipoDocumento"
+              value={tipoDocumento}
+              onChange={(e) => setTipoDocumento(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              Fazer Login
-            </Button>
+              <option value="">Selecione o tipo</option>
+              <option value="peticao_inicial">Petição Inicial</option>
+              <option value="contestacao">Contestação</option>
+              <option value="recurso">Recurso</option>
+              <option value="procuracao">Procuração</option>
+              <option value="contrato">Contrato</option>
+              <option value="documento_pessoal">Documento Pessoal</option>
+              <option value="comprovante">Comprovante</option>
+              <option value="laudo">Laudo/Perícia</option>
+              <option value="sentenca">Sentença</option>
+              <option value="acordo">Acordo</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="observacao" className="block text-sm font-medium text-text mb-2">
+              Observação
+            </label>
+            <textarea
+              id="observacao"
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              placeholder="Adicione observações sobre este documento (opcional)"
+              rows={3}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
           </div>
         </Card>
-      )}
+      </div>
 
       {/* Área de drop */}
       <Card
@@ -189,7 +215,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
           dragActive
             ? 'border-primary bg-primary/5'
             : 'border-border hover:border-primary/50'
-        } ${isAuthenticated === false ? 'opacity-50 pointer-events-none' : ''}`}
+        }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
