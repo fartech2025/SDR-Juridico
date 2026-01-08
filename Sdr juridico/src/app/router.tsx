@@ -2,6 +2,7 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 
 import { AppShell } from '@/layouts/AppShell'
 import { AgendaPage } from '@/pages/AgendaPage'
+import AnalyticsPage from '@/pages/AnalyticsPage'
 import { CasoPage } from '@/pages/CasoPage'
 import { CasosPage } from '@/pages/CasosPage'
 import { ClientesPage } from '@/pages/ClientesPage'
@@ -90,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: 'datajud',
         element: <DataJudPage />,
+      },
+      {
+        path: 'analytics',
+        element: <AnalyticsPage />,
       },
     ],
   },

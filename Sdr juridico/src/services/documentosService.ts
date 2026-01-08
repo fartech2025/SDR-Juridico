@@ -229,4 +229,177 @@ export const documentosService = {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar estatísticas', 'database_error')
     }
   },
+
+  /**
+   * Faz upload de um documento para o Supabase Storage
+   */
+  async uploadDocumento(params: {
+    arquivo: File
+    categoria?: string
+    casoId?: string
+    tags?: string[]
+    descricao?: string
+  }): Promise<Documentos> {
+    try {
+      const { arquivo, categoria = 'geral', casoId, tags, descricao } = params
+
+      // Validar arquivo
+      if (!arquivo) {
+        throw new AppError('Arquivo é obrigatório', 'validation_error')
+      }
+
+      // Validar tamanho (10MB)
+      const MAX_SIZE = 10 * 1024 * 1024
+      if (arquivo.size > MAX_SIZE) {
+        throw new AppError('Arquivo muito grande. Tamanho máximo: 10MB', 'validation_error')
+      }
+
+      // Validar tipo de arquivo
+      const tiposPermitidos = [
+        'application/pdf',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/heic',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ]
+
+      if (!tiposPermitidos.includes(arquivo.type)) {
+        throw new AppError('Tipo de arquivo não permitido. Use PDF, imagens ou documentos Office', 'validation_error')
+      }
+
+      // Obter usuário autenticado
+      const { data: { session }, error: authError } = await supabase.auth.getSession()
+      if (authError || !session?.user) {
+        throw new AppError('Usuário não autenticado. Faça login para fazer upload de documentos.', 'auth_error')
+      }
+
+      const user = session.user
+
+      // Gerar nome único para o arquivo
+      const timestamp = Date.now()
+      const randomStr = Math.random().toString(36).substring(2, 9)
+      const extensao = arquivo.name.split('.').pop()
+      const nomeArquivo = `${timestamp}_${randomStr}.${extensao}`
+      
+      // Path no storage: user_id/nome_arquivo
+      const storagePath = `${user.id}/${nomeArquivo}`
+
+      // Upload para o Storage
+      const { error: uploadError } = await supabase.storage
+        .from('documentos')
+        .upload(storagePath, arquivo, {
+          cacheControl: '3600',
+          upsert: false,
+        })
+
+      if (uploadError) {
+        throw new AppError(uploadError.message, 'storage_error')
+      }
+
+      // Registrar no banco de dados
+      const { data: documento, error: dbError } = await supabase
+        .from('documentos')
+        .insert({
+          user_id: user.id,
+          nome_arquivo: nomeArquivo,
+          nome_original: arquivo.name,
+          tipo_arquivo: arquivo.type,
+          tamanho_bytes: arquivo.size,
+          storage_path: storagePath,
+          caso_id: casoId || null,
+          categoria,
+          tags: tags || [],
+          descricao: descricao || null,
+          status: 'pendente',
+          metadata: {
+            uploaded_at: new Date().toISOString(),
+            original_name: arquivo.name,
+          },
+        })
+        .select()
+        .single()
+
+      if (dbError) {
+        // Se falhar ao registrar no banco, tentar deletar do storage
+        await supabase.storage.from('documentos').remove([storagePath])
+        throw new AppError(dbError.message, 'database_error')
+      }
+
+      return documento
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao fazer upload do documento', 'unknown_error')
+    }
+  },
+
+  /**
+   * Obtém URL pública temporária para visualizar/baixar documento
+   */
+  async obterUrlDocumento(storagePath: string): Promise<string> {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documentos')
+        .createSignedUrl(storagePath, 3600) // 1 hora
+
+      if (error) throw new AppError(error.message, 'storage_error')
+      if (!data.signedUrl) throw new AppError('Erro ao gerar URL', 'storage_error')
+
+      return data.signedUrl
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao obter URL do documento', 'unknown_error')
+    }
+  },
+
+  /**
+   * Faz download de um documento
+   */
+  async downloadDocumento(storagePath: string, nomeOriginal: string): Promise<void> {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documentos')
+        .download(storagePath)
+
+      if (error) throw new AppError(error.message, 'storage_error')
+
+      // Criar link de download
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = nomeOriginal
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao fazer download do documento', 'unknown_error')
+    }
+  },
+}
+
+/**
+ * Formata tamanho de arquivo em formato legível
+ */
+export function formatarTamanhoArquivo(bytes: number): string {
+  if (bytes === 0) return '0 Bytes'
+
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
+}
+
+/**
+ * Obtém ícone baseado no tipo de arquivo
+ */
+export function obterIconeArquivo(tipoArquivo: string): string {
+  if (tipoArquivo.includes('pdf')) return '📄'
+  if (tipoArquivo.includes('image')) return '🖼️'
+  if (tipoArquivo.includes('word') || tipoArquivo.includes('document')) return '📝'
+  if (tipoArquivo.includes('excel') || tipoArquivo.includes('sheet')) return '📊'
+  return '📎'
 }
