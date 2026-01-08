@@ -169,9 +169,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
                 Autenticação necessária
               </p>
               <p className="text-xs text-orange-700 mt-1">
-                Você precisa estar logado para fazer upload de documentos. Por favor, faça login e tente novamente.
-              </p>
-            </div>
+                Você precisa estar logado para fazer upload de documentos.
               </p>
             </div>
             <Button
@@ -180,7 +178,9 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
               onClick={() => navigate('/login', { state: { from: window.location.pathname } })}
             >
               Fazer Login
-            </Button
+            </Button>
+          </div>
+        </Card>
       )}
 
       {/* Área de drop */}
