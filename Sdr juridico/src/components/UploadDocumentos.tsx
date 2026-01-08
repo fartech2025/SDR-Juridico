@@ -19,11 +19,73 @@ interface ArquivoUpload {
   erro?: string
 }
 
+interface DadosProcuracao {
+  tipo: string
+  status: string
+  numeroId: string
+  dataDocumento: string
+  dataAssinatura: string
+  validade: string
+  dataExpiracao: string
+  outorgante: {
+    nome: string
+    cpfCnpj: string
+    rgIe: string
+    endereco: string
+    email: string
+    telefone: string
+  }
+  outorgados: Array<{
+    nome: string
+    oab: string
+    uf: string
+    cpf: string
+    sociedade: string
+  }>
+  poderesPrincipais: string[]
+  poderesEspeciais: string
+  limitacoes: string
+  orgaoCompetencia: string
+  processosVinculados: string
+  areaDireito: string
+  finalidade: string
+  tipoAssinatura: string
+  assinantes: string
+  evidencias: string
+  reconhecimentoFirma: boolean
+  cartorio: string
+  testemunhas: string
+}
+
 export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
   const [tipoDocumento, setTipoDocumento] = React.useState('')
   const [observacao, setObservacao] = React.useState('')
+  const [dadosProcuracao, setDadosProcuracao] = React.useState<DadosProcuracao>({
+    tipo: '',
+    status: 'rascunho',
+    numeroId: '',
+    dataDocumento: '',
+    dataAssinatura: '',
+    validade: 'indeterminada',
+    dataExpiracao: '',
+    outorgante: { nome: '', cpfCnpj: '', rgIe: '', endereco: '', email: '', telefone: '' },
+    outorgados: [{ nome: '', oab: '', uf: '', cpf: '', sociedade: '' }],
+    poderesPrincipais: [],
+    poderesEspeciais: '',
+    limitacoes: '',
+    orgaoCompetencia: '',
+    processosVinculados: '',
+    areaDireito: '',
+    finalidade: '',
+    tipoAssinatura: '',
+    assinantes: '',
+    evidencias: '',
+    reconhecimentoFirma: false,
+    cartorio: '',
+    testemunhas: '',
+  })
   const inputFileRef = React.useRef<HTMLInputElement>(null)
   const inputCameraRef = React.useRef<HTMLInputElement>(null)
 
@@ -112,12 +174,18 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
         )
       )
 
+      // Preparar descrição com dados da procuração se aplicável
+      let descricaoCompleta = observacao || ''
+      if (tipoDocumento === 'procuracao') {
+        descricaoCompleta = JSON.stringify({ observacao, dadosProcuracao })
+      }
+
       // Fazer upload
       await documentosService.uploadDocumento({
         arquivo: upload.arquivo,
         casoId,
         categoria: tipoDocumento || 'geral',
-        descricao: observacao || undefined,
+        descricao: descricaoCompleta || undefined,
       })
 
       // Sucesso
@@ -208,6 +276,503 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
           </div>
         </Card>
       </div>
+
+      {/* Campos específicos para Procuração */}
+      {tipoDocumento === 'procuracao' && (
+        <div className="space-y-4 mb-4">
+          {/* 1) Identificação rápida */}
+          <Card className="p-4 space-y-4">
+            <h3 className="text-base font-semibold text-text border-b border-border pb-2">
+              1. Identificação Rápida
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Tipo de Procuração *
+                </label>
+                <select
+                  value={dadosProcuracao.tipo}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, tipo: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Selecione</option>
+                  <option value="judicial">Judicial</option>
+                  <option value="extrajudicial">Extrajudicial</option>
+                  <option value="ad_judicia">Ad Judicia</option>
+                  <option value="ad_judicia_et_extra">Ad Judicia et Extra</option>
+                  <option value="substabelecimento">Substabelecimento</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Status
+                </label>
+                <select
+                  value={dadosProcuracao.status}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="rascunho">Rascunho</option>
+                  <option value="enviada">Enviada</option>
+                  <option value="assinada">Assinada</option>
+                  <option value="valida">Válida</option>
+                  <option value="vencida">Vencida</option>
+                  <option value="revogada">Revogada</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Número/ID Interno
+                </label>
+                <input
+                  type="text"
+                  value={dadosProcuracao.numeroId}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, numeroId: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Data do Documento
+                </label>
+                <input
+                  type="date"
+                  value={dadosProcuracao.dataDocumento}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, dataDocumento: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Data de Assinatura
+                </label>
+                <input
+                  type="date"
+                  value={dadosProcuracao.dataAssinatura}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, dataAssinatura: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Validade
+                </label>
+                <select
+                  value={dadosProcuracao.validade}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, validade: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="indeterminada">Indeterminada</option>
+                  <option value="por_prazo">Por Prazo</option>
+                </select>
+              </div>
+
+              {dadosProcuracao.validade === 'por_prazo' && (
+                <div>
+                  <label className="block text-sm font-medium text-text mb-2">
+                    Data de Expiração
+                  </label>
+                  <input
+                    type="date"
+                    value={dadosProcuracao.dataExpiracao}
+                    onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, dataExpiracao: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* 2) Partes e poderes */}
+          <Card className="p-4 space-y-4">
+            <h3 className="text-base font-semibold text-text border-b border-border pb-2">
+              2. Partes e Poderes
+            </h3>
+            
+            {/* Outorgante */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-text">Outorgante (Cliente)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Nome/Razão Social</label>
+                  <input
+                    type="text"
+                    value={dadosProcuracao.outorgante.nome}
+                    onChange={(e) => setDadosProcuracao({
+                      ...dadosProcuracao,
+                      outorgante: { ...dadosProcuracao.outorgante, nome: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">CPF/CNPJ</label>
+                  <input
+                    type="text"
+                    value={dadosProcuracao.outorgante.cpfCnpj}
+                    onChange={(e) => setDadosProcuracao({
+                      ...dadosProcuracao,
+                      outorgante: { ...dadosProcuracao.outorgante, cpfCnpj: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">RG/IE</label>
+                  <input
+                    type="text"
+                    value={dadosProcuracao.outorgante.rgIe}
+                    onChange={(e) => setDadosProcuracao({
+                      ...dadosProcuracao,
+                      outorgante: { ...dadosProcuracao.outorgante, rgIe: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Endereço</label>
+                  <input
+                    type="text"
+                    value={dadosProcuracao.outorgante.endereco}
+                    onChange={(e) => setDadosProcuracao({
+                      ...dadosProcuracao,
+                      outorgante: { ...dadosProcuracao.outorgante, endereco: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">E-mail</label>
+                  <input
+                    type="email"
+                    value={dadosProcuracao.outorgante.email}
+                    onChange={(e) => setDadosProcuracao({
+                      ...dadosProcuracao,
+                      outorgante: { ...dadosProcuracao.outorgante, email: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Telefone</label>
+                  <input
+                    type="tel"
+                    value={dadosProcuracao.outorgante.telefone}
+                    onChange={(e) => setDadosProcuracao({
+                      ...dadosProcuracao,
+                      outorgante: { ...dadosProcuracao.outorgante, telefone: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Outorgados */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-text">Outorgado(s) (Advogados)</h4>
+              {dadosProcuracao.outorgados.map((outorgado, idx) => (
+                <div key={idx} className="border border-border rounded-lg p-3 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">Nome</label>
+                      <input
+                        type="text"
+                        value={outorgado.nome}
+                        onChange={(e) => {
+                          const novos = [...dadosProcuracao.outorgados]
+                          novos[idx].nome = e.target.value
+                          setDadosProcuracao({ ...dadosProcuracao, outorgados: novos })
+                        }}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">OAB</label>
+                      <input
+                        type="text"
+                        value={outorgado.oab}
+                        onChange={(e) => {
+                          const novos = [...dadosProcuracao.outorgados]
+                          novos[idx].oab = e.target.value
+                          setDadosProcuracao({ ...dadosProcuracao, outorgados: novos })
+                        }}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">UF</label>
+                      <input
+                        type="text"
+                        value={outorgado.uf}
+                        onChange={(e) => {
+                          const novos = [...dadosProcuracao.outorgados]
+                          novos[idx].uf = e.target.value
+                          setDadosProcuracao({ ...dadosProcuracao, outorgados: novos })
+                        }}
+                        maxLength={2}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">CPF (opcional)</label>
+                      <input
+                        type="text"
+                        value={outorgado.cpf}
+                        onChange={(e) => {
+                          const novos = [...dadosProcuracao.outorgados]
+                          novos[idx].cpf = e.target.value
+                          setDadosProcuracao({ ...dadosProcuracao, outorgados: novos })
+                        }}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs text-text-muted mb-1">Sociedade de Advogados</label>
+                      <input
+                        type="text"
+                        value={outorgado.sociedade}
+                        onChange={(e) => {
+                          const novos = [...dadosProcuracao.outorgados]
+                          novos[idx].sociedade = e.target.value
+                          setDadosProcuracao({ ...dadosProcuracao, outorgados: novos })
+                        }}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+                  {dadosProcuracao.outorgados.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDadosProcuracao({
+                          ...dadosProcuracao,
+                          outorgados: dadosProcuracao.outorgados.filter((_, i) => i !== idx)
+                        })
+                      }}
+                      className="text-xs text-red-500"
+                    >
+                      <X className="h-3 w-3 mr-1" /> Remover
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDadosProcuracao({
+                    ...dadosProcuracao,
+                    outorgados: [...dadosProcuracao.outorgados, { nome: '', oab: '', uf: '', cpf: '', sociedade: '' }]
+                  })
+                }}
+              >
+                + Adicionar Outorgado
+              </Button>
+            </div>
+
+            {/* Poderes */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">Poderes Principais</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {['receber e dar quitação', 'confessar', 'transigir', 'firmar compromisso', 
+                    'substabelecer', 'representar em audiência', 'levantamento de valores/alvará', 
+                    'representação administrativa', 'propositura de ação'].map((poder) => (
+                    <label key={poder} className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={dadosProcuracao.poderesPrincipais.includes(poder)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setDadosProcuracao({
+                              ...dadosProcuracao,
+                              poderesPrincipais: [...dadosProcuracao.poderesPrincipais, poder]
+                            })
+                          } else {
+                            setDadosProcuracao({
+                              ...dadosProcuracao,
+                              poderesPrincipais: dadosProcuracao.poderesPrincipais.filter(p => p !== poder)
+                            })
+                          }
+                        }}
+                        className="rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span className="text-text">{poder}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">Poderes Especiais</label>
+                <textarea
+                  value={dadosProcuracao.poderesEspeciais}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, poderesEspeciais: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  placeholder="Descreva poderes especiais específicos"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">Limitações/Ressalvas</label>
+                <textarea
+                  value={dadosProcuracao.limitacoes}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, limitacoes: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  placeholder="Ex: vedado substabelecer, somente INSS, somente processo X"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 3) Contexto do uso */}
+          <Card className="p-4 space-y-4">
+            <h3 className="text-base font-semibold text-text border-b border-border pb-2">
+              3. Contexto do Uso
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">Órgão/Competência</label>
+                <input
+                  type="text"
+                  value={dadosProcuracao.orgaoCompetencia}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, orgaoCompetencia: e.target.value })}
+                  placeholder="Ex: JT, JF, TJ, TRF, Juizado"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">Área do Direito</label>
+                <input
+                  type="text"
+                  value={dadosProcuracao.areaDireito}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, areaDireito: e.target.value })}
+                  placeholder="Ex: cível, trabalhista, previdenciário"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text mb-2">Processos Vinculados (CNJs)</label>
+                <textarea
+                  value={dadosProcuracao.processosVinculados}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, processosVinculados: e.target.value })}
+                  rows={2}
+                  placeholder="Liste os números de processo CNJ separados por vírgula"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text mb-2">Finalidade</label>
+                <input
+                  type="text"
+                  value={dadosProcuracao.finalidade}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, finalidade: e.target.value })}
+                  placeholder="Ex: ajuizamento, acompanhamento, acordo, alvará"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 4) Assinaturas e autenticação */}
+          <Card className="p-4 space-y-4">
+            <h3 className="text-base font-semibold text-text border-b border-border pb-2">
+              4. Assinaturas e Autenticação
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">Tipo de Assinatura</label>
+                <select
+                  value={dadosProcuracao.tipoAssinatura}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, tipoAssinatura: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Selecione</option>
+                  <option value="manuscrita">Manuscrita</option>
+                  <option value="icp_brasil">ICP-Brasil</option>
+                  <option value="govbr">Gov.br</option>
+                  <option value="docusign">DocuSign</option>
+                  <option value="clicksign">Clicksign</option>
+                  <option value="outra">Outra Plataforma</option>
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="reconhecimentoFirma"
+                  checked={dadosProcuracao.reconhecimentoFirma}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, reconhecimentoFirma: e.target.checked })}
+                  className="rounded border-border text-primary focus:ring-primary"
+                />
+                <label htmlFor="reconhecimentoFirma" className="text-sm font-medium text-text">
+                  Reconhecimento de Firma
+                </label>
+              </div>
+
+              {dadosProcuracao.reconhecimentoFirma && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-text mb-2">Cartório</label>
+                  <input
+                    type="text"
+                    value={dadosProcuracao.cartorio}
+                    onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, cartorio: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text mb-2">Assinantes (nome + documento + data)</label>
+                <textarea
+                  value={dadosProcuracao.assinantes}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, assinantes: e.target.value })}
+                  rows={2}
+                  placeholder="Liste quem assinou, documentos e datas"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text mb-2">Evidências (certificado, hash, trilha)</label>
+                <textarea
+                  value={dadosProcuracao.evidencias}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, evidencias: e.target.value })}
+                  rows={2}
+                  placeholder="Informações sobre certificados, hash, carimbo do tempo, etc"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text mb-2">Testemunhas (nome + CPF)</label>
+                <textarea
+                  value={dadosProcuracao.testemunhas}
+                  onChange={(e) => setDadosProcuracao({ ...dadosProcuracao, testemunhas: e.target.value })}
+                  rows={2}
+                  placeholder="Liste as testemunhas com seus CPFs"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Área de drop */}
       <Card
