@@ -1,8 +1,9 @@
 import * as React from 'react'
-import { Upload, FileUp, Image, X, Loader2, CheckCircle2 } from 'lucide-react'
+import { Upload, FileUp, Image, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { supabase } from '@/lib/supabaseClient'
 import { documentosService, formatarTamanhoArquivo, obterIconeArquivo } from '@/services/documentosService'
 
 interface UploadDocumentosProps {
@@ -21,8 +22,21 @@ interface ArquivoUpload {
 export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
+  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null)
   const inputFileRef = React.useRef<HTMLInputElement>(null)
   const inputCameraRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    checkAuthentication()
+  }, [])
+
+  async function checkAuthentication() {
+    const { data: { session } } = await supabase.auth.getSession()
+    setIsAuthenticated(!!session?.user)
+    if (!session?.user) {
+      toast.error('Você precisa estar logado para fazer upload de documentos')
+    }
+  }
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -146,13 +160,30 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
 
   return (
     <div className={className}>
+      {/* Aviso de não autenticado */}
+      {isAuthenticated === false && (
+        <Card className="mb-4 border-orange-200 bg-orange-50">
+          <div className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-900">
+                Autenticação necessária
+              </p>
+              <p className="text-xs text-orange-700 mt-1">
+                Você precisa estar logado para fazer upload de documentos. Por favor, faça login e tente novamente.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Área de drop */}
       <Card
         className={`relative border-2 border-dashed transition-colors ${
           dragActive
             ? 'border-primary bg-primary/5'
             : 'border-border hover:border-primary/50'
-        }`}
+        } ${isAuthenticated === false ? 'opacity-50 pointer-events-none' : ''}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
