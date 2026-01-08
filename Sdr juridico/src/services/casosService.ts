@@ -10,7 +10,7 @@ export const casosService = {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -27,7 +27,7 @@ export const casosService = {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
         .eq('id', id)
         .single()
 
@@ -47,7 +47,7 @@ export const casosService = {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
         .eq('status', status)
         .order('created_at', { ascending: false })
 
@@ -65,7 +65,7 @@ export const casosService = {
     try {
       const { data, error } = await supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
         .gte('prioridade', 3)
         .order('created_at', { ascending: true })
 

@@ -10,7 +10,7 @@ export const clientesService = {
     try {
       const { data, error } = await supabase
         .from('clientes')
-        .select()
+        .select('*, owner_user:profiles!owner_user_id(nome)')
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -27,7 +27,7 @@ export const clientesService = {
     try {
       const { data, error } = await supabase
         .from('clientes')
-        .select()
+        .select('*, owner_user:profiles!owner_user_id(nome)')
         .eq('id', id)
         .single()
 

@@ -23,7 +23,7 @@ export const agendaService = {
     try {
       const { data, error } = await supabase
         .from('agendamentos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), owner:profiles!owner_user_id(nome)')
         .order('start_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -40,7 +40,7 @@ export const agendaService = {
     try {
       const { data, error } = await supabase
         .from('agendamentos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), owner:profiles!owner_user_id(nome)')
         .eq('id', id)
         .single()
 
@@ -60,7 +60,7 @@ export const agendaService = {
     try {
       const { data, error } = await supabase
         .from('agendamentos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), owner:profiles!owner_user_id(nome)')
         .gte('start_at', dataInicio.toISOString())
         .lte('start_at', dataFim.toISOString())
         .order('start_at', { ascending: true })

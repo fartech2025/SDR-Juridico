@@ -22,7 +22,7 @@ export const leadsService = {
     try {
       const { data, error } = await supabase
         .from('leads')
-        .select('*')
+        .select('*, cliente:clientes(nome), assigned_user:profiles!assigned_user_id(nome)')
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -40,7 +40,7 @@ export const leadsService = {
     try {
       const { data, error } = await supabase
         .from('leads')
-        .select('*')
+        .select('*, cliente:clientes(nome), assigned_user:profiles!assigned_user_id(nome)')
         .eq('id', id)
         .single()
 
@@ -59,7 +59,7 @@ export const leadsService = {
     try {
       const { data, error } = await supabase
         .from('leads')
-        .select('*')
+        .select('*, cliente:clientes(nome), assigned_user:profiles!assigned_user_id(nome)')
         .eq('status', status)
         .order('created_at', { ascending: false })
 

@@ -34,7 +34,7 @@ export const documentosService = {
     try {
       const { data, error } = await supabase
         .from('documentos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:profiles!uploaded_by(nome)')
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -51,7 +51,7 @@ export const documentosService = {
     try {
       const { data, error } = await supabase
         .from('documentos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:profiles!uploaded_by(nome)')
         .eq('id', id)
         .single()
 
@@ -71,7 +71,7 @@ export const documentosService = {
     try {
       const { data, error } = await supabase
         .from('documentos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:profiles!uploaded_by(nome)')
         .eq('caso_id', casoId)
         .order('created_at', { ascending: false })
 
