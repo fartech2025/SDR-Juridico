@@ -251,10 +251,12 @@ export const documentosService = {
       }
 
       // Obter usuário autenticado
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError || !user) {
-        throw new AppError('Usuário não autenticado', 'auth_error')
+      const { data: { session }, error: authError } = await supabase.auth.getSession()
+      if (authError || !session?.user) {
+        throw new AppError('Usuário não autenticado. Faça login para fazer upload de documentos.', 'auth_error')
       }
+
+      const user = session.user
 
       // Gerar nome único para o arquivo
       const timestamp = Date.now()
