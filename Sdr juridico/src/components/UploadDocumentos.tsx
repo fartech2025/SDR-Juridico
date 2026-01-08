@@ -3,9 +3,9 @@ import { Upload, FileUp, Image, X, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { supabase } from '@/lib/supabaseClient'
 import { documentosService, formatarTamanhoArquivo, obterIconeArquivo } from '@/services/documentosService'
 import { FormularioContestacao } from '@/components/FormularioContestacao'
+import { FormularioContrato } from '@/components/FormularioContrato'
 
 interface UploadDocumentosProps {
   casoId?: string
@@ -120,6 +120,63 @@ interface DadosContestacao {
   dataHoraEnvio: string
 }
 
+interface DadosContrato {
+  tipoContrato: string
+  subtipoContrato: string
+  status: string
+  numeroContrato: string
+  dataEmissao: string
+  dataAssinatura: string
+  dataInicio: string
+  dataTermino: string
+  prazoVigencia: string
+  renovacaoAutomatica: boolean
+  partes: Array<{
+    tipo: string
+    nome: string
+    cpfCnpj: string
+    endereco: string
+    email: string
+    telefone: string
+    representante: string
+  }>
+  objetoContrato: string
+  valorTotal: string
+  formaPagamento: string
+  parcelas: string
+  dataVencimento: string
+  reajuste: string
+  indiceReajuste: string
+  honorariosFixo: string
+  honorariosExito: string
+  percentualExito: string
+  valorMinimoGarantido: string
+  garantias: string[]
+  tipoGarantia: string
+  clausulasEspecificas: string
+  clausulaRescisao: string
+  multaRescisoria: string
+  clausulaNaoConcorrencia: string
+  sla: string
+  escopo: string
+  limitesHoras: string
+  propriedadeIntelectual: string
+  confidencialidade: boolean
+  foro: string
+  legislacaoAplicavel: string
+  tipoAssinatura: string
+  assinantes: string
+  reconhecimentoFirma: boolean
+  cartorio: string
+  vinculacaoCliente: string
+  vinculacaoCaso: string
+  vinculacaoHonorarios: string
+  alertaVencimento: boolean
+  diasAntesAlerta: string
+  alertaReajuste: boolean
+  observacoes: string
+}
+
 export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
@@ -187,6 +244,54 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
     confirmacaoProtocolo: false,
     usuarioProtocolo: '',
     dataHoraEnvio: '',
+  })
+  const [dadosContrato, setDadosContrato] = React.useState<DadosContrato>({
+    tipoContrato: '',
+    subtipoContrato: '',
+    status: 'rascunho',
+    numeroContrato: '',
+    dataEmissao: '',
+    dataAssinatura: '',
+    dataInicio: '',
+    dataTermino: '',
+    prazoVigencia: '',
+    renovacaoAutomatica: false,
+    partes: [{ tipo: '', nome: '', cpfCnpj: '', endereco: '', email: '', telefone: '', representante: '' }],
+    objetoContrato: '',
+    valorTotal: '',
+    formaPagamento: '',
+    parcelas: '',
+    dataVencimento: '',
+    reajuste: '',
+    indiceReajuste: '',
+    honorariosFixo: '',
+    honorariosExito: '',
+    percentualExito: '',
+    valorMinimoGarantido: '',
+    garantias: [],
+    tipoGarantia: '',
+    clausulasEspecificas: '',
+    clausulaRescisao: '',
+    multaRescisoria: '',
+    clausulaNaoConcorrencia: '',
+    sla: '',
+    escopo: '',
+    limitesHoras: '',
+    propriedadeIntelectual: '',
+    confidencialidade: false,
+    foro: '',
+    legislacaoAplicavel: '',
+    tipoAssinatura: '',
+    assinantes: '',
+    reconhecimentoFirma: false,
+    cartorio: '',
+    vinculacaoCliente: '',
+    vinculacaoCaso: '',
+    vinculacaoHonorarios: '',
+    alertaVencimento: false,
+    diasAntesAlerta: '',
+    alertaReajuste: false,
+    observacoes: '',
   })
   const inputFileRef = React.useRef<HTMLInputElement>(null)
   const inputCameraRef = React.useRef<HTMLInputElement>(null)
@@ -276,12 +381,14 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
         )
       )
 
-      // Preparar descrição com dados da procuração ou contestação se aplicável
+      // Preparar descrição com dados da procuração, contestação ou contrato se aplicável
       let descricaoCompleta = observacao || ''
       if (tipoDocumento === 'procuracao') {
         descricaoCompleta = JSON.stringify({ observacao, dadosProcuracao })
       } else if (tipoDocumento === 'contestacao') {
         descricaoCompleta = JSON.stringify({ observacao, dadosContestacao })
+      } else if (tipoDocumento === 'contrato') {
+        descricaoCompleta = JSON.stringify({ observacao, dadosContrato })
       }
 
       // Fazer upload
@@ -883,6 +990,14 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
         <FormularioContestacao 
           dados={dadosContestacao} 
           onChange={setDadosContestacao} 
+        />
+      )}
+
+      {/* Campos específicos para Contrato */}
+      {tipoDocumento === 'contrato' && (
+        <FormularioContrato 
+          dados={dadosContrato} 
+          onChange={setDadosContrato} 
         />
       )}
 
