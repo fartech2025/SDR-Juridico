@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { Search } from 'lucide-react'
+import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 
 import { LeadDrawer } from '@/components/LeadDrawer'
 import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import heroLight from '@/assets/hero-light.svg'
 import type { Lead } from '@/types/domain'
 import { formatDateTime, formatPhone } from '@/utils/format'
@@ -24,21 +24,18 @@ const resolveStatus = (
 }
 
 const statusPill = (status: Lead['status']) => {
-  if (status === 'ganho') return 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
-  if (status === 'perdido') return 'border-[#F5C2C2] bg-[#FFE1E1] text-[#B42318]'
-  if (status === 'proposta')
-    return 'border-[#F8D2A8] bg-[#FFF1E3] text-[#B45309]'
-  if (status === 'qualificado')
-    return 'border-[#D6E4FF] bg-[#E6F0FF] text-[#1D4ED8]'
-  if (status === 'em_contato')
-    return 'border-[#E6D6FF] bg-[#F2E9FF] text-[#6B21A8]'
-  return 'border-[#E7E9F2] bg-[#F2F4FA] text-[#6B7280]'
+  if (status === 'ganho') return 'border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+  if (status === 'perdido') return 'border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400'
+  if (status === 'proposta') return 'border-amber-500/30 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+  if (status === 'qualificado') return 'border-blue-500/30 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+  if (status === 'em_contato') return 'border-purple-500/30 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400'
+  return 'border-slate-300 bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
 }
 
 const heatPill = (heat: Lead['heat']) => {
-  if (heat === 'quente') return 'border-[#F5C2C2] bg-[#FFE1E1] text-[#B42318]'
-  if (heat === 'morno') return 'border-[#F1D28A] bg-[#FFF1CC] text-[#8A5A00]'
-  return 'border-[#D6E4FF] bg-[#E6F0FF] text-[#1D4ED8]'
+  if (heat === 'quente') return 'border-red-500/50 bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg shadow-red-500/20'
+  if (heat === 'morno') return 'border-yellow-500/50 bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/20'
+  return 'border-blue-500/50 bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/20'
 }
 
 export const LeadsPage = () => {
@@ -50,19 +47,26 @@ export const LeadsPage = () => {
   const [query, setQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('todos')
   const [heatFilter, setHeatFilter] = React.useState('todos')
-  const [areaFilter, setAreaFilter] = React.useState('todos')
-  const [originFilter, setOriginFilter] = React.useState('todos')
   const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null)
   const [activeTab, setActiveTab] = React.useState('Todos')
 
-  const tabs = ['Todos', 'Docs', 'Agenda', 'Comercial', 'Juridico', 'Automacao']
+  const tabs = ['Todos', 'Quentes 🔥', 'Em Negociação 💰', 'Fechados ✅']
+
+  // Métricas do pipeline de vendas
+  const metrics = React.useMemo(() => {
+    const total = leads.length
+    const quentes = leads.filter(l => l.heat === 'quente').length
+    const emNegociacao = leads.filter(l => ['proposta', 'qualificado'].includes(l.status)).length
+    const ganhos = leads.filter(l => l.status === 'ganho').length
+    const taxaConversao = total > 0 ? ((ganhos / total) * 100).toFixed(1) : '0'
+    
+    return { total, quentes, emNegociacao, ganhos, taxaConversao }
+  }, [leads])
 
   const filters = React.useMemo(
     () => ({
       status: Array.from(new Set(leads.map((lead) => lead.status))),
       heat: Array.from(new Set(leads.map((lead) => lead.heat))),
-      area: Array.from(new Set(leads.map((lead) => lead.area))),
-      origin: Array.from(new Set(leads.map((lead) => lead.origin))),
     }),
     [leads],
   )
@@ -77,11 +81,15 @@ export const LeadsPage = () => {
         lead.phone.replace(/\D/g, '').includes(term.replace(/\D/g, ''))
       const matchesStatus = statusFilter === 'todos' || lead.status === statusFilter
       const matchesHeat = heatFilter === 'todos' || lead.heat === heatFilter
-      const matchesArea = areaFilter === 'todos' || lead.area === areaFilter
-      const matchesOrigin = originFilter === 'todos' || lead.origin === originFilter
-      return matchesQuery && matchesStatus && matchesHeat && matchesArea && matchesOrigin
+      
+      // Filtro por aba
+      if (activeTab === 'Quentes 🔥') return matchesQuery && matchesStatus && lead.heat === 'quente'
+      if (activeTab === 'Em Negociação 💰') return matchesQuery && matchesHeat && ['proposta', 'qualificado'].includes(lead.status)
+      if (activeTab === 'Fechados ✅') return matchesQuery && matchesHeat && ['ganho', 'perdido'].includes(lead.status)
+      
+      return matchesQuery && matchesStatus && matchesHeat
     })
-  }, [query, statusFilter, heatFilter, areaFilter, originFilter, leads])
+  }, [query, statusFilter, heatFilter, activeTab, leads])
 
   const forcedState = resolveStatus(params.get('state'))
   const baseState = loading
@@ -101,8 +109,6 @@ export const LeadsPage = () => {
     setQuery('')
     setStatusFilter('todos')
     setHeatFilter('todos')
-    setAreaFilter('todos')
-    setOriginFilter('todos')
   }
 
   return (
@@ -112,293 +118,394 @@ export const LeadsPage = () => {
         isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
       )}
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
+        {/* Header com gradiente moderno voltado para vendas */}
         <header
           className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
+            'relative overflow-hidden rounded-3xl border p-8 shadow-2xl',
             isDark
-              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
-              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#1a1f2e] to-[#0b0f14]'
+              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#ffe0b2]',
           )}
         >
           <div
             className={cn(
               'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              isDark ? 'opacity-20' : 'opacity-80',
+              isDark ? 'opacity-10' : 'opacity-50',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
           />
-          <div className="relative z-10 space-y-2">
-            <p
-              className={cn(
-                'text-xs uppercase tracking-[0.3em]',
-                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
-              )}
-            >
-              Leads
-            </p>
-            <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
-              Triagem juridica
-            </h2>
-            <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
-              Busque por nome, telefone ou area e filtre por status.
-            </p>
+          <div className="relative z-10">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    'rounded-full p-2',
+                    isDark ? 'bg-emerald-500/10' : 'bg-emerald-500/20'
+                  )}>
+                    <TrendingUp className={cn('h-5 w-5', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+                  </div>
+                  <p
+                    className={cn(
+                      'text-xs font-bold uppercase tracking-[0.3em]',
+                      isDark ? 'text-emerald-300' : 'text-emerald-700',
+                    )}
+                  >
+                    Pipeline de Vendas
+                  </p>
+                </div>
+                <h2 className={cn('font-display text-4xl font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                  Gestão de Leads
+                </h2>
+                <p className={cn('text-base', isDark ? 'text-slate-400' : 'text-[#7a4a1a]')}>
+                  Acompanhe oportunidades e impulsione suas vendas
+                </p>
+              </div>
+              <Button 
+                className={cn(
+                  'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl',
+                  isDark 
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                )}
+              >
+                <Zap className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
+                Novo Lead
+                <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+              </Button>
+            </div>
           </div>
         </header>
 
+        {/* Cards de métricas - estilo CRM de vendas */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className={cn(
+            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
+            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-blue-500/50' : 'border-[#f0d9b8] bg-white hover:border-blue-500/30'
+          )}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                    Total Pipeline
+                  </p>
+                  <p className="text-4xl font-bold tracking-tight">{metrics.total}</p>
+                  <p className={cn('text-xs font-medium', isDark ? 'text-slate-500' : 'text-slate-500')}>
+                    oportunidades ativas
+                  </p>
+                </div>
+                <div className={cn(
+                  'rounded-2xl p-4 transition-colors',
+                  isDark ? 'bg-blue-500/10 group-hover:bg-blue-500/20' : 'bg-blue-50 group-hover:bg-blue-100'
+                )}>
+                  <TrendingUp className={cn('h-8 w-8', isDark ? 'text-blue-400' : 'text-blue-600')} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={cn(
+            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
+            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-red-500/50' : 'border-[#f0d9b8] bg-white hover:border-red-500/30'
+          )}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                    Leads Quentes
+                  </p>
+                  <p className="text-4xl font-bold tracking-tight text-red-500">{metrics.quentes}</p>
+                  <p className={cn('text-xs font-medium uppercase', isDark ? 'text-red-400' : 'text-red-600')}>
+                    🔥 Ação Imediata
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-gradient-to-br from-red-500/10 to-orange-500/10 p-4 group-hover:from-red-500/20 group-hover:to-orange-500/20">
+                  <Zap className="h-8 w-8 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={cn(
+            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
+            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-amber-500/50' : 'border-[#f0d9b8] bg-white hover:border-amber-500/30'
+          )}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                    Em Negociação
+                  </p>
+                  <p className="text-4xl font-bold tracking-tight text-amber-500">{metrics.emNegociacao}</p>
+                  <p className={cn('text-xs font-medium', isDark ? 'text-amber-400' : 'text-amber-600')}>
+                    💰 propostas ativas
+                  </p>
+                </div>
+                <div className={cn(
+                  'rounded-2xl p-4 transition-colors',
+                  'bg-amber-500/10 group-hover:bg-amber-500/20'
+                )}>
+                  <Clock className={cn('h-8 w-8', isDark ? 'text-amber-400' : 'text-amber-600')} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={cn(
+            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
+            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-emerald-500/50' : 'border-[#f0d9b8] bg-white hover:border-emerald-500/30'
+          )}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                    Taxa de Conversão
+                  </p>
+                  <p className="text-4xl font-bold tracking-tight text-emerald-500">{metrics.taxaConversao}%</p>
+                  <p className={cn('text-xs font-medium', isDark ? 'text-emerald-400' : 'text-emerald-600')}>
+                    ✅ {metrics.ganhos} fechamentos
+                  </p>
+                </div>
+                <div className={cn(
+                  'rounded-2xl p-4 transition-colors',
+                  'bg-emerald-500/10 group-hover:bg-emerald-500/20'
+                )}>
+                  <DollarSign className={cn('h-8 w-8', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabela de Leads - Design Moderno */}
         <Card
           className={cn(
             'border',
             isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
           )}
         >
-        <CardHeader className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">Lista de leads</CardTitle>
-            <div className="mt-2 flex flex-wrap gap-3 text-xs text-text-subtle">
-              <span>Total: {leads.length}</span>
-              <span>Exibindo: {filteredLeads.length}</span>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" className="h-10 rounded-full px-4">
-            Adicionar evento
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            className={cn(
-              'flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2 shadow-soft',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
-            )}
-          >
-            <div className="flex flex-wrap gap-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
-                    activeTab === tab
-                      ? isDark
-                        ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300'
-                        : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600'
-                      : isDark
-                        ? 'border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800'
-                        : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:bg-[#fff3e0] hover:text-[#2a1400]'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              className={cn(
-                'text-xs',
-                isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
-              )}
-              onClick={resetFilters}
-            >
-              Limpar filtros
-            </button>
-          </div>
+          <CardContent className="p-6 space-y-5">
+            {/* Tabs e Filtros */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={cn(
+                      'rounded-full border-2 px-6 py-2.5 text-sm font-bold transition-all',
+                      activeTab === tab
+                        ? isDark
+                          ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300 shadow-lg shadow-emerald-500/20'
+                          : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-500/10'
+                        : isDark
+                          ? 'border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600 hover:bg-slate-800'
+                          : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-emerald-400 hover:bg-[#fff3e0]'
+                    )}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
 
-          <div className="grid gap-3 lg:grid-cols-[2fr_repeat(4,1fr)]">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
-              <input
-                className={cn(
-                  'h-11 w-full rounded-full border pl-11 pr-4 text-sm shadow-soft focus:outline-none focus:ring-2',
-                  isDark
-                    ? 'border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-500 focus:border-emerald-400 focus:ring-emerald-500/20'
-                    : 'border-[#f0d9b8] bg-[#fff3e0] text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-400 focus:ring-emerald-200',
-                )}
-                placeholder="Buscar por nome, telefone ou area"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </div>
-            <select
-              className={cn(
-                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
-                isDark
-                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-              )}
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="todos">Status</option>
-              {filters.status.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-            <select
-              className={cn(
-                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
-                isDark
-                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-              )}
-              value={heatFilter}
-              onChange={(event) => setHeatFilter(event.target.value)}
-            >
-              <option value="todos">Calor</option>
-              {filters.heat.map((heat) => (
-                <option key={heat} value={heat}>
-                  {heat}
-                </option>
-              ))}
-            </select>
-            <select
-              className={cn(
-                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
-                isDark
-                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-              )}
-              value={areaFilter}
-              onChange={(event) => setAreaFilter(event.target.value)}
-            >
-              <option value="todos">Area</option>
-              {filters.area.map((area) => (
-                <option key={area} value={area}>
-                  {area}
-                </option>
-              ))}
-            </select>
-            <select
-              className={cn(
-                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
-                isDark
-                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-              )}
-              value={originFilter}
-              onChange={(event) => setOriginFilter(event.target.value)}
-            >
-              <option value="todos">Origem</option>
-              {filters.origin.map((origin) => (
-                <option key={origin} value={origin}>
-                  {origin}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="flex flex-wrap gap-3">
+                {/* Barra de Busca */}
+                <div className="relative flex-1 min-w-[300px]">
+                  <Search className={cn(
+                    'absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2',
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  )} />
+                  <input
+                    className={cn(
+                      'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                      isDark
+                        ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                        : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                    )}
+                    placeholder="Buscar por nome, telefone ou área..."
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                </div>
 
-          <PageState
-            status={pageState}
-            emptyTitle="Nenhum lead encontrado"
-            emptyDescription="Ajuste os filtros ou tente outra busca."
-          >
-            <div
-              className={cn(
-                'overflow-hidden rounded-2xl border shadow-soft',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
-              )}
-            >
-              <table className="w-full border-collapse text-left text-sm">
-                <thead
+                {/* Filtros */}
+                <select
                   className={cn(
-                    'text-[11px] uppercase tracking-[0.22em]',
-                    isDark ? 'bg-slate-800 text-slate-300' : 'bg-[#fff3e0] text-[#9a5b1e]',
+                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                    isDark
+                      ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
+                      : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                  )}
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <option value="todos">📊 Todos Status</option>
+                  {filters.status.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className={cn(
+                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                    isDark
+                      ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
+                      : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                  )}
+                  value={heatFilter}
+                  onChange={(event) => setHeatFilter(event.target.value)}
+                >
+                  <option value="todos">🌡️ Temperatura</option>
+                  {filters.heat.map((heat) => (
+                    <option key={heat} value={heat}>
+                      {heat}
+                    </option>
+                  ))}
+                </select>
+
+                <Button
+                  variant="outline"
+                  onClick={resetFilters}
+                  className={cn(
+                    'h-12 rounded-xl border-2 px-6 font-semibold',
+                    isDark
+                      ? 'border-slate-700 hover:bg-slate-800'
+                      : 'border-[#f0d9b8] hover:bg-[#fff3e0]'
                   )}
                 >
-                  <tr>
-                    <th className="px-4 py-3" />
-                    <th className="px-4 py-3">Lead</th>
-                    <th className="px-4 py-3">Area</th>
-                    <th className="px-4 py-3">Origem</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Calor</th>
-                    <th className="px-4 py-3">Contato</th>
-                    <th className="px-4 py-3">Responsavel</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.map((lead) => {
-                    const initials = lead.name
-                      .split(' ')
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join('')
-                    return (
-                      <tr
-                        key={lead.id}
-                        className={cn(
-                          'border-t text-text',
-                          isDark
-                            ? 'border-slate-800 hover:bg-slate-800/60'
-                            : 'border-[#f0d9b8] hover:bg-[#fff3e0]/60',
-                        )}
-                        onClick={() => setSelectedLead(lead)}
-                      >
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border border-border bg-white text-primary"
-                            onClick={(event) => event.stopPropagation()}
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                              {initials}
-                            </div>
-                            <div>
-                              <div className="text-sm font-semibold text-text">
-                                {lead.name}
-                              </div>
-                              <div className="text-xs text-text-subtle">
-                                {lead.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-text">{lead.area}</td>
-                        <td className="px-4 py-3 text-sm text-text">{lead.origin}</td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize ${statusPill(
-                              lead.status,
-                            )}`}
-                          >
-                            {lead.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize ${heatPill(
-                              lead.heat,
-                            )}`}
-                          >
-                            {lead.heat}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-text">
-                            {formatPhone(lead.phone)}
-                          </div>
-                          <div className="text-xs text-text-subtle">
-                            {lead.lastContactAt
-                              ? formatDateTime(lead.lastContactAt)
-                              : 'Sem contato'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-text">
-                          {lead.owner}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                  <Filter className="mr-2 h-4 w-4" />
+                  Limpar
+                </Button>
+              </div>
             </div>
-          </PageState>
-        </CardContent>
-      </Card>
+
+            {/* Lista de Leads - Cards Modernos */}
+            <PageState
+              status={pageState}
+              emptyTitle="Nenhum lead encontrado"
+              emptyDescription="Ajuste os filtros ou adicione novos leads ao pipeline."
+            >
+              <div className="space-y-3">
+                {filteredLeads.map((lead) => {
+                  const initials = lead.name
+                    .split(' ')
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join('')
+                  
+                  return (
+                    <div
+                      key={lead.id}
+                      onClick={() => setSelectedLead(lead)}
+                      className={cn(
+                        'group cursor-pointer rounded-2xl border-2 p-5 transition-all hover:scale-[1.01] hover:shadow-xl',
+                        isDark
+                          ? 'border-slate-800 bg-slate-800/50 hover:border-emerald-500/50 hover:bg-slate-800'
+                          : 'border-[#f0d9b8] bg-white hover:border-emerald-400 hover:bg-emerald-50/30',
+                      )}
+                    >
+                      <div className="flex flex-wrap items-center gap-4">
+                        {/* Avatar */}
+                        <div className={cn(
+                          'flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold shadow-lg transition-transform group-hover:scale-110',
+                          isDark
+                            ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white'
+                            : 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white'
+                        )}>
+                          {initials}
+                        </div>
+
+                        {/* Informações */}
+                        <div className="flex-1 min-w-[200px]">
+                          <div className="flex items-center gap-2">
+                            <h3 className={cn(
+                              'text-lg font-bold',
+                              isDark ? 'text-slate-100' : 'text-[#2a1400]'
+                            )}>
+                              {lead.name}
+                            </h3>
+                            <span
+                              className={cn(
+                                'inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-bold',
+                                heatPill(lead.heat)
+                              )}
+                            >
+                              {lead.heat === 'quente' ? '🔥' : lead.heat === 'morno' ? '⚡' : '❄️'}
+                              {lead.heat}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm">
+                            <span className={cn('flex items-center gap-1', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                              <Mail className="h-4 w-4" />
+                              {lead.email}
+                            </span>
+                            <span className={cn('flex items-center gap-1', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                              <Phone className="h-4 w-4" />
+                              {formatPhone(lead.phone)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status e Ações */}
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <span
+                              className={cn(
+                                'inline-flex rounded-xl border-2 px-4 py-1.5 text-sm font-bold capitalize',
+                                statusPill(lead.status)
+                              )}
+                            >
+                              {lead.status}
+                            </span>
+                            <p className={cn('mt-1 text-xs font-medium', isDark ? 'text-slate-500' : 'text-slate-500')}>
+                              {lead.area}
+                            </p>
+                          </div>
+                          
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              size="sm"
+                              className={cn(
+                                'h-9 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 font-semibold shadow-md hover:from-emerald-500 hover:to-teal-500'
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                // Ação de contato
+                              }}
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rodapé do Card */}
+                      {lead.lastContactAt && (
+                        <div className={cn(
+                          'mt-3 flex items-center gap-2 border-t pt-3 text-xs font-medium',
+                          isDark ? 'border-slate-700 text-slate-500' : 'border-slate-200 text-slate-500'
+                        )}>
+                          <Clock className="h-3.5 w-3.5" />
+                          Último contato: {formatDateTime(lead.lastContactAt)}
+                          {lead.owner && (
+                            <>
+                              <span className="mx-2">•</span>
+                              Responsável: {lead.owner}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </PageState>
+          </CardContent>
+        </Card>
+      </div>
 
       <LeadDrawer
         open={Boolean(selectedLead)}
@@ -406,7 +513,6 @@ export const LeadsPage = () => {
         relatedCase={relatedCase}
         onClose={() => setSelectedLead(null)}
       />
-    </div>
     </div>
   )
 }
