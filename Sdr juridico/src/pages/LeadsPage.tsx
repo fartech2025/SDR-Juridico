@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter } from 'lucide-react'
+import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, Building, MapPin, Briefcase } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 
 import { LeadDrawer } from '@/components/LeadDrawer'
@@ -13,6 +13,7 @@ import { useLeads } from '@/hooks/useLeads'
 import { useCasos } from '@/hooks/useCasos'
 import { useTheme } from '@/contexts/ThemeContext'
 import { cn } from '@/utils/cn'
+import type { LeadRow } from '@/lib/supabaseClient'
 
 const resolveStatus = (
   value: string | null,
@@ -39,7 +40,7 @@ const heatPill = (heat: Lead['heat']) => {
 }
 
 export const LeadsPage = () => {
-  const { leads, loading, error } = useLeads()
+  const { leads, loading, error, createLead } = useLeads()
   const { casos } = useCasos()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -49,6 +50,20 @@ export const LeadsPage = () => {
   const [heatFilter, setHeatFilter] = React.useState('todos')
   const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null)
   const [activeTab, setActiveTab] = React.useState('Todos')
+  const [showNewLeadForm, setShowNewLeadForm] = React.useState(false)
+  const [saving, setSaving] = React.useState(false)
+
+  // Estado do formulário de novo lead
+  const [formData, setFormData] = React.useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    origem: '',
+    assunto: '',
+    resumo: '',
+    status: 'novo' as LeadRow['status'],
+    canal: 'whatsapp' as LeadRow['canal'],
+  })
 
   const tabs = ['Todos', 'Quentes 🔥', 'Em Negociação 💰', 'Fechados ✅']
 
@@ -111,6 +126,352 @@ export const LeadsPage = () => {
     setHeatFilter('todos')
   }
 
+  const handleSaveLead = async () => {
+    if (!formData.nome || !formData.email || !formData.telefone) {
+      alert('Por favor, preencha os campos obrigatórios: Nome, Email e Telefone')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await createLead({
+        nome: formData.nome,
+        email: formData.email,
+        telefone: formData.telefone,
+        origem: formData.origem || null,
+        assunto: formData.assunto || null,
+        resumo: formData.resumo || null,
+        status: formData.status,
+        canal: formData.canal,
+        qualificacao: {},
+        assigned_user_id: null,
+        cliente_id: null,
+        remote_id: null,
+        last_contact_at: null,
+      })
+      
+      // Resetar formulário e voltar para lista
+      setFormData({
+        nome: '',
+        email: '',
+        telefone: '',
+        origem: '',
+        assunto: '',
+        resumo: '',
+        status: 'novo',
+        canal: 'whatsapp',
+      })
+      setShowNewLeadForm(false)
+    } catch (error) {
+      alert('Erro ao salvar lead. Tente novamente.')
+      console.error(error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Se está mostrando formulário de novo lead
+  if (showNewLeadForm) {
+    return (
+      <div
+        className={cn(
+          'min-h-screen pb-12',
+          isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+        )}
+      >
+        <div className="space-y-6">
+          {/* Header */}
+          <header
+            className={cn(
+              'relative overflow-hidden rounded-3xl border p-8 shadow-2xl',
+              isDark
+                ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#1a1f2e] to-[#0b0f14]'
+                : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#ffe0b2]',
+            )}
+          >
+            <div
+              className={cn(
+                'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+                isDark ? 'opacity-10' : 'opacity-50',
+              )}
+              style={{ backgroundImage: `url(${heroLight})` }}
+            />
+            <div className="relative z-10">
+              <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      'rounded-full p-2',
+                      isDark ? 'bg-emerald-500/10' : 'bg-emerald-500/20'
+                    )}>
+                      <Zap className={cn('h-5 w-5', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+                    </div>
+                    <p
+                      className={cn(
+                        'text-xs font-bold uppercase tracking-[0.3em]',
+                        isDark ? 'text-emerald-300' : 'text-emerald-700',
+                      )}
+                    >
+                      Novo Lead
+                    </p>
+                  </div>
+                  <h2 className={cn('font-display text-4xl font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                    Adicionar Oportunidade
+                  </h2>
+                  <p className={cn('text-base', isDark ? 'text-slate-400' : 'text-[#7a4a1a]')}>
+                    Preencha os dados do novo lead para adicionar ao pipeline
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowNewLeadForm(false)}
+                  variant="outline"
+                  className={cn(
+                    'h-14 rounded-full px-8 font-bold shadow-lg transition-all hover:scale-105',
+                    isDark 
+                      ? 'border-slate-700 hover:bg-slate-800'
+                      : 'border-[#f3c988] hover:bg-[#fff3e0]'
+                  )}
+                >
+                  <ArrowLeft className="mr-2 h-5 w-5" />
+                  Voltar
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          {/* Formulário */}
+          <Card
+            className={cn(
+              'border',
+              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            )}
+          >
+            <CardContent className="p-8">
+              <form className="space-y-6">
+                {/* Informações Pessoais */}
+                <div>
+                  <h3 className={cn('mb-4 text-lg font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                    Informações do Lead
+                  </h3>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Nome Completo *
+                      </label>
+                      <div className="relative">
+                        <User className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <input
+                          type="text"
+                          required
+                          value={formData.nome}
+                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                          className={cn(
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                            isDark
+                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                          )}
+                          placeholder="Digite o nome completo"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Email *
+                      </label>
+                      <div className="relative">
+                        <Mail className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className={cn(
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                            isDark
+                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                          )}
+                          placeholder="email@exemplo.com"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Telefone *
+                      </label>
+                      <div className="relative">
+                        <Phone className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <input
+                          type="tel"
+                          required
+                          value={formData.telefone}
+                          onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                          className={cn(
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                            isDark
+                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                          )}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Origem
+                      </label>
+                      <div className="relative">
+                        <MapPin className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <input
+                          type="text"
+                          value={formData.origem}
+                          onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
+                          className={cn(
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                            isDark
+                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                          )}
+                          placeholder="Ex: Website, Indicação, Redes Sociais"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detalhes do Lead */}
+                <div>
+                  <h3 className={cn('mb-4 text-lg font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                    Detalhes da Oportunidade
+                  </h3>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Status
+                      </label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as LeadRow['status'] })}
+                        className={cn(
+                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                          isDark
+                            ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
+                            : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                        )}
+                      >
+                        <option value="novo">Novo</option>
+                        <option value="em_contato">Em Contato</option>
+                        <option value="qualificado">Qualificado</option>
+                        <option value="proposta">Proposta</option>
+                        <option value="ganho">Ganho</option>
+                        <option value="perdido">Perdido</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Canal de Contato
+                      </label>
+                      <select
+                        value={formData.canal}
+                        onChange={(e) => setFormData({ ...formData, canal: e.target.value as LeadRow['canal'] })}
+                        className={cn(
+                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                          isDark
+                            ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
+                            : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                        )}
+                      >
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="email">Email</option>
+                        <option value="telefone">Telefone</option>
+                        <option value="presencial">Presencial</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Assunto
+                      </label>
+                      <div className="relative">
+                        <Briefcase className={cn('absolute left-4 top-4 h-5 w-5', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <input
+                          type="text"
+                          value={formData.assunto}
+                          onChange={(e) => setFormData({ ...formData, assunto: e.target.value })}
+                          className={cn(
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                            isDark
+                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                          )}
+                          placeholder="Ex: Consultoria jurídica, Contrato empresarial"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Resumo / Observações
+                      </label>
+                      <textarea
+                        value={formData.resumo}
+                        onChange={(e) => setFormData({ ...formData, resumo: e.target.value })}
+                        rows={4}
+                        className={cn(
+                          'w-full rounded-xl border-2 p-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                          isDark
+                            ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                            : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                        )}
+                        placeholder="Descreva informações adicionais sobre o lead..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botões de Ação */}
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <Button
+                    type="button"
+                    onClick={handleSaveLead}
+                    disabled={saving}
+                    className={cn(
+                      'h-14 flex-1 rounded-xl px-8 font-bold shadow-xl transition-all hover:scale-105 disabled:opacity-50',
+                      isDark 
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'
+                        : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                    )}
+                  >
+                    <Save className="mr-2 h-5 w-5" />
+                    {saving ? 'Salvando...' : 'Salvar Lead'}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setShowNewLeadForm(false)}
+                    variant="outline"
+                    className={cn(
+                      'h-14 rounded-xl border-2 px-8 font-bold transition-all hover:scale-105',
+                      isDark
+                        ? 'border-slate-700 hover:bg-slate-800'
+                        : 'border-[#f0d9b8] hover:bg-[#fff3e0]'
+                    )}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn(
@@ -162,6 +523,7 @@ export const LeadsPage = () => {
                 </p>
               </div>
               <Button 
+                onClick={() => setShowNewLeadForm(true)}
                 className={cn(
                   'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl',
                   isDark 
