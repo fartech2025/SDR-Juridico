@@ -4,17 +4,16 @@
  */
 
 import { supabase, type LeadRow } from '@/lib/supabaseClient'
-import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import { AppError } from '@/utils/errors'
 
 export const leadsService = {
   // Buscar todos os leads
   async getLeads() {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('leads').select('*').order('created_at', { ascending: false })
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow[]
@@ -29,10 +28,11 @@ export const leadsService = {
   // Buscar lead por ID
   async getLead(id: string) {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('leads').select('*').eq('id', id)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.single()
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('id', id)
+        .single()
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow
@@ -47,14 +47,11 @@ export const leadsService = {
   // Buscar leads por status
   async getLeadsByStatus(status: LeadRow['status']) {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase
+      const { data, error } = await supabase
         .from('leads')
         .select('*')
         .eq('status', status)
         .order('created_at', { ascending: false })
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow[]
@@ -88,10 +85,8 @@ export const leadsService = {
   // Criar novo lead
   async createLead(lead: Omit<LeadRow, 'id' | 'created_at' | 'org_id'>) {
     try {
-      const orgId = await requireOrgId()
       const payload = {
         ...lead,
-        org_id: orgId,
         canal: lead.canal || 'whatsapp',
         qualificacao: lead.qualificacao || {},
       }

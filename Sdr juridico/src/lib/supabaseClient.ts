@@ -79,7 +79,7 @@ export interface OrgMemberRow {
 export interface LeadRow {
   id: string
   created_at: string
-  org_id: string
+  org_id?: string
   status: LeadStatus
   canal: ChannelType
   nome: string | null
