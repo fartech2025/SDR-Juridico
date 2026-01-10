@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, Building, MapPin, Briefcase } from 'lucide-react'
+import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 
 import { LeadDrawer } from '@/components/LeadDrawer'

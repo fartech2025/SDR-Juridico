@@ -109,12 +109,10 @@ export const leadsService = {
   // Atualizar lead
   async updateLead(id: string, updates: Partial<Omit<LeadRow, 'id' | 'created_at'>>) {
     try {
-      const orgId = await requireOrgId()
       const { data, error } = await supabase
         .from('leads')
         .update(updates)
         .eq('id', id)
-        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -131,8 +129,7 @@ export const leadsService = {
   // Deletar lead
   async deleteLead(id: string) {
     try {
-      const orgId = await requireOrgId()
-      const { error } = await supabase.from('leads').delete().eq('id', id).eq('org_id', orgId)
+      const { error } = await supabase.from('leads').delete().eq('id', id)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
