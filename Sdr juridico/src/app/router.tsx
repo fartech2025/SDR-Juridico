@@ -13,7 +13,6 @@ import { DocumentosPage } from '@/pages/DocumentosPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { IndicadoresPage } from '@/pages/IndicadoresPage'
 import { LeadsPage } from '@/pages/LeadsPage'
-import { LeadsRealPage } from '@/pages/LeadsPage.example'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -55,10 +54,6 @@ export const router = createBrowserRouter([
       {
         path: 'leads',
         element: <LeadsPage />,
-      },
-      {
-        path: 'leads-real',
-        element: <LeadsRealPage />,
       },
       {
         path: 'clientes',

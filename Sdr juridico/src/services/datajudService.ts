@@ -3,12 +3,56 @@
  * Base Nacional de Dados do Poder Judiciário
  */
 
+import { supabase } from '@/lib/supabaseClient'
+import { getActiveOrgId } from '@/lib/org'
+
 // Em desenvolvimento, usa o proxy do Vite para evitar CORS
 // Em produção, deve usar um backend proxy ou configurar CORS
-const DATAJUD_API_URL = import.meta.env.DEV 
+const DATAJUD_API_URL = import.meta.env.DEV
   ? '/api-datajud'
   : 'https://api-publica.datajud.cnj.jus.br'
-const DATAJUD_API_KEY = import.meta.env.VITE_DATAJUD_API_KEY || ''
+const ENV_DATAJUD_API_KEY = import.meta.env.VITE_DATAJUD_API_KEY || ''
+
+let cachedApiKey: string | null | undefined
+
+async function resolveDataJudApiKey(): Promise<string> {
+  if (cachedApiKey !== undefined) return cachedApiKey || ''
+  if (ENV_DATAJUD_API_KEY) {
+    cachedApiKey = ENV_DATAJUD_API_KEY
+    return ENV_DATAJUD_API_KEY
+  }
+
+  const orgId = await getActiveOrgId()
+  let query = supabase
+    .from('integrations')
+    .select('secrets, settings')
+    .eq('provider', 'datajud')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  if (orgId) query = query.eq('org_id', orgId)
+
+  const { data, error } = await query
+  if (error) {
+    cachedApiKey = ''
+    return ''
+  }
+
+  const row = data?.[0] as {
+    secrets?: Record<string, unknown> | null
+    settings?: Record<string, unknown> | null
+  } | undefined
+  const secrets = row?.secrets || {}
+  const settings = row?.settings || {}
+  const apiKey =
+    (typeof secrets === 'object' && (secrets as { apiKey?: string }).apiKey) ||
+    (typeof secrets === 'object' && (secrets as { apikey?: string }).apikey) ||
+    (typeof settings === 'object' && (settings as { apiKey?: string }).apiKey) ||
+    (typeof settings === 'object' && (settings as { apikey?: string }).apikey) ||
+    ''
+
+  cachedApiKey = apiKey || ''
+  return apiKey || ''
+}
 
 export interface ProcessoDataJud {
   numeroProcesso?: string
@@ -87,8 +131,9 @@ export interface ConfiguracaoDataJud {
 /**
  * Verifica se a API DataJud está configurada
  */
-export function isDataJudConfigured(): boolean {
-  return Boolean(DATAJUD_API_KEY && DATAJUD_API_KEY.length > 0)
+export async function isDataJudConfigured(): Promise<boolean> {
+  const apiKey = await resolveDataJudApiKey()
+  return Boolean(apiKey && apiKey.length > 0)
 }
 
 /**
@@ -99,7 +144,8 @@ export async function testarConexao(): Promise<{
   mensagem: string
   detalhes?: any
 }> {
-  if (!isDataJudConfigured()) {
+  const apiKey = await resolveDataJudApiKey()
+  if (!apiKey) {
     return {
       sucesso: false,
       mensagem: 'API Key não configurada. Configure em .env',
@@ -111,7 +157,7 @@ export async function testarConexao(): Promise<{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `APIKey ${DATAJUD_API_KEY}`,
+        Authorization: `APIKey ${apiKey}`,
       },
       body: JSON.stringify({
         size: 1,
@@ -151,7 +197,8 @@ export async function buscarProcessoPorNumero(
   numeroProcesso: string,
   tribunal: string = 'trf1'
 ): Promise<ResultadoBuscaDataJud> {
-  if (!isDataJudConfigured()) {
+  const apiKey = await resolveDataJudApiKey()
+  if (!apiKey) {
     throw new Error('API DataJud não configurada')
   }
 
@@ -162,7 +209,7 @@ export async function buscarProcessoPorNumero(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `APIKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${apiKey}`,
     },
     body: JSON.stringify({
       query: {
@@ -189,7 +236,8 @@ export async function buscarProcessosPorParte(
   tribunal: string = 'trf1',
   tamanho: number = 10
 ): Promise<ResultadoBuscaDataJud> {
-  if (!isDataJudConfigured()) {
+  const apiKey = await resolveDataJudApiKey()
+  if (!apiKey) {
     throw new Error('API DataJud não configurada')
   }
 
@@ -197,7 +245,7 @@ export async function buscarProcessosPorParte(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `APIKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${apiKey}`,
     },
     body: JSON.stringify({
       size: tamanho,
@@ -230,7 +278,8 @@ export async function buscarProcessosPorOrgao(
   tribunal: string = 'trf1',
   tamanho: number = 10
 ): Promise<ResultadoBuscaDataJud> {
-  if (!isDataJudConfigured()) {
+  const apiKey = await resolveDataJudApiKey()
+  if (!apiKey) {
     throw new Error('API DataJud não configurada')
   }
 
@@ -238,7 +287,7 @@ export async function buscarProcessosPorOrgao(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `APIKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${apiKey}`,
     },
     body: JSON.stringify({
       size: tamanho,
@@ -266,7 +315,8 @@ export async function buscarProcessosPorClasse(
   tribunal: string = 'trf1',
   tamanho: number = 10
 ): Promise<ResultadoBuscaDataJud> {
-  if (!isDataJudConfigured()) {
+  const apiKey = await resolveDataJudApiKey()
+  if (!apiKey) {
     throw new Error('API DataJud não configurada')
   }
 
@@ -274,7 +324,7 @@ export async function buscarProcessosPorClasse(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `APIKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${apiKey}`,
     },
     body: JSON.stringify({
       size: tamanho,
@@ -309,7 +359,8 @@ export async function buscaAvancada(
   tribunal: string = 'trf1',
   tamanho: number = 10
 ): Promise<ResultadoBuscaDataJud> {
-  if (!isDataJudConfigured()) {
+  const apiKey = await resolveDataJudApiKey()
+  if (!apiKey) {
     throw new Error('API DataJud não configurada')
   }
 
@@ -368,7 +419,7 @@ export async function buscaAvancada(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `APIKey ${DATAJUD_API_KEY}`,
+      Authorization: `APIKey ${apiKey}`,
     },
     body: JSON.stringify({
       size: tamanho,
@@ -545,4 +596,3 @@ export function extrairInfoProcesso(processo: ProcessoDataJud) {
     totalMovimentacoes: processo.movimentos?.length || 0,
   }
 }
-

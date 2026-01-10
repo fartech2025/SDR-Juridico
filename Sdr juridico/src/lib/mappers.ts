@@ -1,5 +1,5 @@
 import type {
-  AgendamentoRow,
+  AgendaRow,
   CasoRow,
   ClienteRow,
   DocumentoRow,
@@ -42,13 +42,6 @@ const leadStatusMap: Record<LeadRow['status'], LeadStatus> = {
 }
 
 const resolveHeat = (row: LeadRow): LeadHeat => {
-  if (row.qualificacao && typeof row.qualificacao === 'object') {
-    const stored = (row.qualificacao as { heat?: string }).heat
-    if (stored === 'quente' || stored === 'morno' || stored === 'frio') {
-      return stored
-    }
-  }
-
   const base = row.last_contact_at || row.created_at
   if (!base) return 'morno'
   const diffMs = Date.now() - new Date(base).getTime()
@@ -65,8 +58,7 @@ const resolveCaseStatus = (status: CasoRow['status']): Caso['status'] => {
 
 const resolveCaseStage = (status: CasoRow['status']): Caso['stage'] => {
   if (status === 'triagem') return 'triagem'
-  if (status === 'negociacao') return 'negociacao'
-  if (status === 'contrato') return 'negociacao'
+  if (status === 'negociacao' || status === 'contrato') return 'negociacao'
   if (status === 'andamento') return 'em_andamento'
   if (status === 'encerrado' || status === 'arquivado') return 'conclusao'
   return 'triagem'
@@ -84,50 +76,13 @@ const resolveSlaRisk = (prioridade: number): Caso['slaRisk'] => {
   return 'ok'
 }
 
-const resolveDocStatus = (doc: DocumentoRow): Documento['status'] => {
-  if (doc.meta && typeof doc.meta === 'object') {
-    const status = (doc.meta as { status?: string }).status
-    if (status === 'pendente' || status === 'aprovado' || status === 'rejeitado' || status === 'solicitado') {
-      return status
-    }
-  }
-
-  if (doc.visibility === 'cliente') return 'aprovado'
-  if (doc.visibility === 'interno') return 'solicitado'
-  return 'pendente'
-}
-
 const resolveDocType = (doc: DocumentoRow) => {
-  if (doc.meta && typeof doc.meta === 'object') {
-    const meta = doc.meta as { tipo?: string; type?: string }
-    if (meta.tipo) return meta.tipo
-    if (meta.type) return meta.type
-  }
-
   if (doc.mime_type) {
     const [, subtype] = doc.mime_type.split('/')
     if (subtype) return subtype.toUpperCase()
   }
 
-  return 'Documento'
-}
-
-const resolveDocUpdatedAt = (doc: DocumentoRow) => {
-  if (doc.meta && typeof doc.meta === 'object') {
-    const updated = (doc.meta as { updated_at?: string }).updated_at
-    if (updated) return updated
-  }
-  return doc.created_at
-}
-
-const resolveAgendaStatus = (row: AgendamentoRow): AgendaItem['status'] => {
-  if (row.meta && typeof row.meta === 'object') {
-    const status = (row.meta as { status?: AgendaItem['status'] }).status
-    if (status === 'confirmado' || status === 'pendente' || status === 'cancelado') {
-      return status
-    }
-  }
-  return 'confirmado'
+  return 'DOCUMENTO'
 }
 
 const resolveTimelineCategory = (nota: NotaRow): TimelineCategory => {
@@ -147,40 +102,34 @@ export const mapLeadRowToLead = (row: LeadRow): Lead => ({
   name: row.nome || 'Sem nome',
   email: row.email || '',
   phone: row.telefone || '',
-  area:
-    row.assunto ||
-    (row.qualificacao && typeof row.qualificacao === 'object'
-      ? ((row.qualificacao as { area?: string }).area || 'Sem area')
-      : 'Sem area'),
-  origin: row.origem || row.canal || 'Outro',
-  status: (() => {
-    if (row.qualificacao && typeof row.qualificacao === 'object') {
-      const stored = (row.qualificacao as { status?: LeadStatus }).status
-      if (stored) return stored
-    }
-    return leadStatusMap[row.status] || 'novo'
-  })(),
+  area: row.assunto || 'Sem area',
+  origin: row.origem || 'Outro',
+  status: leadStatusMap[row.status] || 'novo',
   heat: resolveHeat(row),
   createdAt: row.created_at,
   lastContactAt: row.last_contact_at || undefined,
   owner: row.assigned_user_id ? shortUserLabel(row.assigned_user_id) : 'Nao atribuido',
 })
 
-export const mapCasoRowToCaso = (row: CasoRow): Caso => ({
-  id: row.id,
-  title: row.titulo,
-  cliente: row.cliente?.nome || 'Sem cliente',
-  area: row.area || 'Geral',
-  status: resolveCaseStatus(row.status),
-  heat: resolveCaseHeat(row.prioridade),
-  stage: resolveCaseStage(row.status),
-  value: row.valor_estimado || 0,
-  createdAt: row.created_at,
-  updatedAt: row.encerrado_em || row.created_at,
-  leadId: row.lead_id || undefined,
-  tags: [],
-  slaRisk: resolveSlaRisk(row.prioridade),
-})
+export const mapCasoRowToCaso = (row: CasoRow): Caso => {
+  const prioridadeNum = row.prioridade ?? 2
+
+  return {
+    id: row.id,
+    title: row.titulo,
+    cliente: row.cliente?.nome || 'Sem cliente',
+    area: row.area || 'Geral',
+    status: resolveCaseStatus(row.status),
+    heat: resolveCaseHeat(prioridadeNum),
+    stage: resolveCaseStage(row.status),
+    value: row.valor_estimado || 0,
+    createdAt: row.created_at,
+    updatedAt: row.encerrado_em || row.created_at,
+    leadId: row.lead_id || undefined,
+    tags: [],
+    slaRisk: resolveSlaRisk(prioridadeNum),
+  }
+}
 
 export const mapClienteRowToCliente = (
   row: ClienteRow,
@@ -205,17 +154,17 @@ export const mapClienteRowToCliente = (
 export const mapDocumentoRowToDocumento = (row: DocumentoRow): Documento => ({
   id: row.id,
   title: row.title,
-  cliente: row.cliente?.nome || 'Sem cliente',
+  cliente: row.cliente_id ? shortUserLabel(row.cliente_id) : 'Sem cliente',
   casoId: row.caso_id || undefined,
   type: resolveDocType(row),
-  status: resolveDocStatus(row),
+  status: ((row.meta as { status?: string })?.status as Documento['status']) || 'pendente',
   createdAt: row.created_at,
-  updatedAt: resolveDocUpdatedAt(row),
+  updatedAt: row.created_at,
   requestedBy: row.uploaded_by ? shortUserLabel(row.uploaded_by) : 'Sistema',
   tags: row.tags || [],
 })
 
-export const mapAgendamentoRowToAgendaItem = (row: AgendamentoRow): AgendaItem => {
+export const mapAgendamentoRowToAgendaItem = (row: AgendaRow): AgendaItem => {
   const startAt = new Date(row.start_at)
   const endAt = new Date(row.end_at)
   const durationMinutes = Math.max(0, Math.round((endAt.getTime() - startAt.getTime()) / 60000))
@@ -223,18 +172,15 @@ export const mapAgendamentoRowToAgendaItem = (row: AgendamentoRow): AgendaItem =
   return {
     id: row.id,
     title: row.title,
-    type:
-      (row.meta && typeof row.meta === 'object'
-        ? (row.meta as { tipo?: string }).tipo
-        : null) || 'Compromisso',
+    type: (row.meta?.tipo as string) || 'Compromisso',
     date: toLocalDate(row.start_at),
     time: toLocalTime(row.start_at),
     durationMinutes: durationMinutes || 30,
-    cliente: row.cliente?.nome || 'Sem cliente',
+    cliente: row.cliente_id ? shortUserLabel(row.cliente_id) : 'Sem cliente',
     casoId: row.caso_id || undefined,
     owner: row.owner_user_id ? shortUserLabel(row.owner_user_id) : 'Nao atribuido',
     location: row.location || 'Indefinido',
-    status: resolveAgendaStatus(row),
+    status: ((row.meta as { status?: string })?.status as AgendaItem['status']) || 'pendente',
   }
 }
 

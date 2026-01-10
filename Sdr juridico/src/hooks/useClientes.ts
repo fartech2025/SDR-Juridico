@@ -44,8 +44,9 @@ export function useClientes() {
         )
         const latest = sorted[0]
         const caseCount = cliente.casos_count ?? casosCliente.length
-        const hasCritico = casosCliente.some((caso) => caso.prioridade >= 3)
-        const hasAtencao = casosCliente.some((caso) => caso.prioridade === 2)
+        
+        const hasCritico = casosCliente.some((caso) => (caso.prioridade ?? 0) >= 3)
+        const hasAtencao = casosCliente.some((caso) => (caso.prioridade ?? 0) === 2)
 
         return mapClienteRowToCliente(cliente, {
           caseCount,
@@ -139,7 +140,7 @@ export function useClientes() {
   /**
    * Cria um novo cliente (com atualização otimista)
    */
-  const createCliente = useCallback(async (cliente: Omit<ClienteRow, 'id' | 'created_at'>) => {
+  const createCliente = useCallback(async (cliente: Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoCliente = await clientesService.createCliente(cliente)
@@ -163,7 +164,7 @@ export function useClientes() {
    * Atualiza um cliente (com atualização otimista)
    */
   const updateCliente = useCallback(
-    async (id: string, updates: Partial<Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>>) => {
+    async (id: string, updates: Partial<Omit<ClienteRow, 'id' | 'created_at'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const clienteAtualizado = await clientesService.updateCliente(id, updates)

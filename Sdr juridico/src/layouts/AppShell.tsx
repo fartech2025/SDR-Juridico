@@ -236,9 +236,17 @@ export const AppShell = () => {
         </div>
       </header>
 
-      <main className="min-h-screen bg-transparent pt-16 lg:pl-60">
+      <main className="relative min-h-screen bg-transparent pt-16 lg:pl-60">
         <div className="px-4 py-6 md:px-8">
           <Outlet />
+        </div>
+        <div className="pointer-events-none absolute bottom-6 right-6 opacity-40 dark:opacity-60 md:bottom-10 md:right-10">
+          <img
+            src="https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/TALENT%20SDR%20SEM%20FUNDO.png"
+            alt="Talent SDR Juridico"
+            className="w-56 max-w-[70vw] md:w-80 dark:brightness-125 dark:contrast-110"
+            loading="lazy"
+          />
         </div>
       </main>
 

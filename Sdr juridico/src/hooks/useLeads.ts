@@ -71,7 +71,7 @@ export function useLeads() {
 
   // Criar novo lead
   const createLead = useCallback(
-    async (lead: Omit<LeadRow, 'id' | 'created_at'>) => {
+    async (lead: Omit<LeadRow, 'id' | 'created_at' | 'org_id'>) => {
       try {
         const newLead = await leadsService.createLead(lead)
         setState((prev) => ({

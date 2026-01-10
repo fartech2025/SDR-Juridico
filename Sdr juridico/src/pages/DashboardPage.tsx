@@ -17,6 +17,7 @@ import { useCasos } from '@/hooks/useCasos'
 import { useDocumentos } from '@/hooks/useDocumentos'
 import { useLeads } from '@/hooks/useLeads'
 import { useNotas } from '@/hooks/useNotas'
+import { useTheme } from '@/contexts/ThemeContext'
 import type { KPI, Notification } from '@/types/domain'
 
 const resolveStatus = (
@@ -144,6 +145,8 @@ const buildNotifications = (
 export const DashboardPage = () => {
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const status = resolveStatus(params.get('state'))
   const { leads, loading: leadsLoading, error: leadsError } = useLeads()
   const { casos, loading: casosLoading, error: casosError } = useCasos()
@@ -237,26 +240,51 @@ export const DashboardPage = () => {
   }, [agendaItems, casos, documentos, leads, todayIso])
 
   return (
-    <div className="space-y-6">
-      <header
-        className="relative overflow-hidden rounded-2xl border border-border bg-white p-7 shadow-soft"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 70%, rgba(255,216,232,0.3) 100%), url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '560px',
-        }}
-      >
-        <div className="relative z-10 space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
-            Dashboard
-          </p>
-          <h2 className="font-display text-2xl text-text">Resumo executivo</h2>
-          <p className="text-sm text-text-muted">
-            Foco em caso critico, produtividade e agenda juridica.
-          </p>
-        </div>
-      </header>
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+      )}
+    >
+      <div className="space-y-6">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-8 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
+            isDark
+              ? 'border-slate-800 bg-gradient-to-br from-[#0f141b] via-[#101721] to-[#151d28]'
+              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+          )}
+        >
+          {isDark && (
+            <div className="absolute inset-0">
+              <div className="absolute -right-10 -top-10 h-52 w-52 rounded-full bg-emerald-500/15 blur-3xl" />
+              <div className="absolute -bottom-16 left-12 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
+            </div>
+          )}
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              isDark ? 'opacity-15' : 'opacity-90',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-3">
+            <p
+              className={cn(
+                'text-[11px] uppercase tracking-[0.32em]',
+                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+              )}
+            >
+              Dashboard
+            </p>
+            <h2 className={cn('font-display text-3xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+              Resumo executivo
+            </h2>
+            <p className={cn('max-w-2xl text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+              Foco em caso critico, produtividade e agenda juridica com uma visão clara do funil.
+            </p>
+          </div>
+        </header>
 
       <PageState status={pageState}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -268,6 +296,10 @@ export const DashboardPage = () => {
               delta={item.delta}
               trend={item.trend}
               period={item.period}
+              className={cn(
+                'border',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
+              )}
             />
           ))}
         </div>
@@ -285,6 +317,12 @@ export const DashboardPage = () => {
                 priority="P0"
                 actionLabel="Acelerar lead"
                 href="/app/leads"
+                className={cn(
+                  'border',
+                  isDark
+                    ? 'border-slate-800'
+                    : 'border-[#f0d9b8] !bg-white/95 !from-white !via-white !to-[#fde9f2] !text-[#2a1400]',
+                )}
               />
               <ActionCard
                 title="Documento pendente de validacao"
@@ -298,10 +336,21 @@ export const DashboardPage = () => {
                 href="/app/documentos"
                 secondaryActionLabel="Abrir dossie"
                 secondaryHref={`/app/caso/${docPending?.casoId ?? 'caso-sem-dados'}`}
+                className={cn(
+                  'border',
+                  isDark
+                    ? 'border-slate-800'
+                    : 'border-[#f0d9b8] !bg-white/95 !text-[#2a1400]',
+                )}
               />
             </div>
 
-            <Card>
+            <Card
+              className={cn(
+                'border',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
+              )}
+            >
               <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
                 <div className="flex items-center gap-2">
                   <Flag className="h-4 w-4 text-warning" />
@@ -321,14 +370,22 @@ export const DashboardPage = () => {
               </CardHeader>
               <CardContent className="space-y-3 px-6 pb-6">
                 {criticalEvents.length === 0 && (
-                  <div className="rounded-2xl border border-border bg-white px-4 py-6 text-center text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                  <div
+                    className={cn(
+                      'rounded-2xl border px-4 py-6 text-center text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
+                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                    )}
+                  >
                     Nenhum evento critico registrado hoje.
                   </div>
                 )}
                 {criticalEvents.map((event) => (
                   <div
                     key={event.id}
-                    className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+                    className={cn(
+                      'rounded-2xl border px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
+                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                    )}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="space-y-1">
@@ -359,10 +416,59 @@ export const DashboardPage = () => {
                 ))}
               </CardContent>
             </Card>
+
+            <Card
+              className={cn(
+                'border',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
+              )}
+            >
+              <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-accent" />
+                  <CardTitle className="text-sm">Agenda do dia</CardTitle>
+                </div>
+                <Link
+                  to="/app/agenda"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Ver todos
+                </Link>
+              </CardHeader>
+              <CardContent className="space-y-3 px-6 pb-6">
+                {agendaToday.map((item) => (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      'flex items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
+                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                    )}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-text">
+                        {item.title}
+                      </p>
+                      <p className="text-xs text-text-subtle">
+                        {item.cliente} - {item.location}
+                      </p>
+                    </div>
+                    <div className="text-right text-xs text-text-subtle">
+                      <div>{item.time}</div>
+                      <div>{item.durationMinutes} min</div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-4">
-            <Card>
+            <Card
+              className={cn(
+                'border',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
+              )}
+            >
               <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
@@ -371,7 +477,12 @@ export const DashboardPage = () => {
               </CardHeader>
               <CardContent className="space-y-3 px-6 pb-6 text-sm text-text-muted">
                 {nextCase ? (
-                  <div className="rounded-2xl border border-border bg-white px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                  <div
+                    className={cn(
+                      'rounded-2xl border px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
+                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                    )}
+                  >
                     <p className="text-sm font-semibold text-text">
                       {nextCase.title}
                     </p>
@@ -388,7 +499,12 @@ export const DashboardPage = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                  <div
+                    className={cn(
+                      'rounded-2xl border px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
+                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                    )}
+                  >
                     Nenhum caso ativo encontrado.
                   </div>
                 )}
@@ -410,46 +526,19 @@ export const DashboardPage = () => {
               </CardContent>
             </Card>
 
-            <NotificationCenter notifications={notifications.slice(0, 6)} />
-
-            <Card>
-              <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-accent" />
-                  <CardTitle className="text-sm">Agenda do dia</CardTitle>
-                </div>
-                <Link
-                  to="/app/agenda"
-                  className="text-xs text-primary hover:underline"
-                >
-                  Ver todos
-                </Link>
-              </CardHeader>
-              <CardContent className="space-y-3 px-6 pb-6">
-                {agendaToday.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 py-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-text">
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-text-subtle">
-                        {item.cliente} - {item.location}
-                      </p>
-                    </div>
-                    <div className="text-right text-xs text-text-subtle">
-                      <div>{item.time}</div>
-                      <div>{item.durationMinutes} min</div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <NotificationCenter
+              notifications={notifications.slice(0, 6)}
+              className={cn(
+                'border',
+                isDark
+                  ? 'border-slate-800 bg-slate-900/70'
+                  : 'border-[#f0d9b8] !bg-white/95 !text-[#2a1400]',
+              )}
+            />
           </div>
         </div>
       </PageState>
+      </div>
     </div>
   )
 }

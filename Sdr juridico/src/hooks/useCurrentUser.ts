@@ -13,7 +13,10 @@ const roleLabels: Record<UserRole, string> = {
   leitura: 'Leitura',
 }
 
-const deriveDisplayName = (profile: ProfileRow | null, user: { email?: string | null; user_metadata?: Record<string, unknown> } | null) => {
+const deriveDisplayName = (
+  profile: ProfileRow | null,
+  user: { email?: string | null; user_metadata?: Record<string, unknown> } | null
+) => {
   const metadataName =
     user?.user_metadata && typeof user.user_metadata === 'object'
       ? (user.user_metadata as { nome?: string }).nome
@@ -81,8 +84,7 @@ export function useCurrentUser() {
       }
 
       setProfile((profileResult.data?.[0] as ProfileRow) || null)
-      
-      // Tratar org como array e pegar primeiro elemento
+
       const memberData = memberResult.data?.[0]
       if (memberData) {
         if (Array.isArray(memberData.org) && memberData.org.length > 0) {
@@ -93,7 +95,7 @@ export function useCurrentUser() {
       } else {
         setMember(null)
       }
-      
+
       setLoading(false)
     }
 

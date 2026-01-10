@@ -10,6 +10,7 @@ import type { Caso } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useCasos } from '@/hooks/useCasos'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const resolveStatus = (
   value: string | null,
@@ -64,6 +65,8 @@ const heatPill = (heat: Caso['heat']) => {
 export const CasosPage = () => {
   const { casos, loading, error } = useCasos()
   const { displayName } = useCurrentUser()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const status = resolveStatus(params.get('state'))
@@ -101,31 +104,52 @@ export const CasosPage = () => {
   const pageState = status !== 'ready' ? status : baseState
 
   return (
-    <div className="space-y-6">
-      <header
-        className="relative overflow-hidden rounded-3xl border border-border bg-white p-6 shadow-soft"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 72%, rgba(255,216,232,0.22) 100%), url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '520px',
-          backgroundColor: 'var(--agenda-card)',
-          borderColor: 'var(--agenda-border)',
-          boxShadow: 'var(--agenda-shadow)',
-        }}
-      >
-        <div className="relative z-10 space-y-2">
-          <div className="flex items-center gap-3 text-sm text-text-muted">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white">
-              <ChevronLeft className="h-4 w-4 text-text-subtle" />
-            </span>
-            <span>Bom dia, {displayName}</span>
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+      )}
+    >
+      <div className="space-y-6">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
+            isDark
+              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
+              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+          )}
+        >
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              isDark ? 'opacity-20' : 'opacity-80',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-2">
+            <div className={cn('flex items-center gap-3 text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+              <span
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-full border',
+                  isDark ? 'border-slate-700 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                )}
+              >
+                <ChevronLeft className={cn('h-4 w-4', isDark ? 'text-slate-300' : 'text-[#9a5b1e]')} />
+              </span>
+              <span>Bom dia, {displayName}</span>
+            </div>
+            <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+              Casos
+            </h2>
           </div>
-          <h2 className="font-display text-2xl text-text">Casos</h2>
-        </div>
-      </header>
+        </header>
 
-      <Card>
+        <Card
+          className={cn(
+            'border',
+            isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+          )}
+        >
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-1 flex-wrap items-center gap-3">
@@ -135,7 +159,12 @@ export const CasosPage = () => {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Buscar casos..."
-                  className="h-11 w-full rounded-full border border-border bg-white pl-10 pr-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className={cn(
+                    'h-11 w-full rounded-full border pl-10 pr-3 text-sm shadow-soft focus:outline-none focus:ring-2',
+                    isDark
+                      ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                      : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+                  )}
                 />
               </div>
               <Button
@@ -149,7 +178,12 @@ export const CasosPage = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-soft">
+          <div
+            className={cn(
+              'flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 shadow-soft',
+              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+            )}
+          >
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {chips.map((chip) => (
                 <button
@@ -166,7 +200,10 @@ export const CasosPage = () => {
               ))}
               <button
                 type="button"
-                className="ml-2 text-xs text-text-subtle hover:text-text"
+                className={cn(
+                  'ml-2 text-xs',
+                  isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+                )}
                 onClick={() => {
                   setQuery('')
                   setAreaFilter('todos')
@@ -179,7 +216,7 @@ export const CasosPage = () => {
             <Button
               variant="primary"
               size="sm"
-              className="h-11 rounded-full bg-[#5BB9B6] px-5 text-sm font-semibold hover:brightness-95"
+              className="h-11 rounded-full bg-[#1f8a4c] px-5 text-sm font-semibold text-white shadow-[0_12px_20px_-12px_rgba(31,138,76,0.8)] hover:brightness-95 dark:bg-emerald-500"
             >
               + Novo Caso
             </Button>
@@ -191,7 +228,12 @@ export const CasosPage = () => {
               <select
                 value={areaFilter}
                 onChange={(event) => setAreaFilter(event.target.value)}
-                className="h-8 rounded-full border border-border bg-white px-3 text-xs text-text shadow-soft"
+                className={cn(
+                  'h-8 rounded-full border px-3 text-xs shadow-soft',
+                  isDark
+                    ? 'border-slate-700 bg-slate-900 text-slate-100'
+                    : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                )}
               >
                 <option value="todos">Todos</option>
                 {Array.from(new Set(casos.map((caso) => caso.area))).map((area) => (
@@ -204,7 +246,12 @@ export const CasosPage = () => {
               <select
                 value={heatFilter}
                 onChange={(event) => setHeatFilter(event.target.value)}
-                className="h-8 rounded-full border border-border bg-white px-3 text-xs text-text shadow-soft"
+                className={cn(
+                  'h-8 rounded-full border px-3 text-xs shadow-soft',
+                  isDark
+                    ? 'border-slate-700 bg-slate-900 text-slate-100'
+                    : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                )}
               >
                 <option value="todos">Todos</option>
                 {Array.from(new Set(casos.map((caso) => caso.heat))).map((heat) => (
@@ -221,9 +268,19 @@ export const CasosPage = () => {
             emptyTitle="Nenhum caso encontrado"
             emptyDescription="Ajuste os filtros para localizar um caso."
           >
-            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
+            <div
+              className={cn(
+                'overflow-hidden rounded-2xl border shadow-soft',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+              )}
+            >
               <table className="w-full border-collapse text-left text-sm">
-                <thead className="bg-surface-2 text-[11px] uppercase tracking-[0.22em] text-text-subtle">
+                <thead
+                  className={cn(
+                    'text-[11px] uppercase tracking-[0.22em]',
+                    isDark ? 'bg-slate-800 text-slate-300' : 'bg-[#fff3e0] text-[#9a5b1e]',
+                  )}
+                >
                   <tr>
                     <th className="px-4 py-3">ID</th>
                     <th className="px-4 py-3">Cliente</th>
@@ -245,7 +302,12 @@ export const CasosPage = () => {
                     return (
                       <tr
                         key={caso.id}
-                        className="border-t border-border hover:bg-surface-2/70"
+                        className={cn(
+                          'border-t',
+                          isDark
+                            ? 'border-slate-800 hover:bg-slate-800/60'
+                            : 'border-[#f0d9b8] hover:bg-[#fff3e0]/60',
+                        )}
                         onClick={() => navigate(`/app/caso/${caso.id}`)}
                       >
                         <td className="px-4 py-3 text-xs text-text-subtle">
@@ -314,7 +376,12 @@ export const CasosPage = () => {
                               event.stopPropagation()
                               navigate(`/app/caso/${caso.id}`)
                             }}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-subtle hover:text-text"
+                            className={cn(
+                              'inline-flex h-8 w-8 items-center justify-center rounded-full border',
+                              isDark
+                                ? 'border-slate-700 bg-slate-900 text-slate-300 hover:text-slate-100'
+                                : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:text-[#2a1400]',
+                            )}
                           >
                             <ChevronDown className="h-4 w-4" />
                           </button>
@@ -324,7 +391,14 @@ export const CasosPage = () => {
                   })}
                 </tbody>
               </table>
-              <div className="flex items-center justify-between border-t border-border bg-surface-2 px-4 py-3 text-xs text-text-subtle">
+              <div
+                className={cn(
+                  'flex items-center justify-between border-t px-4 py-3 text-xs',
+                  isDark
+                    ? 'border-slate-800 bg-slate-800 text-slate-300'
+                    : 'border-[#f0d9b8] bg-[#fff3e0] text-[#9a5b1e]',
+                )}
+              >
                 <span>
                   Mostrando {filtered.length} de {casos.length} casos
                 </span>
@@ -333,7 +407,12 @@ export const CasosPage = () => {
                     <button
                       key={page}
                       type="button"
-                      className="h-7 w-7 rounded-lg border border-border bg-white text-xs text-text-subtle hover:text-text"
+                      className={cn(
+                        'h-7 w-7 rounded-lg border text-xs',
+                        isDark
+                          ? 'border-slate-700 bg-slate-900 text-slate-300 hover:text-slate-100'
+                          : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:text-[#2a1400]',
+                      )}
                     >
                       {page}
                     </button>
@@ -344,6 +423,7 @@ export const CasosPage = () => {
           </PageState>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

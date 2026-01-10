@@ -119,7 +119,7 @@ export function useCasos() {
   /**
    * Cria um novo caso (com atualização otimista)
    */
-  const createCaso = useCallback(async (caso: Omit<CasoRow, 'id' | 'created_at'>) => {
+  const createCaso = useCallback(async (caso: Omit<CasoRow, 'id' | 'created_at' | 'org_id'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoCaso = await casosService.createCaso(caso)
@@ -137,7 +137,7 @@ export function useCasos() {
    * Atualiza um caso (com atualização otimista)
    */
   const updateCaso = useCallback(
-    async (id: string, updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'org_id'>>) => {
+    async (id: string, updates: Partial<Omit<CasoRow, 'id' | 'created_at'>>) => {
       try {
         setState((prev) => ({ ...prev, error: null }))
         const casoAtualizado = await casosService.updateCaso(id, updates)
@@ -184,7 +184,7 @@ export function useCasos() {
   /**
    * Muda prioridade de um caso
    */
-  const mudarPrioridade = useCallback(async (id: string, novaPrioridade: number) => {
+  const mudarPrioridade = useCallback(async (id: string, novaPrioridade: CasoRow['prioridade']) => {
     return updateCaso(id, { prioridade: novaPrioridade })
   }, [updateCaso])
 

@@ -12,6 +12,8 @@ import { formatDateTime } from '@/utils/format'
 import type { Documento } from '@/types/domain'
 import { useDocumentos } from '@/hooks/useDocumentos'
 import { useCasos } from '@/hooks/useCasos'
+import { useTheme } from '@/contexts/ThemeContext'
+import { cn } from '@/utils/cn'
 
 const resolveStatus = (
   value: string | null,
@@ -32,6 +34,8 @@ const statusPill = (status: Documento['status']) => {
 export const DocumentosPage = () => {
   const { documentos, loading, error } = useDocumentos()
   const { casos } = useCasos()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [params] = useSearchParams()
   const [statusFilter, setStatusFilter] = React.useState('todos')
   const [typeFilter, setTypeFilter] = React.useState('todos')
@@ -95,29 +99,45 @@ export const DocumentosPage = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <header
-        className="relative overflow-hidden rounded-3xl border border-border bg-white p-6 shadow-soft"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 72%, rgba(255,216,232,0.22) 100%), url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '520px',
-          backgroundColor: 'var(--agenda-card)',
-          borderColor: 'var(--agenda-border)',
-          boxShadow: 'var(--agenda-shadow)',
-        }}
-      >
-        <div className="relative z-10 space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-text-subtle">
-            Documentos
-          </p>
-          <h2 className="font-display text-2xl text-text">Gestao central</h2>
-          <p className="text-sm text-text-muted">
-            Filtre por status, tipo e cliente para validar pendencias.
-          </p>
-        </div>
-      </header>
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+      )}
+    >
+      <div className="space-y-5">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
+            isDark
+              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
+              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+          )}
+        >
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              isDark ? 'opacity-20' : 'opacity-80',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-2">
+            <p
+              className={cn(
+                'text-xs uppercase tracking-[0.3em]',
+                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+              )}
+            >
+              Documentos
+            </p>
+            <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+              Gestao central
+            </h2>
+            <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+              Filtre por status, tipo e cliente para validar pendencias.
+            </p>
+          </div>
+        </header>
 
       <PageState
         status={pageState}
@@ -127,7 +147,12 @@ export const DocumentosPage = () => {
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           {/* Seção de Upload */}
           {mostrarUpload && (
-            <Card className="xl:col-span-2">
+            <Card
+              className={cn(
+                'xl:col-span-2 border',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              )}
+            >
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Upload de Documentos</CardTitle>
                 <Button
@@ -147,7 +172,12 @@ export const DocumentosPage = () => {
             </Card>
           )}
 
-          <Card>
+          <Card
+            className={cn(
+              'border',
+              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            )}
+          >
             <CardHeader className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-base">Documentos pendentes</CardTitle>
@@ -172,7 +202,12 @@ export const DocumentosPage = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white px-3 py-2 shadow-soft">
+              <div
+                className={cn(
+                  'flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2 shadow-soft',
+                  isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+                )}
+              >
                 <div className="flex flex-wrap gap-2">
                   {tabs.map((tab) => (
                     <button
@@ -181,8 +216,12 @@ export const DocumentosPage = () => {
                       onClick={() => setActiveTab(tab)}
                       className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
                         activeTab === tab
-                          ? 'border-primary/60 bg-primary/15 text-primary'
-                          : 'border-border bg-white text-text-subtle hover:bg-[#F2F5FF] hover:text-text'
+                          ? isDark
+                            ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300'
+                            : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600'
+                          : isDark
+                            ? 'border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800'
+                            : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:bg-[#fff3e0] hover:text-[#2a1400]'
                       }`}
                     >
                       {tab}
@@ -194,7 +233,12 @@ export const DocumentosPage = () => {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-3">
                   <select
-                    className="h-11 rounded-full border border-border bg-white px-4 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className={cn(
+                      'h-11 rounded-full border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
+                      isDark
+                        ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+                    )}
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value)}
                   >
@@ -206,7 +250,12 @@ export const DocumentosPage = () => {
                     ))}
                   </select>
                   <select
-                    className="h-11 rounded-full border border-border bg-white px-4 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className={cn(
+                      'h-11 rounded-full border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
+                      isDark
+                        ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+                    )}
                     value={typeFilter}
                     onChange={(event) => setTypeFilter(event.target.value)}
                   >
@@ -218,7 +267,12 @@ export const DocumentosPage = () => {
                     ))}
                   </select>
                   <select
-                    className="h-11 rounded-full border border-border bg-white px-4 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className={cn(
+                      'h-11 rounded-full border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
+                      isDark
+                        ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+                    )}
                     value={clienteFilter}
                     onChange={(event) => setClienteFilter(event.target.value)}
                   >
@@ -232,16 +286,29 @@ export const DocumentosPage = () => {
                 </div>
                 <button
                   type="button"
-                  className="text-xs text-text-subtle hover:text-text"
+                  className={cn(
+                    'text-xs',
+                    isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+                  )}
                   onClick={resetFilters}
                 >
                   Limpar filtros
                 </button>
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
+              <div
+                className={cn(
+                  'overflow-hidden rounded-2xl border shadow-soft',
+                  isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+                )}
+              >
                 <table className="w-full border-collapse text-left text-sm">
-                  <thead className="bg-surface-2 text-[11px] uppercase tracking-[0.22em] text-text-subtle">
+                  <thead
+                    className={cn(
+                      'text-[11px] uppercase tracking-[0.22em]',
+                      isDark ? 'bg-slate-800 text-slate-300' : 'bg-[#fff3e0] text-[#9a5b1e]',
+                    )}
+                  >
                     <tr>
                       <th className="px-4 py-3" />
                       <th className="px-4 py-3">Documento</th>
@@ -255,7 +322,12 @@ export const DocumentosPage = () => {
                     {filteredDocs.map((doc) => (
                       <tr
                         key={doc.id}
-                        className="border-t border-border text-text hover:bg-surface-2/70"
+                        className={cn(
+                          'border-t text-text',
+                          isDark
+                            ? 'border-slate-800 hover:bg-slate-800/60'
+                            : 'border-[#f0d9b8] hover:bg-[#fff3e0]/60',
+                        )}
                       >
                         <td className="px-4 py-3">
                           <input
@@ -288,7 +360,10 @@ export const DocumentosPage = () => {
                           <div className="flex flex-wrap items-center gap-3 text-xs">
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 text-text-subtle hover:text-success"
+                              className={cn(
+                                'inline-flex items-center gap-1',
+                                isDark ? 'text-slate-300 hover:text-success' : 'text-[#7a4a1a] hover:text-success',
+                              )}
                               onClick={(event) => {
                                 event.stopPropagation()
                                 toast.success(`Documento aprovado: ${doc.title}`)
@@ -299,7 +374,10 @@ export const DocumentosPage = () => {
                             </button>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 text-text-subtle hover:text-danger"
+                              className={cn(
+                                'inline-flex items-center gap-1',
+                                isDark ? 'text-slate-300 hover:text-danger' : 'text-[#7a4a1a] hover:text-danger',
+                              )}
                               onClick={(event) => {
                                 event.stopPropagation()
                                 toast.error(`Documento rejeitado: ${doc.title}`)
@@ -310,7 +388,10 @@ export const DocumentosPage = () => {
                             </button>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 text-text-subtle hover:text-primary"
+                              className={cn(
+                                'inline-flex items-center gap-1',
+                                isDark ? 'text-slate-300 hover:text-primary' : 'text-[#7a4a1a] hover:text-primary',
+                              )}
                               onClick={(event) => {
                                 event.stopPropagation()
                                 toast.message(`Solicitado novamente: ${doc.title}`)
@@ -329,14 +410,24 @@ export const DocumentosPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className={cn(
+              'border',
+              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            )}
+          >
             <CardHeader>
               <CardTitle className="text-base">Checklist do caso</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-text-muted">
               {selectedCase ? (
                 <>
-                  <div className="rounded-2xl border border-border bg-white px-3 py-3 shadow-soft">
+                  <div
+                    className={cn(
+                      'rounded-2xl border px-3 py-3 shadow-soft',
+                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                    )}
+                  >
                     <p className="text-sm font-semibold text-text">
                       {selectedCase.title}
                     </p>
@@ -345,14 +436,22 @@ export const DocumentosPage = () => {
                     </p>
                   </div>
                   {checklistItems.length === 0 && (
-                    <div className="rounded-2xl border border-border bg-white px-3 py-3 shadow-soft">
+                    <div
+                      className={cn(
+                        'rounded-2xl border px-3 py-3 shadow-soft',
+                        isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                      )}
+                    >
                       Nenhum documento vinculado ao caso.
                     </div>
                   )}
                   {checklistItems.map((doc) => (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between rounded-2xl border border-border bg-white px-3 py-2 text-xs shadow-soft"
+                      className={cn(
+                        'flex items-center justify-between rounded-2xl border px-3 py-2 text-xs shadow-soft',
+                        isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                      )}
                     >
                       <span className="text-text">{doc.title}</span>
                       <span
@@ -366,7 +465,12 @@ export const DocumentosPage = () => {
                   ))}
                 </>
               ) : (
-                <div className="rounded-2xl border border-border bg-white px-3 py-4 text-sm text-text-muted shadow-soft">
+                <div
+                  className={cn(
+                    'rounded-2xl border px-3 py-4 text-sm text-text-muted shadow-soft',
+                    isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                  )}
+                >
                   Selecione um cliente para visualizar o checklist do caso.
                 </div>
               )}
@@ -374,6 +478,7 @@ export const DocumentosPage = () => {
           </Card>
         </div>
       </PageState>
+      </div>
     </div>
   )
 }

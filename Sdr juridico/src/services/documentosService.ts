@@ -1,41 +1,18 @@
 import { supabase } from '@/lib/supabaseClient'
+import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import type { DocumentoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
 export const documentosService = {
   /**
-   * Resolve meta padrão para documentos
-   */
-  resolveMetaDefaults(documento: Omit<DocumentoRow, 'id' | 'created_at'>) {
-    const existingMeta =
-      documento.meta && typeof documento.meta === 'object'
-        ? (documento.meta as Record<string, unknown>)
-        : {}
-    const tipoFromMime =
-      documento.mime_type && documento.mime_type.includes('/')
-        ? documento.mime_type.split('/')[1]?.toUpperCase()
-        : undefined
-    const tipo =
-      (existingMeta.tipo as string | undefined) ||
-      (existingMeta.type as string | undefined) ||
-      tipoFromMime ||
-      'Documento'
-    const status = (existingMeta.status as string | undefined) || 'pendente'
-    return {
-      ...existingMeta,
-      tipo,
-      status,
-    }
-  },
-  /**
    * Busca todos os documentos
    */
   async getDocumentos(): Promise<DocumentoRow[]> {
     try {
-      const { data, error } = await supabase
-        .from('documentos')
-        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:profiles!uploaded_by(nome)')
-        .order('created_at', { ascending: false })
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('documentos').select('*')
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -49,11 +26,10 @@ export const documentosService = {
    */
   async getDocumento(id: string): Promise<DocumentoRow> {
     try {
-      const { data, error } = await supabase
-        .from('documentos')
-        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:profiles!uploaded_by(nome)')
-        .eq('id', id)
-        .single()
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('documentos').select('*').eq('id', id)
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Documento não encontrado', 'not_found')
@@ -69,11 +45,10 @@ export const documentosService = {
    */
   async getDocumentosByCaso(casoId: string): Promise<DocumentoRow[]> {
     try {
-      const { data, error } = await supabase
-        .from('documentos')
-        .select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:profiles!uploaded_by(nome)')
-        .eq('caso_id', casoId)
-        .order('created_at', { ascending: false })
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('documentos').select('*').eq('caso_id', casoId)
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -88,10 +63,7 @@ export const documentosService = {
   async getDocumentosByStatus(status: string): Promise<DocumentoRow[]> {
     try {
       const documentos = await this.getDocumentos()
-      return documentos.filter((doc) => {
-        if (!doc.meta || typeof doc.meta !== 'object') return false
-        return (doc.meta as { status?: string }).status === status
-      })
+      return documentos.filter((doc) => (doc.meta as { status?: string })?.status === status)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
@@ -104,9 +76,9 @@ export const documentosService = {
     try {
       const documentos = await this.getDocumentos()
       return documentos.filter((doc) => {
-        if (!doc.meta || typeof doc.meta !== 'object') return false
-        const meta = doc.meta as { tipo?: string; type?: string }
-        return meta.tipo === tipo || meta.type === tipo
+        if (doc.mime_type && doc.mime_type.includes(tipo)) return true
+        const categoria = (doc.meta as { categoria?: string })?.categoria
+        return categoria === tipo
       })
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
@@ -117,13 +89,21 @@ export const documentosService = {
    * Cria um novo documento
    */
   async createDocumento(
-    documento: Omit<DocumentoRow, 'id' | 'created_at'>
+    documento: Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>
   ): Promise<DocumentoRow> {
     try {
-      const meta = this.resolveMetaDefaults(documento)
+      const orgId = await requireOrgId()
+      const payload = {
+        ...documento,
+        org_id: orgId,
+        visibility: documento.visibility || 'interno',
+        bucket: documento.bucket || 'docs',
+        tags: documento.tags || [],
+        meta: documento.meta || {},
+      }
       const { data, error } = await supabase
         .from('documentos')
-        .insert([{ ...documento, meta }])
+        .insert([payload])
         .select()
         .single()
 
@@ -141,13 +121,21 @@ export const documentosService = {
    */
   async updateDocumento(
     id: string,
-    updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>>
+    updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>> & { status?: string }
   ): Promise<DocumentoRow> {
     try {
+      const orgId = await requireOrgId()
+      const nextUpdates = { ...updates } as Partial<DocumentoRow>
+      if ('status' in updates) {
+        const current = (updates.meta as Record<string, unknown>) || {}
+        nextUpdates.meta = { ...current, status: updates.status }
+        delete (nextUpdates as { status?: string }).status
+      }
       const { data, error } = await supabase
         .from('documentos')
-        .update(updates)
+        .update(nextUpdates)
         .eq('id', id)
+        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -165,10 +153,12 @@ export const documentosService = {
    */
   async deleteDocumento(id: string): Promise<void> {
     try {
+      const orgId = await requireOrgId()
       const { error } = await supabase
         .from('documentos')
         .delete()
         .eq('id', id)
+        .eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
@@ -180,16 +170,14 @@ export const documentosService = {
    * Marca documento como completo
    */
   async marcarCompleto(id: string): Promise<DocumentoRow> {
-    const meta = { status: 'aprovado' }
-    return this.updateDocumento(id, { meta })
+    return this.updateDocumento(id, { status: 'aprovado' })
   },
 
   /**
    * Marca documento como pendente
    */
   async marcarPendente(id: string): Promise<DocumentoRow> {
-    const meta = { status: 'pendente' }
-    return this.updateDocumento(id, { meta })
+    return this.updateDocumento(id, { status: 'pendente' })
   },
 
   /**
@@ -212,18 +200,8 @@ export const documentosService = {
 
       return {
         total: documentos.length,
-        pendentes: documentos.filter((doc) => {
-          const status = doc.meta && typeof doc.meta === 'object'
-            ? (doc.meta as { status?: string }).status
-            : null
-          return status === 'pendente'
-        }).length,
-        completos: documentos.filter((doc) => {
-          const status = doc.meta && typeof doc.meta === 'object'
-            ? (doc.meta as { status?: string }).status
-            : null
-          return status === 'aprovado'
-        }).length,
+        pendentes: documentos.filter((doc) => (doc.meta as { status?: string })?.status === 'pendente').length,
+        completos: documentos.filter((doc) => (doc.meta as { status?: string })?.status === 'aprovado').length,
       }
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar estatísticas', 'database_error')
@@ -279,6 +257,7 @@ export const documentosService = {
       }
 
       const user = session.user
+      const orgId = await requireOrgId()
 
       // Gerar nome único para o arquivo
       const timestamp = Date.now()
@@ -291,7 +270,7 @@ export const documentosService = {
 
       // Upload para o Storage
       const { error: uploadError } = await supabase.storage
-        .from('documentos')
+        .from('docs')
         .upload(storagePath, arquivo, {
           cacheControl: '3600',
           upsert: false,
@@ -305,20 +284,21 @@ export const documentosService = {
       const { data: documento, error: dbError } = await supabase
         .from('documentos')
         .insert({
-          user_id: user.id,
-          nome_arquivo: nomeArquivo,
-          nome_original: arquivo.name,
-          tipo_arquivo: arquivo.type,
-          tamanho_bytes: arquivo.size,
+          org_id: orgId,
+          title: arquivo.name,
+          description: descricao || null,
+          visibility: 'interno',
+          bucket: 'docs',
           storage_path: storagePath,
           caso_id: casoId || null,
-          categoria,
+          mime_type: arquivo.type,
+          size_bytes: arquivo.size,
+          uploaded_by: user.id,
           tags: tags || [],
-          descricao: descricao || null,
-          status: 'pendente',
-          metadata: {
-            uploaded_at: new Date().toISOString(),
+          meta: {
+            categoria,
             original_name: arquivo.name,
+            status: 'pendente',
           },
         })
         .select()
@@ -326,7 +306,7 @@ export const documentosService = {
 
       if (dbError) {
         // Se falhar ao registrar no banco, tentar deletar do storage
-        await supabase.storage.from('documentos').remove([storagePath])
+        await supabase.storage.from('docs').remove([storagePath])
         throw new AppError(dbError.message, 'database_error')
       }
 
@@ -341,8 +321,11 @@ export const documentosService = {
    */
   async obterUrlDocumento(storagePath: string): Promise<string> {
     try {
+      if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+        return storagePath
+      }
       const { data, error } = await supabase.storage
-        .from('documentos')
+        .from('docs')
         .createSignedUrl(storagePath, 3600) // 1 hora
 
       if (error) throw new AppError(error.message, 'storage_error')
@@ -359,14 +342,24 @@ export const documentosService = {
    */
   async downloadDocumento(storagePath: string, nomeOriginal: string): Promise<void> {
     try {
-      const { data, error } = await supabase.storage
-        .from('documentos')
-        .download(storagePath)
+      let fileData: Blob
+      if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+        const response = await fetch(storagePath)
+        if (!response.ok) {
+          throw new AppError(`Erro ao baixar documento (${response.status})`, 'storage_error')
+        }
+        fileData = await response.blob()
+      } else {
+        const { data, error } = await supabase.storage
+          .from('docs')
+          .download(storagePath)
 
-      if (error) throw new AppError(error.message, 'storage_error')
+        if (error) throw new AppError(error.message, 'storage_error')
+        fileData = data
+      }
 
       // Criar link de download
-      const url = URL.createObjectURL(data)
+      const url = URL.createObjectURL(fileData)
       const a = document.createElement('a')
       a.href = url
       a.download = nomeOriginal

@@ -27,6 +27,11 @@ export function useIntegrations() {
   const fetchIntegrations = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
+      try {
+        await integrationsService.cleanupDuplicates()
+      } catch {
+        // Ignorar falhas de limpeza para não bloquear a tela
+      }
       const rows = await integrationsService.getIntegrations()
       const mapped: Integration[] = rows.map((row) => ({
         id: row.id,
@@ -48,8 +53,8 @@ export function useIntegrations() {
   }, [])
 
   const createDefaultIntegrations = useCallback(
-    async (orgId: string) => {
-      await integrationsService.ensureDefaultIntegrations(orgId)
+    async () => {
+      await integrationsService.ensureDefaultIntegrations()
       await fetchIntegrations()
     },
     [fetchIntegrations]

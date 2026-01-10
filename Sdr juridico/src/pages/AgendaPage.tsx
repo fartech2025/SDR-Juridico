@@ -12,6 +12,7 @@ import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const resolveStatus = (
   value: string | null,
@@ -61,6 +62,8 @@ const statusStyles: Record<
 export const AgendaPage = () => {
   const { eventos: agendaItems, loading, error } = useAgenda()
   const { displayName } = useCurrentUser()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [selectedItem, setSelectedItem] = React.useState<AgendaItem | null>(null)
@@ -126,31 +129,52 @@ export const AgendaPage = () => {
   }, [agendaItems, days])
 
   return (
-    <div className="space-y-6">
-      <header
-        className="relative overflow-hidden rounded-3xl border bg-white p-6"
-        style={{
-          backgroundImage: `url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '420px',
-          backgroundColor: 'var(--agenda-card)',
-          borderColor: 'var(--agenda-border)',
-          boxShadow: 'var(--agenda-shadow)',
-        }}
-      >
-        <div className="relative z-10 space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
-            Agenda juridica
-          </p>
-          <h2 className="font-display text-3xl text-text">Agenda juridica</h2>
-          <p className="text-sm text-text-muted">Bom dia, {displayName}</p>
-        </div>
-      </header>
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+      )}
+    >
+      <div className="space-y-6">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
+            isDark
+              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
+              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+          )}
+        >
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:420px]',
+              isDark ? 'opacity-20' : 'opacity-80',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-2">
+            <p
+              className={cn(
+                'text-[11px] uppercase tracking-[0.32em]',
+                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+              )}
+            >
+              Agenda juridica
+            </p>
+            <h2 className={cn('font-display text-3xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+              Agenda juridica
+            </h2>
+            <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+              Bom dia, {displayName}
+            </p>
+          </div>
+        </header>
 
       <PageState status={pageState} emptyTitle="Nenhum compromisso encontrado">
         <Card
-          className="border bg-white"
+          className={cn(
+            'border',
+            isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+          )}
           style={{
             backgroundColor: 'var(--agenda-card)',
             borderColor: 'var(--agenda-border)',
@@ -163,14 +187,24 @@ export const AgendaPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-[#E9ECF5] bg-white text-text"
+                  className={cn(
+                    'border',
+                    isDark
+                      ? 'border-slate-700 bg-slate-900 text-slate-100'
+                      : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                  )}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-[#E9ECF5] bg-white text-text"
+                  className={cn(
+                    'border',
+                    isDark
+                      ? 'border-slate-700 bg-slate-900 text-slate-100'
+                      : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                  )}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -443,6 +477,7 @@ export const AgendaPage = () => {
           </div>
         )}
       </Modal>
+    </div>
     </div>
   )
 }

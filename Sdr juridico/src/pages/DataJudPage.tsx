@@ -137,6 +137,7 @@ export const DataJudPage = () => {
   const [conectado, setConectado] = React.useState<boolean>(false)
   const [testando, setTestando] = React.useState<boolean>(false)
   const [buscando, setBuscando] = React.useState<boolean>(false)
+  const [configurado, setConfigurado] = React.useState<boolean>(false)
   const [tipoBusca, setTipoBusca] = React.useState<TipoBusca>('numero')
   const [tribunal, setTribunal] = React.useState<string>('trf1')
   const [resultados, setResultados] = React.useState<ProcessoDataJud[]>([])
@@ -150,11 +151,23 @@ export const DataJudPage = () => {
   const [dataInicio, setDataInicio] = React.useState<string>('')
   const [dataFim, setDataFim] = React.useState<string>('')
 
-  const configurado = isDataJudConfigured()
-
   React.useEffect(() => {
-    if (configurado) {
-      handleTestarConexao()
+    let ativo = true
+    isDataJudConfigured()
+      .then((ok) => {
+        if (!ativo) return
+        setConfigurado(ok)
+        if (ok) {
+          handleTestarConexao()
+        }
+      })
+      .catch(() => {
+        if (ativo) {
+          setConfigurado(false)
+        }
+      })
+    return () => {
+      ativo = false
     }
   }, [])
 
@@ -177,10 +190,13 @@ export const DataJudPage = () => {
   }
 
   const handleBuscar = async () => {
-    if (!configurado) {
+    const ok = await isDataJudConfigured()
+    if (!ok) {
+      setConfigurado(false)
       toast.error('API DataJud não configurada. Configure em .env')
       return
     }
+    setConfigurado(true)
 
     setBuscando(true)
     try {
@@ -290,26 +306,82 @@ export const DataJudPage = () => {
     return String(value || '-')
   }
 
-  const exportarProcessoParaPDF = (processo: ProcessoDataJud) => {
+  const obterMarcaDagua = (() => {
+    let cache: { dataUrl: string; width: number; height: number } | null = null
+    const watermarkUrl =
+      'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/TALENT%20SDR%20SEM%20FUNDO.png'
+
+    return async () => {
+      if (cache) return cache
+      const response = await fetch(watermarkUrl)
+      if (!response.ok) {
+        throw new Error('Nao foi possivel carregar a marca dagua.')
+      }
+      const blob = await response.blob()
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(new Error('Falha ao ler a marca dagua.'))
+        reader.readAsDataURL(blob)
+      })
+      const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+        img.onerror = () => reject(new Error('Falha ao medir a marca dagua.'))
+        img.src = dataUrl
+      })
+      cache = { dataUrl, ...dimensions }
+      return cache
+    }
+  })()
+
+  const exportarProcessoParaPDF = async (processo: ProcessoDataJud) => {
     try {
       const doc = new jsPDF()
       const info = extrairInfoProcesso(processo)
-      let y = 20
       const pageWidth = doc.internal.pageSize.getWidth()
-      const margin = 20
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 18
+      const topMargin = 28
+      const bottomMargin = 18
+      let y = topMargin
       const maxWidth = pageWidth - 2 * margin
+      const watermark = await obterMarcaDagua().catch(() => null)
 
       // Configurações de fonte
-      const addText = (text: string, fontSize = 10, isBold = false) => {
-        if (y > 280) {
+      const ensureSpace = (height: number) => {
+        if (y + height > pageHeight - bottomMargin) {
           doc.addPage()
-          y = 20
+          y = topMargin
         }
+      }
+
+      const addText = (text: string, fontSize = 10, isBold = false) => {
         doc.setFontSize(fontSize)
         doc.setFont('helvetica', isBold ? 'bold' : 'normal')
         const lines = doc.splitTextToSize(text, maxWidth)
+        const lineHeight = fontSize * 0.5 + 3
+        ensureSpace(lines.length * lineHeight + 2)
         doc.text(lines, margin, y)
-        y += lines.length * (fontSize * 0.5) + 3
+        y += lines.length * lineHeight
+      }
+
+      const addSectionTitle = (title: string) => {
+        ensureSpace(14)
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(26, 47, 76)
+        doc.text(title, margin, y)
+        y += 6
+        doc.setDrawColor(220)
+        doc.line(margin, y, pageWidth - margin, y)
+        y += 6
+        doc.setTextColor(40)
+      }
+
+      const addKeyValue = (label: string, value: string) => {
+        addText(`${label}: ${value}`, 10)
       }
 
       // Título
@@ -318,38 +390,59 @@ export const DataJudPage = () => {
       addText(`Processo: ${formatarNumeroProcesso(info.numero)}`, 12, true)
       y += 3
 
+      if (watermark) {
+        const targetWidth = pageWidth * 0.28
+        const aspect = watermark.height / watermark.width
+        const targetHeight = targetWidth * aspect
+        const x = pageWidth - targetWidth - margin
+        const yPos = topMargin + 2
+        const jsPdfAny = jsPDF as unknown as { GState?: new (state: { opacity: number }) => any }
+        const docAny = doc as unknown as { setGState?: (state: any) => void }
+
+        if (docAny.setGState && jsPdfAny.GState) {
+          docAny.setGState(new jsPdfAny.GState({ opacity: 0.08 }))
+        }
+        doc.addImage(watermark.dataUrl, 'PNG', x, yPos, targetWidth, targetHeight)
+        if (docAny.setGState && jsPdfAny.GState) {
+          docAny.setGState(new jsPdfAny.GState({ opacity: 1 }))
+        }
+      }
+
       // Informações básicas
-      addText('DADOS GERAIS', 14, true)
-      addText(`Tribunal: ${info.tribunal}`)
-      addText(`Classe: ${renderValue(info.classe)}`)
-      addText(`Grau: ${processo.grau || '-'}`)
-      addText(`Sistema: ${renderValue(processo.sistema)}`)
-      addText(`Formato: ${renderValue(processo.formato)}`)
-      addText(`Nivel de Sigilo: ${processo.nivelSigilo === 0 ? 'Publico' : 'Restrito'}`)
-      if (processo.id) addText(`ID do Processo: ${processo.id}`)
+      addSectionTitle('DADOS GERAIS')
+      addKeyValue('Tribunal', info.tribunal)
+      addKeyValue('Classe', renderValue(info.classe))
+      addKeyValue('Grau', processo.grau || '-')
+      addKeyValue('Sistema', renderValue(processo.sistema))
+      addKeyValue('Formato', renderValue(processo.formato))
+      addKeyValue('Nivel de Sigilo', processo.nivelSigilo === 0 ? 'Publico' : 'Restrito')
+      if (processo.id) addKeyValue('ID do Processo', processo.id)
       y += 5
 
       // Órgão Julgador
       if (processo.orgaoJulgador) {
-        addText('ORGAO JULGADOR', 14, true)
-        addText(`Nome: ${renderValue(processo.orgaoJulgador)}`)
+        addSectionTitle('ORGAO JULGADOR')
+        addKeyValue('Nome', renderValue(processo.orgaoJulgador))
         if (processo.orgaoJulgador.codigoMunicipioIBGE) {
-          addText(`Codigo IBGE: ${processo.orgaoJulgador.codigoMunicipioIBGE}`)
+          addKeyValue('Codigo IBGE', processo.orgaoJulgador.codigoMunicipioIBGE)
         }
         y += 5
       }
 
       // Datas
-      addText('DATAS', 14, true)
-      addText(`Data de Ajuizamento: ${info.dataAjuizamento}`)
+      addSectionTitle('DATAS')
+      addKeyValue('Data de Ajuizamento', info.dataAjuizamento)
       if (processo.dataHoraUltimaAtualizacao) {
-        addText(`Ultima Atualizacao: ${new Date(processo.dataHoraUltimaAtualizacao).toLocaleString('pt-BR')}`)
+        addKeyValue(
+          'Ultima Atualizacao',
+          new Date(processo.dataHoraUltimaAtualizacao).toLocaleString('pt-BR'),
+        )
       }
       y += 5
 
       // Assuntos
       if (processo.assuntos && processo.assuntos.length > 0) {
-        addText('ASSUNTOS', 14, true)
+        addSectionTitle('ASSUNTOS')
         processo.assuntos.forEach((assunto: any) => {
           const txt = `- ${renderValue(assunto)}`
           if (assunto.codigo) {
@@ -363,15 +456,12 @@ export const DataJudPage = () => {
 
       // Movimentações
       if (processo.movimentos && processo.movimentos.length > 0) {
-        addText('HISTORICO DE MOVIMENTACOES', 14, true)
+        addSectionTitle('HISTORICO DE MOVIMENTACOES')
         addText(`Total: ${processo.movimentos.length} movimentacoes`, 10, true)
         y += 3
 
         processo.movimentos.forEach((mov: any, index: number) => {
-          if (y > 250) {
-            doc.addPage()
-            y = 20
-          }
+          ensureSpace(22)
 
           addText(`${index + 1}. ${mov.nome}`, 11, true)
           
@@ -411,10 +501,24 @@ export const DataJudPage = () => {
         })
       }
 
-      // Rodapé
+      // Marca d'agua e rodapé
       const totalPages = doc.getNumberOfPages()
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i)
+        doc.setFillColor(245, 247, 251)
+        doc.rect(0, 0, pageWidth, 22, 'F')
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(26, 47, 76)
+        doc.text('Relatorio DataJud', margin, 14)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(90)
+        doc.text(
+          formatarNumeroProcesso(info.numero),
+          pageWidth - margin,
+          14,
+          { align: 'right' },
+        )
         doc.setFontSize(8)
         doc.setFont('helvetica', 'normal')
         doc.text(
@@ -423,6 +527,15 @@ export const DataJudPage = () => {
           doc.internal.pageSize.getHeight() - 10,
           { align: 'center' }
         )
+        doc.setFontSize(7)
+        doc.setTextColor(120)
+        doc.text(
+          'LGPD: Este relatorio contem dados pessoais e deve ser acessado e compartilhado apenas por pessoas autorizadas.',
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 5,
+          { align: 'center' }
+        )
+        doc.setTextColor(40)
       }
 
       // Salvar PDF
@@ -433,6 +546,33 @@ export const DataJudPage = () => {
       console.error('Erro ao gerar PDF:', error)
       toast.error('Erro ao gerar PDF')
     }
+  }
+
+  const renderPolos = (processo: ProcessoDataJud) => {
+    const polos = processo.dadosBasicos?.polo || []
+    if (!polos.length) return null
+    return (
+      <div className="space-y-2">
+        <p className="text-text-muted text-xs mb-1">Partes</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {polos.map((polo, idx) => (
+            <div key={idx} className="rounded-xl border border-border bg-surface-2 p-3">
+              <p className="text-xs text-text-muted">
+                {polo.polo || polo.tipo || 'Parte'}
+              </p>
+              <p className="text-sm font-semibold text-text">
+                {polo.nome || '-'}
+              </p>
+              {polo.tipo && (
+                <p className="text-[10px] text-text-muted mt-0.5">
+                  Tipo: {polo.tipo}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -792,139 +932,148 @@ export const DataJudPage = () => {
                       </div>
                     )}
 
-                    {/* Assuntos */}
-                    {processo.assuntos && processo.assuntos.length > 0 && (
-                      <div>
-                        <p className="text-text-muted text-xs mb-2">Assuntos</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {processo.assuntos.map((assunto, idx) => (
-                            <Badge key={idx} variant="default" className="text-xs" title={`Código: ${assunto.codigo}`}>
-                              {assunto.nome}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <details className="mt-2 rounded-2xl border border-border bg-surface-2">
+                      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors rounded-2xl">
+                        Detalhes do Processo
+                      </summary>
+                      <div className="space-y-4 px-4 pb-4">
+                        {/* Assuntos */}
+                        {processo.assuntos && processo.assuntos.length > 0 && (
+                          <div>
+                            <p className="text-text-muted text-xs mb-2">Assuntos</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {processo.assuntos.map((assunto, idx) => (
+                                <Badge key={idx} variant="default" className="text-xs" title={`Código: ${assunto.codigo}`}>
+                                  {assunto.nome}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    {/* Histórico de Movimentações */}
-                    {processo.movimentos && processo.movimentos.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-border">
-                        <div className="flex items-center gap-2 mb-3">
-                          <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                          <p className="text-text font-semibold text-base">
-                            Histórico de Movimentações
-                          </p>
-                          <Badge variant="info" className="ml-auto">
-                            {processo.movimentos.length} movimentações
-                          </Badge>
-                        </div>
-                        <div className="max-h-[500px] overflow-y-auto space-y-3 border rounded-lg p-4 bg-surface shadow-inner">
-                          {processo.movimentos
-                            .filter((m: any) => m.nome)
-                            .sort((a: any, b: any) => {
-                              const dateA = a.dataHora ? new Date(a.dataHora).getTime() : 0
-                              const dateB = b.dataHora ? new Date(b.dataHora).getTime() : 0
-                              return dateB - dateA // Mais recente primeiro
-                            })
-                            .map((mov: any, idx: number) => (
-                              <div
-                                key={idx}
-                                className="flex gap-4 p-3 rounded-lg bg-surface-2 border border-border hover:border-primary/30 hover:shadow-sm transition-all"
-                              >
-                                <div className="flex-shrink-0 flex flex-col items-center">
-                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-primary">
-                                      {idx + 1}
-                                    </span>
-                                  </div>
-                                  {idx < (processo.movimentos?.filter((m: any) => m.nome).length || 0) - 1 && (
-                                    <div className="w-px h-full bg-border mt-2"></div>
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-3 mb-2">
-                                    <div className="flex-1">
-                                      <p className="text-sm font-semibold text-text leading-snug">
-                                        {mov.nome}
-                                      </p>
-                                      {mov.codigo && (
-                                        <p className="text-[10px] text-text-muted mt-0.5 font-mono">
-                                          Código: {mov.codigo}
-                                          {mov.codigoNacional && ` • Nacional: ${mov.codigoNacional}`}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                      <Badge variant="default" className="text-[10px] flex-shrink-0">
-                                        {mov.dataHora
-                                          ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
-                                              day: '2-digit',
-                                              month: '2-digit',
-                                              year: 'numeric',
-                                            })
-                                          : 'Sem data'}
-                                      </Badge>
-                                      {mov.dataHora && (
-                                        <span className="text-[10px] text-text-muted">
-                                          {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                          })}
+                        {renderPolos(processo)}
+
+                        {/* Histórico de Movimentações */}
+                        {processo.movimentos && processo.movimentos.length > 0 && (
+                          <div className="pt-3 border-t border-border">
+                            <div className="flex items-center gap-2 mb-3">
+                              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              <p className="text-text font-semibold text-base">
+                                Historico de movimentacoes
+                              </p>
+                              <Badge variant="info" className="ml-auto">
+                                {processo.movimentos.length} movimentacoes
+                              </Badge>
+                            </div>
+                            <div className="max-h-[500px] overflow-y-auto space-y-3 border rounded-lg p-4 bg-surface shadow-inner">
+                              {processo.movimentos
+                                .filter((m: any) => m.nome)
+                                .sort((a: any, b: any) => {
+                                  const dateA = a.dataHora ? new Date(a.dataHora).getTime() : 0
+                                  const dateB = b.dataHora ? new Date(b.dataHora).getTime() : 0
+                                  return dateB - dateA // Mais recente primeiro
+                                })
+                                .map((mov: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="flex gap-4 p-3 rounded-lg bg-surface-2 border border-border hover:border-primary/30 hover:shadow-sm transition-all"
+                                  >
+                                    <div className="flex-shrink-0 flex flex-col items-center">
+                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <span className="text-xs font-bold text-primary">
+                                          {idx + 1}
                                         </span>
+                                      </div>
+                                      {idx < (processo.movimentos?.filter((m: any) => m.nome).length || 0) - 1 && (
+                                        <div className="w-px h-full bg-border mt-2"></div>
                                       )}
                                     </div>
-                                  </div>
-                                  
-                                  {/* Complemento em texto */}
-                                  {mov.complemento && (
-                                    <div className="mb-2 p-2 bg-surface rounded text-xs text-text border-l-2 border-primary/30">
-                                      {mov.complemento}
-                                    </div>
-                                  )}
-                                  
-                                  {/* Complementos Tabelados Detalhados */}
-                                  {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
-                                    <div className="mt-2 pt-2 border-t border-border/50">
-                                      <p className="text-xs text-text-muted font-medium mb-2">📋 Detalhes:</p>
-                                      <div className="space-y-1.5">
-                                        {mov.complementosTabelados.map((c: any, cIdx: number) => (
-                                          <div key={cIdx} className="text-xs bg-info/10 p-2 rounded border border-info/20">
-                                            <div className="flex items-start gap-2">
-                                              <span className="text-info font-semibold">•</span>
-                                              <div className="flex-1">
-                                                <p className="text-text font-medium">{c.nome}</p>
-                                                {c.descricao && (
-                                                  <p className="text-text-muted text-[10px] mt-0.5">
-                                                    {c.descricao.replace(/_/g, ' ')}
-                                                  </p>
-                                                )}
-                                                <div className="flex gap-3 mt-1">
-                                                  {c.codigo && (
-                                                    <span className="text-[10px] text-text-muted font-mono">
-                                                      Cód: {c.codigo}
-                                                    </span>
-                                                  )}
-                                                  {c.valor && (
-                                                    <span className="text-[10px] text-text-muted font-mono">
-                                                      Val: {c.valor}
-                                                    </span>
-                                                  )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-3 mb-2">
+                                        <div className="flex-1">
+                                          <p className="text-sm font-semibold text-text leading-snug">
+                                            {mov.nome}
+                                          </p>
+                                          {mov.codigo && (
+                                            <p className="text-[10px] text-text-muted mt-0.5 font-mono">
+                                              Código: {mov.codigo}
+                                              {mov.codigoNacional && ` • Nacional: ${mov.codigoNacional}`}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                          <Badge variant="default" className="text-[10px] flex-shrink-0">
+                                            {mov.dataHora
+                                              ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
+                                                  day: '2-digit',
+                                                  month: '2-digit',
+                                                  year: 'numeric',
+                                                })
+                                              : 'Sem data'}
+                                          </Badge>
+                                          {mov.dataHora && (
+                                            <span className="text-[10px] text-text-muted">
+                                              {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                              })}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Complemento em texto */}
+                                      {mov.complemento && (
+                                        <div className="mb-2 p-2 bg-surface rounded text-xs text-text border-l-2 border-primary/30">
+                                          {mov.complemento}
+                                        </div>
+                                      )}
+                                      
+                                      {/* Complementos Tabelados Detalhados */}
+                                      {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-border/50">
+                                          <p className="text-xs text-text-muted font-medium mb-2">Detalhes:</p>
+                                          <div className="space-y-1.5">
+                                            {mov.complementosTabelados.map((c: any, cIdx: number) => (
+                                              <div key={cIdx} className="text-xs bg-info/10 p-2 rounded border border-info/20">
+                                                <div className="flex items-start gap-2">
+                                                  <span className="text-info font-semibold">•</span>
+                                                  <div className="flex-1">
+                                                    <p className="text-text font-medium">{c.nome}</p>
+                                                    {c.descricao && (
+                                                      <p className="text-text-muted text-[10px] mt-0.5">
+                                                        {c.descricao.replace(/_/g, ' ')}
+                                                      </p>
+                                                    )}
+                                                    <div className="flex gap-3 mt-1">
+                                                      {c.codigo && (
+                                                        <span className="text-[10px] text-text-muted font-mono">
+                                                          Cod: {c.codigo}
+                                                        </span>
+                                                      )}
+                                                      {c.valor && (
+                                                        <span className="text-[10px] text-text-muted font-mono">
+                                                          Val: {c.valor}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </div>
                                                 </div>
                                               </div>
-                                            </div>
+                                            ))}
                                           </div>
-                                        ))}
-                                      </div>
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                        </div>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </details>
 
                     <div className="flex gap-2 pt-2 border-t">
                       <Button

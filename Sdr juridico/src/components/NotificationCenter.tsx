@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTheme } from '@/contexts/ThemeContext'
 import type { Notification, NotificationPriority } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
@@ -22,9 +23,12 @@ const priorityBadgeClass: Record<NotificationPriority, string> = {
 
 export interface NotificationCenterProps {
   notifications: Notification[]
+  className?: string
 }
 
-export const NotificationCenter = ({ notifications }: NotificationCenterProps) => {
+export const NotificationCenter = ({ notifications, className }: NotificationCenterProps) => {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const navigate = useNavigate()
   const sorted = [...notifications].sort((a, b) => {
     const priority = priorityOrder[a.priority] - priorityOrder[b.priority]
@@ -45,7 +49,7 @@ export const NotificationCenter = ({ notifications }: NotificationCenterProps) =
   const highlightSlot = miniSlots[1]?.id ?? miniSlots[0]?.id
 
   return (
-    <Card>
+    <Card className={cn('border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70', className)}>
       <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
         <div className="flex items-center gap-2">
           <BellRing className="h-4 w-4 text-text-subtle" />
@@ -55,28 +59,46 @@ export const NotificationCenter = ({ notifications }: NotificationCenterProps) =
       </CardHeader>
       <CardContent className="space-y-3 px-6 pb-6">
         {sorted.length === 0 && (
-          <div className="rounded-2xl border border-border bg-white px-4 py-4 text-sm text-text-muted shadow-soft">
+          <div className="rounded-2xl border border-[#f0d9b8] bg-white px-4 py-4 text-sm text-text-muted shadow-soft dark:border-slate-800 dark:bg-slate-900">
             Sem notificacoes por enquanto.
           </div>
         )}
         {sorted.length > 0 && (
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-white px-3 py-2 text-[11px] text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
-            <div className="flex min-w-[56px] flex-col items-start rounded-xl bg-surface-2 px-3 py-2 text-xs font-semibold text-text">
+          <div
+            className={cn(
+              'flex items-center gap-2 rounded-2xl border px-3 py-2 text-[11px] shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
+              isDark
+                ? 'border-slate-800 bg-slate-900 text-slate-300'
+                : 'border-[#f0d9b8] bg-white text-[#7a4a1a]',
+            )}
+          >
+            <div
+              className={cn(
+                'flex min-w-[56px] flex-col items-start rounded-xl px-3 py-2 text-xs font-semibold',
+                isDark ? 'bg-slate-800/80 text-slate-100' : 'bg-[#fff3e0] text-[#2a1400]',
+              )}
+            >
               <span className="text-sm">{sorted.length}</span>
-              <span className="text-[10px] text-text-muted">itens</span>
+              <span className={cn('text-[10px]', isDark ? 'text-slate-400' : 'text-[#9a5b1e]')}>
+                itens
+              </span>
             </div>
             <div className="flex flex-1 items-center gap-2 overflow-hidden">
               {miniSlots.map((slot) => (
                 <div
                   key={slot.id}
                   className={cn(
-                    'flex min-w-[52px] flex-col items-center rounded-xl border border-border px-2 py-2 text-[10px] shadow-soft',
+                    'flex min-w-[52px] flex-col items-center rounded-xl border px-2 py-2 text-[10px] shadow-soft',
                     slot.id === highlightSlot
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-white text-text-subtle',
+                      ? isDark
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                        : 'border-[#f0d9b8] bg-[#fff3e0] text-[#2a1400]'
+                      : isDark
+                        ? 'border-slate-700 bg-slate-900 text-slate-300'
+                        : 'border-[#f0d9b8] bg-white text-[#7a4a1a]',
                   )}
                 >
-                  <span className="text-[11px] font-semibold text-text">
+                  <span className={cn('text-[11px] font-semibold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
                     {slot.day}
                   </span>
                   <span>{slot.time}</span>
@@ -88,7 +110,12 @@ export const NotificationCenter = ({ notifications }: NotificationCenterProps) =
         {sorted.map((item) => (
           <div
             key={item.id}
-            className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+            className={cn(
+              'rounded-2xl border px-4 py-4 text-xs shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
+              isDark
+                ? 'border-slate-800 bg-slate-900 text-slate-300'
+                : 'border-[#f0d9b8] !bg-white !text-[#2a1400]',
+            )}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="space-y-1">
@@ -105,13 +132,15 @@ export const NotificationCenter = ({ notifications }: NotificationCenterProps) =
                   >
                     {item.priority}
                   </Badge>
-                  <span className="text-sm font-semibold text-text">
+                  <span className={cn('text-sm font-semibold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
                     {item.title}
                   </span>
                 </div>
-                <p className="text-xs text-text-muted">{item.description}</p>
+                <p className={cn('text-xs', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+                  {item.description}
+                </p>
               </div>
-              <div className="text-[10px] text-text-subtle">
+              <div className={cn('text-[10px]', isDark ? 'text-slate-400' : 'text-[#9a5b1e]')}>
                 {formatDateTime(item.date)}
               </div>
             </div>

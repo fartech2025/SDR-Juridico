@@ -3,7 +3,28 @@
  * Utiliza dados abertos da Receita Federal do Brasil
  */
 
-import { supabase } from '@/lib/supabaseClient'
+const STORAGE_KEY = 'sdr_juridico_cache_cnpj'
+
+const loadCache = (): Record<string, any> => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, any>
+      if (parsed && typeof parsed === 'object') return parsed
+    }
+  } catch {
+    // Ignorar erros de storage
+  }
+  return {}
+}
+
+const saveCache = (cache: Record<string, any>) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cache))
+  } catch {
+    // Ignorar erros de storage
+  }
+}
 
 export interface DadosCNPJ {
   cnpj: string
@@ -54,13 +75,9 @@ export async function consultarCNPJ(cnpj: string): Promise<DadosCNPJ | null> {
  * Busca CNPJ no cache do Supabase
  */
 async function buscarNoCache(cnpj: string): Promise<DadosCNPJ | null> {
-  const { data, error } = await supabase
-    .from('cache_cnpj')
-    .select('*')
-    .eq('cnpj', cnpj)
-    .single()
-
-  if (error || !data) return null
+  const cache = loadCache()
+  const data = cache[cnpj]
+  if (!data) return null
 
   // Verificar se cache está desatualizado (>30 dias)
   const consultadoEm = new Date(data.consultado_em)
@@ -78,15 +95,13 @@ async function buscarNoCache(cnpj: string): Promise<DadosCNPJ | null> {
  * Salva dados do CNPJ no cache
  */
 async function salvarNoCache(dados: DadosCNPJ): Promise<void> {
-  await supabase
-    .from('cache_cnpj')
-    .upsert({
-      ...dados,
-      consultado_em: new Date().toISOString(),
-      atualizado_em: new Date().toISOString()
-    }, {
-      onConflict: 'cnpj'
-    })
+  const cache = loadCache()
+  cache[dados.cnpj] = {
+    ...dados,
+    consultado_em: new Date().toISOString(),
+    atualizado_em: new Date().toISOString()
+  }
+  saveCache(cache)
 }
 
 /**

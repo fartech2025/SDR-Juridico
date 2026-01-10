@@ -88,7 +88,7 @@ export interface LeadRow {
   origem: string | null
   assunto: string | null
   resumo: string | null
-  qualificacao: Record<string, unknown> | null
+  qualificacao: Record<string, unknown>
   assigned_user_id: string | null
   cliente_id: string | null
   remote_id: string | null
@@ -101,9 +101,9 @@ export interface ClienteRow {
   org_id: string
   tipo: string
   nome: string
+  telefone: string | null
   documento: string | null
   email: string | null
-  telefone: string | null
   endereco: Record<string, unknown>
   tags: string[]
   observacoes: string | null
@@ -147,13 +147,10 @@ export interface DocumentoRow {
   caso_id: string | null
   uploaded_by: string | null
   tags: string[]
-  meta: Record<string, unknown> | null
-  cliente?: {
-    nome: string | null
-  } | null
+  meta: Record<string, unknown>
 }
 
-export interface AgendamentoRow {
+export interface AgendaRow {
   id: string
   created_at: string
   org_id: string
@@ -168,10 +165,7 @@ export interface AgendamentoRow {
   caso_id: string | null
   external_provider: string | null
   external_event_id: string | null
-  meta: Record<string, unknown> | null
-  cliente?: {
-    nome: string | null
-  } | null
+  meta: Record<string, unknown>
 }
 
 export interface IntegrationRow {
@@ -193,7 +187,7 @@ export interface NotaRow {
   entidade_id: string
   texto: string
   created_by: string | null
-  tags: string[]
+  tags: string[] | null
 }
 
 export interface ConversaRow {
@@ -207,6 +201,9 @@ export interface ConversaRow {
   caso_id: string | null
   aberto: boolean
   ultimo_evento_em: string | null
+  humano_na_conversa: boolean
+  bloqueado: boolean
+  expirar_bloqueado: string | null
 }
 
 export interface MensagemRow {
@@ -214,7 +211,7 @@ export interface MensagemRow {
   created_at: string
   org_id: string
   conversa_id: string
-  direction: 'in' | 'out'
+  direction: string
   from_remote: string | null
   to_remote: string | null
   body: string | null

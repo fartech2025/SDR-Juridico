@@ -22,6 +22,7 @@ import { cn } from '@/utils/cn'
 import { useLeads } from '@/hooks/useLeads'
 import { useCasos } from '@/hooks/useCasos'
 import type { FunnelStage, Goal, Insight, MonthlyMetric } from '@/types/domain'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const resolveStatus = (
   value: string | null,
@@ -71,6 +72,8 @@ const buildMonthlyMetrics = (dates: string[]): MonthlyMetric[] => {
 
 export const IndicadoresPage = () => {
   const [params] = useSearchParams()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const state = resolveStatus(params.get('state'))
   const { leads, loading: leadsLoading, error: leadsError } = useLeads()
   const { casos, loading: casosLoading, error: casosError } = useCasos()
@@ -166,36 +169,57 @@ export const IndicadoresPage = () => {
   const pageState = state !== 'ready' ? state : baseState
 
   return (
-    <div className="space-y-5">
-      <header
-        className="relative overflow-hidden rounded-3xl border border-border bg-white p-6 shadow-soft"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 72%, rgba(255,216,232,0.22) 100%), url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '520px',
-          backgroundColor: 'var(--agenda-card)',
-          borderColor: 'var(--agenda-border)',
-          boxShadow: 'var(--agenda-shadow)',
-        }}
-      >
-        <div className="relative z-10 space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
-            Indicadores
-          </p>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-accent" />
-            <h2 className="font-display text-2xl text-text">Gestao central</h2>
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+      )}
+    >
+      <div className="space-y-5">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
+            isDark
+              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
+              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+          )}
+        >
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              isDark ? 'opacity-20' : 'opacity-80',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-2">
+            <p
+              className={cn(
+                'text-[11px] uppercase tracking-[0.32em]',
+                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+              )}
+            >
+              Indicadores
+            </p>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-accent" />
+              <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                Gestao central
+              </h2>
+            </div>
+            <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+              Leitura consolidada do funil juridico e metas.
+            </p>
           </div>
-          <p className="text-sm text-text-muted">
-            Leitura consolidada do funil juridico e metas.
-          </p>
-        </div>
-      </header>
+        </header>
 
       <PageState status={pageState} emptyTitle="Sem indicadores disponiveis">
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-          <Card>
+          <Card
+            className={cn(
+              'border',
+              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            )}
+          >
             <CardHeader>
               <CardTitle className="text-base">
                 Leads x Fechamentos (mes)
@@ -237,7 +261,12 @@ export const IndicadoresPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className={cn(
+              'border',
+              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            )}
+          >
             <CardHeader>
               <CardTitle className="text-base">Funil de etapas</CardTitle>
             </CardHeader>
@@ -278,7 +307,13 @@ export const IndicadoresPage = () => {
 
         <div className="grid gap-4 lg:grid-cols-3">
           {insights.map((insight) => (
-            <Card key={insight.id}>
+            <Card
+              key={insight.id}
+              className={cn(
+                'border',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              )}
+            >
               <CardHeader className="flex items-center justify-between gap-3">
                 <CardTitle className="text-base">{insight.title}</CardTitle>
                 <Badge variant={trendVariant(insight.trend)}>{insight.value}</Badge>
@@ -290,7 +325,12 @@ export const IndicadoresPage = () => {
           ))}
         </div>
 
-        <Card>
+        <Card
+          className={cn(
+            'border',
+            isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+          )}
+        >
           <CardHeader>
             <CardTitle className="text-base">Metas da operacao</CardTitle>
           </CardHeader>
@@ -319,6 +359,7 @@ export const IndicadoresPage = () => {
           </CardContent>
         </Card>
       </PageState>
+      </div>
     </div>
   )
 }

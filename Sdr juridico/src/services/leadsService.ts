@@ -4,26 +4,17 @@
  */
 
 import { supabase, type LeadRow } from '@/lib/supabaseClient'
-import type { LeadStatus } from '@/types/domain'
+import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import { AppError } from '@/utils/errors'
-
-const uiStatusBySqlStatus: Record<LeadRow['status'], LeadStatus> = {
-  novo: 'novo',
-  em_triagem: 'em_contato',
-  qualificado: 'qualificado',
-  nao_qualificado: 'perdido',
-  convertido: 'ganho',
-  perdido: 'perdido',
-}
 
 export const leadsService = {
   // Buscar todos os leads
   async getLeads() {
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*, cliente:clientes(nome), assigned_user:profiles!assigned_user_id(nome)')
-        .order('created_at', { ascending: false })
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('leads').select('*').order('created_at', { ascending: false })
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow[]
@@ -38,11 +29,10 @@ export const leadsService = {
   // Buscar lead por ID
   async getLead(id: string) {
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*, cliente:clientes(nome), assigned_user:profiles!assigned_user_id(nome)')
-        .eq('id', id)
-        .single()
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('leads').select('*').eq('id', id)
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.single()
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow
@@ -57,11 +47,14 @@ export const leadsService = {
   // Buscar leads por status
   async getLeadsByStatus(status: LeadRow['status']) {
     try {
-      const { data, error } = await supabase
+      const orgId = await getActiveOrgId()
+      let query = supabase
         .from('leads')
-        .select('*, cliente:clientes(nome), assigned_user:profiles!assigned_user_id(nome)')
+        .select('*')
         .eq('status', status)
         .order('created_at', { ascending: false })
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow[]
@@ -77,9 +70,12 @@ export const leadsService = {
   async getHotLeads() {
     try {
       const leads = await this.getLeads()
+      const now = Date.now()
       return leads.filter((lead) => {
-        if (!lead.qualificacao || typeof lead.qualificacao !== 'object') return false
-        return (lead.qualificacao as { heat?: string }).heat === 'quente'
+        const base = lead.last_contact_at || lead.created_at
+        if (!base) return false
+        const diffDays = (now - new Date(base).getTime()) / (1000 * 60 * 60 * 24)
+        return diffDays <= 2
       })
     } catch (error) {
       throw new AppError(
@@ -90,27 +86,15 @@ export const leadsService = {
   },
 
   // Criar novo lead
-  async createLead(lead: Omit<LeadRow, 'id' | 'created_at'>) {
+  async createLead(lead: Omit<LeadRow, 'id' | 'created_at' | 'org_id'>) {
     try {
-      const existingQualificacao =
-        lead.qualificacao && typeof lead.qualificacao === 'object'
-          ? (lead.qualificacao as Record<string, unknown>)
-          : {}
-      const qualStatus =
-        (existingQualificacao.status as LeadStatus | undefined) ??
-        uiStatusBySqlStatus[lead.status]
-      const qualHeat =
-        (existingQualificacao.heat as string | undefined) ?? 'morno'
-
+      const orgId = await requireOrgId()
       const payload = {
         ...lead,
-        qualificacao: {
-          ...existingQualificacao,
-          status: qualStatus,
-          heat: qualHeat,
-        },
+        org_id: orgId,
+        canal: lead.canal || 'whatsapp',
+        qualificacao: lead.qualificacao || {},
       }
-
       const { data, error } = await supabase
         .from('leads')
         .insert(payload)
@@ -130,10 +114,12 @@ export const leadsService = {
   // Atualizar lead
   async updateLead(id: string, updates: Partial<Omit<LeadRow, 'id' | 'created_at'>>) {
     try {
+      const orgId = await requireOrgId()
       const { data, error } = await supabase
         .from('leads')
         .update(updates)
         .eq('id', id)
+        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -150,7 +136,8 @@ export const leadsService = {
   // Deletar lead
   async deleteLead(id: string) {
     try {
-      const { error } = await supabase.from('leads').delete().eq('id', id)
+      const orgId = await requireOrgId()
+      const { error } = await supabase.from('leads').delete().eq('id', id).eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {

@@ -10,6 +10,7 @@ import type { Cliente } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
 import { useClientes } from '@/hooks/useClientes'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const resolveStatus = (
   value: string | null,
@@ -42,6 +43,8 @@ const healthPill = (health: Cliente['health']) => {
 
 export const ClientesPage = () => {
   const { clientes, loading, error } = useClientes()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [params] = useSearchParams()
   const [query, setQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('todos')
@@ -105,31 +108,52 @@ export const ClientesPage = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <header
-        className="relative overflow-hidden rounded-3xl border border-border bg-white p-6 shadow-soft"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 72%, rgba(255,216,232,0.22) 100%), url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '520px',
-          backgroundColor: 'var(--agenda-card)',
-          borderColor: 'var(--agenda-border)',
-          boxShadow: 'var(--agenda-shadow)',
-        }}
-      >
-        <div className="relative z-10 space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-text-subtle">
-            Clientes
-          </p>
-          <h2 className="font-display text-2xl text-text">Carteira ativa</h2>
-          <p className="text-sm text-text-muted">
-            Carteira ativa com indicadores de risco e status.
-          </p>
-        </div>
-      </header>
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+      )}
+    >
+      <div className="space-y-5">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
+            isDark
+              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
+              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+          )}
+        >
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              isDark ? 'opacity-20' : 'opacity-80',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-2">
+            <p
+              className={cn(
+                'text-xs uppercase tracking-[0.3em]',
+                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+              )}
+            >
+              Clientes
+            </p>
+            <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+              Carteira ativa
+            </h2>
+            <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+              Carteira ativa com indicadores de risco e status.
+            </p>
+          </div>
+        </header>
 
-      <Card>
+        <Card
+          className={cn(
+            'border',
+            isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+          )}
+        >
         <CardHeader className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -154,8 +178,12 @@ export const ClientesPage = () => {
                 className={cn(
                   'rounded-full border px-4 py-1.5 text-xs font-medium transition',
                   activeTab === tab
-                    ? 'border-primary/60 bg-primary/15 text-primary'
-                    : 'border-border bg-white text-text-subtle hover:bg-[#F2F5FF] hover:text-text',
+                    ? isDark
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300'
+                      : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600'
+                    : isDark
+                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800'
+                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:bg-[#fff3e0] hover:text-[#2a1400]',
                 )}
               >
                 {tab}
@@ -168,7 +196,10 @@ export const ClientesPage = () => {
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
               <input
                 className={cn(
-                  'h-11 w-full rounded-full border border-border bg-[#EEF4FF] pl-11 pr-4 text-sm text-text placeholder:text-text-subtle shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+                  'h-11 w-full rounded-full border pl-11 pr-4 text-sm shadow-soft focus:outline-none focus:ring-2',
+                  isDark
+                    ? 'border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-500 focus:border-emerald-400 focus:ring-emerald-500/20'
+                    : 'border-[#f0d9b8] bg-[#fff3e0] text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-400 focus:ring-emerald-200',
                 )}
                 placeholder="Buscar cliente"
                 value={query}
@@ -176,7 +207,12 @@ export const ClientesPage = () => {
               />
             </div>
             <select
-              className="h-11 rounded-full border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className={cn(
+                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
+                isDark
+                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+              )}
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
             >
@@ -188,7 +224,12 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className="h-11 rounded-full border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className={cn(
+                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
+                isDark
+                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+              )}
               value={healthFilter}
               onChange={(event) => setHealthFilter(event.target.value)}
             >
@@ -200,7 +241,12 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className="h-11 rounded-full border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className={cn(
+                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
+                isDark
+                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+              )}
               value={areaFilter}
               onChange={(event) => setAreaFilter(event.target.value)}
             >
@@ -212,7 +258,12 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className="h-11 rounded-full border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className={cn(
+                'h-11 rounded-full border px-3 text-sm shadow-soft focus:outline-none focus:ring-2',
+                isDark
+                  ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                  : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+              )}
               value={ownerFilter}
               onChange={(event) => setOwnerFilter(event.target.value)}
             >
@@ -225,7 +276,10 @@ export const ClientesPage = () => {
             </select>
             <button
               type="button"
-              className="h-11 text-xs text-text-subtle hover:text-text"
+              className={cn(
+                'h-11 text-xs',
+                isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+              )}
               onClick={resetFilters}
             >
               Limpar filtros
@@ -237,9 +291,19 @@ export const ClientesPage = () => {
             emptyTitle="Nenhum cliente encontrado"
             emptyDescription="Ajuste os filtros para localizar a carteira."
           >
-            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
+            <div
+              className={cn(
+                'overflow-hidden rounded-2xl border shadow-soft',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+              )}
+            >
               <table className="w-full border-collapse text-left text-sm">
-                <thead className="bg-surface-2 text-[11px] uppercase tracking-[0.22em] text-text-subtle">
+                <thead
+                  className={cn(
+                    'text-[11px] uppercase tracking-[0.22em]',
+                    isDark ? 'bg-slate-800 text-slate-300' : 'bg-[#fff3e0] text-[#9a5b1e]',
+                  )}
+                >
                   <tr>
                     <th className="px-4 py-3" />
                     <th className="px-4 py-3">Cliente</th>
@@ -260,7 +324,12 @@ export const ClientesPage = () => {
                     return (
                       <tr
                         key={cliente.id}
-                        className="border-t border-border hover:bg-surface-2/70"
+                        className={cn(
+                          'border-t',
+                          isDark
+                            ? 'border-slate-800 hover:bg-slate-800/60'
+                            : 'border-[#f0d9b8] hover:bg-[#fff3e0]/60',
+                        )}
                       >
                         <td className="px-4 py-3">
                           <input
@@ -321,6 +390,7 @@ export const ClientesPage = () => {
           </PageState>
         </CardContent>
       </Card>
+    </div>
     </div>
   )
 }

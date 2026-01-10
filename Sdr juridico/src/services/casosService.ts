@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import type { CasoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
@@ -8,10 +9,10 @@ export const casosService = {
    */
   async getCasos(): Promise<CasoRow[]> {
     try {
-      const { data, error } = await supabase
-        .from('casos')
-        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
-        .order('created_at', { ascending: false })
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('casos').select('*, cliente:clientes(nome)')
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -25,11 +26,10 @@ export const casosService = {
    */
   async getCaso(id: string): Promise<CasoRow> {
     try {
-      const { data, error } = await supabase
-        .from('casos')
-        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
-        .eq('id', id)
-        .single()
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('casos').select('*, cliente:clientes(nome)').eq('id', id)
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Caso não encontrado', 'not_found')
@@ -45,11 +45,10 @@ export const casosService = {
    */
   async getCasosByStatus(status: CasoRow['status']): Promise<CasoRow[]> {
     try {
-      const { data, error } = await supabase
-        .from('casos')
-        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
-        .eq('status', status)
-        .order('created_at', { ascending: false })
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('casos').select('*, cliente:clientes(nome)').eq('status', status)
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -63,11 +62,10 @@ export const casosService = {
    */
   async getCasosCriticos(): Promise<CasoRow[]> {
     try {
-      const { data, error } = await supabase
-        .from('casos')
-        .select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
-        .gte('prioridade', 3)
-        .order('created_at', { ascending: true })
+      const orgId = await getActiveOrgId()
+      let query = supabase.from('casos').select('*, cliente:clientes(nome)').gte('prioridade', 3)
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.order('created_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -81,11 +79,13 @@ export const casosService = {
    */
   async getCasosByCliente(clienteId: string): Promise<CasoRow[]> {
     try {
-      const { data, error } = await supabase
+      const orgId = await getActiveOrgId()
+      let query = supabase
         .from('casos')
         .select('*, cliente:clientes(nome)')
         .eq('cliente_id', clienteId)
-        .order('created_at', { ascending: false })
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -97,11 +97,18 @@ export const casosService = {
   /**
    * Cria um novo caso
    */
-  async createCaso(caso: Omit<CasoRow, 'id' | 'created_at'>): Promise<CasoRow> {
+  async createCaso(caso: Omit<CasoRow, 'id' | 'created_at' | 'org_id'>): Promise<CasoRow> {
     try {
+      const orgId = await requireOrgId()
+      const payload = {
+        ...caso,
+        org_id: orgId,
+        status: caso.status || 'triagem',
+        prioridade: typeof caso.prioridade === 'number' ? caso.prioridade : 2,
+      }
       const { data, error } = await supabase
         .from('casos')
-        .insert([caso])
+        .insert([payload])
         .select()
         .single()
 
@@ -122,10 +129,12 @@ export const casosService = {
     updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'org_id'>>
   ): Promise<CasoRow> {
     try {
+      const orgId = await requireOrgId()
       const { data, error } = await supabase
         .from('casos')
         .update(updates)
         .eq('id', id)
+        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -143,10 +152,12 @@ export const casosService = {
    */
   async deleteCaso(id: string): Promise<void> {
     try {
+      const orgId = await requireOrgId()
       const { error } = await supabase
         .from('casos')
         .delete()
         .eq('id', id)
+        .eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
@@ -164,7 +175,7 @@ export const casosService = {
   /**
    * Muda prioridade de um caso
    */
-  async mudarPrioridade(id: string, novaPrioridade: number): Promise<CasoRow> {
+  async mudarPrioridade(id: string, novaPrioridade: CasoRow['prioridade']): Promise<CasoRow> {
     return this.updateCaso(id, { prioridade: novaPrioridade })
   },
 

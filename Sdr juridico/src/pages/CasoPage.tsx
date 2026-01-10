@@ -139,39 +139,33 @@ export const CasoPage = () => {
   ]
 
   return (
-    <div className="space-y-6">
-      <header
-        className="relative overflow-hidden rounded-3xl border border-border bg-white p-6 shadow-soft"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 72%, rgba(255,216,232,0.22) 100%), url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '520px',
-          backgroundColor: 'var(--agenda-card)',
-          borderColor: 'var(--agenda-border)',
-          boxShadow: 'var(--agenda-shadow)',
-        }}
-      >
-        <div className="relative z-10 space-y-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1 text-xs text-text-subtle shadow-soft"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            #{caso.id.replace('caso-', '')}
-          </button>
-          <h2 className="font-display text-2xl text-text">
-            {caso.id.replace('caso-', '#')} - {caso.cliente}
-          </h2>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-text-subtle">
-            <Badge variant={statusBadge(caso.status)} className="capitalize">
-              {caso.status}
-            </Badge>
-            <Badge variant="info">{caso.area}</Badge>
-            <Badge variant="default">{caso.stage}</Badge>
+    <div className="min-h-screen bg-[#fff6e9] pb-12 text-[#1d1d1f] dark:bg-[#0e1116] dark:text-slate-100">
+      <div className="space-y-6">
+        <header className="relative overflow-hidden rounded-3xl border border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa] p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)] dark:border-slate-800 dark:from-[#141820] dark:via-[#10141b] dark:to-[#0b0f14]">
+          <div
+            className="absolute inset-0 bg-no-repeat bg-right bg-[length:520px] opacity-80 dark:opacity-20"
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-3">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full border border-[#f0d9b8] bg-white px-3 py-1 text-xs text-[#7a4a1a] shadow-soft dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              #{caso.id.replace('caso-', '')}
+            </button>
+            <h2 className="font-display text-2xl text-[#2a1400] dark:text-slate-100">
+              {caso.id.replace('caso-', '#')} - {caso.cliente}
+            </h2>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[#7a4a1a] dark:text-slate-300">
+              <Badge variant={statusBadge(caso.status)} className="capitalize">
+                {caso.status}
+              </Badge>
+              <Badge variant="info">{caso.area}</Badge>
+              <Badge variant="default">{caso.stage}</Badge>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       <PageState status={pageState}>
         <div className="grid gap-6 xl:grid-cols-[2.4fr_1fr]">
@@ -185,8 +179,8 @@ export const CasoPage = () => {
                   className={cn(
                     'rounded-full border px-4 py-1.5 text-xs font-medium transition',
                     activeTab === tab
-                      ? 'border-primary/40 bg-primary/10 text-primary'
-                      : 'border-border bg-white text-text-subtle hover:bg-[#F2F5FF] hover:text-text',
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:bg-[#fff3e0] hover:text-[#2a1400] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800',
                   )}
                 >
                   {tab}
@@ -199,7 +193,7 @@ export const CasoPage = () => {
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
                 <Input
                   placeholder="Buscar casos..."
-                  className="h-11 rounded-full border border-border bg-[#EEF4FF] pl-11"
+                  className="h-11 rounded-full border border-[#f0d9b8] bg-[#fff3e0] pl-11 text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-400 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-emerald-500/20"
                 />
               </div>
               <Button variant="outline" size="sm" className="h-11 rounded-full px-4">
@@ -210,7 +204,7 @@ export const CasoPage = () => {
 
             {activeTab === 'Tudo' && (
               <div className="space-y-4">
-                <Card>
+                <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
                   <CardHeader className="flex-row items-center justify-between space-y-0">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -226,7 +220,7 @@ export const CasoPage = () => {
                   </CardHeader>
                   <CardContent className="space-y-4 text-sm text-text-muted">
                     <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border border-border bg-gradient-to-br from-[#FFF5F8] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                      <div className="rounded-2xl border border-[#f0d9b8] bg-gradient-to-br from-[#FFF5F8] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
                         <div className="flex items-center gap-2 text-sm font-semibold text-text">
                           <FileText className="h-4 w-4 text-[#D36D8C]" />
                           Resumo gerado por IA
@@ -235,7 +229,7 @@ export const CasoPage = () => {
                           {highlights[0]?.content}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-border bg-gradient-to-br from-[#F2F7FF] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                      <div className="rounded-2xl border border-[#f0d9b8] bg-gradient-to-br from-[#F2F7FF] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
                         <div className="flex items-center gap-2 text-sm font-semibold text-text">
                           <KeyRound className="h-4 w-4 text-[#6BB9A8]" />
                           Pontos relevantes
@@ -257,7 +251,7 @@ export const CasoPage = () => {
             )}
 
             {activeTab !== 'Tudo' && (
-              <Card>
+              <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <CardTitle>{activeTab}</CardTitle>
                   <Button variant="outline" size="sm" onClick={() => setModalOpen(true)}>
@@ -269,7 +263,7 @@ export const CasoPage = () => {
                     filteredEvents.map((event) => (
                       <div
                         key={event.id}
-                        className="rounded-2xl border border-border bg-white p-3 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+                        className="rounded-2xl border border-[#f0d9b8] bg-white p-3 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900"
                       >
                         <p className="text-sm font-semibold text-text">{event.title}</p>
                         <p className="text-xs text-text-subtle">{event.description}</p>
@@ -279,7 +273,7 @@ export const CasoPage = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-2xl border border-border bg-white p-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                    <div className="rounded-2xl border border-[#f0d9b8] bg-white p-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900">
                       Sem eventos para esta categoria.
                     </div>
                   )}
@@ -289,7 +283,7 @@ export const CasoPage = () => {
           </div>
 
           <aside className="space-y-4">
-            <Card>
+            <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -306,13 +300,13 @@ export const CasoPage = () => {
                     </p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-border bg-white px-3 py-2 text-xs text-text shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                <div className="rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 text-xs text-text shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900">
                   {lead?.phone ?? '(11) 99999-0000'}
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
               <CardHeader>
                 <CardTitle>Checklist Processual</CardTitle>
               </CardHeader>
@@ -320,7 +314,7 @@ export const CasoPage = () => {
                 {checklist.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+                    className="flex items-center justify-between rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900"
                   >
                     <span>{item.label}</span>
                     <span
@@ -338,7 +332,7 @@ export const CasoPage = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
               <CardHeader>
                 <CardTitle>Documentos recentes</CardTitle>
               </CardHeader>
@@ -346,7 +340,7 @@ export const CasoPage = () => {
                 {caseDocs.slice(0, 3).map((doc) => (
                   <div
                     key={doc.id}
-                    className="rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+                    className="rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900"
                   >
                     <div className="text-sm font-semibold text-text">{doc.title}</div>
                     <div className="text-xs text-text-subtle">{doc.status}</div>
@@ -388,7 +382,7 @@ export const CasoPage = () => {
             <label className="text-xs uppercase tracking-wide text-text-subtle">
               Categoria
             </label>
-            <select className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text">
+            <select className="h-10 w-full rounded-2xl border border-[#f0d9b8] bg-white px-3 text-sm text-[#2a1400] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
               <option>Docs</option>
               <option>Agenda</option>
               <option>Comercial</option>
@@ -402,12 +396,13 @@ export const CasoPage = () => {
               Descricao
             </label>
             <textarea
-              className="min-h-[120px] w-full rounded-2xl border border-border bg-white px-3 py-2 text-sm text-text"
+              className="min-h-[120px] w-full rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 text-sm text-[#2a1400] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               placeholder="Detalhes do evento"
             />
           </div>
         </div>
       </Modal>
+      </div>
     </div>
   )
 }

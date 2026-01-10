@@ -120,7 +120,7 @@ export function useDocumentos() {
   /**
    * Cria um novo documento (com atualização otimista)
    */
-  const createDocumento = useCallback(async (documento: Omit<DocumentoRow, 'id' | 'created_at'>) => {
+  const createDocumento = useCallback(async (documento: Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoDocumento = await documentosService.createDocumento(documento)
@@ -138,7 +138,7 @@ export function useDocumentos() {
    * Atualiza um documento (com atualização otimista)
    */
   const updateDocumento = useCallback(
-    async (id: string, updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>>) => {
+    async (id: string, updates: Partial<Omit<DocumentoRow, 'id' | 'created_at'>> & { status?: string }) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const documentoAtualizado = await documentosService.updateDocumento(id, updates)
@@ -179,14 +179,14 @@ export function useDocumentos() {
    * Marca documento como completo
    */
   const marcarCompleto = useCallback(async (id: string) => {
-    return updateDocumento(id, { meta: { status: 'aprovado' } })
+    return updateDocumento(id, { status: 'aprovado' })
   }, [updateDocumento])
 
   /**
    * Marca documento como pendente
    */
   const marcarPendente = useCallback(async (id: string) => {
-    return updateDocumento(id, { meta: { status: 'pendente' } })
+    return updateDocumento(id, { status: 'pendente' })
   }, [updateDocumento])
 
   /**

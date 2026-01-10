@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { agendaService } from '@/services/agendaService'
-import type { AgendamentoRow } from '@/lib/supabaseClient'
+import type { AgendaRow } from '@/lib/supabaseClient'
 import type { AgendaItem } from '@/types/domain'
 import { mapAgendamentoRowToAgendaItem } from '@/lib/mappers'
 
@@ -167,7 +167,7 @@ export function useAgenda() {
    * Cria um novo evento (com atualização otimista)
    */
   const createEvento = useCallback(
-    async (evento: Omit<AgendamentoRow, 'id' | 'created_at'>) => {
+    async (evento: Omit<AgendaRow, 'id' | 'created_at' | 'org_id'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoEvento = await agendaService.createEvento(evento)
@@ -187,7 +187,7 @@ export function useAgenda() {
    * Atualiza um evento (com atualização otimista)
    */
   const updateEvento = useCallback(
-    async (id: string, updates: Partial<Omit<AgendamentoRow, 'id' | 'created_at' | 'org_id'>>) => {
+    async (id: string, updates: Partial<Omit<AgendaRow, 'id' | 'created_at'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const eventoAtualizado = await agendaService.updateEvento(id, updates)

@@ -11,6 +11,7 @@ export interface StatCardProps {
   delta: number
   trend: Trend
   period: string
+  className?: string
 }
 
 const trendClasses: Record<Trend, string> = {
@@ -25,11 +26,11 @@ const trendIcon = (trend: Trend) => {
   return Minus
 }
 
-export const StatCard = ({ label, value, delta, trend, period }: StatCardProps) => {
+export const StatCard = ({ label, value, delta, trend, period, className }: StatCardProps) => {
   const Icon = trendIcon(trend)
 
   return (
-    <Card>
+    <Card className={className}>
       <CardContent className="space-y-2 px-6 py-5">
         <p className="text-[10px] uppercase tracking-[0.28em] text-text-muted">
           {label}
