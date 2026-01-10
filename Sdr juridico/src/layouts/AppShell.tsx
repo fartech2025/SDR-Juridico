@@ -31,7 +31,6 @@ import { cn } from '@/utils/cn'
 const navItems = [
   { label: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
   { label: 'Leads', to: '/app/leads', icon: Users },
-  { label: 'Leads (Supabase)', to: '/app/leads-real', icon: Users },
   { label: 'Clientes', to: '/app/clientes', icon: UserRound },
   { label: 'Casos', to: '/app/casos', icon: Briefcase },
   { label: 'Agenda', to: '/app/agenda', icon: CalendarClock },
