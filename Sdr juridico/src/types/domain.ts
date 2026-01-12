@@ -62,6 +62,7 @@ export interface AgendaItem {
   id: string
   title: string
   type: string
+  tipo?: string
   date: string
   time: string
   durationMinutes: number
