@@ -776,11 +776,7 @@ export const AgendaPage = () => {
 
               <div className="grid gap-4 xl:grid-cols-[2.3fr_1fr]">
                 <div
-                  className="rounded-3xl border bg-[#F7F8FC] dark:bg-slate-900/50 p-4"
-                  style={{
-                    borderColor: 'var(--agenda-border)',
-                    boxShadow: 'var(--agenda-shadow)',
-                  }}
+                  className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-[#F7F8FC] dark:bg-slate-800/90 p-4"
                 >
                   {viewMode === 'week' ? (
                     <div className="relative grid grid-cols-[80px_repeat(7,1fr)] gap-2 text-xs text-text-muted">
