@@ -41,6 +41,7 @@ export function useIntegrations() {
           descriptionByProvider[row.provider] ||
           'Integracao configurada.',
         status: (row.enabled ? 'connected' : 'disconnected') as 'connected' | 'disconnected',
+        settings: row.settings || null,
       }))
       setState((prev) => ({ ...prev, integrations: mapped, loading: false }))
     } catch (error) {
@@ -60,6 +61,17 @@ export function useIntegrations() {
     [fetchIntegrations]
   )
 
+  const updateIntegration = useCallback(
+    async (
+      id: string,
+      updates: Parameters<typeof integrationsService.updateIntegration>[1]
+    ) => {
+      await integrationsService.updateIntegration(id, updates)
+      await fetchIntegrations()
+    },
+    [fetchIntegrations]
+  )
+
   useEffect(() => {
     fetchIntegrations()
   }, [fetchIntegrations])
@@ -68,5 +80,6 @@ export function useIntegrations() {
     ...state,
     fetchIntegrations,
     createDefaultIntegrations,
+    updateIntegration,
   }
 }

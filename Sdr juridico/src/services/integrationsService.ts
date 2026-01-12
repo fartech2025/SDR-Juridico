@@ -72,6 +72,31 @@ export const integrationsService = {
     return idsToDelete.length
   },
 
+  async updateIntegration(
+    id: string,
+    updates: Partial<Pick<IntegrationRow, 'enabled' | 'settings' | 'secrets' | 'name'>>
+  ): Promise<IntegrationRow> {
+    try {
+      const orgId = await requireOrgId()
+      const { data, error } = await supabase
+        .from('integrations')
+        .update(updates)
+        .eq('id', id)
+        .eq('org_id', orgId)
+        .select()
+        .single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      if (!data) throw new AppError('Integracao nao encontrada', 'not_found')
+      return data
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : 'Erro ao atualizar integracao',
+        'database_error'
+      )
+    }
+  },
+
   async ensureDefaultIntegrations(): Promise<void> {
     try {
       const orgId = await requireOrgId()

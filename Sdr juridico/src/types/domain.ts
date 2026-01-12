@@ -133,6 +133,7 @@ export interface Integration {
   name: string
   description: string
   status: IntegrationStatus
+  settings?: Record<string, unknown> | null
 }
 
 export interface Insight {

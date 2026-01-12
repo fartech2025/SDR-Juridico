@@ -8,11 +8,13 @@ import { PageState } from '@/components/PageState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import type { Integration, IntegrationStatus } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useIntegrations } from '@/hooks/useIntegrations'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { supabase } from '@/lib/supabaseClient'
 import { useTheme } from '@/contexts/ThemeContext'
 
 const tabs = ['Essencial', 'Avancado'] as const
@@ -50,8 +52,16 @@ export const ConfigPage = () => {
   const [activeTab, setActiveTab] = React.useState<TabKey>('Essencial')
   const [selectedIntegration, setSelectedIntegration] =
     React.useState<Integration | null>(null)
+  const [integrationBusy, setIntegrationBusy] = React.useState(false)
+  const [calendarId, setCalendarId] = React.useState('')
   const { orgId } = useCurrentUser()
-  const { integrations, loading, error, createDefaultIntegrations } = useIntegrations()
+  const {
+    integrations,
+    loading,
+    error,
+    createDefaultIntegrations,
+    updateIntegration,
+  } = useIntegrations()
 
   const dedupedIntegrations = React.useMemo(() => {
     const byKey = new Map<string, Integration>()
@@ -91,6 +101,170 @@ export const ConfigPage = () => {
         : 'ready'
   const pageState = state !== 'ready' ? state : baseState
   const canSeed = !loading && integrations.length === 0 && Boolean(orgId)
+  const selectedIsGoogleCalendar = selectedIntegration
+    ? matchesKey(selectedIntegration.name, 'google_calendar')
+    : false
+  const googleCalendarStatus = params.get('google_calendar')
+
+  const resolveCalendarId = (integration: Integration | null) => {
+    const settings = integration?.settings
+    if (settings && typeof settings === 'object' && 'calendar_id' in settings) {
+      const value = (settings as { calendar_id?: string }).calendar_id
+      return typeof value === 'string' ? value : ''
+    }
+    return ''
+  }
+
+  const buildGoogleCalendarSettings = (
+    overrides: Record<string, unknown> = {},
+  ) => {
+    const baseSettings =
+      selectedIntegration?.settings && typeof selectedIntegration.settings === 'object'
+        ? (selectedIntegration.settings as Record<string, unknown>)
+        : {}
+    const next: Record<string, unknown> = { ...baseSettings, ...overrides }
+    const trimmedCalendarId = calendarId.trim()
+    if (trimmedCalendarId) {
+      next.calendar_id = trimmedCalendarId
+    } else if ('calendar_id' in next) {
+      delete next.calendar_id
+    }
+    return next
+  }
+
+  const handleGoogleCalendarConnect = async () => {
+    if (!selectedIntegration) return
+    setIntegrationBusy(true)
+    try {
+      const settings = buildGoogleCalendarSettings({
+        linked_at: new Date().toISOString(),
+      })
+      await updateIntegration(selectedIntegration.id, { settings })
+      setSelectedIntegration((prev) => (prev ? { ...prev, settings } : prev))
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      if (!supabaseUrl) {
+        throw new Error('Supabase nao configurado.')
+      }
+      if (!orgId) {
+        throw new Error('Organizacao nao encontrada.')
+      }
+      const returnTo = `${window.location.origin}/app/config`
+      const oauthUrl = new URL(
+        `${supabaseUrl.replace(/\/$/, '')}/functions/v1/google-calendar-oauth`,
+      )
+      oauthUrl.searchParams.set('integration_id', selectedIntegration.id)
+      oauthUrl.searchParams.set('org_id', orgId)
+      oauthUrl.searchParams.set('return_to', returnTo)
+      window.location.href = oauthUrl.toString()
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erro ao atualizar integracao'
+      toast.error(message)
+      setIntegrationBusy(false)
+    } finally {
+      if (!document.hidden) {
+        setIntegrationBusy(false)
+      }
+    }
+  }
+
+  const handleGoogleCalendarDisconnect = async () => {
+    if (!selectedIntegration) return
+    setIntegrationBusy(true)
+    try {
+      const settings = buildGoogleCalendarSettings({
+        unlinked_at: new Date().toISOString(),
+      })
+      await updateIntegration(selectedIntegration.id, {
+        enabled: false,
+        settings,
+      })
+      setSelectedIntegration((prev) =>
+        prev ? { ...prev, status: 'disconnected', settings } : prev,
+      )
+      toast.success('Google Calendar desvinculado.')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erro ao atualizar integracao'
+      toast.error(message)
+    } finally {
+      setIntegrationBusy(false)
+    }
+  }
+
+  const handleGoogleCalendarSave = async () => {
+    if (!selectedIntegration) return
+    setIntegrationBusy(true)
+    try {
+      const settings = buildGoogleCalendarSettings({
+        updated_at: new Date().toISOString(),
+      })
+      await updateIntegration(selectedIntegration.id, { settings })
+      setSelectedIntegration((prev) => (prev ? { ...prev, settings } : prev))
+      toast.success('Configuracao do Google Calendar salva.')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erro ao salvar configuracao'
+      toast.error(message)
+    } finally {
+      setIntegrationBusy(false)
+    }
+  }
+
+  const handleGoogleCalendarSync = async () => {
+    if (!orgId) {
+      toast.error('Organizacao nao encontrada.')
+      return
+    }
+    setIntegrationBusy(true)
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+      if (sessionError || !accessToken) {
+        throw new Error('Sessao expirada. Faca login novamente.')
+      }
+      const { data, error: syncError } = await supabase.functions.invoke(
+        'google-calendar-sync',
+        {
+          body: { org_id: orgId },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      )
+      if (syncError) {
+        throw syncError
+      }
+      toast.success('Sincronizacao concluida.')
+      if (data?.created || data?.updated || data?.pushed) {
+        toast.success(
+          `Sync: +${data.created || 0} novos, ${data.updated || 0} atualizados, ${data.pushed || 0} enviados.`,
+        )
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erro ao sincronizar agenda'
+      toast.error(message)
+    } finally {
+      setIntegrationBusy(false)
+    }
+  }
+
+  React.useEffect(() => {
+    if (!selectedIntegration || !selectedIsGoogleCalendar) {
+      setCalendarId('')
+      return
+    }
+    setCalendarId(resolveCalendarId(selectedIntegration))
+  }, [selectedIntegration, selectedIsGoogleCalendar])
+
+  React.useEffect(() => {
+    if (!googleCalendarStatus) return
+    if (googleCalendarStatus === 'connected') {
+      toast.success('Google Calendar conectado.')
+    } else if (googleCalendarStatus === 'error') {
+      toast.error('Falha ao conectar Google Calendar.')
+    }
+  }, [googleCalendarStatus])
 
   return (
     <div
@@ -176,51 +350,64 @@ export const ConfigPage = () => {
       <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           <div className="grid gap-4 lg:grid-cols-2">
-            {filteredIntegrations.map((integration) => (
-              <Card
-                key={integration.id}
-                className={cn(
-                  'border',
-                  isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
-                )}
-              >
-                <CardHeader className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <CardTitle className="text-sm">
-                      {integration.name}
-                    </CardTitle>
-                    <Badge variant={statusVariant(integration.status)}>
-                      {integration.status}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-text-muted">
-                    {integration.description}
-                  </p>
-                </CardHeader>
-                <CardContent className="flex gap-2">
-                  {integration.name.toLowerCase().includes('datajud') ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => navigate('/app/datajud')}
-                      className="!bg-emerald-600 !text-white hover:!bg-emerald-500 !border-0"
-                    >
-                      <Database className="h-4 w-4 mr-2" />
-                      Acessar API
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedIntegration(integration)}
-                      className="!bg-emerald-600 !text-white hover:!bg-emerald-500 !border-0"
-                    >
-                      Configurar
-                    </Button>
+            {filteredIntegrations.map((integration) => {
+              const isGoogleCalendar = matchesKey(
+                integration.name,
+                'google_calendar',
+              )
+              const actionLabel = isGoogleCalendar
+                ? integration.status === 'connected'
+                  ? 'Gerenciar'
+                  : 'Vincular'
+                : 'Configurar'
+              return (
+                <Card
+                  key={integration.id}
+                  className={cn(
+                    'border',
+                    isDark
+                      ? 'border-slate-800 bg-slate-900/70'
+                      : 'border-[#f0d9b8] bg-white/95',
                   )}
-                </CardContent>
-              </Card>
-            ))}
+                >
+                  <CardHeader className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <CardTitle className="text-sm">
+                        {integration.name}
+                      </CardTitle>
+                      <Badge variant={statusVariant(integration.status)}>
+                        {integration.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-text-muted">
+                      {integration.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="flex gap-2">
+                    {integration.name.toLowerCase().includes('datajud') ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate('/app/datajud')}
+                        className="!bg-emerald-600 !text-white hover:!bg-emerald-500 !border-0"
+                      >
+                        <Database className="h-4 w-4 mr-2" />
+                        Acessar API
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedIntegration(integration)}
+                        className="!bg-emerald-600 !text-white hover:!bg-emerald-500 !border-0"
+                      >
+                        {actionLabel}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
 
           <Card
@@ -265,17 +452,90 @@ export const ConfigPage = () => {
         description="Configuracao da integracao."
         footer={
           <>
-            <Button variant="ghost" onClick={() => setSelectedIntegration(null)}>
+            <Button
+              variant="ghost"
+              onClick={() => setSelectedIntegration(null)}
+              disabled={integrationBusy}
+            >
               Fechar
             </Button>
-            <Button variant="primary" onClick={() => setSelectedIntegration(null)}>
-              Salvar
-            </Button>
+            {selectedIsGoogleCalendar ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleGoogleCalendarSave}
+                  disabled={integrationBusy}
+                >
+                  Salvar ajustes
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={handleGoogleCalendarSync}
+                  disabled={integrationBusy}
+                >
+                  Sincronizar agora
+                </Button>
+                {selectedIntegration?.status === 'connected' ? (
+                  <Button
+                    variant="danger"
+                    onClick={handleGoogleCalendarDisconnect}
+                    disabled={integrationBusy}
+                  >
+                    Desvincular
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    onClick={handleGoogleCalendarConnect}
+                    disabled={integrationBusy}
+                  >
+                    Vincular Google Calendar
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={() => setSelectedIntegration(null)}
+                disabled={integrationBusy}
+              >
+                Salvar
+              </Button>
+            )}
           </>
         }
       >
         {selectedIntegration && (
           <div className="space-y-3 text-sm text-text-muted">
+            {selectedIsGoogleCalendar && (
+              <div
+                className={cn(
+                  'rounded-2xl border px-3 py-3 text-xs shadow-soft',
+                  isDark
+                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                    : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700',
+                )}
+              >
+                Use o botao abaixo para vincular ou desvincular sua conta do
+                Google Calendar.
+              </div>
+            )}
+            {selectedIsGoogleCalendar && (
+              <div className="space-y-2">
+                <span className="text-xs uppercase tracking-wide text-text-subtle">
+                  ID do Calendario (opcional)
+                </span>
+                <Input
+                  value={calendarId}
+                  onChange={(event) => setCalendarId(event.target.value)}
+                  placeholder="primary@group.calendar.google.com"
+                  disabled={integrationBusy}
+                />
+                <p className="text-[11px] text-text-muted">
+                  Use o ID do calendario compartilhado se nao for o principal.
+                </p>
+              </div>
+            )}
             <div
               className={cn(
                 'rounded-2xl border px-3 py-3 shadow-soft',
