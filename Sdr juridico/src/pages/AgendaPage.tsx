@@ -28,6 +28,7 @@ import { cn } from '@/utils/cn'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useGoogleCalendarCreate } from '@/hooks/useGoogleCalendarCreate'
 
 const resolveStatus = (
   value: string | null,
@@ -187,6 +188,8 @@ export const AgendaPage = () => {
   const [formState, setFormState] = React.useState<EditorFormState>(() =>
     buildFormState(),
   )
+  const { createMeeting, error: meetError } = useGoogleCalendarCreate()
+  const [isCreatingGoogleMeet, setIsCreatingGoogleMeet] = React.useState(false)
 
   const state = resolveStatus(params.get('state'))
   const baseState = loading ? 'loading' : error ? 'error' : 'ready'
@@ -1260,15 +1263,59 @@ export const AgendaPage = () => {
                 <span className="text-xs uppercase tracking-wide text-text-subtle">
                   Local
                 </span>
-                <Input
-                  value={formState.location}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      location: event.target.value,
-                    }))
-                  }
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={formState.location}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        location: event.target.value,
+                      }))
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    onClick={async () => {
+                      setIsCreatingGoogleMeet(true)
+                      try {
+                        const startTime = new Date(`${formState.date}T${formState.time}`)
+                        const endTime = new Date(startTime.getTime() + formState.durationMinutes * 60 * 1000)
+                        
+                        const result = await createMeeting({
+                          title: formState.title || 'Reunião',
+                          startTime,
+                          endTime,
+                          videoConference: true,
+                        })
+                        
+                        // Extrair link do Google Meet
+                        const meetLink = result.conferenceData?.entryPoints?.find((ep: any) => ep.entryPointType === 'video')?.uri || ''
+                        
+                        if (meetLink) {
+                          setFormState((prev) => ({
+                            ...prev,
+                            location: meetLink,
+                          }))
+                        }
+                      } catch (err) {
+                        console.error('Erro ao criar Google Meet:', err)
+                      } finally {
+                        setIsCreatingGoogleMeet(false)
+                      }
+                    }}
+                    disabled={isCreatingGoogleMeet || !formState.title}
+                    title={!formState.title ? 'Preencha o título primeiro' : 'Criar Google Meet'}
+                  >
+                    {isCreatingGoogleMeet ? (
+                      <span className="text-xs">Criando...</span>
+                    ) : (
+                      <Video className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {meetError && (
+                  <p className="text-xs text-red-600 mt-1">{meetError.message}</p>
+                )}
               </div>
             </div>
           </div>
