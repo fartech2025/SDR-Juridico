@@ -93,13 +93,13 @@ export function useGoogleCalendarCreate() {
         setIsLoading(true)
         setError(null)
 
-        const orgId = getActiveOrgId()
+        const orgId = await getActiveOrgId()
         if (!orgId) throw new Error('Organização não encontrada')
 
         // Verificar conexão
         const connected = await isConnected()
         if (!connected) {
-          throw new Error('Google Calendar não está conectado. Por favor, vincule sua conta.')
+          throw new Error('Google Calendar não está conectado. Por favor, configure a integração nas configurações.')
         }
 
         // Chamar Edge Function para criar o evento

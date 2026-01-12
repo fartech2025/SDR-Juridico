@@ -1326,7 +1326,18 @@ export const AgendaPage = () => {
                   placeholder="Clique em 'Gerar Google Meet' ou digite um local"
                 />
                 {meetError && (
-                  <p className="text-xs text-red-600 mt-1">{meetError.message}</p>
+                  <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs space-y-2">
+                    <p className="font-semibold">⚠️ Erro ao gerar Google Meet</p>
+                    <p>{meetError.message}</p>
+                    {meetError.message.includes('não está conectado') && (
+                      <div className="bg-red-100 p-2 rounded mt-2 space-y-2">
+                        <p className="font-medium">🚀 Conectar Google Calendar:</p>
+                        <p className="text-xs text-red-600">Execute no terminal:</p>
+                        <code className="block bg-red-900/20 p-1 rounded font-mono text-red-900 break-all">npm run connect:google</code>
+                        <p className="text-xs text-red-600 mt-1">Depois autorize no Google e está pronto! ✨</p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
