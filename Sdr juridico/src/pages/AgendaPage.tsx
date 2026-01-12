@@ -421,9 +421,6 @@ export const AgendaPage = () => {
       alert('Erro ao bloquear horário de almoço.')
     }
   }
-    setEditorError(null)
-    setEditorOpen(true)
-  }
 
   const handleSave = async () => {
     setEditorBusy(true)
