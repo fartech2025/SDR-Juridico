@@ -600,14 +600,14 @@ export const AgendaPage = () => {
 
               {/* Filtros */}
               <div className="flex flex-wrap items-center gap-2">
-                <Filter className="h-4 w-4 text-text-muted" />
+                <Filter className="h-4 w-4 text-text-muted dark:text-slate-400" />
                 <button
                   onClick={() => setActiveFilter('all')}
                   className={cn(
                     'rounded-full border px-3 py-1 text-xs transition-all',
                     activeFilter === 'all'
                       ? 'border-primary bg-primary text-white shadow-sm'
-                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                      : 'border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-muted dark:text-slate-300 hover:border-primary/50'
                   )}
                 >
                   Todos
@@ -618,7 +618,7 @@ export const AgendaPage = () => {
                     'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
                     activeFilter === 'reuniao'
                       ? 'border-primary bg-primary text-white shadow-sm'
-                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                      : 'border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-muted dark:text-slate-300 hover:border-primary/50'
                   )}
                 >
                   <Users className="h-3 w-3" />
@@ -630,7 +630,7 @@ export const AgendaPage = () => {
                     'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
                     activeFilter === 'ligacao'
                       ? 'border-primary bg-primary text-white shadow-sm'
-                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                      : 'border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-muted dark:text-slate-300 hover:border-primary/50'
                   )}
                 >
                   <Phone className="h-3 w-3" />
@@ -642,7 +642,7 @@ export const AgendaPage = () => {
                     'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
                     activeFilter === 'audiencia'
                       ? 'border-primary bg-primary text-white shadow-sm'
-                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                      : 'border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-muted dark:text-slate-300 hover:border-primary/50'
                   )}
                 >
                   <Gavel className="h-3 w-3" />
@@ -668,22 +668,22 @@ export const AgendaPage = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-text-muted" />
-                  <span className="text-xs text-text-muted">Almoço:</span>
+                  <Clock className="h-4 w-4 text-text-muted dark:text-slate-400" />
+                  <span className="text-xs text-text-muted dark:text-slate-300">Almoço:</span>
                   <select
                     value={horariosAlmoco.inicio}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, inicio: e.target.value }))}
-                    className="rounded-lg border border-border bg-white dark:bg-slate-800 px-2 py-1 text-xs"
+                    className="rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text dark:text-slate-100 px-2 py-1 text-xs"
                   >
                     <option value="12:00">12:00</option>
                     <option value="12:30">12:30</option>
                     <option value="13:00">13:00</option>
                   </select>
-                  <span className="text-xs text-text-muted">até</span>
+                  <span className="text-xs text-text-muted dark:text-slate-300">até</span>
                   <select
                     value={horariosAlmoco.fim}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, fim: e.target.value }))}
-                    className="rounded-lg border border-border bg-white dark:bg-slate-800 px-2 py-1 text-xs"
+                    className="rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text dark:text-slate-100 px-2 py-1 text-xs"
                   >
                     <option value="13:00">13:00</option>
                     <option value="13:30">13:30</option>
@@ -733,7 +733,7 @@ export const AgendaPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div
-                    className="rounded-2xl border bg-[#F7F8FC] p-1 text-xs"
+                    className="rounded-2xl border bg-[#F7F8FC] dark:bg-slate-800 p-1 text-xs"
                     style={{
                       borderColor: 'var(--agenda-border)',
                       boxShadow: 'var(--agenda-shadow-soft)',
@@ -744,8 +744,8 @@ export const AgendaPage = () => {
                       className={cn(
                         'rounded-xl px-3 py-1',
                         viewMode === 'week'
-                          ? 'bg-white text-primary shadow-sm'
-                          : 'text-text-subtle',
+                          ? 'bg-white dark:bg-slate-700 text-primary dark:text-blue-400 shadow-sm'
+                          : 'text-text-subtle dark:text-slate-400',
                       )}
                       onClick={() => setViewMode('week')}
                     >
@@ -756,8 +756,8 @@ export const AgendaPage = () => {
                       className={cn(
                         'rounded-xl px-3 py-1',
                         viewMode === 'month'
-                          ? 'bg-white text-primary shadow-sm'
-                          : 'text-text-subtle',
+                          ? 'bg-white dark:bg-slate-700 text-primary dark:text-blue-400 shadow-sm'
+                          : 'text-text-subtle dark:text-slate-400',
                       )}
                       onClick={() => setViewMode('month')}
                     >
@@ -790,9 +790,9 @@ export const AgendaPage = () => {
                         <div
                           key={day.iso}
                           className={cn(
-                            'rounded-xl py-1 text-center text-sm text-text',
-                            day.isToday && 'bg-primary/10 text-primary font-semibold',
-                            day.isSelected && 'border border-primary/30',
+                            'rounded-xl py-1 text-center text-sm text-text dark:text-slate-100',
+                            day.isToday && 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400 font-semibold',
+                            day.isSelected && 'border border-primary/30 dark:border-blue-700',
                           )}
                         >
                           {day.label} {day.date}
@@ -800,7 +800,7 @@ export const AgendaPage = () => {
                       ))}
                       {timeSlots.map((slot, slotIndex) => (
                         <React.Fragment key={slot}>
-                          <div className="text-right text-xs text-text-muted">
+                          <div className="text-right text-xs text-text-muted dark:text-slate-400">
                             {slot}
                           </div>
                           {weekDays.map((day) => (
@@ -874,10 +874,10 @@ export const AgendaPage = () => {
                                 {event.item.durationMinutes || 30}min
                               </span>
                             </div>
-                            <div className="mt-1.5 text-sm font-semibold leading-tight">
+                            <div className="mt-1.5 text-sm font-semibold leading-tight dark:text-slate-900">
                               {event.item.title}
                             </div>
-                            <div className="text-[11px] text-text-muted mt-0.5">
+                            <div className="text-[11px] text-text-muted dark:text-slate-700 mt-0.5">
                               {event.item.cliente}
                             </div>
                             <div className="mt-2 flex items-center gap-2 flex-wrap">
@@ -934,8 +934,8 @@ export const AgendaPage = () => {
                             <div
                               key={day.iso}
                               className={cn(
-                                'min-h-[110px] rounded-2xl border bg-white/80 p-2 transition hover:bg-white',
-                                isSelected && 'border-primary/40',
+                                'min-h-[110px] rounded-2xl border bg-white/80 dark:bg-slate-800/80 p-2 transition hover:bg-white dark:hover:bg-slate-800',
+                                isSelected && 'border-primary/40 dark:border-blue-700',
                               )}
                               style={{ borderColor: 'var(--agenda-grid)' }}
                               onClick={() => handleSlotCreate(day.iso)}
@@ -951,14 +951,14 @@ export const AgendaPage = () => {
                                 <span
                                   className={cn(
                                     'rounded-full px-2 py-0.5 text-[11px]',
-                                    isToday && 'bg-primary/10 text-primary',
-                                    isSelected && 'bg-primary text-white',
+                                    isToday && 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400',
+                                    isSelected && 'bg-primary dark:bg-blue-600 text-white',
                                   )}
                                 >
                                   {day.number}
                                 </span>
                                 {dayEvents.length > 0 && (
-                                  <span className="text-[10px] text-text-muted">
+                                  <span className="text-[10px] text-text-muted dark:text-slate-400">
                                     {dayEvents.length} eventos
                                   </span>
                                 )}
@@ -968,7 +968,7 @@ export const AgendaPage = () => {
                                   <button
                                     key={event.id}
                                     type="button"
-                                    className="w-full rounded-xl border bg-white px-2 py-1 text-left text-[11px] text-text shadow-soft"
+                                    className="w-full rounded-xl border bg-white dark:bg-slate-900 px-2 py-1 text-left text-[11px] text-text dark:text-slate-100 shadow-soft"
                                     style={{ borderColor: 'var(--agenda-border)' }}
                                     onClick={(eventClick) => {
                                       eventClick.stopPropagation()
@@ -978,13 +978,13 @@ export const AgendaPage = () => {
                                     <div className="truncate font-semibold">
                                       {event.title}
                                     </div>
-                                    <div className="text-[10px] text-text-muted">
+                                    <div className="text-[10px] text-text-muted dark:text-slate-400">
                                       {event.time}
                                     </div>
                                   </button>
                                 ))}
                                 {dayEvents.length > 3 && (
-                                  <div className="text-[10px] text-text-muted">
+                                  <div className="text-[10px] text-text-muted dark:text-slate-400">
                                     +{dayEvents.length - 3} compromissos
                                   </div>
                                 )}
@@ -998,7 +998,7 @@ export const AgendaPage = () => {
                 </div>
                 <div className="space-y-4">
                   <Card
-                    className="border bg-white"
+                    className="border bg-white dark:bg-slate-900 dark:border-slate-800"
                     style={{
                       backgroundColor: 'var(--agenda-card)',
                       borderColor: 'var(--agenda-border)',
@@ -1006,11 +1006,11 @@ export const AgendaPage = () => {
                     }}
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-text">
+                      <div className="flex items-center justify-between text-sm text-text dark:text-slate-100">
                         <span className="font-semibold">Calendario</span>
-                        <span className="text-xs text-text-subtle">{monthLabel}</span>
+                        <span className="text-xs text-text-subtle dark:text-slate-400">{monthLabel}</span>
                       </div>
-                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted">
+                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted dark:text-slate-400">
                         {monthDayLabels.map((label) => (
                           <span key={label}>{label}</span>
                         ))}
@@ -1033,10 +1033,10 @@ export const AgendaPage = () => {
                               key={day.iso}
                               type="button"
                               className={cn(
-                                'relative rounded-full py-1 text-xs transition hover:bg-primary/20',
-                                isSelected && 'bg-primary text-white font-bold',
-                                !isSelected && isToday && 'bg-primary/10 text-primary font-semibold ring-2 ring-primary/30',
-                                hasEvents && !isSelected && !isToday && 'font-semibold',
+                                'relative rounded-full py-1 text-xs transition hover:bg-primary/20 dark:hover:bg-blue-900/30',
+                                isSelected && 'bg-primary dark:bg-blue-600 text-white font-bold',
+                                !isSelected && isToday && 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400 font-semibold ring-2 ring-primary/30 dark:ring-blue-700',
+                                hasEvents && !isSelected && !isToday && 'font-semibold dark:text-slate-200',
                               )}
                               onClick={() => setCurrentDate(day.date)}
                             >
@@ -1044,7 +1044,7 @@ export const AgendaPage = () => {
                               {hasEvents && (
                                 <span className={cn(
                                   "absolute -bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full",
-                                  isSelected ? "bg-white" : "bg-primary"
+                                  isSelected ? "bg-white" : "bg-primary dark:bg-blue-400"
                                 )} />
                               )}
                             </button>
@@ -1052,19 +1052,19 @@ export const AgendaPage = () => {
                         })}
                       </div>
                       <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-text-muted">
+                        <div className="flex items-center gap-2 text-text-muted dark:text-slate-400">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-blue-500">
                             <CheckCircle2 className="h-2 w-2 text-white" />
                           </div>
                           <span>Confirmada</span>
                         </div>
-                        <div className="flex items-center gap-2 text-text-muted">
+                        <div className="flex items-center gap-2 text-text-muted dark:text-slate-400">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-amber-500">
                             <AlertCircle className="h-2 w-2 text-white" />
                           </div>
                           <span>Pendente</span>
                         </div>
-                        <div className="flex items-center gap-2 text-text-muted">
+                        <div className="flex items-center gap-2 text-text-muted dark:text-slate-400">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
                             <XCircle className="h-2 w-2 text-white" />
                           </div>
@@ -1075,7 +1075,7 @@ export const AgendaPage = () => {
                   </Card>
 
                   <Card
-                    className="border bg-white"
+                    className="border bg-white dark:bg-slate-900 dark:border-slate-800"
                     style={{
                       backgroundColor: 'var(--agenda-card)',
                       borderColor: 'var(--agenda-border)',
@@ -1083,18 +1083,18 @@ export const AgendaPage = () => {
                     }}
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-text">
+                      <div className="flex items-center justify-between text-sm text-text dark:text-slate-100">
                         <span className="font-semibold">Proximas reunioes</span>
                         <button
                           type="button"
-                          className="text-xs text-primary"
+                          className="text-xs text-primary dark:text-blue-400"
                           onClick={() => navigate('/app/agenda')}
                         >
                           Ver todos
                         </button>
                       </div>
                       {upcomingItems.length === 0 ? (
-                        <p className="text-xs text-text-muted">
+                        <p className="text-xs text-text-muted dark:text-slate-400">
                           Nenhum compromisso agendado.
                         </p>
                       ) : (
@@ -1127,13 +1127,13 @@ export const AgendaPage = () => {
                                 <div className="flex-1">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     {tipoIcon}
-                                    <p className="font-semibold text-sm leading-tight">{item.title}</p>
+                                    <p className="font-semibold text-sm leading-tight dark:text-slate-900">{item.title}</p>
                                   </div>
-                                  <p className="text-xs opacity-80">
+                                  <p className="text-xs opacity-80 dark:text-slate-700">
                                     {item.time} • {item.cliente || 'Sem cliente'}
                                   </p>
                                   {diff < 2 * 60 * 60 * 1000 && diff > 0 && (
-                                    <p className="text-xs font-semibold mt-1 opacity-90">
+                                    <p className="text-xs font-semibold mt-1 opacity-90 dark:text-slate-800">
                                       ⏰ {timeUntil}
                                     </p>
                                   )}
