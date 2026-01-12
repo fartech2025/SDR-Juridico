@@ -673,7 +673,7 @@ export const AgendaPage = () => {
                   <select
                     value={horariosAlmoco.inicio}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, inicio: e.target.value }))}
-                    className="rounded-lg border border-border bg-white dark:bg-slate-800 px-2 py-1 text-xs"
+                    className="rounded-lg border border-border bg-white dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-xs"
                   >
                     <option value="12:00">12:00</option>
                     <option value="12:30">12:30</option>
@@ -683,7 +683,7 @@ export const AgendaPage = () => {
                   <select
                     value={horariosAlmoco.fim}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, fim: e.target.value }))}
-                    className="rounded-lg border border-border bg-white dark:bg-slate-800 px-2 py-1 text-xs"
+                    className="rounded-lg border border-border bg-white dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-xs"
                   >
                     <option value="13:00">13:00</option>
                     <option value="13:30">13:30</option>
@@ -1253,7 +1253,7 @@ export const AgendaPage = () => {
                   Status
                 </span>
                 <select
-                  className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="h-10 w-full rounded-2xl border border-border bg-white dark:bg-slate-800 dark:text-slate-100 px-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   value={formState.status}
                   onChange={(event) =>
                     setFormState((prev) => ({
