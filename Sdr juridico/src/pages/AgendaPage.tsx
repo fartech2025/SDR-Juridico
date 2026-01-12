@@ -727,22 +727,26 @@ export const AgendaPage = () => {
                               className="relative h-20 rounded-xl border bg-white/70 dark:bg-slate-800/50 transition hover:bg-white dark:hover:bg-slate-800 hover:shadow-md"
                               style={{ borderColor: 'var(--agenda-grid)' }}
                               onClick={() => handleSlotCreate(day.iso, slot)}
-                            >
-                              {/* Linha do tempo atual */}
-                              {day.isToday && currentTimePosition !== null && (
-                                <div
-                                  className="absolute left-0 right-0 z-10 h-0.5 bg-red-500 shadow-lg"
-                                  style={{
-                                    top: `${(currentTimePosition / 100) * 80}px`,
-                                  }}
-                                >
-                                  <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                                </div>
-                              )}
-                            </button>
+                            />
                           ))}
                         </React.Fragment>
                       ))}
+                      
+                      {/* Linha do tempo atual - renderizada apenas uma vez */}
+                      {currentTimePosition !== null && weekDays.some(day => day.isToday) && (
+                        <div
+                          className="absolute z-20 h-0.5 bg-red-500 shadow-lg pointer-events-none"
+                          style={{
+                            top: `calc(40px + ${currentTimePosition * 0.01 * (timeSlots.length * 88)}px)`,
+                            left: `calc(80px + ${weekDays.findIndex(d => d.isToday) * (100 / 7)}% + ${weekDays.findIndex(d => d.isToday) * 8}px)`,
+                            width: `calc((100% - 80px) / 7 - 8px)`,
+                          }}
+                        >
+                          <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                          <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                        </div>
+                      )}
+                      
                       {calendarEvents.map((event) => {
                         const row = event.slotIndex + 2
                         const col = event.dayIndex + 2
