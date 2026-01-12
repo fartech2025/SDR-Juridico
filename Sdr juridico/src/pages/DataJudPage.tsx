@@ -400,7 +400,7 @@ export const DataJudPage = () => {
         const docAny = doc as unknown as { setGState?: (state: any) => void }
 
         if (docAny.setGState && jsPdfAny.GState) {
-          docAny.setGState(new jsPdfAny.GState({ opacity: 0.08 }))
+          docAny.setGState(new jsPdfAny.GState({ opacity: 0.15 }))
         }
         doc.addImage(watermark.dataUrl, 'PNG', x, yPos, targetWidth, targetHeight)
         if (docAny.setGState && jsPdfAny.GState) {

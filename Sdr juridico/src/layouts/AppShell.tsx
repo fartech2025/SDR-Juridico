@@ -239,7 +239,7 @@ export const AppShell = () => {
         <div className="px-4 py-6 md:px-8">
           <Outlet />
         </div>
-        <div className="pointer-events-none absolute bottom-6 right-6 opacity-40 dark:opacity-60 md:bottom-10 md:right-10">
+        <div className="pointer-events-none absolute bottom-6 right-6 opacity-12 dark:opacity-18 md:bottom-10 md:right-10">
           <img
             src="https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/TALENT%20SDR%20SEM%20FUNDO.png"
             alt="Talent SDR Juridico"

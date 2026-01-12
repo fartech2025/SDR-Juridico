@@ -1,5 +1,20 @@
 import * as React from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Calendar, 
+  Phone, 
+  Video, 
+  Users, 
+  Gavel, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle,
+  TrendingUp,
+  BarChart3,
+  Filter
+} from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import heroLight from '@/assets/hero-light.svg'
@@ -71,6 +86,23 @@ const formatShortDate = (value: Date) =>
     value,
   )
 
+// Ícones por tipo de evento
+const tipoIcons: Record<string, React.ReactNode> = {
+  reuniao: <Users className="h-3.5 w-3.5" />,
+  ligacao: <Phone className="h-3.5 w-3.5" />,
+  videochamada: <Video className="h-3.5 w-3.5" />,
+  audiencia: <Gavel className="h-3.5 w-3.5" />,
+  prazo: <Clock className="h-3.5 w-3.5" />,
+  default: <Calendar className="h-3.5 w-3.5" />,
+}
+
+// Ícones por status
+const statusIcons: Record<AgendaStatus, React.ReactNode> = {
+  confirmado: <CheckCircle2 className="h-3.5 w-3.5" />,
+  pendente: <AlertCircle className="h-3.5 w-3.5" />,
+  cancelado: <XCircle className="h-3.5 w-3.5" />,
+}
+
 const statusLabels: Record<AgendaStatus, string> = {
   confirmado: 'Confirmada',
   pendente: 'Pendente',
@@ -82,19 +114,19 @@ const statusStyles: Record<
   { container: string; badge: string; button: string }
 > = {
   confirmado: {
-    container: 'bg-[#DDEBFF] border-[#7FB2FF] text-[#2F4D9B]',
-    badge: 'bg-white/70 border-white/80 text-[#2F4D9B]',
-    button: 'bg-white text-[#2F4D9B] border-white/70',
+    container: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-900 dark:text-blue-100',
+    badge: 'bg-white/80 dark:bg-blue-900/50 border-white/90 dark:border-blue-700 text-blue-700 dark:text-blue-200',
+    button: 'bg-white dark:bg-blue-800 text-blue-700 dark:text-blue-100 border-white/70 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-700',
   },
   pendente: {
-    container: 'bg-[#FFF1CC] border-[#FFC44D] text-[#8A6B20]',
-    badge: 'bg-white/70 border-white/80 text-[#8A6B20]',
-    button: 'bg-white text-[#8A6B20] border-white/70',
+    container: 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100',
+    badge: 'bg-white/80 dark:bg-amber-900/50 border-white/90 dark:border-amber-700 text-amber-700 dark:text-amber-200',
+    button: 'bg-white dark:bg-amber-800 text-amber-700 dark:text-amber-100 border-white/70 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-700',
   },
   cancelado: {
-    container: 'bg-[#FFE1E1] border-[#FF7A7A] text-[#9B3B3B]',
-    badge: 'bg-white/70 border-white/80 text-[#9B3B3B]',
-    button: 'bg-white text-[#9B3B3B] border-white/70',
+    container: 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/20 border-red-300 dark:border-red-700 text-red-900 dark:text-red-100',
+    badge: 'bg-white/80 dark:bg-red-900/50 border-white/90 dark:border-red-700 text-red-700 dark:text-red-200',
+    button: 'bg-white dark:bg-red-800 text-red-700 dark:text-red-100 border-white/70 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-700',
   },
 }
 
@@ -146,6 +178,7 @@ export const AgendaPage = () => {
   const [editingItem, setEditingItem] = React.useState<AgendaItem | null>(null)
   const [editorBusy, setEditorBusy] = React.useState(false)
   const [editorError, setEditorError] = React.useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = React.useState<string>('all')
   const [formState, setFormState] = React.useState<EditorFormState>(() =>
     buildFormState(),
   )
@@ -201,18 +234,26 @@ export const AgendaPage = () => {
 
   const eventsByDate = React.useMemo(() => {
     const map = new Map<string, AgendaItem[]>()
-    agendaItems.forEach((item) => {
+    const filteredItems = activeFilter === 'all' 
+      ? agendaItems 
+      : agendaItems.filter(item => item.tipo === activeFilter)
+    
+    filteredItems.forEach((item) => {
       const list = map.get(item.date) ?? []
       list.push(item)
       map.set(item.date, list)
     })
     map.forEach((list) => list.sort((a, b) => toMinutes(a.time) - toMinutes(b.time)))
     return map
-  }, [agendaItems])
+  }, [agendaItems, activeFilter])
 
   const calendarEvents = React.useMemo(() => {
     const weekDates = new Set(weekDays.map((day) => day.iso))
-    return agendaItems
+    const filteredItems = activeFilter === 'all' 
+      ? agendaItems 
+      : agendaItems.filter(item => item.tipo === activeFilter)
+    
+    return filteredItems
       .filter((item) => weekDates.has(item.date))
       .map((item) => {
         const dayIndex = weekDays.findIndex((day) => day.iso === item.date)
@@ -236,7 +277,7 @@ export const AgendaPage = () => {
       span: number
       item: AgendaItem
     }>
-  }, [agendaItems, weekDays])
+  }, [agendaItems, weekDays, activeFilter])
 
   const upcomingItems = React.useMemo(() => {
     const now = new Date()
@@ -249,6 +290,58 @@ export const AgendaPage = () => {
       .sort((a, b) => a.at.getTime() - b.at.getTime())
       .map(({ item }) => item)
   }, [agendaItems])
+
+  // Métricas
+  const metrics = React.useMemo(() => {
+    const now = new Date()
+    const weekStart = startOfWeek(now)
+    const weekEnd = addDays(weekStart, 7)
+    
+    const thisWeekEvents = agendaItems.filter(item => {
+      const eventDate = new Date(item.date)
+      return eventDate >= weekStart && eventDate < weekEnd
+    })
+    
+    const totalMinutes = thisWeekEvents.reduce((sum, item) => sum + (item.durationMinutes || 30), 0)
+    const hoursScheduled = Math.round(totalMinutes / 60 * 10) / 10
+    
+    const confirmed = agendaItems.filter(e => e.status === 'confirmado').length
+    const total = agendaItems.length
+    const confirmationRate = total > 0 ? Math.round((confirmed / total) * 100) : 0
+    
+    return {
+      hoursScheduled,
+      eventsThisWeek: thisWeekEvents.length,
+      confirmationRate
+    }
+  }, [agendaItems])
+
+  // Linha do tempo atual (hora atual)
+  const [currentTimePosition, setCurrentTimePosition] = React.useState<number | null>(null)
+
+  React.useEffect(() => {
+    const updateCurrentTime = () => {
+      const now = new Date()
+      const currentHour = now.getHours()
+      const currentMinutes = now.getMinutes()
+      const totalMinutes = currentHour * 60 + currentMinutes
+      const startMinutes = 8 * 60 // 8:00
+      const endMinutes = 21 * 60 // 21:00
+      
+      if (totalMinutes >= startMinutes && totalMinutes <= endMinutes) {
+        const position = ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100
+        setCurrentTimePosition(position)
+      } else {
+        setCurrentTimePosition(null)
+      }
+    }
+    
+    updateCurrentTime()
+    const interval = setInterval(updateCurrentTime, 60000) // Atualiza a cada minuto
+    
+    return () => clearInterval(interval)
+  }, [])
+
   const openEditor = (mode: 'create' | 'edit', item?: AgendaItem | null) => {
     if (mode === 'edit' && item) {
       setEditorMode('edit')
@@ -440,6 +533,89 @@ export const AgendaPage = () => {
             }}
           >
             <CardContent className="space-y-4">
+              {/* Métricas */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="flex items-center gap-3 rounded-2xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-4 shadow-sm">
+                  <div className="rounded-xl bg-blue-500 dark:bg-blue-600 p-2">
+                    <Clock className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{metrics.hoursScheduled}h</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">Esta semana</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-2xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 p-4 shadow-sm">
+                  <div className="rounded-xl bg-green-500 dark:bg-green-600 p-2">
+                    <BarChart3 className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{metrics.eventsThisWeek}</p>
+                    <p className="text-xs text-green-600 dark:text-green-400">Eventos</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-2xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 p-4 shadow-sm">
+                  <div className="rounded-xl bg-purple-500 dark:bg-purple-600 p-2">
+                    <TrendingUp className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{metrics.confirmationRate}%</p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400">Taxa confirmação</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filtros */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Filter className="h-4 w-4 text-text-muted" />
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className={cn(
+                    'rounded-full border px-3 py-1 text-xs transition-all',
+                    activeFilter === 'all'
+                      ? 'border-primary bg-primary text-white shadow-sm'
+                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                  )}
+                >
+                  Todos
+                </button>
+                <button
+                  onClick={() => setActiveFilter('reuniao')}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
+                    activeFilter === 'reuniao'
+                      ? 'border-primary bg-primary text-white shadow-sm'
+                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                  )}
+                >
+                  <Users className="h-3 w-3" />
+                  Reunião
+                </button>
+                <button
+                  onClick={() => setActiveFilter('ligacao')}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
+                    activeFilter === 'ligacao'
+                      ? 'border-primary bg-primary text-white shadow-sm'
+                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                  )}
+                >
+                  <Phone className="h-3 w-3" />
+                  Ligação
+                </button>
+                <button
+                  onClick={() => setActiveFilter('audiencia')}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
+                    activeFilter === 'audiencia'
+                      ? 'border-primary bg-primary text-white shadow-sm'
+                      : 'border-border bg-white dark:bg-slate-800 text-text-muted hover:border-primary/50'
+                  )}
+                >
+                  <Gavel className="h-3 w-3" />
+                  Audiência
+                </button>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm text-text">
                   <Button
@@ -525,21 +701,21 @@ export const AgendaPage = () => {
                   }}
                 >
                   {viewMode === 'week' ? (
-                    <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-2 text-xs text-text-muted">
+                    <div className="relative grid grid-cols-[80px_repeat(7,1fr)] gap-2 text-xs text-text-muted">
                       <div />
                       {weekDays.map((day) => (
                         <div
                           key={day.iso}
                           className={cn(
                             'rounded-xl py-1 text-center text-sm text-text',
-                            day.isToday && 'bg-primary/10 text-primary',
+                            day.isToday && 'bg-primary/10 text-primary font-semibold',
                             day.isSelected && 'border border-primary/30',
                           )}
                         >
                           {day.label} {day.date}
                         </div>
                       ))}
-                      {timeSlots.map((slot) => (
+                      {timeSlots.map((slot, slotIndex) => (
                         <React.Fragment key={slot}>
                           <div className="text-right text-xs text-text-muted">
                             {slot}
@@ -548,10 +724,22 @@ export const AgendaPage = () => {
                             <button
                               key={`${day.iso}-${slot}`}
                               type="button"
-                              className="h-20 rounded-xl border bg-white/70 transition hover:bg-white"
+                              className="relative h-20 rounded-xl border bg-white/70 dark:bg-slate-800/50 transition hover:bg-white dark:hover:bg-slate-800 hover:shadow-md"
                               style={{ borderColor: 'var(--agenda-grid)' }}
                               onClick={() => handleSlotCreate(day.iso, slot)}
-                            />
+                            >
+                              {/* Linha do tempo atual */}
+                              {day.isToday && currentTimePosition !== null && (
+                                <div
+                                  className="absolute left-0 right-0 z-10 h-0.5 bg-red-500 shadow-lg"
+                                  style={{
+                                    top: `${(currentTimePosition / 100) * 80}px`,
+                                  }}
+                                >
+                                  <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                                </div>
+                              )}
+                            </button>
                           ))}
                         </React.Fragment>
                       ))}
@@ -560,13 +748,16 @@ export const AgendaPage = () => {
                         const col = event.dayIndex + 2
                         const styles =
                           statusStyles[event.item.status] ?? statusStyles.pendente
+                        const tipoIcon = tipoIcons[event.item.tipo || 'default'] || tipoIcons.default
+                        const statusIcon = statusIcons[event.item.status]
+                        
                         return (
                           <div
                             key={event.id}
                             role="button"
                             tabIndex={0}
                             className={cn(
-                              'cursor-pointer rounded-2xl border px-3 py-3 text-left text-xs shadow-[0_10px_24px_rgba(18,38,63,0.12)]',
+                              'group cursor-pointer rounded-2xl border px-3 py-3 text-left text-xs shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl',
                               styles.container,
                             )}
                             style={{
@@ -582,30 +773,34 @@ export const AgendaPage = () => {
                             }}
                           >
                             <div className="flex items-center justify-between text-[10px] font-semibold">
-                              <span>{event.item.time}</span>
-                              <span className="rounded-full bg-white/60 px-2 py-0.5 text-[9px] text-text">
-                                Agenda
+                              <div className="flex items-center gap-1">
+                                {tipoIcon}
+                                <span>{event.item.time}</span>
+                              </div>
+                              <span className="rounded-full bg-white/60 dark:bg-slate-900/50 px-2 py-0.5 text-[9px]">
+                                {event.item.durationMinutes || 30}min
                               </span>
                             </div>
-                            <div className="mt-1 text-sm font-semibold text-text">
+                            <div className="mt-1.5 text-sm font-semibold leading-tight">
                               {event.item.title}
                             </div>
-                            <div className="text-[11px] text-text-muted">
+                            <div className="text-[11px] text-text-muted mt-0.5">
                               {event.item.cliente}
                             </div>
-                            <div className="mt-2 inline-flex items-center gap-2">
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
                               <span
                                 className={cn(
-                                  'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                                  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
                                   styles.badge,
                                 )}
                               >
+                                {statusIcon}
                                 {statusLabels[event.item.status]}
                               </span>
                               <button
                                 type="button"
                                 className={cn(
-                                  'inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold',
+                                  'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition-all',
                                   styles.button,
                                 )}
                                 onClick={(eventClick) => {
@@ -615,7 +810,7 @@ export const AgendaPage = () => {
                                   }
                                 }}
                               >
-                                Ver caso
+                                Ver caso →
                               </button>
                             </div>
                           </div>
@@ -745,32 +940,42 @@ export const AgendaPage = () => {
                               key={day.iso}
                               type="button"
                               className={cn(
-                                'relative rounded-full py-1 text-xs transition',
-                                isSelected && 'bg-primary text-white',
-                                !isSelected && isToday && 'bg-primary/10 text-primary',
+                                'relative rounded-full py-1 text-xs transition hover:bg-primary/20',
+                                isSelected && 'bg-primary text-white font-bold',
+                                !isSelected && isToday && 'bg-primary/10 text-primary font-semibold ring-2 ring-primary/30',
+                                hasEvents && !isSelected && !isToday && 'font-semibold',
                               )}
                               onClick={() => setCurrentDate(day.date)}
                             >
                               {day.number}
                               {hasEvents && (
-                                <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
+                                <span className={cn(
+                                  "absolute -bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full",
+                                  isSelected ? "bg-white" : "bg-primary"
+                                )} />
                               )}
                             </button>
                           )
                         })}
                       </div>
-                      <div className="space-y-2 text-xs text-text-muted">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-[#7FB2FF]" />
-                          Confirmada
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center gap-2 text-text-muted">
+                          <div className="flex h-3 w-3 items-center justify-center rounded-full bg-blue-500">
+                            <CheckCircle2 className="h-2 w-2 text-white" />
+                          </div>
+                          <span>Confirmada</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-[#FFC44D]" />
-                          Pendente
+                        <div className="flex items-center gap-2 text-text-muted">
+                          <div className="flex h-3 w-3 items-center justify-center rounded-full bg-amber-500">
+                            <AlertCircle className="h-2 w-2 text-white" />
+                          </div>
+                          <span>Pendente</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-[#FF7A7A]" />
-                          Cancelada
+                        <div className="flex items-center gap-2 text-text-muted">
+                          <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
+                            <XCircle className="h-2 w-2 text-white" />
+                          </div>
+                          <span>Cancelada</span>
                         </div>
                       </div>
                     </CardContent>
@@ -800,23 +1005,51 @@ export const AgendaPage = () => {
                           Nenhum compromisso agendado.
                         </p>
                       ) : (
-                        upcomingItems.slice(0, 3).map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            className="w-full rounded-2xl border bg-white px-3 py-3 text-left text-sm text-text hover:bg-[#F7F8FC]"
-                            style={{
-                              borderColor: 'var(--agenda-border)',
-                              boxShadow: 'var(--agenda-shadow-soft)',
-                            }}
-                            onClick={() => openEditor('edit', item)}
-                          >
-                            <p className="font-semibold text-text">{item.title}</p>
-                            <p className="text-xs text-text-muted">
-                              {item.time} - {item.cliente}
-                            </p>
-                          </button>
-                        ))
+                        upcomingItems.slice(0, 4).map((item) => {
+                          const itemDate = new Date(`${item.date}T${item.time}:00`)
+                          const now = new Date()
+                          const diff = itemDate.getTime() - now.getTime()
+                          const hours = Math.floor(diff / (1000 * 60 * 60))
+                          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+                          const timeUntil = hours > 24 
+                            ? `em ${Math.floor(hours / 24)} dias`
+                            : hours > 0 
+                              ? `em ${hours}h ${minutes}min`
+                              : `em ${minutes}min`
+                          
+                          const tipoIcon = tipoIcons[item.tipo || 'default'] || tipoIcons.default
+                          const styles = statusStyles[item.status] || statusStyles.pendente
+                          
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className={cn(
+                                "w-full rounded-2xl border p-3 text-left transition-all hover:scale-[1.02] hover:shadow-lg",
+                                styles.container
+                              )}
+                              onClick={() => openEditor('edit', item)}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                    {tipoIcon}
+                                    <p className="font-semibold text-sm leading-tight">{item.title}</p>
+                                  </div>
+                                  <p className="text-xs opacity-80">
+                                    {item.time} • {item.cliente || 'Sem cliente'}
+                                  </p>
+                                  {diff < 2 * 60 * 60 * 1000 && diff > 0 && (
+                                    <p className="text-xs font-semibold mt-1 opacity-90">
+                                      ⏰ {timeUntil}
+                                    </p>
+                                  )}
+                                </div>
+                                {statusIcons[item.status]}
+                              </div>
+                            </button>
+                          )
+                        })
                       )}
                     </CardContent>
                   </Card>
