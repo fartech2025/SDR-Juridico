@@ -13,7 +13,10 @@
     "test:google-calendar": "node scripts/test_google_calendar.mjs",
     "setup:google-calendar": "node scripts/setup_google_calendar.mjs",
     "deploy:google-calendar-create": "bash scripts/deploy-google-calendar-create.sh",
-    "test:google-calendar-create": "node scripts/test-google-calendar-create.mjs"
+    "test:google-calendar-create": "node scripts/test-google-calendar-create.mjs",
+    "deploy:teams-create": "bash scripts/deploy-teams-create.sh",
+    "test:teams-create": "node scripts/test-teams-create.mjs",
+    "setup:teams": "node scripts/setup-teams.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
