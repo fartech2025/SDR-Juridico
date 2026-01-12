@@ -40,8 +40,8 @@ const resolveStatus = (
 
 const weekDayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
 const monthDayLabels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
-const timeSlots = Array.from({ length: 13 }, (_, index) => {
-  const hour = String(8 + index).padStart(2, '0')
+const timeSlots = Array.from({ length: 9 }, (_, index) => {
+  const hour = String(9 + index).padStart(2, '0')
   return `${hour}:00`
 })
 
@@ -179,6 +179,11 @@ export const AgendaPage = () => {
   const [editorBusy, setEditorBusy] = React.useState(false)
   const [editorError, setEditorError] = React.useState<string | null>(null)
   const [activeFilter, setActiveFilter] = React.useState<string>('all')
+  const [agendaAberta, setAgendaAberta] = React.useState(true)
+  const [horariosAlmoco, setHorariosAlmoco] = React.useState<{ inicio: string; fim: string }>({ 
+    inicio: '12:00', 
+    fim: '13:00' 
+  })
   const [formState, setFormState] = React.useState<EditorFormState>(() =>
     buildFormState(),
   )
@@ -325,8 +330,8 @@ export const AgendaPage = () => {
       const currentHour = now.getHours()
       const currentMinutes = now.getMinutes()
       const totalMinutes = currentHour * 60 + currentMinutes
-      const startMinutes = 8 * 60 // 8:00
-      const endMinutes = 21 * 60 // 21:00
+      const startMinutes = 9 * 60 // 9:00
+      const endMinutes = 18 * 60 // 18:00
       
       if (totalMinutes >= startMinutes && totalMinutes <= endMinutes) {
         const position = ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100
@@ -376,6 +381,11 @@ export const AgendaPage = () => {
   }
 
   const handleSlotCreate = (date: string, time?: string) => {
+    if (!agendaAberta) {
+      alert('A agenda está fechada para novos agendamentos.')
+      return
+    }
+    
     setEditorMode('create')
     setEditingItem(null)
     setFormState(
@@ -384,6 +394,33 @@ export const AgendaPage = () => {
         time: time ?? '09:00',
       }),
     )
+    setEditorError(null)
+    setEditorOpen(true)
+  }
+
+  const handleCreateLunchBreak = async () => {
+    if (!user) return
+    
+    const today = toIsoDate(new Date())
+    const lunchEvent = {
+      title: 'Horário de Almoço',
+      date: today,
+      time: horariosAlmoco.inicio,
+      durationMinutes: 60,
+      location: 'Escritório',
+      status: 'confirmado' as AgendaStatus,
+      tipo: 'interno',
+      responsavel: displayName || user.email || 'Sistema',
+      cliente: '-',
+    }
+    
+    try {
+      await createEvento(lunchEvent)
+      alert('Horário de almoço bloqueado com sucesso!')
+    } catch (err) {
+      alert('Erro ao bloquear horário de almoço.')
+    }
+  }
     setEditorError(null)
     setEditorOpen(true)
   }
@@ -616,6 +653,55 @@ export const AgendaPage = () => {
                 </button>
               </div>
 
+              {/* Controles da Agenda */}
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setAgendaAberta(!agendaAberta)}
+                    className={cn(
+                      'flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all',
+                      agendaAberta
+                        ? 'border-green-300 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                        : 'border-red-300 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                    )}
+                  >
+                    {agendaAberta ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                    {agendaAberta ? 'Agenda Aberta' : 'Agenda Fechada'}
+                  </button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-text-muted" />
+                  <span className="text-xs text-text-muted">Almoço:</span>
+                  <select
+                    value={horariosAlmoco.inicio}
+                    onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, inicio: e.target.value }))}
+                    className="rounded-lg border border-border bg-white dark:bg-slate-800 px-2 py-1 text-xs"
+                  >
+                    <option value="12:00">12:00</option>
+                    <option value="12:30">12:30</option>
+                    <option value="13:00">13:00</option>
+                  </select>
+                  <span className="text-xs text-text-muted">até</span>
+                  <select
+                    value={horariosAlmoco.fim}
+                    onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, fim: e.target.value }))}
+                    className="rounded-lg border border-border bg-white dark:bg-slate-800 px-2 py-1 text-xs"
+                  >
+                    <option value="13:00">13:00</option>
+                    <option value="13:30">13:30</option>
+                    <option value="14:00">14:00</option>
+                  </select>
+                  <button
+                    onClick={handleCreateLunchBreak}
+                    className="flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 transition-all hover:bg-amber-200 dark:hover:bg-amber-900/50"
+                  >
+                    <Clock className="h-3 w-3" />
+                    Bloquear Almoço
+                  </button>
+                </div>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm text-text">
                   <Button
@@ -733,19 +819,25 @@ export const AgendaPage = () => {
                       ))}
                       
                       {/* Linha do tempo atual - renderizada apenas uma vez */}
-                      {currentTimePosition !== null && weekDays.some(day => day.isToday) && (
-                        <div
-                          className="absolute z-20 h-0.5 bg-red-500 shadow-lg pointer-events-none"
-                          style={{
-                            top: `calc(40px + ${currentTimePosition * 0.01 * (timeSlots.length * 88)}px)`,
-                            left: `calc(80px + ${weekDays.findIndex(d => d.isToday) * (100 / 7)}% + ${weekDays.findIndex(d => d.isToday) * 8}px)`,
-                            width: `calc((100% - 80px) / 7 - 8px)`,
-                          }}
-                        >
-                          <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                          <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                        </div>
-                      )}
+                      {currentTimePosition !== null && weekDays.some(day => day.isToday) && (() => {
+                        const todayIndex = weekDays.findIndex(d => d.isToday)
+                        const columnWidth = `calc((100% - 80px - ${6 * 8}px) / 7)`
+                        const columnLeft = `calc(80px + ${todayIndex} * (${columnWidth} + 8px))`
+                        
+                        return (
+                          <div
+                            className="absolute z-20 h-0.5 bg-red-500 shadow-lg pointer-events-none"
+                            style={{
+                              top: `calc(40px + ${currentTimePosition * 0.01 * (timeSlots.length * 88)}px)`,
+                              left: columnLeft,
+                              width: columnWidth,
+                            }}
+                          >
+                            <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                            <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                          </div>
+                        )
+                      })()}
                       
                       {calendarEvents.map((event) => {
                         const row = event.slotIndex + 2
