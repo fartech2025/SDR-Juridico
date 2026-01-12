@@ -733,7 +733,7 @@ export const AgendaPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div
-                    className="rounded-2xl border bg-[#F7F8FC] p-1 text-xs"
+                    className="rounded-2xl border bg-[#F7F8FC] dark:bg-slate-800/50 p-1 text-xs"
                     style={{
                       borderColor: 'var(--agenda-border)',
                       boxShadow: 'var(--agenda-shadow-soft)',
@@ -742,10 +742,10 @@ export const AgendaPage = () => {
                     <button
                       type="button"
                       className={cn(
-                        'rounded-xl px-3 py-1',
+                        'rounded-xl px-3 py-1 transition-all',
                         viewMode === 'week'
-                          ? 'bg-white text-primary shadow-sm'
-                          : 'text-text-subtle',
+                          ? 'bg-white dark:bg-slate-700 text-primary dark:text-blue-400 shadow-sm'
+                          : 'text-text-subtle dark:text-slate-400 hover:text-text dark:hover:text-slate-200',
                       )}
                       onClick={() => setViewMode('week')}
                     >
@@ -754,10 +754,10 @@ export const AgendaPage = () => {
                     <button
                       type="button"
                       className={cn(
-                        'rounded-xl px-3 py-1',
+                        'rounded-xl px-3 py-1 transition-all',
                         viewMode === 'month'
-                          ? 'bg-white text-primary shadow-sm'
-                          : 'text-text-subtle',
+                          ? 'bg-white dark:bg-slate-700 text-primary dark:text-blue-400 shadow-sm'
+                          : 'text-text-subtle dark:text-slate-400 hover:text-text dark:hover:text-slate-200',
                       )}
                       onClick={() => setViewMode('month')}
                     >
@@ -776,10 +776,9 @@ export const AgendaPage = () => {
 
               <div className="grid gap-4 xl:grid-cols-[2.3fr_1fr]">
                 <div
-                  className="rounded-3xl border bg-[#F7F8FC] p-4"
+                  className="rounded-3xl border bg-[#F7F8FC] dark:bg-slate-900/50 p-4"
                   style={{
                     borderColor: 'var(--agenda-border)',
-                    backgroundColor: 'var(--agenda-bg)',
                     boxShadow: 'var(--agenda-shadow)',
                   }}
                 >
@@ -790,9 +789,9 @@ export const AgendaPage = () => {
                         <div
                           key={day.iso}
                           className={cn(
-                            'rounded-xl py-1 text-center text-sm text-text',
-                            day.isToday && 'bg-primary/10 text-primary font-semibold',
-                            day.isSelected && 'border border-primary/30',
+                            'rounded-xl py-1 text-center text-sm text-text dark:text-slate-200',
+                            day.isToday && 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400 font-semibold',
+                            day.isSelected && 'border border-primary/30 dark:border-blue-700',
                           )}
                         >
                           {day.label} {day.date}
@@ -800,15 +799,14 @@ export const AgendaPage = () => {
                       ))}
                       {timeSlots.map((slot, slotIndex) => (
                         <React.Fragment key={slot}>
-                          <div className="text-right text-xs text-text-muted">
+                          <div className="text-right text-xs text-text-muted dark:text-slate-400">
                             {slot}
                           </div>
                           {weekDays.map((day) => (
                             <button
                               key={`${day.iso}-${slot}`}
                               type="button"
-                              className="relative h-20 rounded-xl border bg-white/70 dark:bg-slate-800/50 transition hover:bg-white dark:hover:bg-slate-800 hover:shadow-md"
-                              style={{ borderColor: 'var(--agenda-grid)' }}
+                              className="relative h-20 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/30 transition hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-md dark:hover:shadow-slate-900/50"
                               onClick={() => handleSlotCreate(day.iso, slot)}
                             />
                           ))}
@@ -912,7 +910,7 @@ export const AgendaPage = () => {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted">
+                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted dark:text-slate-400">
                         {monthDayLabels.map((label) => (
                           <span key={label}>{label}</span>
                         ))}
@@ -934,10 +932,9 @@ export const AgendaPage = () => {
                             <div
                               key={day.iso}
                               className={cn(
-                                'min-h-[110px] rounded-2xl border bg-white/80 p-2 transition hover:bg-white',
-                                isSelected && 'border-primary/40',
+                                'min-h-[110px] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/30 p-2 transition hover:bg-white dark:hover:bg-slate-800/60',
+                                isSelected && 'border-primary/40 dark:border-blue-600',
                               )}
-                              style={{ borderColor: 'var(--agenda-grid)' }}
                               onClick={() => handleSlotCreate(day.iso)}
                               role="button"
                               tabIndex={0}
@@ -951,14 +948,14 @@ export const AgendaPage = () => {
                                 <span
                                   className={cn(
                                     'rounded-full px-2 py-0.5 text-[11px]',
-                                    isToday && 'bg-primary/10 text-primary',
-                                    isSelected && 'bg-primary text-white',
+                                    isToday && 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400',
+                                    isSelected && 'bg-primary dark:bg-blue-600 text-white',
                                   )}
                                 >
                                   {day.number}
                                 </span>
                                 {dayEvents.length > 0 && (
-                                  <span className="text-[10px] text-text-muted">
+                                  <span className="text-[10px] text-text-muted dark:text-slate-400">
                                     {dayEvents.length} eventos
                                   </span>
                                 )}
@@ -968,8 +965,7 @@ export const AgendaPage = () => {
                                   <button
                                     key={event.id}
                                     type="button"
-                                    className="w-full rounded-xl border bg-white px-2 py-1 text-left text-[11px] text-text shadow-soft"
-                                    style={{ borderColor: 'var(--agenda-border)' }}
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/50 px-2 py-1 text-left text-[11px] text-text dark:text-slate-200 shadow-soft dark:shadow-slate-900/50"
                                     onClick={(eventClick) => {
                                       eventClick.stopPropagation()
                                       openEditor('edit', event)
@@ -978,13 +974,13 @@ export const AgendaPage = () => {
                                     <div className="truncate font-semibold">
                                       {event.title}
                                     </div>
-                                    <div className="text-[10px] text-text-muted">
+                                    <div className="text-[10px] text-text-muted dark:text-slate-400">
                                       {event.time}
                                     </div>
                                   </button>
                                 ))}
                                 {dayEvents.length > 3 && (
-                                  <div className="text-[10px] text-text-muted">
+                                  <div className="text-[10px] text-text-muted dark:text-slate-400">
                                     +{dayEvents.length - 3} compromissos
                                   </div>
                                 )}
@@ -998,19 +994,14 @@ export const AgendaPage = () => {
                 </div>
                 <div className="space-y-4">
                   <Card
-                    className="border bg-white"
-                    style={{
-                      backgroundColor: 'var(--agenda-card)',
-                      borderColor: 'var(--agenda-border)',
-                      boxShadow: 'var(--agenda-shadow)',
-                    }}
+                    className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50"
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-text">
+                      <div className="flex items-center justify-between text-sm text-text dark:text-slate-200">
                         <span className="font-semibold">Calendario</span>
-                        <span className="text-xs text-text-subtle">{monthLabel}</span>
+                        <span className="text-xs text-text-subtle dark:text-slate-400">{monthLabel}</span>
                       </div>
-                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted">
+                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted dark:text-slate-400">
                         {monthDayLabels.map((label) => (
                           <span key={label}>{label}</span>
                         ))}
@@ -1033,10 +1024,10 @@ export const AgendaPage = () => {
                               key={day.iso}
                               type="button"
                               className={cn(
-                                'relative rounded-full py-1 text-xs transition hover:bg-primary/20',
-                                isSelected && 'bg-primary text-white font-bold',
-                                !isSelected && isToday && 'bg-primary/10 text-primary font-semibold ring-2 ring-primary/30',
-                                hasEvents && !isSelected && !isToday && 'font-semibold',
+                                'relative rounded-full py-1 text-xs transition hover:bg-primary/20 dark:hover:bg-blue-900/30',
+                                isSelected && 'bg-primary dark:bg-blue-600 text-white font-bold',
+                                !isSelected && isToday && 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400 font-semibold ring-2 ring-primary/30 dark:ring-blue-700',
+                                hasEvents && !isSelected && !isToday && 'font-semibold dark:text-slate-200',
                               )}
                               onClick={() => setCurrentDate(day.date)}
                             >
@@ -1044,7 +1035,7 @@ export const AgendaPage = () => {
                               {hasEvents && (
                                 <span className={cn(
                                   "absolute -bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full",
-                                  isSelected ? "bg-white" : "bg-primary"
+                                  isSelected ? "bg-white" : "bg-primary dark:bg-blue-400"
                                 )} />
                               )}
                             </button>
@@ -1052,19 +1043,19 @@ export const AgendaPage = () => {
                         })}
                       </div>
                       <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-text-muted">
+                        <div className="flex items-center gap-2 text-text-muted dark:text-slate-400">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-blue-500">
                             <CheckCircle2 className="h-2 w-2 text-white" />
                           </div>
                           <span>Confirmada</span>
                         </div>
-                        <div className="flex items-center gap-2 text-text-muted">
+                        <div className="flex items-center gap-2 text-text-muted dark:text-slate-400">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-amber-500">
                             <AlertCircle className="h-2 w-2 text-white" />
                           </div>
                           <span>Pendente</span>
                         </div>
-                        <div className="flex items-center gap-2 text-text-muted">
+                        <div className="flex items-center gap-2 text-text-muted dark:text-slate-400">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
                             <XCircle className="h-2 w-2 text-white" />
                           </div>
@@ -1075,26 +1066,21 @@ export const AgendaPage = () => {
                   </Card>
 
                   <Card
-                    className="border bg-white"
-                    style={{
-                      backgroundColor: 'var(--agenda-card)',
-                      borderColor: 'var(--agenda-border)',
-                      boxShadow: 'var(--agenda-shadow)',
-                    }}
+                    className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50"
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-text">
+                      <div className="flex items-center justify-between text-sm text-text dark:text-slate-200">
                         <span className="font-semibold">Proximas reunioes</span>
                         <button
                           type="button"
-                          className="text-xs text-primary"
+                          className="text-xs text-primary dark:text-blue-400 hover:underline"
                           onClick={() => navigate('/app/agenda')}
                         >
                           Ver todos
                         </button>
                       </div>
                       {upcomingItems.length === 0 ? (
-                        <p className="text-xs text-text-muted">
+                        <p className="text-xs text-text-muted dark:text-slate-400">
                           Nenhum compromisso agendado.
                         </p>
                       ) : (
