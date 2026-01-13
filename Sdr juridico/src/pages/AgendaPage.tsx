@@ -39,7 +39,7 @@ const resolveStatus = (
   return 'ready'
 }
 
-const weekDayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
+const weekDayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex']
 const monthDayLabels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 const timeSlots = Array.from({ length: 9 }, (_, index) => {
   const hour = String(9 + index).padStart(2, '0')
@@ -209,11 +209,12 @@ export const AgendaPage = () => {
   )
 
   const weekDays = React.useMemo(() => {
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = addDays(weekStart, index)
+    return Array.from({ length: 5 }, (_, index) => {
+      // Começar na segunda-feira (dia 1 da semana)
+      const date = addDays(weekStart, index + 1)
       const iso = toIsoDate(date)
       return {
-        label: weekDayLabels[date.getDay()],
+        label: weekDayLabels[index],
         date: date.getDate(),
         iso,
         isToday: iso === todayIso,
@@ -323,32 +324,6 @@ export const AgendaPage = () => {
       confirmationRate
     }
   }, [agendaItems])
-
-  // Linha do tempo atual (hora atual)
-  const [currentTimePosition, setCurrentTimePosition] = React.useState<number | null>(null)
-
-  React.useEffect(() => {
-    const updateCurrentTime = () => {
-      const now = new Date()
-      const currentHour = now.getHours()
-      const currentMinutes = now.getMinutes()
-      const totalMinutes = currentHour * 60 + currentMinutes
-      const startMinutes = 9 * 60 // 9:00
-      const endMinutes = 18 * 60 // 18:00
-      
-      if (totalMinutes >= startMinutes && totalMinutes <= endMinutes) {
-        const position = ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100
-        setCurrentTimePosition(position)
-      } else {
-        setCurrentTimePosition(null)
-      }
-    }
-    
-    updateCurrentTime()
-    const interval = setInterval(updateCurrentTime, 60000) // Atualiza a cada minuto
-    
-    return () => clearInterval(interval)
-  }, [])
 
   const openEditor = (mode: 'create' | 'edit', item?: AgendaItem | null) => {
     if (mode === 'edit' && item) {
@@ -554,7 +529,7 @@ export const AgendaPage = () => {
             <p
               className={cn(
                 'text-sm',
-                isDark ? 'text-slate-300' : 'text-[#7a4a1a]',
+                isDark ? 'text-slate-300' : 'text-slate-700',
               )}
             >
               Bom dia, {displayName}
@@ -584,8 +559,8 @@ export const AgendaPage = () => {
                     <Clock className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{metrics.hoursScheduled}h</p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400">Esta semana</p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-200">{metrics.hoursScheduled}h</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-300">Esta semana</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 rounded-2xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 p-4 shadow-sm">
@@ -593,8 +568,8 @@ export const AgendaPage = () => {
                     <BarChart3 className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{metrics.eventsThisWeek}</p>
-                    <p className="text-xs text-green-600 dark:text-green-400">Eventos</p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-200">{metrics.eventsThisWeek}</p>
+                    <p className="text-xs text-green-600 dark:text-green-300">Eventos</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 rounded-2xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 p-4 shadow-sm">
@@ -602,22 +577,22 @@ export const AgendaPage = () => {
                     <TrendingUp className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{metrics.confirmationRate}%</p>
-                    <p className="text-xs text-purple-600 dark:text-purple-400">Taxa confirmação</p>
+                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-200">{metrics.confirmationRate}%</p>
+                    <p className="text-xs text-purple-600 dark:text-purple-300">Taxa confirmação</p>
                   </div>
                 </div>
               </div>
 
               {/* Filtros */}
               <div className="flex flex-wrap items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                <Filter className="h-4 w-4 text-slate-600 dark:text-slate-300" />
                 <button
                   onClick={() => setActiveFilter('all')}
                   className={cn(
-                    'rounded-full border px-3 py-1 text-xs transition-all',
+                    'rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'all'
-                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                      : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-emerald-600'
+                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-md hover:bg-emerald-700'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-emerald-600/30 dark:hover:border-emerald-600/50'
                   )}
                 >
                   Todos
@@ -625,10 +600,10 @@ export const AgendaPage = () => {
                 <button
                   onClick={() => setActiveFilter('reuniao')}
                   className={cn(
-                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
+                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'reuniao'
-                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                      : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-emerald-600'
+                      ? 'border-primary bg-primary text-white shadow-md hover:bg-primary/90'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-primary/30 dark:hover:border-primary/50'
                   )}
                 >
                   <Users className="h-3 w-3" />
@@ -637,10 +612,10 @@ export const AgendaPage = () => {
                 <button
                   onClick={() => setActiveFilter('ligacao')}
                   className={cn(
-                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
+                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'ligacao'
-                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                      : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-emerald-600'
+                      ? 'border-primary bg-primary text-white shadow-md hover:bg-primary/90'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-primary/30 dark:hover:border-primary/50'
                   )}
                 >
                   <Phone className="h-3 w-3" />
@@ -649,10 +624,10 @@ export const AgendaPage = () => {
                 <button
                   onClick={() => setActiveFilter('audiencia')}
                   className={cn(
-                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-all',
+                    'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'audiencia'
-                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                      : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-emerald-600'
+                      ? 'border-primary bg-primary text-white shadow-md hover:bg-primary/90'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-primary/30 dark:hover:border-primary/50'
                   )}
                 >
                   <Gavel className="h-3 w-3" />
@@ -678,8 +653,8 @@ export const AgendaPage = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                  <span className="text-xs text-slate-600 dark:text-slate-400">Almoço:</span>
+                  <Clock className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                  <span className="text-xs text-slate-700 dark:text-slate-200">Almoço:</span>
                   <select
                     value={horariosAlmoco.inicio}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, inicio: e.target.value }))}
@@ -689,7 +664,7 @@ export const AgendaPage = () => {
                     <option value="12:30">12:30</option>
                     <option value="13:00">13:00</option>
                   </select>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">até</span>
+                  <span className="text-xs text-slate-700 dark:text-slate-200">até</span>
                   <select
                     value={horariosAlmoco.fim}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, fim: e.target.value }))}
@@ -701,7 +676,7 @@ export const AgendaPage = () => {
                   </select>
                   <button
                     onClick={handleCreateLunchBreak}
-                    className="flex items-center gap-1 rounded-lg border border-amber-300 dark:border-amber-700/50 bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 transition-all hover:bg-amber-200 dark:hover:bg-amber-900/50"
+                    className="flex items-center gap-1 rounded-lg border border-amber-500 dark:border-amber-600 bg-amber-500 dark:bg-amber-600 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-amber-600 dark:hover:bg-amber-700 shadow-sm"
                   >
                     <Clock className="h-3 w-3" />
                     Bloquear Almoço
@@ -742,20 +717,14 @@ export const AgendaPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div
-                    className="rounded-2xl border bg-white dark:bg-slate-700/50 p-1 text-xs"
-                    style={{
-                      borderColor: 'var(--agenda-border)',
-                      boxShadow: 'var(--agenda-shadow-soft)',
-                    }}
-                  >
+                  <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-1 text-xs">
                     <button
                       type="button"
                       className={cn(
-                        'rounded-xl px-3 py-1 transition-all',
+                        'rounded-lg px-3 py-1.5 font-medium transition-all',
                         viewMode === 'week'
-                          ? 'bg-slate-100 dark:bg-slate-600 text-slate-900 dark:text-slate-50 shadow-sm'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100',
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50 shadow-sm border border-slate-200 dark:border-slate-600'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200',
                       )}
                       onClick={() => setViewMode('week')}
                     >
@@ -764,10 +733,10 @@ export const AgendaPage = () => {
                     <button
                       type="button"
                       className={cn(
-                        'rounded-xl px-3 py-1 transition-all',
+                        'rounded-lg px-3 py-1.5 font-medium transition-all',
                         viewMode === 'month'
-                          ? 'bg-slate-100 dark:bg-slate-600 text-slate-900 dark:text-slate-50 shadow-sm'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100',
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50 shadow-sm border border-slate-200 dark:border-slate-600'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200',
                       )}
                       onClick={() => setViewMode('month')}
                     >
@@ -789,134 +758,110 @@ export const AgendaPage = () => {
                   className="rounded-3xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/50 p-4"
                 >
                   {viewMode === 'week' ? (
-                    <div className="relative grid grid-cols-[80px_repeat(7,1fr)] gap-2 text-xs text-slate-600 dark:text-slate-300">
-                      <div />
-                      {weekDays.map((day) => (
-                        <div
-                          key={day.iso}
-                          className={cn(
-                            'rounded-xl py-1 text-center text-sm text-slate-700 dark:text-slate-200',
-                            day.isToday && 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-semibold',
-                            day.isSelected && 'border border-emerald-300 dark:border-emerald-700',
-                          )}
-                        >
-                          {day.label} {day.date}
-                        </div>
-                      ))}
-                      {timeSlots.map((slot) => (
-                        <React.Fragment key={slot}>
-                          <div className="text-right text-xs text-slate-500 dark:text-slate-400">
-                            {slot}
-                          </div>
-                          {weekDays.map((day) => (
-                            <button
-                              key={`${day.iso}-${slot}`}
-                              type="button"
-                              className="relative h-20 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-700/20 transition hover:bg-slate-100 dark:hover:bg-slate-700/40 hover:shadow-sm dark:hover:shadow-slate-900/30"
-                              onClick={() => handleSlotCreate(day.iso, slot)}
-                            />
-                          ))}
-                        </React.Fragment>
-                      ))}
-                      
-                      {/* Linha do tempo atual - renderizada apenas uma vez */}
-                      {currentTimePosition !== null && weekDays.some(day => day.isToday) && (() => {
-                        const todayIndex = weekDays.findIndex(d => d.isToday)
-                        const columnWidth = `calc((100% - 80px - ${6 * 8}px) / 7)`
-                        const columnLeft = `calc(80px + ${todayIndex} * (${columnWidth} + 8px))`
-                        
-                        return (
+                    <div className="space-y-2">
+                      {/* Header com dias da semana */}
+                      <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-2">
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400"></div>
+                        {weekDays.map((day) => (
                           <div
-                            className="absolute z-20 h-0.5 bg-red-500 shadow-lg pointer-events-none"
-                            style={{
-                              top: `calc(40px + ${currentTimePosition * 0.01 * (timeSlots.length * 88)}px)`,
-                              left: columnLeft,
-                              width: columnWidth,
-                            }}
-                          >
-                            <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                            <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                          </div>
-                        )
-                      })()}
-                      
-                      {calendarEvents.map((event) => {
-                        const row = event.slotIndex + 2
-                        const col = event.dayIndex + 2
-                        const styles =
-                          statusStyles[event.item.status] ?? statusStyles.pendente
-                        const tipoIcon = tipoIcons[event.item.tipo || 'default'] || tipoIcons.default
-                        const statusIcon = statusIcons[event.item.status]
-                        
-                        return (
-                          <div
-                            key={event.id}
-                            role="button"
-                            tabIndex={0}
+                            key={day.iso}
                             className={cn(
-                              'group cursor-pointer rounded-2xl border px-3 py-3 text-left text-xs shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl',
-                              styles.container,
+                              'rounded-xl py-2 text-center text-sm font-semibold',
+                              day.isToday 
+                                ? 'bg-emerald-500 text-white' 
+                                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
                             )}
-                            style={{
-                              gridColumnStart: col,
-                              gridRowStart: row,
-                              gridRowEnd: row + event.span,
-                            }}
-                            onClick={() => openEditor('edit', event.item)}
-                            onKeyDown={(eventKey) => {
-                              if (eventKey.key === 'Enter' || eventKey.key === ' ') {
-                                openEditor('edit', event.item)
-                              }
-                            }}
                           >
-                            <div className="flex items-center justify-between text-[10px] font-semibold text-slate-900 dark:text-slate-100">
-                              <div className="flex items-center gap-1">
-                                {tipoIcon}
-                                <span>{event.item.time}</span>
-                              </div>
-                              <span className="rounded-full bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 text-[9px] text-slate-700 dark:text-slate-200">
-                                {event.item.durationMinutes || 30}min
-                              </span>
-                            </div>
-                            <div className="mt-1.5 text-sm font-semibold leading-tight text-slate-900 dark:text-slate-100">
-                              {event.item.title}
-                            </div>
-                            <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
-                              {event.item.cliente}
-                            </div>
-                            <div className="mt-2 flex items-center gap-2 flex-wrap">
-                              <span
-                                className={cn(
-                                  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
-                                  styles.badge,
-                                )}
-                              >
-                                {statusIcon}
-                                {statusLabels[event.item.status]}
-                              </span>
-                              <button
-                                type="button"
-                                className={cn(
-                                  'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition-all',
-                                  styles.button,
-                                )}
-                                onClick={(eventClick) => {
-                                  eventClick.stopPropagation()
-                                  if (event.item.casoId) {
-                                    navigate(`/app/caso/${event.item.casoId}`)
-                                  }
-                                }}
-                              >
-                                Ver caso →
-                              </button>
-                            </div>
+                            <div className="text-xs opacity-80">{day.label}</div>
+                            <div className="text-base">{day.date}</div>
                           </div>
-                        )
-                      })}
+                        ))}
+                      </div>
+                      
+                      {/* Grid de horários */}
+                      <div className="space-y-1">
+                        {timeSlots.map((slot) => (
+                          <div key={slot} className="grid grid-cols-[60px_repeat(5,1fr)] gap-2">
+                            <div className="text-right pr-3 pt-2 text-sm font-bold text-slate-800 dark:text-slate-100" style={{ height: '6rem' }}>
+                              {slot}
+                            </div>
+                            {weekDays.map((day) => {
+                              // Encontrar eventos para este dia e horário
+                              const slotEvents = calendarEvents.filter(
+                                e => e.dayIndex === weekDays.findIndex(d => d.iso === day.iso) && 
+                                     timeSlots[e.slotIndex] === slot
+                              )
+                              
+                              return (
+                                <div key={`${day.iso}-${slot}`} className="relative" style={{ height: '6rem' }}>
+                                  <button
+                                    type="button"
+                                    className="absolute inset-0 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-700/20 transition hover:bg-slate-100 dark:hover:bg-slate-700/40 hover:shadow-sm group"
+                                    onClick={() => handleSlotCreate(day.iso, slot)}
+                                  >
+                                    <span className="absolute inset-0 flex items-center justify-center text-2xl font-light text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      +
+                                    </span>
+                                  </button>
+                                  
+                                  {slotEvents.map((event) => {
+                                    const styles = statusStyles[event.item.status] ?? statusStyles.pendente
+                                    const tipoIcon = tipoIcons[event.item.tipo || 'default'] || tipoIcons.default
+                                    const statusIcon = statusIcons[event.item.status]
+                                    
+                                    return (
+                                      <div
+                                        key={event.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        className={cn(
+                                          'absolute inset-1 z-10 cursor-pointer rounded-xl border px-2 py-2 text-left shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl overflow-hidden',
+                                          styles.container,
+                                        )}
+                                        style={{
+                                          height: event.span > 1 ? `calc(${event.span * 6}rem + ${(event.span - 1) * 0.25}rem - 0.5rem)` : 'calc(100% - 0.5rem)'
+                                        }}
+                                        onClick={() => openEditor('edit', event.item)}
+                                        onKeyDown={(eventKey) => {
+                                          if (eventKey.key === 'Enter' || eventKey.key === ' ') {
+                                            openEditor('edit', event.item)
+                                          }
+                                        }}
+                                      >
+                                        <div className="flex items-center justify-between text-[0.625rem] font-semibold mb-1">
+                                          <div className="flex items-center gap-1">
+                                            {tipoIcon}
+                                            <span>{event.item.time}</span>
+                                          </div>
+                                          <span className="rounded-full bg-white/50 dark:bg-slate-900/50 px-1.5 py-0.5 text-[0.5625rem]">
+                                            {event.item.durationMinutes || 30}min
+                                          </span>
+                                        </div>
+                                        <div className="text-[0.75rem] font-bold leading-tight truncate">
+                                          {event.item.title}
+                                        </div>
+                                        <div className="text-[0.625rem] mt-0.5 opacity-90 truncate">
+                                          {event.item.cliente}
+                                        </div>
+                                        <div className="mt-1 flex items-center gap-1 flex-wrap">
+                                          <span className={cn('inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[0.5625rem] font-semibold', styles.badge)}>
+                                            {statusIcon}
+                                            <span className="hidden sm:inline">{statusLabels[event.item.status]}</span>
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted dark:text-slate-400">
+                      <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-600 dark:text-slate-300">
                         {monthDayLabels.map((label) => (
                           <span key={label}>{label}</span>
                         ))}
@@ -953,15 +898,15 @@ export const AgendaPage = () => {
                               <div className="flex items-center justify-between">
                                 <span
                                   className={cn(
-                                    'rounded-full px-2 py-0.5 text-[11px]',
-                                    isToday && 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400',
+                                    'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                                    isToday && 'bg-primary/15 dark:bg-blue-900/40 text-primary dark:text-blue-200',
                                     isSelected && 'bg-primary dark:bg-blue-600 text-white',
                                   )}
                                 >
                                   {day.number}
                                 </span>
                                 {dayEvents.length > 0 && (
-                                  <span className="text-[10px] text-text-muted dark:text-slate-400">
+                                  <span className="text-[10px] font-medium text-slate-600 dark:text-slate-300">
                                     {dayEvents.length} eventos
                                   </span>
                                 )}
@@ -971,7 +916,7 @@ export const AgendaPage = () => {
                                   <button
                                     key={event.id}
                                     type="button"
-                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600/50 bg-slate-50 dark:bg-slate-700/30 px-2 py-1 text-left text-[11px] text-slate-700 dark:text-slate-200 shadow-sm dark:shadow-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600/50 bg-slate-50 dark:bg-slate-700/40 px-2 py-1 text-left text-[11px] text-slate-700 dark:text-slate-100 shadow-sm dark:shadow-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition"
                                     onClick={(eventClick) => {
                                       eventClick.stopPropagation()
                                       openEditor('edit', event)
@@ -980,13 +925,13 @@ export const AgendaPage = () => {
                                     <div className="truncate font-semibold">
                                       {event.title}
                                     </div>
-                                    <div className="text-[10px] text-slate-600 dark:text-slate-400">
+                                    <div className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">
                                       {event.time}
                                     </div>
                                   </button>
                                 ))}
                                 {dayEvents.length > 3 && (
-                                  <div className="text-[10px] text-slate-600 dark:text-slate-400">
+                                  <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">
                                     +{dayEvents.length - 3} compromissos
                                   </div>
                                 )}
@@ -1003,11 +948,11 @@ export const AgendaPage = () => {
                     className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50"
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-200">
+                      <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-100">
                         <span className="font-semibold">Calendario</span>
-                        <span className="text-xs text-slate-600 dark:text-slate-400">{monthLabel}</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">{monthLabel}</span>
                       </div>
-                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-slate-600 dark:text-slate-400">
+                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-slate-600 dark:text-slate-300 font-medium">
                         {monthDayLabels.map((label) => (
                           <span key={label}>{label}</span>
                         ))}
@@ -1030,10 +975,11 @@ export const AgendaPage = () => {
                               key={day.iso}
                               type="button"
                               className={cn(
-                                'relative rounded-full py-1 text-xs transition hover:bg-emerald-50 dark:hover:bg-emerald-900/20',
-                                isSelected && 'bg-emerald-600 dark:bg-emerald-700 text-white font-bold',
-                                !isSelected && isToday && 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold ring-2 ring-emerald-300 dark:ring-emerald-700',
-                                hasEvents && !isSelected && !isToday && 'font-semibold dark:text-slate-200',
+                                'relative rounded-full py-1 text-xs font-medium transition hover:bg-emerald-50 dark:hover:bg-emerald-900/30',
+                                isSelected && 'bg-emerald-600 dark:bg-emerald-600 text-white font-bold',
+                                !isSelected && isToday && 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-200 font-bold ring-2 ring-emerald-300 dark:ring-emerald-600',
+                                hasEvents && !isSelected && !isToday && 'font-semibold text-slate-700 dark:text-slate-100',
+                                !hasEvents && !isSelected && !isToday && 'text-slate-600 dark:text-slate-300',
                               )}
                               onClick={() => setCurrentDate(day.date)}
                             >
@@ -1049,19 +995,19 @@ export const AgendaPage = () => {
                         })}
                       </div>
                       <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-blue-500">
                             <CheckCircle2 className="h-2 w-2 text-white" />
                           </div>
                           <span>Confirmada</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-amber-500">
                             <AlertCircle className="h-2 w-2 text-white" />
                           </div>
                           <span>Pendente</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
                             <XCircle className="h-2 w-2 text-white" />
                           </div>
@@ -1075,18 +1021,18 @@ export const AgendaPage = () => {
                     className="border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/50"
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-200">
+                      <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-100">
                         <span className="font-semibold">Proximas reunioes</span>
                         <button
                           type="button"
-                          className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                          className="text-xs font-medium text-emerald-600 dark:text-emerald-300 hover:underline"
                           onClick={() => navigate('/app/agenda')}
                         >
                           Ver todos
                         </button>
                       </div>
                       {upcomingItems.length === 0 ? (
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
                           Nenhum compromisso agendado.
                         </p>
                       ) : (
@@ -1119,9 +1065,9 @@ export const AgendaPage = () => {
                                 <div className="flex-1">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     {tipoIcon}
-                                    <p className="font-semibold text-sm leading-tight">{item.title}</p>
+                                    <p className="font-semibold text-sm leading-tight text-slate-900 dark:text-slate-50">{item.title}</p>
                                   </div>
-                                  <p className="text-xs opacity-80">
+                                  <p className="text-xs opacity-90 text-slate-700 dark:text-slate-200">
                                     {item.time} • {item.cliente || 'Sem cliente'}
                                   </p>
                                   {diff < 2 * 60 * 60 * 1000 && diff > 0 && (
@@ -1180,7 +1126,7 @@ export const AgendaPage = () => {
             )}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1 sm:col-span-2">
-                <span className="text-xs uppercase tracking-wide text-text-subtle">
+                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
                   Titulo
                 </span>
                 <Input
@@ -1194,7 +1140,7 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide text-text-subtle">
+                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
                   Data
                 </span>
                 <Input
@@ -1209,7 +1155,7 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide text-text-subtle">
+                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
                   Hora
                 </span>
                 <Input
@@ -1224,7 +1170,7 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide text-text-subtle">
+                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
                   Duracao (min)
                 </span>
                 <Input
@@ -1241,11 +1187,11 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide text-text-subtle">
+                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
                   Status
                 </span>
                 <select
-                  className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="h-10 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-100 shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   value={formState.status}
                   onChange={(event) =>
                     setFormState((prev) => ({
@@ -1261,7 +1207,7 @@ export const AgendaPage = () => {
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs uppercase tracking-wide text-text-subtle">
+                  <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
                     Local
                   </span>
                   {formState.title && formState.date && formState.time && (

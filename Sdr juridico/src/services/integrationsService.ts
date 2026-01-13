@@ -5,6 +5,8 @@ import { AppError } from '@/utils/errors'
 const defaultIntegrations = [
   { provider: 'whatsapp', name: 'WhatsApp', enabled: false },
   { provider: 'google_calendar', name: 'Google Calendar', enabled: false },
+  { provider: 'google_meet', name: 'Google Meet', enabled: false },
+  { provider: 'teams', name: 'Microsoft Teams', enabled: false },
   { provider: 'datajud', name: 'DataJud', enabled: false },
   { provider: 'twilio', name: 'Twilio', enabled: false },
   { provider: 'evolution', name: 'Evolution', enabled: false },

@@ -14,6 +14,8 @@ const descriptionByProvider: Record<string, string> = {
   evolution: 'Conector de mensagens e automacoes.',
   twilio: 'Mensagens e ligacoes via API.',
   google_calendar: 'Sincronize agenda juridica.',
+  google_meet: 'Videoconferencias com clientes.',
+  teams: 'Reunioes via Microsoft Teams.',
   whatsapp: 'Mensagens e alertas em tempo real.',
 }
 

@@ -4,6 +4,7 @@ import { Database } from 'lucide-react'
 import { toast } from 'sonner'
 
 import heroLight from '@/assets/hero-light.svg'
+import { DatabasePage } from '@/pages/DatabasePage'
 import { PageState } from '@/components/PageState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,7 +18,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { supabase } from '@/lib/supabaseClient'
 import { useTheme } from '@/contexts/ThemeContext'
 
-const tabs = ['Essencial', 'Avancado'] as const
+const tabs = ['Essencial', 'Avancado', 'Database'] as const
 type TabKey = (typeof tabs)[number]
 
 const resolveStatus = (
@@ -80,6 +81,9 @@ export const ConfigPage = () => {
   }, [integrations])
 
   const filteredIntegrations = React.useMemo(() => {
+    if (activeTab === 'Database') {
+      return []
+    }
     if (activeTab === 'Essencial') {
       return dedupedIntegrations.filter((integration) =>
         ['whatsapp', 'google_calendar', 'email'].some((key) =>
@@ -87,6 +91,7 @@ export const ConfigPage = () => {
         ),
       )
     }
+    // Aba Avançado: mostra todas exceto whatsapp
     return dedupedIntegrations.filter(
       (integration) => !integration.name.toLowerCase().includes('whatsapp'),
     )
@@ -347,9 +352,12 @@ export const ConfigPage = () => {
         )}
       </div>
 
-      <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
-        <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-          <div className="grid gap-4 lg:grid-cols-2">
+      {activeTab === 'Database' ? (
+        <DatabasePage />
+      ) : (
+        <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
+          <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+            <div className="grid gap-4 lg:grid-cols-2">
             {filteredIntegrations.map((integration) => {
               const isGoogleCalendar = matchesKey(
                 integration.name,
@@ -444,6 +452,7 @@ export const ConfigPage = () => {
           </Card>
         </div>
       </PageState>
+      )}
 
       <Modal
         open={Boolean(selectedIntegration)}

@@ -25,25 +25,25 @@ html.dark [style*="background: #ffffff"] {
 }
 
 /* ALL elements with bg-white - Force dark mode */
-html.dark div[class*="bg-white"],
+html.dark div[class*="bg-white"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
 html.dark section[class*="bg-white"],
 html.dark article[class*="bg-white"],
 html.dark form[class*="bg-white"],
-html.dark [role="region"][class*="bg-white"],
-html.dark .bg-white,
-html.dark [class*="rounded"][style*="white"] {
+html.dark [role="region"][class*="bg-white"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark .bg-white:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark [class*="rounded"][style*="white"]:not(.rounded-3xl):not([class*="rounded-3xl"]) {
   background-color: #1e293b !important;
   color: #f1f5f9 !important;
 }
 
-/* Cards and Containers */
-html.dark [class*="bg-white"],
-html.dark [class*="bg-base"],
-html.dark [class*="bg-surface"],
-html.dark [class*="rounded-2xl"],
-html.dark [class*="rounded-xl"],
-html.dark [class*="card"],
-html.dark [class*="Card"] {
+/* Cards and Containers - EXCEPT agenda containers */
+html.dark [class*="bg-white"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark [class*="bg-base"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark [class*="bg-surface"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark [class*="rounded-2xl"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark [class*="rounded-xl"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark [class*="card"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
+html.dark [class*="Card"]:not(.rounded-3xl):not([class*="rounded-3xl"]) {
   background-color: #1e293b;
   color: #f1f5f9;
 }
@@ -168,4 +168,18 @@ html.dark ::-webkit-scrollbar-thumb {
 
 html.dark ::-webkit-scrollbar-thumb:hover {
   background-color: #64748b;
+}
+
+/* Agenda Page - Respect Tailwind classes */
+html.dark [class*="bg-slate-900"],
+html.dark [class*="dark:bg-slate-900"],
+html.dark [class*="dark:bg-slate-800"],
+html.dark [class*="dark:bg-slate-700"] {
+  background-color: inherit !important;
+}
+
+/* Allow Agenda containers to use their own dark mode classes */
+html.dark .space-y-4 > div[class*="rounded-3xl"],
+html.dark .space-y-4 > div[class*="border"][class*="bg-"] {
+  background-color: inherit !important;
 }
