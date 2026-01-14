@@ -1,12 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/preflight" layer(base);
+@import "tailwindcss/utilities" layer(utilities);
 
 /* Design System - Importar na ordem correta */
 @import "./styles/design-tokens.css";
-@import "./styles/components.css";
 @import "./styles/dark-mode.css";
 
 /* ========================================
