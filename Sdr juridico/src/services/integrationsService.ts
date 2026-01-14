@@ -1,6 +1,6 @@
 import { supabase, type IntegrationRow } from '@/lib/supabaseClient'
-import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import { AppError } from '@/utils/errors'
+import { getActiveOrgId } from '@/lib/org'
 
 const defaultIntegrations = [
   { provider: 'whatsapp', name: 'WhatsApp', enabled: false },
@@ -17,9 +17,17 @@ export const integrationsService = {
   async getIntegrations(): Promise<IntegrationRow[]> {
     try {
       const orgId = await getActiveOrgId()
-      let query = supabase.from('integrations').select('*')
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      let query = supabase
+        .from('integrations')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      // Fartech admins (orgId=null) veem tudo, outros filtram por org
+      if (orgId) {
+        query = query.eq('org_id', orgId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -32,11 +40,9 @@ export const integrationsService = {
   },
 
   async cleanupDuplicates(): Promise<number> {
-    const orgId = await requireOrgId()
     const { data, error } = await supabase
       .from('integrations')
       .select('id, provider, enabled, created_at')
-      .eq('org_id', orgId)
       .order('created_at', { ascending: false })
 
     if (error) throw new AppError(error.message, 'database_error')
@@ -79,12 +85,10 @@ export const integrationsService = {
     updates: Partial<Pick<IntegrationRow, 'enabled' | 'settings' | 'secrets' | 'name'>>
   ): Promise<IntegrationRow> {
     try {
-      const orgId = await requireOrgId()
       const { data, error } = await supabase
         .from('integrations')
         .update(updates)
         .eq('id', id)
-        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -101,11 +105,9 @@ export const integrationsService = {
 
   async ensureDefaultIntegrations(): Promise<void> {
     try {
-      const orgId = await requireOrgId()
       const { data, error } = await supabase
         .from('integrations')
         .select('provider')
-        .eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
 
@@ -113,7 +115,6 @@ export const integrationsService = {
       const payload = defaultIntegrations
         .filter((item) => !existing.has(item.provider))
         .map((item) => ({
-          org_id: orgId,
           provider: item.provider,
           name: item.name,
           enabled: item.enabled,

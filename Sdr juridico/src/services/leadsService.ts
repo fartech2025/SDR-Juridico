@@ -5,15 +5,24 @@
 
 import { supabase, type LeadRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
+import { getActiveOrgId } from '@/lib/org'
 
 export const leadsService = {
   // Buscar todos os leads
   async getLeads() {
     try {
-      const { data, error } = await supabase
+      const orgId = await getActiveOrgId()
+      let query = supabase
         .from('leads')
         .select('*')
         .order('created_at', { ascending: false })
+      
+      // Filtrar por org_id se não for Fartech Admin
+      if (orgId) {
+        query = query.eq('org_id', orgId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow[]
@@ -47,7 +56,18 @@ export const leadsService = {
   // Buscar leads por status
   async getLeadsByStatus(status: LeadRow['status']) {
     try {
-      const { data, error } = await supabase
+      const orgId = await getActiveOrgId()
+      let query = supabase
+        .from('leads')
+        .select('*')
+        .eq('status', status)
+        .order('created_at', { ascending: false })
+      
+      if (orgId) {
+        query = query.eq('org_id', orgId)
+      }
+
+      const { data, error } = await query
         .from('leads')
         .select('*')
         .eq('status', status)

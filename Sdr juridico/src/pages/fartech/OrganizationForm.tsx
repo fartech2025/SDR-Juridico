@@ -1,0 +1,495 @@
+// OrganizationForm - Create/Edit organization form
+// Date: 2026-01-13
+
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Save, ArrowLeft, Building2 } from 'lucide-react'
+import { organizationsService } from '@/services/organizationsService'
+import { FartechGuard } from '@/components/guards'
+import type { CreateOrganizationInput, Organization, OrganizationPlan } from '@/types/organization'
+
+export default function OrganizationForm() {
+  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const isEditMode = !!id
+  
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [organization, setOrganization] = useState<Organization | null>(null)
+  
+  const [formData, setFormData] = useState<CreateOrganizationInput>({
+    name: '',
+    slug: '',
+    cnpj: '',
+    plan: 'starter',
+    max_users: 5,
+    max_storage_gb: 10,
+    max_cases: null,
+    primary_color: '#059669',
+    address_street: '',
+    address_number: '',
+    address_complement: '',
+    address_neighborhood: '',
+    address_city: '',
+    address_state: '',
+    address_postal_code: '',
+  })
+  
+  useEffect(() => {
+    if (isEditMode && id) {
+      loadOrganization(id)
+    }
+  }, [id, isEditMode])
+  
+  const loadOrganization = async (orgId: string) => {
+    try {
+      setLoading(true)
+      const org = await organizationsService.getById(orgId)
+      if (org) {
+        setOrganization(org)
+        setFormData({
+          name: org.name,
+          slug: org.slug,
+          cnpj: org.cnpj || '',
+          plan: org.plan,
+          max_users: org.max_users,
+          max_storage_gb: org.max_storage_gb,
+          max_cases: org.max_cases,
+          primary_color: org.primary_color,
+          secondary_color: org.secondary_color,
+          address_street: org.address_street || '',
+          address_number: org.address_number || '',
+          address_complement: org.address_complement || '',
+          address_neighborhood: org.address_neighborhood || '',
+          address_city: org.address_city || '',
+          address_state: org.address_state || '',
+          address_postal_code: org.address_postal_code || '',
+        })
+      }
+    } catch (err) {
+      setError('Erro ao carregar organização')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handlePlanChange = (plan: OrganizationPlan) => {
+    // Set default limits based on plan
+    const limits = {
+      starter: { max_users: 5, max_storage_gb: 10, max_cases: 50 },
+      professional: { max_users: 20, max_storage_gb: 50, max_cases: 200 },
+      enterprise: { max_users: 100, max_storage_gb: 500, max_cases: null },
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      plan,
+      ...limits[plan],
+    }))
+  }
+  
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }
+  
+  const handleNameChange = (name: string) => {
+    setFormData(prev => ({
+      ...prev,
+      name,
+      slug: isEditMode ? prev.slug : generateSlug(name),
+    }))
+  }
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      setSaving(true)
+      setError(null)
+      
+      if (isEditMode && id) {
+        await organizationsService.update(id, formData)
+      } else {
+        await organizationsService.create(formData)
+      }
+      
+      navigate('/fartech/organizations')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao salvar organização'
+      setError(message)
+      console.error(err)
+    } finally {
+      setSaving(false)
+    }
+  }
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-gray-600 dark:text-gray-400">Carregando...</div>
+      </div>
+    )
+  }
+  
+  return (
+    <FartechGuard>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <button
+                  onClick={() => navigate('/fartech/organizations')}
+                  className="mr-4 p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {isEditMode ? 'Editar Organização' : 'Nova Organização'}
+                  </h1>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {isEditMode ? 'Atualize as informações da organização' : 'Crie uma nova organização no sistema'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {error && (
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-red-800 dark:text-red-300">{error}</p>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit}>
+            {/* Basic Information */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Informações Básicas
+                </h2>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Nome da Organização *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Ex: Silva & Associados"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Slug (URL) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.slug}
+                      onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      placeholder="silva-associados"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Usado na URL: {formData.slug || 'slug'}.fartech.com.br
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    CNPJ
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.cnpj}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cnpj: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Plan and Limits */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Plano e Limites
+                </h2>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Plano *
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {(['starter', 'professional', 'enterprise'] as OrganizationPlan[]).map((plan) => (
+                      <button
+                        key={plan}
+                        type="button"
+                        onClick={() => handlePlanChange(plan)}
+                        className={`p-4 border-2 rounded-lg text-left transition-all ${
+                          formData.plan === plan
+                            ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                        }`}
+                      >
+                        <p className="font-semibold text-gray-900 dark:text-white capitalize">
+                          {plan}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Máximo de Usuários *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={formData.max_users}
+                      onChange={(e) => setFormData(prev => ({ ...prev, max_users: parseInt(e.target.value) }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Armazenamento (GB) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={formData.max_storage_gb}
+                      onChange={(e) => setFormData(prev => ({ ...prev, max_storage_gb: parseInt(e.target.value) }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Máximo de Casos
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.max_cases || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, max_cases: e.target.value ? parseInt(e.target.value) : null }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Ilimitado"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Branding */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Identidade Visual
+                </h2>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Cor Primária *
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.primary_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
+                        className="w-20 h-10 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.primary_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Cor Secundária
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.secondary_color || '#10b981'}
+                        onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        className="w-20 h-10 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.secondary_color || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                        placeholder="#10b981"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Address */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Endereço
+                </h2>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Logradouro
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address_street}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address_street: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Número
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address_number: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Complemento
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address_complement}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address_complement: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Bairro
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address_neighborhood}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address_neighborhood: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Cidade
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address_city}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address_city: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Estado
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address_state}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address_state: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      maxLength={2}
+                      placeholder="SP"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      CEP
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address_postal_code}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address_postal_code: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      placeholder="00000-000"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/fartech/organizations')}
+                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? 'Salvando...' : isEditMode ? 'Atualizar' : 'Criar Organização'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </FartechGuard>
+  )
+}

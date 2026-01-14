@@ -36,8 +36,9 @@ export const LoginPage = () => {
 
     setStatus('idle')
     toast.success('Acesso liberado.')
-    const from = (location.state as any)?.from?.pathname || '/app/dashboard'
-    navigate(from, { replace: true })
+    
+    // Redirect to /admin for now (will be handled by guards)
+    navigate('/admin/organizations', { replace: true })
   }
 
   return (

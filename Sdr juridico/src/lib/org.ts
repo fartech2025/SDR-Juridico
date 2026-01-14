@@ -5,20 +5,20 @@ export async function getActiveOrgId(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data, error } = await supabase
-    .from('org_members')
-    .select('org_id')
+  // Buscar org_id do profile do usuário
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('org_id, is_fartech_admin')
     .eq('user_id', user.id)
-    .eq('ativo', true)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+    .single()
 
-  if (error) {
-    throw new AppError(error.message, 'database_error')
+  // Fartech admins não têm org_id (retorna null para ver tudo)
+  if (profile?.is_fartech_admin) {
+    return null
   }
 
-  return data?.org_id ?? null
+  // Retorna org_id do usuário
+  return profile?.org_id || null
 }
 
 export async function requireOrgId(): Promise<string> {

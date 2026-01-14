@@ -61,40 +61,27 @@ export function useCurrentUser() {
       const [profileResult, memberResult] = await Promise.all([
         supabase
           .from('profiles')
-          .select('user_id, created_at, nome, email, telefone, avatar_url, metadata')
+          .select('user_id, created_at, nome, email, telefone, avatar_url, metadata, org_id, role, is_fartech_admin')
           .eq('user_id', user.id)
           .limit(1),
+        
         supabase
           .from('org_members')
-          .select('id, created_at, org_id, user_id, role, ativo, org:orgs(nome)')
+          .select('id, org_id, user_id, role, ativo, created_at, updated_at, org:orgs(nome)')
           .eq('user_id', user.id)
           .eq('ativo', true)
-          .order('created_at', { ascending: true })
-          .limit(1),
+          .limit(1)
       ])
 
       if (!active) return
 
-      if (profileResult.error || memberResult.error) {
-        const message =
-          profileResult.error?.message ||
-          memberResult.error?.message ||
-          'Erro ao carregar dados do usuario'
+      if (profileResult.error) {
+        const message = profileResult.error?.message || 'Erro ao carregar dados do usuario'
         setError(new Error(message))
       }
 
       setProfile((profileResult.data?.[0] as ProfileRow) || null)
-
-      const memberData = memberResult.data?.[0]
-      if (memberData) {
-        if (Array.isArray(memberData.org) && memberData.org.length > 0) {
-          setMember({ ...memberData, org: memberData.org[0] } as MemberWithOrg)
-        } else {
-          setMember({ ...memberData, org: null } as MemberWithOrg)
-        }
-      } else {
-        setMember(null)
-      }
+      setMember((memberResult.data?.[0] as MemberWithOrg) || null)
 
       setLoading(false)
     }

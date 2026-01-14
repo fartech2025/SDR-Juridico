@@ -25,6 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('sdr-theme')
+      
       if (saved === 'light' || saved === 'dark') {
         setThemeState(saved)
         applyTheme(saved)
@@ -49,8 +50,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       html.classList.remove('dark')
     }
-    
-    console.log(`Tema aplicado: ${newTheme}`)
   }
 
   const setTheme = useCallback((newTheme: Theme) => {
