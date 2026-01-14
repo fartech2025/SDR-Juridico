@@ -4,6 +4,7 @@ export type AppErrorCode =
   | 'database_error'
   | 'unauthorized'
   | 'forbidden'
+  | 'permission_denied'
   | 'auth_error'
   | 'storage_error'
   | 'unknown_error'

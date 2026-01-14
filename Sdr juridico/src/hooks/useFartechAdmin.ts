@@ -61,7 +61,7 @@ export function useFartechAdmin() {
       const totalOrgs = orgsData.length
       const activeOrgs = orgsData.filter(o => o.status === 'active').length
       const suspendedOrgs = orgsData.filter(o => o.status === 'suspended').length
-      const trialOrgs = orgsData.filter(o => o.status === 'trial').length
+      const trialOrgs = orgsData.filter(o => o.plan === 'trial').length
       
       // Get stats for each org
       const statsPromises = orgsData.map(org => organizationsService.getStats(org.id))
@@ -71,7 +71,7 @@ export function useFartechAdmin() {
       const totalUsers = stats.reduce((sum, s) => sum + s.total_users, 0)
       const totalClients = stats.reduce((sum, s) => sum + s.total_clients, 0)
       const totalCases = stats.reduce((sum, s) => sum + s.total_cases, 0)
-      const totalStorage = stats.reduce((sum, s) => sum + s.total_storage_gb, 0)
+      const totalStorage = stats.reduce((sum, s) => sum + s.storage_used_gb, 0)
       
       return {
         organizations: {
@@ -101,7 +101,8 @@ export function useFartechAdmin() {
     if (!allOrgs) return { starter: [], professional: [], enterprise: [] }
     
     return {
-      starter: allOrgs.filter(o => o.plan === 'starter'),
+      trial: allOrgs.filter(o => o.plan === 'trial'),
+      basic: allOrgs.filter(o => o.plan === 'basic'),
       professional: allOrgs.filter(o => o.plan === 'professional'),
       enterprise: allOrgs.filter(o => o.plan === 'enterprise'),
     }
@@ -115,7 +116,7 @@ export function useFartechAdmin() {
     
     return {
       active: allOrgs.filter(o => o.status === 'active'),
-      trial: allOrgs.filter(o => o.status === 'trial'),
+      trial: allOrgs.filter(o => o.plan === 'trial'),
       suspended: allOrgs.filter(o => o.status === 'suspended'),
       cancelled: allOrgs.filter(o => o.status === 'cancelled'),
     }
@@ -146,7 +147,7 @@ export function useFartechAdmin() {
           alerts.push(`Armazenamento: ${usage.storage.current_gb}/${usage.storage.limit_gb}GB (${usage.storage.percentage}%)`)
         }
         
-        if (usage.cases.percentage >= 90) {
+        if (usage.cases.percentage && usage.cases.percentage >= 90) {
           alerts.push(`Casos: ${usage.cases.current}/${usage.cases.limit} (${usage.cases.percentage}%)`)
         }
         
@@ -187,7 +188,9 @@ export function useFartechAdmin() {
     try {
       setLoading(true)
       setError(null)
-      await switchOrg(null)
+      // Note: Currently we don't have a way to clear org context
+      // This would require updating OrganizationContext to accept null
+      // For now, just clear the loading state
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao voltar para dashboard Fartech'
       setError(message)
@@ -195,7 +198,7 @@ export function useFartechAdmin() {
     } finally {
       setLoading(false)
     }
-  }, [switchOrg])
+  }, [])
   
   return {
     // State

@@ -41,7 +41,7 @@ export default function OrgSuspendedPage() {
           </div>
         </div>
         
-        {currentOrg?.status === 'trial' && (
+        {currentOrg?.plan === 'trial' && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
             Sua organização está em período de teste. Entre em contato para ativar um plano.
           </div>

@@ -3,11 +3,7 @@
 
 export type UserRole = 'fartech_admin' | 'org_admin' | 'user'
 
-export interface Permission {
-  resource: string
-  action: PermissionAction
-}
-
+// Permission action types
 export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'manage'
 
 // Resources in the system
@@ -23,6 +19,11 @@ export type Resource =
   | 'settings'
   | 'billing'
   | 'reports'
+
+export interface Permission {
+  resource: Resource
+  action: PermissionAction
+}
 
 // Role definitions with permissions
 export interface RoleDefinition {

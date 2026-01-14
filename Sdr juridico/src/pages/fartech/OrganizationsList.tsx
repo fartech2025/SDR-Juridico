@@ -6,11 +6,9 @@ import { Link } from 'react-router-dom'
 import { 
   Building2, 
   Search, 
-  Filter, 
   Plus,
   Eye,
   Edit,
-  Trash2,
   Download,
   Users,
   ShieldCheck,

@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabaseClient'
 import type { OrgMemberRow, ProfileRow, UserRole } from '@/lib/supabaseClient'
 import { useAuth } from '@/contexts/AuthContext'
 
-type MemberWithOrg = OrgMemberRow & { org?: { nome: string | null } | null }
+type MemberWithOrg = Omit<OrgMemberRow, 'org'> & { 
+  org: { nome: string | null } | null 
+}
 
 const roleLabels: Record<UserRole, string> = {
   admin: 'Admin',
@@ -67,10 +69,10 @@ export function useCurrentUser() {
         
         supabase
           .from('org_members')
-          .select('id, org_id, user_id, role, ativo, created_at, updated_at, org:orgs(nome)')
+          .select('id, org_id, user_id, role, ativo, created_at, updated_at, org:orgs!org_id(nome)')
           .eq('user_id', user.id)
           .eq('ativo', true)
-          .limit(1)
+          .maybeSingle()
       ])
 
       if (!active) return
@@ -81,7 +83,7 @@ export function useCurrentUser() {
       }
 
       setProfile((profileResult.data?.[0] as ProfileRow) || null)
-      setMember((memberResult.data?.[0] as MemberWithOrg) || null)
+      setMember((memberResult.data as MemberWithOrg) || null)
 
       setLoading(false)
     }

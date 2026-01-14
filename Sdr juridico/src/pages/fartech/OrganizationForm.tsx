@@ -8,6 +8,20 @@ import { organizationsService } from '@/services/organizationsService'
 import { FartechGuard } from '@/components/guards'
 import type { CreateOrganizationInput, Organization, OrganizationPlan } from '@/types/organization'
 
+// Extended form data with optional branding fields
+interface OrganizationFormData extends CreateOrganizationInput {
+  max_cases?: number | null
+  primary_color?: string
+  secondary_color?: string | null
+  address_street?: string
+  address_number?: string
+  address_complement?: string
+  address_neighborhood?: string
+  address_city?: string
+  address_state?: string
+  address_postal_code?: string
+}
+
 export default function OrganizationForm() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -18,15 +32,17 @@ export default function OrganizationForm() {
   const [error, setError] = useState<string | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
   
-  const [formData, setFormData] = useState<CreateOrganizationInput>({
+  const [formData, setFormData] = useState<OrganizationFormData>({
     name: '',
     slug: '',
     cnpj: '',
-    plan: 'starter',
+    email: '',
+    plan: 'trial',
     max_users: 5,
     max_storage_gb: 10,
     max_cases: null,
     primary_color: '#059669',
+    secondary_color: null,
     address_street: '',
     address_number: '',
     address_complement: '',
@@ -52,19 +68,22 @@ export default function OrganizationForm() {
           name: org.name,
           slug: org.slug,
           cnpj: org.cnpj || '',
+          email: org.email,
+          phone: org.phone || '',
           plan: org.plan,
           max_users: org.max_users,
           max_storage_gb: org.max_storage_gb,
           max_cases: org.max_cases,
           primary_color: org.primary_color,
           secondary_color: org.secondary_color,
-          address_street: org.address_street || '',
-          address_number: org.address_number || '',
-          address_complement: org.address_complement || '',
-          address_neighborhood: org.address_neighborhood || '',
-          address_city: org.address_city || '',
-          address_state: org.address_state || '',
-          address_postal_code: org.address_postal_code || '',
+          address: org.address || undefined,
+          address_street: org.address?.street || '',
+          address_number: org.address?.number || '',
+          address_complement: org.address?.complement || '',
+          address_neighborhood: org.address?.neighborhood || '',
+          address_city: org.address?.city || '',
+          address_state: org.address?.state || '',
+          address_postal_code: org.address?.zip_code || '',
         })
       }
     } catch (err) {
@@ -78,9 +97,10 @@ export default function OrganizationForm() {
   const handlePlanChange = (plan: OrganizationPlan) => {
     // Set default limits based on plan
     const limits = {
-      starter: { max_users: 5, max_storage_gb: 10, max_cases: 50 },
-      professional: { max_users: 20, max_storage_gb: 50, max_cases: 200 },
-      enterprise: { max_users: 100, max_storage_gb: 500, max_cases: null },
+      trial: { max_users: 3, max_storage_gb: 5 },
+      basic: { max_users: 5, max_storage_gb: 10 },
+      professional: { max_users: 20, max_storage_gb: 50 },
+      enterprise: { max_users: 100, max_storage_gb: 500 },
     }
     
     setFormData(prev => ({
