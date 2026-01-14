@@ -1092,7 +1092,7 @@ export const DataJudPage = () => {
                       <Button
                         size="sm"
                         onClick={() => exportarProcessoParaPDF(processo)}
-                        className="flex items-center gap-2 !bg-[#6366f1] !text-white hover:!bg-[#5558e3] !border-0"
+                        className="flex items-center gap-2 bg-brand-secondary text-white hover:bg-brand-secondary-dark border-0"
                       >
                         <FileDown className="h-4 w-4" />
                         Exportar PDF

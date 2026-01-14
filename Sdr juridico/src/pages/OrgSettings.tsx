@@ -15,7 +15,7 @@ export default function OrgSettings() {
   
   const [formData, setFormData] = useState<UpdateOrganizationInput>({
     name: '',
-    primary_color: '#059669',
+    primary_color: 'var(--brand-primary-dark)',
     address_street: '',
     address_number: '',
     address_complement: '',
@@ -219,7 +219,7 @@ export default function OrgSettings() {
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
-                        value={formData.secondary_color || '#10b981'}
+                        value={formData.secondary_color || 'var(--brand-primary)'}
                         onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
                         className="w-20 h-10 rounded cursor-pointer"
                       />
@@ -227,8 +227,8 @@ export default function OrgSettings() {
                         type="text"
                         value={formData.secondary_color || ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                        placeholder="#10b981"
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary"
+                        placeholder="var(--brand-primary)"
                       />
                     </div>
                   </div>

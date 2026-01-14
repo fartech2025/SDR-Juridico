@@ -333,12 +333,12 @@ function OrgCard({ org }: { org: OrgWithStats }) {
           <div className="flex items-center space-x-4">
             <div 
               className="w-14 h-14 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: (org.primary_color || '#10b981') + '20' }}
+              style={{ backgroundColor: (org.primary_color || 'var(--brand-primary)') + '20' }}
             >
               {org.logo_url ? (
                 <img src={org.logo_url} alt={org.name} className="w-12 h-12 rounded" />
               ) : (
-                <Building2 className="w-7 h-7" style={{ color: org.primary_color || '#10b981' }} />
+                <Building2 className="w-7 h-7" style={{ color: org.primary_color || 'var(--brand-primary)' }} />
               )}
             </div>
             <div>

@@ -64,8 +64,8 @@ export default function OrganizationSettingsPage() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [cnpj, setCnpj] = useState('')
-  const [primaryColor, setPrimaryColor] = useState('#10b981')
-  const [secondaryColor, setSecondaryColor] = useState('#059669')
+  const [primaryColor, setPrimaryColor] = useState('var(--brand-primary)')
+  const [secondaryColor, setSecondaryColor] = useState('var(--brand-primary-dark)')
   
   // Address
   const [addressStreet, setAddressStreet] = useState('')
@@ -125,8 +125,8 @@ export default function OrganizationSettingsPage() {
       setName(org.name || '')
       setSlug(org.slug || '')
       setCnpj(org.cnpj || '')
-      setPrimaryColor(org.primary_color || '#10b981')
-      setSecondaryColor(org.secondary_color || '#059669')
+      setPrimaryColor(org.primary_color || 'var(--brand-primary)')
+      setSecondaryColor(org.secondary_color || 'var(--brand-primary-dark)')
       
       // Address
       setAddressStreet(org.address_street || '')

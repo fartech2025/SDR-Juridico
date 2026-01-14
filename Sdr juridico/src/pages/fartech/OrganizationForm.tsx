@@ -41,7 +41,7 @@ export default function OrganizationForm() {
     max_users: 5,
     max_storage_gb: 10,
     max_cases: null,
-    primary_color: '#059669',
+    primary_color: 'var(--brand-primary-dark)',
     secondary_color: null,
     address_street: '',
     address_number: '',
@@ -366,7 +366,7 @@ export default function OrganizationForm() {
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
-                        value={formData.secondary_color || '#10b981'}
+                        value={formData.secondary_color || 'var(--brand-primary)'}
                         onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
                         className="w-20 h-10 rounded cursor-pointer"
                       />
@@ -374,8 +374,8 @@ export default function OrganizationForm() {
                         type="text"
                         value={formData.secondary_color || ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                        placeholder="#10b981"
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary"
+                        placeholder="var(--brand-primary)"
                       />
                     </div>
                   </div>
