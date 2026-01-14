@@ -1,7 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
+
+/* Design System - Importar na ordem correta */
+@import "./styles/design-tokens.css";
+@import "./styles/components.css";
 @import "./styles/dark-mode.css";
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
 
 :root {
   color-scheme: light;
@@ -9,55 +17,158 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* Font Size Scale - Controle de Acessibilidade */
-  --font-scale: 1;
-  --font-xs: calc(11px * var(--font-scale));
-  --font-sm: calc(13px * var(--font-scale));
-  --font-base: calc(15px * var(--font-scale));
-  --font-lg: calc(17px * var(--font-scale));
-  --font-xl: calc(21px * var(--font-scale));
-  --font-2xl: calc(26px * var(--font-scale));
-  --font-3xl: calc(34px * var(--font-scale));
-  --font-4xl: calc(44px * var(--font-scale));
-
-  /* Light Mode Colors */
-  --color-base: #f7f8fc;
-  --color-base-secondary: #ffffff;
-  --color-base-tertiary: #f1f5f9;
-  --color-surface: #ffffff;
-  --color-surface-2: #f8f9fb;
-  --color-surface-alt: #f1f5f9;
-  --color-surface-raised: #ffffff;
-  --color-text: #23263b;
-  --color-text-muted: #4b5563;
-  --color-text-subtle: #64748b;
-  --color-border: #cbd5e1; /* Mais escura no modo claro */
-  --color-border-soft: #e2e8f0;
-  --color-bg-hover: #f1f5f9;
-  --color-primary: #6366f1;
-  --color-primary-soft: #eef2ff;
-  --color-accent: #8b5cf6;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
 }
 
-html.dark {
-  color-scheme: dark;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  /* Dark Mode Colors */
-  --color-base: #0f172a;
-  --color-base-secondary: #1e293b;
-  --color-base-tertiary: #334155;
-  --color-surface: #1e293b;
-  --color-surface-2: #1e293b;
-  --color-surface-alt: #1e293b;
-  --color-surface-raised: #334155;
-  --color-text: #f1f5f9;
-  --color-text-muted: #cbd5e1;
-  --color-text-subtle: #94a3b8;
+html {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: var(--line-height-normal);
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--color-base);
+  color: var(--color-text);
+  transition: background-color 250ms ease-in-out, color 250ms ease-in-out;
+}
+
+/* ========================================
+   SCROLLBAR CUSTOMIZATION
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  transition: background 200ms;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) var(--color-surface-alt);
+}
+
+/* ========================================
+   SELECTION
+   ======================================== */
+
+::selection {
+  background-color: var(--brand-primary);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: var(--brand-primary);
+  color: white;
+}
+
+/* ========================================
+   FOCUS STYLES
+   ======================================== */
+
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
   --color-border: #334155;
   --color-border-soft: #475569;
   --color-bg-hover: #1e293b;
