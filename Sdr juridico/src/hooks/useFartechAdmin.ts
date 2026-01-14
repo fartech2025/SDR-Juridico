@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useIsFartechAdmin, usePermissions } from './usePermissions'
 import { useOrganization } from './useOrganization'
 import { organizationsService } from '@/services/organizationsService'
-import type { Organization, OrganizationStats } from '@/types/organization'
+import type { Organization } from '@/types/organization'
 
 /**
  * Hook for Fartech admin specific features

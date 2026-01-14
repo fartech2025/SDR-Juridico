@@ -4,7 +4,6 @@
 import { supabase } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 import type {
-  UserRole,
   Permission,
   PermissionCheck,
   PermissionResult,
@@ -15,8 +14,6 @@ import type {
 import {
   getPermissionsByRole,
   FARTECH_ADMIN_PERMISSIONS,
-  ORG_ADMIN_PERMISSIONS,
-  USER_PERMISSIONS,
 } from '@/types/permissions'
 
 export const permissionsService = {

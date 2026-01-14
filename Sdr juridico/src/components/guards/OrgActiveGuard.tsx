@@ -1,7 +1,7 @@
 // OrgActiveGuard - Component to restrict access to users with active organizations
 // Date: 2026-01-13
 
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useIsOrgActive } from '@/hooks/useOrganization'
 import { useIsFartechAdmin } from '@/hooks/usePermissions'

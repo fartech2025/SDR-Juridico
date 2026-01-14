@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Save, ArrowLeft, Building2 } from 'lucide-react'
+import { Save, ArrowLeft } from 'lucide-react'
 import { organizationsService } from '@/services/organizationsService'
 import { FartechGuard } from '@/components/guards'
 import type { CreateOrganizationInput, Organization, OrganizationPlan } from '@/types/organization'

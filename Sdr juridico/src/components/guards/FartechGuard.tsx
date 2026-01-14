@@ -1,7 +1,7 @@
 // FartechGuard - Component to restrict access to Fartech admins only
 // Date: 2026-01-13
 
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useIsFartechAdmin } from '@/hooks/usePermissions'
 import { usePermissions } from '@/hooks/usePermissions'

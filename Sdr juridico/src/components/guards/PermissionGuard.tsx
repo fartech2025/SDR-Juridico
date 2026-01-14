@@ -1,7 +1,7 @@
 // PermissionGuard - Component to restrict access based on permissions
 // Date: 2026-01-13
 
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { usePermissions } from '@/hooks/usePermissions'
 import type { Permission, Resource, PermissionAction } from '@/types/permissions'
@@ -94,15 +94,15 @@ export function PermissionGuard({
   
   // Check based on props provided
   if (permission) {
-    hasPermission = canSync(permission)
+    hasPermission = canSync(permission.resource, permission.action)
   } else if (resource && action) {
-    hasPermission = canSync({ resource, action })
+    hasPermission = canSync(resource, action)
   } else if (permissions && permissions.length > 0) {
     // Requires ALL permissions
-    hasPermission = permissions.every(p => canSync(p))
+    hasPermission = permissions.every(p => canSync(p.resource, p.action))
   } else if (anyPermissions && anyPermissions.length > 0) {
     // Requires ANY permission
-    hasPermission = anyPermissions.some(p => canSync(p))
+    hasPermission = anyPermissions.some(p => canSync(p.resource, p.action))
   } else {
     console.warn('PermissionGuard: No permission criteria provided')
     hasPermission = false

@@ -20,7 +20,7 @@ export function usePermissions() {
  */
 export function useHasPermission(resource: Resource, action: PermissionAction): boolean {
   const { canSync } = usePermissions()
-  return canSync({ resource, action })
+  return canSync(resource, action)
 }
 
 /**
@@ -30,7 +30,7 @@ export function useHasPermission(resource: Resource, action: PermissionAction): 
  */
 export function useHasAllPermissions(permissions: Permission[]): boolean {
   const { canSync } = usePermissions()
-  return permissions.every(p => canSync(p))
+  return permissions.every(p => canSync(p.resource, p.action))
 }
 
 /**
@@ -40,7 +40,7 @@ export function useHasAllPermissions(permissions: Permission[]): boolean {
  */
 export function useHasAnyPermission(permissions: Permission[]): boolean {
   const { canSync } = usePermissions()
-  return permissions.some(p => canSync(p))
+  return permissions.some(p => canSync(p.resource, p.action))
 }
 
 /**
@@ -81,9 +81,9 @@ export function useIsRegularUser(): boolean {
  */
 export function useCanManage(resource: Resource): boolean {
   const { canSync } = usePermissions()
-  return canSync({ resource, action: 'create' }) &&
-         canSync({ resource, action: 'update' }) &&
-         canSync({ resource, action: 'delete' })
+  return canSync(resource, 'create') &&
+         canSync(resource, 'update') &&
+         canSync(resource, 'delete')
 }
 
 /**
@@ -92,7 +92,7 @@ export function useCanManage(resource: Resource): boolean {
  */
 export function useCanView(resource: Resource): boolean {
   const { canSync } = usePermissions()
-  return canSync({ resource, action: 'read' })
+  return canSync(resource, 'read')
 }
 
 /**
@@ -105,12 +105,12 @@ export function useOrgPermission(orgId: string) {
   return {
     async check(permission: Permission): Promise<boolean> {
       // Fartech admins can access any org
-      if (user?.is_fartech_admin) return can(permission)
+      if (user?.is_fartech_admin) return can(permission.resource, permission.action)
       
       // Others can only access their own org
       if (user?.org_id !== orgId) return false
       
-      return can(permission)
+      return can(permission.resource, permission.action)
     },
     
     canAccessOrg: user?.is_fartech_admin || user?.org_id === orgId,

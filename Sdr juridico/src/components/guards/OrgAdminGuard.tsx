@@ -1,7 +1,7 @@
 // OrgAdminGuard - Component to restrict access to org admins and above
 // Date: 2026-01-13
 
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useIsOrgAdmin, useIsFartechAdmin } from '@/hooks/usePermissions'
 import { usePermissions } from '@/hooks/usePermissions'
