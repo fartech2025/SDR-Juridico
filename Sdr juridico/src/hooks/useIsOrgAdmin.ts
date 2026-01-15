@@ -12,5 +12,5 @@ export function useIsOrgAdmin() {
     return false
   }
   
-  return currentRole === 'admin'
+  return currentRole === 'org_admin'
 }

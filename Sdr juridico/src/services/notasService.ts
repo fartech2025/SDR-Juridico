@@ -1,14 +1,14 @@
-import { supabase, type NotaRow } from '@/lib/supabaseClient'
-import { getActiveOrgId } from '@/lib/org'
+import { supabase, type TimelineEventRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
 export const notasService = {
-  async getNotas(): Promise<NotaRow[]> {
+  async getNotas(): Promise<TimelineEventRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('notas').select('*')
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false }).limit(200)
+      const { data, error } = await supabase
+        .from('timeline_events')
+        .select('*')
+        .order('data_evento', { ascending: false })
+        .limit(200)
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -20,16 +20,17 @@ export const notasService = {
     }
   },
 
-  async getNotasByEntidade(entidade: string, entidadeId: string): Promise<NotaRow[]> {
+  async getNotasByEntidade(entidade: string, entidadeId: string): Promise<TimelineEventRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase
-        .from('notas')
+      if (entidade !== 'caso') {
+        return []
+      }
+
+      const { data, error } = await supabase
+        .from('timeline_events')
         .select('*')
-        .eq('entidade', entidade)
-        .eq('entidade_id', entidadeId)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+        .eq('caso_id', entidadeId)
+        .order('data_evento', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []

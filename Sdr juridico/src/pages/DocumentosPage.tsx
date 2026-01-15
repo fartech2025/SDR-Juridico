@@ -26,6 +26,7 @@ const resolveStatus = (
 
 const statusPill = (status: Documento['status']) => {
   if (status === 'aprovado') return 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
+  if (status === 'completo') return 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
   if (status === 'solicitado') return 'border-[#D6E4FF] bg-[#E6F0FF] text-[#1D4ED8]'
   if (status === 'rejeitado') return 'border-[#F5C2C2] bg-[#FFE1E1] text-[#B42318]'
   return 'border-[#F1D28A] bg-[#FFF1CC] text-[#8A5A00]'

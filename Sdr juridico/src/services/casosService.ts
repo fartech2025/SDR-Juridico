@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabaseClient'
-import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import type { CasoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
@@ -9,10 +8,10 @@ export const casosService = {
    */
   async getCasos(): Promise<CasoRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('casos').select('*, cliente:clientes(nome)')
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('casos')
+        .select('*, cliente:clientes(nome)')
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -26,10 +25,11 @@ export const casosService = {
    */
   async getCaso(id: string): Promise<CasoRow> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('casos').select('*, cliente:clientes(nome)').eq('id', id)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.single()
+      const { data, error } = await supabase
+        .from('casos')
+        .select('*, cliente:clientes(nome)')
+        .eq('id', id)
+        .single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Caso não encontrado', 'not_found')
@@ -45,10 +45,11 @@ export const casosService = {
    */
   async getCasosByStatus(status: CasoRow['status']): Promise<CasoRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('casos').select('*, cliente:clientes(nome)').eq('status', status)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('casos')
+        .select('*, cliente:clientes(nome)')
+        .eq('status', status)
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -62,10 +63,11 @@ export const casosService = {
    */
   async getCasosCriticos(): Promise<CasoRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('casos').select('*, cliente:clientes(nome)').gte('prioridade', 3)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: true })
+      const { data, error } = await supabase
+        .from('casos')
+        .select('*, cliente:clientes(nome)')
+        .in('prioridade', ['alta', 'critica'])
+        .order('created_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -79,12 +81,10 @@ export const casosService = {
    */
   async getCasosByCliente(clienteId: string): Promise<CasoRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase
+      const query = supabase
         .from('casos')
         .select('*, cliente:clientes(nome)')
         .eq('cliente_id', clienteId)
-      if (orgId) query = query.eq('org_id', orgId)
       const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
@@ -99,12 +99,10 @@ export const casosService = {
    */
   async createCaso(caso: Omit<CasoRow, 'id' | 'created_at' | 'org_id'>): Promise<CasoRow> {
     try {
-      const orgId = await requireOrgId()
       const payload = {
         ...caso,
-        org_id: orgId,
-        status: caso.status || 'triagem',
-        prioridade: typeof caso.prioridade === 'number' ? caso.prioridade : 2,
+        status: caso.status || 'aberto',
+        prioridade: caso.prioridade || 'media',
       }
       const { data, error } = await supabase
         .from('casos')
@@ -129,12 +127,10 @@ export const casosService = {
     updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'org_id'>>
   ): Promise<CasoRow> {
     try {
-      const orgId = await requireOrgId()
       const { data, error } = await supabase
         .from('casos')
         .update(updates)
         .eq('id', id)
-        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -152,12 +148,10 @@ export const casosService = {
    */
   async deleteCaso(id: string): Promise<void> {
     try {
-      const orgId = await requireOrgId()
       const { error } = await supabase
         .from('casos')
         .delete()
         .eq('id', id)
-        .eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
@@ -185,12 +179,10 @@ export const casosService = {
   async getEstatisticas(): Promise<{
     total: number
     abertos: number
-    triagem: number
-    negociacao: number
-    contrato: number
     andamento: number
+    resolvidos: number
+    fechados: number
     encerrados: number
-    arquivados: number
     criticos: number
   }> {
     try {
@@ -205,13 +197,11 @@ export const casosService = {
       return {
         total: casos.length,
         abertos: casos.filter((c) => c.status === 'aberto').length,
-        triagem: casos.filter((c) => c.status === 'triagem').length,
-        negociacao: casos.filter((c) => c.status === 'negociacao').length,
-        contrato: casos.filter((c) => c.status === 'contrato').length,
-        andamento: casos.filter((c) => c.status === 'andamento').length,
+        andamento: casos.filter((c) => c.status === 'em_andamento').length,
+        resolvidos: casos.filter((c) => c.status === 'resolvido').length,
+        fechados: casos.filter((c) => c.status === 'fechado').length,
         encerrados: casos.filter((c) => c.status === 'encerrado').length,
-        arquivados: casos.filter((c) => c.status === 'arquivado').length,
-        criticos: casos.filter((c) => c.prioridade >= 3).length,
+        criticos: casos.filter((c) => ['alta', 'critica'].includes(c.prioridade)).length,
       }
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar estatísticas', 'database_error')

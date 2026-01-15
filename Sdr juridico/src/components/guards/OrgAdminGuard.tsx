@@ -48,11 +48,16 @@ export function OrgAdminGuard({
 }: OrgAdminGuardProps) {
   const isOrgAdmin = useIsOrgAdmin()
   const isFartechAdmin = useIsFartechAdmin()
-  const { user } = usePermissions()
+  const { user, loading } = usePermissions()
   
   // Still loading user data
-  if (!user) {
+  if (loading) {
     return <>{loadingComponent}</>
+  }
+  
+  // Not authenticated: go to login
+  if (!user) {
+    return <Navigate to="/login" replace />
   }
   
   // Check if user has required role

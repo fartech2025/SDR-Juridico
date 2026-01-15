@@ -29,18 +29,32 @@ export default function UserManagement() {
   }, [currentOrg])
   
   const loadUsers = async () => {
-    if (!currentOrg) return
-    
     try {
       setLoading(true)
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, nome, role, org_id, created_at')
-        .eq('org_id', currentOrg.id)
+        .from('usuarios')
+        .select('id, email, nome_completo, permissoes, created_at, ultimo_acesso')
         .order('created_at', { ascending: false })
       
       if (error) throw error
-      setUsers(data || [])
+      const mapped = (data || []).map((row) => {
+        const permissoes = row.permissoes || []
+        const role: UserRole = permissoes.includes('fartech_admin')
+          ? 'fartech_admin'
+          : permissoes.includes('org_admin')
+            ? 'org_admin'
+            : 'user'
+
+        return {
+          id: row.id,
+          email: row.email,
+          nome: row.nome_completo,
+          role,
+          created_at: row.created_at,
+          last_sign_in_at: row.ultimo_acesso,
+        } as OrgUser
+      })
+      setUsers(mapped)
     } catch (error) {
       console.error('Erro ao carregar usuários:', error)
     } finally {

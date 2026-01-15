@@ -1,7 +1,4 @@
 import { useCallback, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import { getActiveOrgId } from '@/lib/org'
-
 /**
  * Interface para dados do meeting
  */
@@ -65,20 +62,7 @@ export function useGoogleCalendarCreate() {
    */
   const isConnected = useCallback(async (): Promise<boolean> => {
     try {
-      const orgId = getActiveOrgId()
-      if (!orgId) return false
-
-      const { data, error: err } = await supabase
-        .from('integrations')
-        .select('enabled, secrets')
-        .eq('org_id', orgId)
-        .eq('provider', 'google_calendar')
-        .maybeSingle()
-
-      if (err || !data) return false
-
-      const secrets = data.secrets || {}
-      return Boolean(secrets.access_token) && data.enabled
+      return false
     } catch {
       return false
     }
@@ -92,63 +76,7 @@ export function useGoogleCalendarCreate() {
       try {
         setIsLoading(true)
         setError(null)
-
-        const orgId = await getActiveOrgId()
-        if (!orgId) throw new Error('Organização não encontrada')
-
-        // Verificar conexão
-        const connected = await isConnected()
-        if (!connected) {
-          throw new Error('Google Calendar não está conectado. Por favor, configure a integração nas configurações.')
-        }
-
-        // Chamar Edge Function para criar o evento
-        const { data, error: err } = await supabase.functions.invoke(
-          'google-calendar-create-event',
-          {
-            body: {
-              org_id: orgId,
-              event: {
-                summary: meeting.title,
-                description: meeting.description || '',
-                location: meeting.location || '',
-                start: {
-                  dateTime: meeting.startTime.toISOString(),
-                  timeZone: 'America/Sao_Paulo',
-                },
-                end: {
-                  dateTime: meeting.endTime.toISOString(),
-                  timeZone: 'America/Sao_Paulo',
-                },
-                attendees: meeting.guests?.map((email) => ({ email })) || [],
-                reminders: meeting.reminders || {
-                  useDefault: true,
-                },
-                conferenceData: meeting.videoConference
-                  ? {
-                      createRequest: {
-                        requestId: `meet-${Date.now()}`,
-                        conferenceSolutionKey: {
-                          key: 'hangoutsMeet',
-                        },
-                      },
-                    }
-                  : undefined,
-              },
-            },
-          }
-        )
-
-        if (err) {
-          throw new Error(
-            err instanceof Error ? err.message : 'Erro ao criar meeting no Google Calendar'
-          )
-        }
-
-        const createdMeeting = data as CreatedGoogleMeeting
-        setLastCreated(createdMeeting)
-
-        return createdMeeting
+        throw new Error('Integração Google Calendar não disponível no schema atual.')
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Erro desconhecido')
         setError(error)
@@ -174,44 +102,8 @@ export function useGoogleCalendarCreate() {
       }
     ): Promise<{ googleEvent: CreatedGoogleMeeting; agendaId?: string }> => {
       try {
-        // Criar no Google Calendar
         const googleEvent = await createMeeting(meeting)
-
-        // Sincronizar com agenda local
-        if (agendaData) {
-          const { data: agenda, error: agendaErr } = await supabase
-            .from('agendamentos')
-            .insert({
-              org_id: getActiveOrgId(),
-              titulo: meeting.title,
-              descricao: meeting.description,
-              tipo: agendaData.tipo,
-              data_inicio: meeting.startTime.toISOString(),
-              data_fim: meeting.endTime.toISOString(),
-              local: meeting.location,
-              cliente_id: agendaData.cliente_id,
-              caso_id: agendaData.caso_id,
-              responsavel_id: agendaData.responsavel_id,
-              external_provider: 'google_calendar',
-              external_id: googleEvent.id,
-              url_reuniao: googleEvent.conferenceData?.entryPoints?.[0]?.uri,
-            })
-            .select('id')
-            .single()
-
-          if (agendaErr) {
-            console.error('Erro ao sincronizar com agenda:', agendaErr)
-          }
-
-          return {
-            googleEvent,
-            agendaId: agenda?.id,
-          }
-        }
-
-        return {
-          googleEvent,
-        }
+        return { googleEvent }
       } catch (err) {
         throw err
       }

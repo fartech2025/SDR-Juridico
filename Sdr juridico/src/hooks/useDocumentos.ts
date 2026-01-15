@@ -120,7 +120,7 @@ export function useDocumentos() {
   /**
    * Cria um novo documento (com atualização otimista)
    */
-  const createDocumento = useCallback(async (documento: Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>) => {
+  const createDocumento = useCallback(async (documento: Omit<DocumentoRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoDocumento = await documentosService.createDocumento(documento)
@@ -138,7 +138,7 @@ export function useDocumentos() {
    * Atualiza um documento (com atualização otimista)
    */
   const updateDocumento = useCallback(
-    async (id: string, updates: Partial<Omit<DocumentoRow, 'id' | 'created_at'>> & { status?: string }) => {
+    async (id: string, updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const documentoAtualizado = await documentosService.updateDocumento(id, updates)

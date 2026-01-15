@@ -26,11 +26,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useIsFartechAdmin } from '@/hooks/useIsFartechAdmin'
 import { useIsOrgAdmin } from '@/hooks/useIsOrgAdmin'
+import { usePageTracking } from '@/hooks/usePageTracking'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { FontSizeButton } from '@/components/FontSizeControl'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/utils/cn'
+import { auditService, sessionService } from '@/services/auditService'
 
 const navItems = [
   { label: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
@@ -63,6 +65,9 @@ export const AppShell = () => {
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
+  // Track page views automaticamente
+  usePageTracking()
+
   // Debug logs
   React.useEffect(() => {
     console.log('👤 AppShell User Info:', { 
@@ -89,6 +94,9 @@ export const AppShell = () => {
 
   const handleLogout = async () => {
     setLogoutOpen(false)
+    // Log de logout e encerrar sessão
+    await auditService.logLogout()
+    sessionService.end()
     await signOut()
     navigate('/login', { replace: true })
   }

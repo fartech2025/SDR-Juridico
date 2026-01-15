@@ -13,12 +13,10 @@ interface UseCasosState {
 interface Estatisticas {
   total: number
   abertos: number
-  triagem: number
-  negociacao: number
-  contrato: number
   andamento: number
+  resolvidos: number
+  fechados: number
   encerrados: number
-  arquivados: number
   criticos: number
 }
 
@@ -119,7 +117,7 @@ export function useCasos() {
   /**
    * Cria um novo caso (com atualização otimista)
    */
-  const createCaso = useCallback(async (caso: Omit<CasoRow, 'id' | 'created_at' | 'org_id'>) => {
+  const createCaso = useCallback(async (caso: Omit<CasoRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoCaso = await casosService.createCaso(caso)
@@ -137,7 +135,7 @@ export function useCasos() {
    * Atualiza um caso (com atualização otimista)
    */
   const updateCaso = useCallback(
-    async (id: string, updates: Partial<Omit<CasoRow, 'id' | 'created_at'>>) => {
+    async (id: string, updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'updated_at'>>) => {
       try {
         setState((prev) => ({ ...prev, error: null }))
         const casoAtualizado = await casosService.updateCaso(id, updates)

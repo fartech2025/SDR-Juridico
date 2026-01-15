@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabaseClient'
-import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import type { ClienteRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
@@ -9,10 +8,10 @@ export const clientesService = {
    */
   async getClientes(): Promise<ClienteRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('clientes').select('*').order('created_at', { ascending: false })
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('*')
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -26,10 +25,11 @@ export const clientesService = {
    */
   async getCliente(id: string): Promise<ClienteRow> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('clientes').select('*').eq('id', id)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.single()
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('id', id)
+        .single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Cliente não encontrado', 'not_found')
@@ -45,10 +45,11 @@ export const clientesService = {
    */
   async getClientesByEmpresa(empresa: string): Promise<ClienteRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('clientes').select().ilike('nome', `%${empresa}%`)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('clientes')
+        .select()
+        .or(`empresa.ilike.%${empresa}%,nome.ilike.%${empresa}%`)
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -62,10 +63,11 @@ export const clientesService = {
    */
   async getClienteByCnpj(cnpj: string): Promise<ClienteRow | null> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('clientes').select().eq('documento', cnpj)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.single()
+      const { data, error } = await supabase
+        .from('clientes')
+        .select()
+        .eq('cnpj', cnpj)
+        .single()
 
       if (error && error.code !== 'PGRST116') throw new AppError(error.message, 'database_error')
       return data || null
@@ -79,13 +81,10 @@ export const clientesService = {
    */
   async createCliente(cliente: Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>): Promise<ClienteRow> {
     try {
-      const orgId = await requireOrgId()
       const payload = {
         ...cliente,
-        org_id: orgId,
-        tipo: cliente.tipo || 'pf',
-        endereco: cliente.endereco || {},
-        tags: cliente.tags || [],
+        status: cliente.status || 'ativo',
+        health: cliente.health || 'ok',
       }
       const { data, error } = await supabase
         .from('clientes')
@@ -110,12 +109,10 @@ export const clientesService = {
     updates: Partial<Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>>
   ): Promise<ClienteRow> {
     try {
-      const orgId = await requireOrgId()
       const { data, error } = await supabase
         .from('clientes')
         .update(updates)
         .eq('id', id)
-        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -133,12 +130,10 @@ export const clientesService = {
    */
   async deleteCliente(id: string): Promise<void> {
     try {
-      const orgId = await requireOrgId()
       const { error } = await supabase
         .from('clientes')
         .delete()
         .eq('id', id)
-        .eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
@@ -151,10 +146,10 @@ export const clientesService = {
    */
   async getClientesComCasos(): Promise<(ClienteRow & { casos_count: number })[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('clientes').select('*, casos(count)')
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('*, casos(count)')
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
 

@@ -6,7 +6,7 @@
 -- =====================================================
 
 -- Extensões necessárias
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =====================================================
 -- TABELA: usuarios
@@ -57,7 +57,7 @@ CREATE TRIGGER on_auth_user_created
 -- Armazena leads de potenciais clientes
 -- =====================================================
 CREATE TABLE IF NOT EXISTS leads (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nome TEXT NOT NULL,
   email TEXT NOT NULL,
   telefone TEXT,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS leads (
 
 -- Indexes para leads
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
-CREATE INDEX IF NOT EXISTS idx_leads_heat ON leads(heat);
+-- CREATE INDEX IF NOT EXISTS idx_leads_heat ON leads(heat); -- Coluna heat não existe no banco
 CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
 
@@ -86,7 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
 -- Armazena clientes ativos do escritório
 -- =====================================================
 CREATE TABLE IF NOT EXISTS clientes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nome TEXT NOT NULL,
   email TEXT NOT NULL,
   telefone TEXT,
@@ -109,17 +109,17 @@ CREATE TABLE IF NOT EXISTS clientes (
 );
 
 -- Indexes para clientes
-CREATE INDEX IF NOT EXISTS idx_clientes_status ON clientes(status);
+-- CREATE INDEX IF NOT EXISTS idx_clientes_status ON clientes(status); -- Coluna status não existe no banco
 CREATE INDEX IF NOT EXISTS idx_clientes_email ON clientes(email);
-CREATE INDEX IF NOT EXISTS idx_clientes_cnpj ON clientes(cnpj) WHERE cnpj IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_clientes_cpf ON clientes(cpf) WHERE cpf IS NOT NULL;
+-- CREATE INDEX IF NOT EXISTS idx_clientes_cnpj ON clientes(cnpj) WHERE cnpj IS NOT NULL; -- Coluna cnpj não existe
+-- CREATE INDEX IF NOT EXISTS idx_clientes_cpf ON clientes(cpf) WHERE cpf IS NOT NULL; -- Coluna cpf não existe
 
 -- =====================================================
 -- TABELA: casos
 -- Armazena casos jurídicos em andamento
 -- =====================================================
 CREATE TABLE IF NOT EXISTS casos (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   titulo TEXT NOT NULL,
   descricao TEXT,
   cliente_id UUID REFERENCES clientes(id) ON DELETE SET NULL,
@@ -149,7 +149,7 @@ CREATE INDEX IF NOT EXISTS idx_casos_status ON casos(status);
 CREATE INDEX IF NOT EXISTS idx_casos_prioridade ON casos(prioridade);
 CREATE INDEX IF NOT EXISTS idx_casos_cliente_id ON casos(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_casos_lead_id ON casos(lead_id);
-CREATE INDEX IF NOT EXISTS idx_casos_sla_risk ON casos(sla_risk);
+-- CREATE INDEX IF NOT EXISTS idx_casos_sla_risk ON casos(sla_risk); -- Coluna sla_risk não existe no banco
 CREATE INDEX IF NOT EXISTS idx_casos_created_at ON casos(created_at DESC);
 
 -- =====================================================
@@ -157,7 +157,7 @@ CREATE INDEX IF NOT EXISTS idx_casos_created_at ON casos(created_at DESC);
 -- Armazena documentos relacionados aos casos
 -- =====================================================
 CREATE TABLE IF NOT EXISTS documentos (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   titulo TEXT NOT NULL,
   descricao TEXT,
   caso_id UUID REFERENCES casos(id) ON DELETE CASCADE,
@@ -176,9 +176,9 @@ CREATE TABLE IF NOT EXISTS documentos (
 );
 
 -- Indexes para documentos
-CREATE INDEX IF NOT EXISTS idx_documentos_status ON documentos(status);
+-- CREATE INDEX IF NOT EXISTS idx_documentos_status ON documentos(status); -- Coluna status não existe no banco atual
 CREATE INDEX IF NOT EXISTS idx_documentos_caso_id ON documentos(caso_id);
-CREATE INDEX IF NOT EXISTS idx_documentos_tipo ON documentos(tipo);
+-- CREATE INDEX IF NOT EXISTS idx_documentos_tipo ON documentos(tipo); -- Coluna tipo não existe no banco atual
 CREATE INDEX IF NOT EXISTS idx_documentos_created_at ON documentos(created_at DESC);
 
 -- =====================================================
@@ -186,7 +186,7 @@ CREATE INDEX IF NOT EXISTS idx_documentos_created_at ON documentos(created_at DE
 -- Armazena compromissos e eventos
 -- =====================================================
 CREATE TABLE IF NOT EXISTS agenda (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   titulo TEXT NOT NULL,
   descricao TEXT,
   tipo TEXT NOT NULL DEFAULT 'reuniao'
@@ -220,7 +220,7 @@ CREATE INDEX IF NOT EXISTS idx_agenda_responsavel ON agenda(responsavel);
 -- Registro cronológico de eventos dos casos
 -- =====================================================
 CREATE TABLE IF NOT EXISTS timeline_events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   caso_id UUID NOT NULL REFERENCES casos(id) ON DELETE CASCADE,
   titulo TEXT NOT NULL,
   descricao TEXT,
@@ -243,7 +243,7 @@ CREATE INDEX IF NOT EXISTS idx_timeline_data_evento ON timeline_events(data_even
 -- Sistema de notificações e alertas
 -- =====================================================
 CREATE TABLE IF NOT EXISTS notificacoes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   titulo TEXT NOT NULL,
   descricao TEXT,
   prioridade TEXT NOT NULL DEFAULT 'P2'

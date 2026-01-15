@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabaseClient'
-import { getActiveOrgId, requireOrgId } from '@/lib/org'
 import type { DocumentoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
@@ -9,10 +8,10 @@ export const documentosService = {
    */
   async getDocumentos(): Promise<DocumentoRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('documentos').select('*')
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('documentos')
+        .select('*')
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -26,10 +25,11 @@ export const documentosService = {
    */
   async getDocumento(id: string): Promise<DocumentoRow> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('documentos').select('*').eq('id', id)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.single()
+      const { data, error } = await supabase
+        .from('documentos')
+        .select('*')
+        .eq('id', id)
+        .single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Documento não encontrado', 'not_found')
@@ -45,10 +45,11 @@ export const documentosService = {
    */
   async getDocumentosByCaso(casoId: string): Promise<DocumentoRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase.from('documentos').select('*').eq('caso_id', casoId)
-      if (orgId) query = query.eq('org_id', orgId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('documentos')
+        .select('*')
+        .eq('caso_id', casoId)
+        .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return data || []
@@ -63,7 +64,7 @@ export const documentosService = {
   async getDocumentosByStatus(status: string): Promise<DocumentoRow[]> {
     try {
       const documentos = await this.getDocumentos()
-      return documentos.filter((doc) => (doc.meta as { status?: string })?.status === status)
+      return documentos.filter((doc) => doc.status === status)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
@@ -75,11 +76,7 @@ export const documentosService = {
   async getDocumentosByTipo(tipo: string): Promise<DocumentoRow[]> {
     try {
       const documentos = await this.getDocumentos()
-      return documentos.filter((doc) => {
-        if (doc.mime_type && doc.mime_type.includes(tipo)) return true
-        const categoria = (doc.meta as { categoria?: string })?.categoria
-        return categoria === tipo
-      })
+      return documentos.filter((doc) => doc.tipo === tipo)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
@@ -89,21 +86,12 @@ export const documentosService = {
    * Cria um novo documento
    */
   async createDocumento(
-    documento: Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>
+    documento: Omit<DocumentoRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>
   ): Promise<DocumentoRow> {
     try {
-      const orgId = await requireOrgId()
-      const payload = {
-        ...documento,
-        org_id: orgId,
-        visibility: documento.visibility || 'interno',
-        bucket: documento.bucket || 'docs',
-        tags: documento.tags || [],
-        meta: documento.meta || {},
-      }
       const { data, error } = await supabase
         .from('documentos')
-        .insert([payload])
+        .insert([documento])
         .select()
         .single()
 
@@ -121,21 +109,13 @@ export const documentosService = {
    */
   async updateDocumento(
     id: string,
-    updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'org_id'>> & { status?: string }
+    updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>>
   ): Promise<DocumentoRow> {
     try {
-      const orgId = await requireOrgId()
-      const nextUpdates = { ...updates } as Partial<DocumentoRow>
-      if ('status' in updates) {
-        const current = (updates.meta as Record<string, unknown>) || {}
-        nextUpdates.meta = { ...current, status: updates.status }
-        delete (nextUpdates as { status?: string }).status
-      }
       const { data, error } = await supabase
         .from('documentos')
-        .update(nextUpdates)
+        .update(updates)
         .eq('id', id)
-        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -153,12 +133,10 @@ export const documentosService = {
    */
   async deleteDocumento(id: string): Promise<void> {
     try {
-      const orgId = await requireOrgId()
       const { error } = await supabase
         .from('documentos')
         .delete()
         .eq('id', id)
-        .eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
@@ -200,8 +178,8 @@ export const documentosService = {
 
       return {
         total: documentos.length,
-        pendentes: documentos.filter((doc) => (doc.meta as { status?: string })?.status === 'pendente').length,
-        completos: documentos.filter((doc) => (doc.meta as { status?: string })?.status === 'aprovado').length,
+        pendentes: documentos.filter((doc) => doc.status === 'pendente').length,
+        completos: documentos.filter((doc) => doc.status === 'aprovado').length,
       }
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar estatísticas', 'database_error')
@@ -257,8 +235,6 @@ export const documentosService = {
       }
 
       const user = session.user
-      const orgId = await requireOrgId()
-
       // Gerar nome único para o arquivo
       const timestamp = Date.now()
       const randomStr = Math.random().toString(36).substring(2, 9)
@@ -270,7 +246,7 @@ export const documentosService = {
 
       // Upload para o Storage
       const { error: uploadError } = await supabase.storage
-        .from('docs')
+        .from('documentos')
         .upload(storagePath, arquivo, {
           cacheControl: '3600',
           upsert: false,
@@ -284,29 +260,24 @@ export const documentosService = {
       const { data: documento, error: dbError } = await supabase
         .from('documentos')
         .insert({
-          org_id: orgId,
-          title: arquivo.name,
-          description: descricao || null,
-          visibility: 'interno',
-          bucket: 'docs',
-          storage_path: storagePath,
-          caso_id: casoId || null,
+          titulo: arquivo.name,
+          descricao: descricao || null,
+          tipo: categoria || 'geral',
+          status: 'pendente',
+          url: storagePath,
+          arquivo_nome: arquivo.name,
+          arquivo_tamanho: arquivo.size,
           mime_type: arquivo.type,
-          size_bytes: arquivo.size,
-          uploaded_by: user.id,
+          solicitado_por: user.id,
           tags: tags || [],
-          meta: {
-            categoria,
-            original_name: arquivo.name,
-            status: 'pendente',
-          },
+          caso_id: casoId || null,
         })
         .select()
         .single()
 
       if (dbError) {
         // Se falhar ao registrar no banco, tentar deletar do storage
-        await supabase.storage.from('docs').remove([storagePath])
+        await supabase.storage.from('documentos').remove([storagePath])
         throw new AppError(dbError.message, 'database_error')
       }
 
@@ -325,7 +296,7 @@ export const documentosService = {
         return storagePath
       }
       const { data, error } = await supabase.storage
-        .from('docs')
+        .from('documentos')
         .createSignedUrl(storagePath, 3600) // 1 hora
 
       if (error) throw new AppError(error.message, 'storage_error')
@@ -351,7 +322,7 @@ export const documentosService = {
         fileData = await response.blob()
       } else {
         const { data, error } = await supabase.storage
-          .from('docs')
+          .from('documentos')
           .download(storagePath)
 
         if (error) throw new AppError(error.message, 'storage_error')

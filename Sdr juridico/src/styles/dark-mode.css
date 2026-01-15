@@ -1,6 +1,7 @@
 /* Dark Mode Global Styles */
 
 html.dark {
+  color-scheme: dark;
   /* Background */
   background-color: #0f172a;
   color: #f1f5f9;
@@ -11,8 +12,22 @@ html.dark body {
   color: #f1f5f9;
 }
 
-/* FORCE dark on ANY element with white background */
-/* (removido bloco vazio que gerava aviso) */
+/* ========================================
+   NAVLINK ITEMS - Dark Mode
+   ======================================== */
+
+html.dark .bg-\[#E9EEFF\] {
+  background-color: #1e3a5f !important;
+  color: #60a5fa !important;
+}
+
+html.dark .hover\:bg-\[#F2F5FF\]:hover {
+  background-color: #1e3a5f !important;
+}
+
+/* ========================================
+   FORCE dark on inline styles
+   ======================================== */
 
 html.dark [style*="background-color: white"],
 html.dark [style*="background-color: #fff"],
@@ -24,62 +39,59 @@ html.dark [style*="background: #ffffff"] {
   color: #f1f5f9 !important;
 }
 
-/* ALL elements with bg-white - Force dark mode */
-html.dark div[class*="bg-white"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark section[class*="bg-white"],
-html.dark article[class*="bg-white"],
-html.dark form[class*="bg-white"],
-html.dark [role="region"][class*="bg-white"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark .bg-white:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark [class*="rounded"][style*="white"]:not(.rounded-3xl):not([class*="rounded-3xl"]) {
+/* ========================================
+   CARDS AND CONTAINERS
+   ======================================== */
+
+/* Generic bg-white fix */
+html.dark .bg-white {
   background-color: #1e293b !important;
   color: #f1f5f9 !important;
 }
 
-/* Cards and Containers - EXCEPT agenda containers */
-html.dark [class*="bg-white"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark [class*="bg-base"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark [class*="bg-surface"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark [class*="rounded-2xl"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark [class*="rounded-xl"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark [class*="card"]:not(.rounded-3xl):not([class*="rounded-3xl"]),
-html.dark [class*="Card"]:not(.rounded-3xl):not([class*="rounded-3xl"]) {
-  background-color: #1e293b;
-  color: #f1f5f9;
+/* Background colors */
+html.dark .bg-\[#f7f8fc\],
+html.dark .bg-base {
+  background-color: #0f172a !important;
 }
 
-/* Text Colors */
+html.dark .bg-surface {
+  background-color: #1e293b !important;
+}
+
+/* ========================================
+   TEXT COLORS
+   ======================================== */
+
 html.dark .text-text {
-  color: #f1f5f9;
+  color: #f1f5f9 !important;
 }
 
 html.dark .text-text-muted {
-  color: #cbd5e1;
+  color: #cbd5e1 !important;
 }
 
 html.dark .text-text-subtle {
-  color: #94a3b8;
+  color: #94a3b8 !important;
 }
 
-/* Borders */
-html.dark .border-border,
-html.dark [class*="border"] {
-  border-color: #334155;
+/* ========================================
+   BORDERS
+   ======================================== */
+
+html.dark .border-border {
+  border-color: #334155 !important;
 }
 
-/* Sidebar */
-html.dark aside {
-  background: linear-gradient(to bottom, #1e293b, #1e293b);
-  border-right-color: #334155;
+html.dark .border-border\/50,
+html.dark .border-border\/70 {
+  border-color: rgba(51, 65, 85, 0.7) !important;
 }
 
-/* Header */
-html.dark header {
-  background-color: rgba(30, 41, 59, 0.9);
-  border-bottom-color: #334155;
-}
+/* ========================================
+   INPUTS AND FORMS
+   ======================================== */
 
-/* Inputs and Forms */
 html.dark input,
 html.dark textarea,
 html.dark select {
@@ -88,74 +100,105 @@ html.dark select {
   border-color: #334155;
 }
 
-html.dark input::placeholder {
+html.dark input::placeholder,
+html.dark textarea::placeholder {
   color: #94a3b8;
 }
 
-/* Buttons */
-html.dark .bg-\[#E9EEFF\] {
-  background-color: #334155;
-  color: #f1f5f9;
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: #6366f1;
+  outline-color: #6366f1;
 }
 
-html.dark .hover\:bg-\[#F2F5FF\]:hover {
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+html.dark button[class*="variant-ghost"],
+html.dark .btn-ghost {
+  color: #e2e8f0;
+}
+
+html.dark button[class*="variant-ghost"]:hover,
+html.dark .btn-ghost:hover {
   background-color: #334155;
 }
 
-/* Cards */
-html.dark .bg-\[#f7f8fc\],
-html.dark .from-\[#f7f8fc\],
-html.dark .via-\[#f7f8fc\],
-html.dark .to-\[#eef2fb\],
-html.dark .from-white,
-html.dark .to-\[#FDE9F2\],
-html.dark .via-white,
-html.dark [class*="bg-gradient"],
+html.dark button[class*="variant-outline"],
+html.dark .btn-outline {
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+/* ========================================
+   GRADIENTS - Force solid dark bg
+   ======================================== */
+
+html.dark [class*="from-\[#f7f8fc\]"],
+html.dark [class*="via-\[#f7f8fc\]"],
+html.dark [class*="to-\[#eef2fb\]"],
 html.dark [class*="from-white"],
 html.dark [class*="to-white"],
 html.dark [class*="via-white"] {
   background-color: #1e293b !important;
   background-image: none !important;
-  color: #f1f5f9;
 }
 
-/* Badges and Tags */
-html.dark [class*="bg-\[#FFE1E1\]"],
-html.dark [class*="bg-\[#FDE2E2\]"],
-html.dark [class*="bg-\[#E6F7EF\]"] {
-  background-color: rgba(30, 41, 59, 0.8);
-  border-color: #334155;
+/* ========================================
+   CARDS AND PANELS
+   ======================================== */
+
+html.dark [class*="shadow-soft"],
+html.dark [class*="shadow-panel"] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
-html.dark [class*="text-\[#9B3B3B\]"],
-html.dark [class*="text-\[#B24B4B\]"],
-html.dark [class*="text-\[#2F7A5C\]"] {
-  color: #cbd5e1;
+html.dark [class*="shadow-card"] {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
-/* Modal Overlay */
-html.dark [class*="bg-black/50"] {
-  background-color: rgba(0, 0, 0, 0.7);
+/* ========================================
+   BADGES AND TAGS
+   ======================================== */
+
+html.dark .bg-primary\/10 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
 }
 
-/* Links */
-html.dark a {
+html.dark .bg-danger\/15 {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+/* ========================================
+   LINKS
+   ======================================== */
+
+html.dark a:not([class*="text-"]) {
   color: #60a5fa;
 }
 
-html.dark a:hover {
+html.dark a:not([class*="text-"]):hover {
   color: #93c5fd;
 }
 
-/* Selection */
+/* ========================================
+   SELECTION
+   ======================================== */
+
 html.dark ::selection {
   background-color: rgba(96, 165, 250, 0.4);
   color: #f1f5f9;
 }
 
-/* Scrollbar */
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+
 html.dark ::-webkit-scrollbar {
   background-color: #0f172a;
+  width: 10px;
 }
 
 html.dark ::-webkit-scrollbar-track {
@@ -164,22 +207,83 @@ html.dark ::-webkit-scrollbar-track {
 
 html.dark ::-webkit-scrollbar-thumb {
   background-color: #475569;
+  border-radius: 5px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
   background-color: #64748b;
 }
 
-/* Agenda Page - Respect Tailwind classes */
-html.dark [class*="bg-slate-900"],
-html.dark [class*="dark:bg-slate-900"],
-html.dark [class*="dark:bg-slate-800"],
-html.dark [class*="dark:bg-slate-700"] {
-  background-color: inherit !important;
+/* ========================================
+   MODALS AND OVERLAYS
+   ======================================== */
+
+html.dark [class*="bg-black/50"],
+html.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.75) !important;
 }
 
-/* Allow Agenda containers to use their own dark mode classes */
-html.dark .space-y-4 > div[class*="rounded-3xl"],
-html.dark .space-y-4 > div[class*="border"][class*="bg-"] {
-  background-color: inherit !important;
+html.dark .modal-content,
+html.dark [role="dialog"] > div {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+html.dark table {
+  background-color: #1e293b;
+}
+
+html.dark th {
+  background-color: #334155;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+
+html.dark td {
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+html.dark tr:hover {
+  background-color: #293548;
+}
+
+/* ========================================
+   STAT CARDS AND DASHBOARD WIDGETS
+   ======================================== */
+
+html.dark [class*="rounded-2xl"][class*="border"],
+html.dark [class*="rounded-xl"][class*="border"] {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+/* ========================================
+   DROPDOWN MENUS
+   ======================================== */
+
+html.dark [role="menu"],
+html.dark [role="listbox"],
+html.dark .dropdown-menu {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+html.dark [role="menuitem"]:hover,
+html.dark [role="option"]:hover {
+  background-color: #334155;
+}
+
+/* ========================================
+   TOOLTIPS
+   ======================================== */
+
+html.dark [role="tooltip"] {
+  background-color: #334155;
+  color: #f1f5f9;
+  border-color: #475569;
 }

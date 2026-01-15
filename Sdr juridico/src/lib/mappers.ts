@@ -4,7 +4,7 @@ import type {
   ClienteRow,
   DocumentoRow,
   LeadRow,
-  NotaRow,
+  TimelineEventRow,
 } from '@/lib/supabaseClient'
 import type {
   AgendaItem,
@@ -32,17 +32,9 @@ const toLocalTime = (value: string) => {
 
 const shortUserLabel = (value: string) => `Usuario ${value.slice(0, 8)}`
 
-const leadStatusMap: Record<LeadRow['status'], LeadStatus> = {
-  novo: 'novo',
-  em_triagem: 'em_contato',
-  qualificado: 'qualificado',
-  nao_qualificado: 'perdido',
-  convertido: 'ganho',
-  perdido: 'perdido',
-}
-
 const resolveHeat = (row: LeadRow): LeadHeat => {
-  const base = row.last_contact_at || row.created_at
+  if (row.heat) return row.heat
+  const base = row.ultimo_contato || row.created_at
   if (!base) return 'morno'
   const diffMs = Date.now() - new Date(base).getTime()
   const diffDays = diffMs / (1000 * 60 * 60 * 24)
@@ -52,82 +44,54 @@ const resolveHeat = (row: LeadRow): LeadHeat => {
 }
 
 const resolveCaseStatus = (status: CasoRow['status']): Caso['status'] => {
-  if (status === 'encerrado' || status === 'arquivado') return 'encerrado'
+  if (status === 'encerrado') return 'encerrado'
+  if (status === 'suspenso') return 'suspenso'
   return 'ativo'
 }
 
-const resolveCaseStage = (status: CasoRow['status']): Caso['stage'] => {
-  if (status === 'triagem') return 'triagem'
-  if (status === 'negociacao' || status === 'contrato') return 'negociacao'
-  if (status === 'andamento') return 'em_andamento'
-  if (status === 'encerrado' || status === 'arquivado') return 'conclusao'
-  return 'triagem'
-}
-
-const resolveCaseHeat = (prioridade: number): LeadHeat => {
-  if (prioridade >= 3) return 'quente'
-  if (prioridade === 2) return 'morno'
-  return 'frio'
-}
-
-const resolveSlaRisk = (prioridade: number): Caso['slaRisk'] => {
-  if (prioridade >= 3) return 'critico'
-  if (prioridade === 2) return 'atencao'
-  return 'ok'
-}
-
 const resolveDocType = (doc: DocumentoRow) => {
-  if (doc.mime_type) {
-    const [, subtype] = doc.mime_type.split('/')
-    if (subtype) return subtype.toUpperCase()
-  }
-
-  return 'DOCUMENTO'
+  return doc.tipo || 'DOCUMENTO'
 }
 
-const resolveTimelineCategory = (nota: NotaRow): TimelineCategory => {
-  const tags = nota.tags || []
+const resolveTimelineCategory = (event: TimelineEventRow): TimelineCategory => {
+  const tags = event.tags || []
   const mapped = tags.find((tag) =>
     ['docs', 'agenda', 'comercial', 'juridico', 'automacao', 'humano'].includes(tag)
   ) as TimelineCategory | undefined
   if (mapped) return mapped
-  if (nota.entidade === 'lead') return 'comercial'
-  if (nota.entidade === 'conversa') return 'humano'
-  if (nota.entidade === 'cliente') return 'comercial'
+  if (event.categoria) return event.categoria
   return 'juridico'
 }
 
 export const mapLeadRowToLead = (row: LeadRow): Lead => ({
   id: row.id,
-  name: row.nome || 'Sem nome',
-  email: row.email || '',
+  name: row.nome,
+  email: row.email,
   phone: row.telefone || '',
-  area: row.assunto || 'Sem area',
-  origin: row.origem || 'Outro',
-  status: leadStatusMap[row.status] || 'novo',
+  area: row.area || 'Sem area',
+  origin: row.origem || row.empresa || 'Outro',
+  status: row.status,
   heat: resolveHeat(row),
   createdAt: row.created_at,
-  lastContactAt: row.last_contact_at || undefined,
-  owner: row.assigned_user_id ? shortUserLabel(row.assigned_user_id) : 'Nao atribuido',
+  lastContactAt: row.ultimo_contato || undefined,
+  owner: row.responsavel || 'Nao atribuido',
 })
 
 export const mapCasoRowToCaso = (row: CasoRow): Caso => {
-  const prioridadeNum = row.prioridade ?? 2
-
   return {
     id: row.id,
     title: row.titulo,
     cliente: row.cliente?.nome || 'Sem cliente',
     area: row.area || 'Geral',
     status: resolveCaseStatus(row.status),
-    heat: resolveCaseHeat(prioridadeNum),
-    stage: resolveCaseStage(row.status),
-    value: row.valor_estimado || 0,
+    heat: row.heat || 'morno',
+    stage: row.stage || 'triagem',
+    value: row.valor || 0,
     createdAt: row.created_at,
-    updatedAt: row.encerrado_em || row.created_at,
+    updatedAt: row.data_encerramento || row.updated_at,
     leadId: row.lead_id || undefined,
-    tags: [],
-    slaRisk: resolveSlaRisk(prioridadeNum),
+    tags: row.tags || [],
+    slaRisk: row.sla_risk || 'ok',
   }
 }
 
@@ -147,54 +111,55 @@ export const mapClienteRowToCliente = (
   status: data.status,
   health: data.health,
   caseCount: data.caseCount,
-  owner: row.owner_user_id ? shortUserLabel(row.owner_user_id) : 'Nao atribuido',
+  owner: row.responsavel || 'Nao atribuido',
   lastUpdate: data.lastUpdate,
 })
 
 export const mapDocumentoRowToDocumento = (row: DocumentoRow): Documento => ({
   id: row.id,
-  title: row.title,
-  cliente: row.cliente_id ? shortUserLabel(row.cliente_id) : 'Sem cliente',
+  title: row.titulo,
+  cliente: row.cliente_nome || 'Sem cliente',
   casoId: row.caso_id || undefined,
   type: resolveDocType(row),
-  status: ((row.meta as { status?: string })?.status as Documento['status']) || 'pendente',
+  status: row.status || 'pendente',
   createdAt: row.created_at,
-  updatedAt: row.created_at,
-  requestedBy: row.uploaded_by ? shortUserLabel(row.uploaded_by) : 'Sistema',
+  updatedAt: row.updated_at,
+  requestedBy: row.solicitado_por || 'Sistema',
   tags: row.tags || [],
 })
 
 export const mapAgendamentoRowToAgendaItem = (row: AgendaRow): AgendaItem => {
-  const startAt = new Date(row.start_at)
-  const endAt = new Date(row.end_at)
+  const startAt = new Date(row.data_inicio)
+  const endAt = new Date(row.data_fim)
   const durationMinutes = Math.max(0, Math.round((endAt.getTime() - startAt.getTime()) / 60000))
 
   return {
     id: row.id,
-    title: row.title,
-    type: (row.meta?.tipo as string) || 'Compromisso',
-    date: toLocalDate(row.start_at),
-    time: toLocalTime(row.start_at),
+    title: row.titulo,
+    type: row.tipo || 'Compromisso',
+    tipo: row.tipo || 'Compromisso',
+    date: toLocalDate(row.data_inicio),
+    time: toLocalTime(row.data_inicio),
     durationMinutes: durationMinutes || 30,
-    cliente: row.cliente_id ? shortUserLabel(row.cliente_id) : 'Sem cliente',
+    cliente: row.cliente_nome || 'Sem cliente',
     casoId: row.caso_id || undefined,
-    owner: row.owner_user_id ? shortUserLabel(row.owner_user_id) : 'Nao atribuido',
-    location: row.location || 'Indefinido',
-    status: ((row.meta as { status?: string })?.status as AgendaItem['status']) || 'pendente',
+    owner: row.responsavel || 'Nao atribuido',
+    location: row.local || 'Indefinido',
+    status: row.status || 'pendente',
   }
 }
 
-export const mapNotaRowToTimelineEvent = (row: NotaRow): TimelineEvent => {
-  const title = row.texto.split('. ')[0] || row.texto
+export const mapTimelineRowToTimelineEvent = (row: TimelineEventRow): TimelineEvent => {
+  const title = row.titulo || row.descricao || 'Evento'
   return {
     id: row.id,
-    casoId: row.entidade_id,
+    casoId: row.caso_id,
     title,
     category: resolveTimelineCategory(row),
-    channel: 'Sistema',
-    date: row.created_at,
-    description: row.texto,
+    channel: row.canal || 'Sistema',
+    date: row.data_evento || row.created_at,
+    description: row.descricao || '',
     tags: row.tags || [],
-    author: row.created_by ? shortUserLabel(row.created_by) : 'Sistema',
+    author: row.autor || 'Sistema',
   }
 }

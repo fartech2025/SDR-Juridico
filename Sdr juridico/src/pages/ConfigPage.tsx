@@ -105,7 +105,7 @@ export const ConfigPage = () => {
         ? 'empty'
         : 'ready'
   const pageState = state !== 'ready' ? state : baseState
-  const canSeed = !loading && integrations.length === 0 && Boolean(orgId)
+  const canSeed = !loading && integrations.length === 0
   const selectedIsGoogleCalendar = selectedIntegration
     ? matchesKey(selectedIntegration.name, 'google_calendar')
     : false

@@ -73,8 +73,11 @@ export function DatabasePage() {
       { name: 'clientes', icon: UserCheck },
       { name: 'casos', icon: Briefcase },
       { name: 'documentos', icon: FileText },
-      { name: 'agenda_eventos', icon: Calendar },
-      { name: 'users', icon: Users }
+      { name: 'agenda', icon: Calendar },
+      { name: 'usuarios', icon: Users },
+      { name: 'organizations', icon: Users },
+      { name: 'timeline_events', icon: Activity },
+      { name: 'notificacoes', icon: AlertCircle }
     ]
 
     const stats: TableStats[] = []
@@ -158,19 +161,12 @@ export function DatabasePage() {
       })
     }
 
-    // Verifica Google Calendar (através da tabela de integrações)
+    // Verifica Google Calendar (integrações locais)
     try {
-      const { data, error } = await supabase
-        .from('integracoes')
-        .select('*')
-        .eq('tipo', 'google_calendar')
-        .eq('ativo', true)
-        .single()
-
       statuses.push({
         name: 'Google Calendar',
-        status: data && !error ? 'connected' : 'not-configured',
-        message: data ? 'Integração ativa' : 'Não configurado',
+        status: 'not-configured',
+        message: 'Integração não disponível no schema atual',
         icon: Calendar
       })
     } catch (error: any) {
@@ -182,19 +178,12 @@ export function DatabasePage() {
       })
     }
 
-    // Verifica Microsoft Teams (através da tabela de integrações)
+    // Verifica Microsoft Teams (integrações locais)
     try {
-      const { data, error } = await supabase
-        .from('integracoes')
-        .select('*')
-        .eq('tipo', 'teams')
-        .eq('ativo', true)
-        .single()
-
       statuses.push({
         name: 'Microsoft Teams',
-        status: data && !error ? 'connected' : 'not-configured',
-        message: data ? 'Integração ativa' : 'Não configurado',
+        status: 'not-configured',
+        message: 'Integração não disponível no schema atual',
         icon: Activity
       })
     } catch (error: any) {

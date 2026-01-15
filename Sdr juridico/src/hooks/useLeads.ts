@@ -71,7 +71,7 @@ export function useLeads() {
 
   // Criar novo lead
   const createLead = useCallback(
-    async (lead: Omit<LeadRow, 'id' | 'created_at' | 'org_id'>) => {
+    async (lead: Omit<LeadRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>) => {
       try {
         const newLead = await leadsService.createLead(lead)
         setState((prev) => ({
@@ -90,7 +90,7 @@ export function useLeads() {
 
   // Atualizar lead
   const updateLead = useCallback(
-    async (id: string, updates: Partial<Omit<LeadRow, 'id' | 'created_at'>>) => {
+    async (id: string, updates: Partial<Omit<LeadRow, 'id' | 'created_at' | 'updated_at'>>) => {
       try {
         const updated = await leadsService.updateLead(id, updates)
         setState((prev) => ({

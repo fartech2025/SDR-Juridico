@@ -67,21 +67,17 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       const isFartech = await permissionsService.isFartechAdmin()
       setIsFartechAdmin(isFartech)
       
-      // Get user role if they belong to an org
+      setCurrentRole(user.role || null)
+
       if (user.org_id) {
-        const membership = await permissionsService.getUserOrgMembership(user.org_id)
-        setCurrentRole(membership?.role || null)
-        
         const org = await organizationsService.getById(user.org_id)
         setCurrentOrg(org)
 
-        // Load stats if org exists
         if (org) {
           await loadStats(org.id)
         }
       } else {
         setCurrentOrg(null)
-        setCurrentRole(null)
       }
     } catch (err) {
       console.error('❌ Error loading organization:', err)

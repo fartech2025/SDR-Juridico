@@ -16,6 +16,43 @@ import {
   FARTECH_ADMIN_PERMISSIONS,
 } from '@/types/permissions'
 
+const extractMetadataPermissoes = (
+  metadata?: Record<string, unknown>
+): string[] => {
+  if (!metadata) return []
+  const permissao = metadata.permissoes
+  if (Array.isArray(permissao)) {
+    return permissao.filter((item): item is string => typeof item === 'string')
+  }
+  if (typeof permissao === 'string') return [permissao]
+  return []
+}
+
+const extractMetadataRole = (metadata?: Record<string, unknown>) => {
+  if (!metadata) return null
+  return typeof metadata.role === 'string' ? metadata.role : null
+}
+
+const extractIsFartechAdmin = (metadata?: Record<string, unknown>) =>
+  metadata?.is_fartech_admin === true
+
+const resolveRoleFromPermissoes = (permissoes: string[]) => {
+  if (permissoes.includes('fartech_admin')) return 'fartech_admin'
+  if (permissoes.includes('org_admin')) return 'org_admin'
+  return 'user'
+}
+
+const fartechAdminEmails = new Set([
+  'admin@fartch.com.br',
+  'admin@fartech.com.br',
+])
+
+const isFartechAdminEmail = (email?: string | null) =>
+  !!email &&
+  (fartechAdminEmails.has(email.toLowerCase()) ||
+    email.toLowerCase().endsWith('@fartch.com.br') ||
+    email.toLowerCase().endsWith('@fartech.com.br'))
+
 export const permissionsService = {
   /**
    * Get current user with role information
@@ -25,27 +62,61 @@ export const permissionsService = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
 
+      const metadata = (user.user_metadata ?? {}) as Record<string, unknown>
+      const metadataPermissoes = extractMetadataPermissoes(metadata)
+      const metadataRole = extractMetadataRole(metadata)
+      const metadataIsFartech = extractIsFartechAdmin(metadata)
+      const emailIsFartechAdmin = isFartechAdminEmail(user.email)
+
       const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, email, nome, role, org_id, is_fartech_admin')
-        .eq('user_id', user.id)
+        .from('usuarios')
+        .select('id, email, nome_completo, permissoes')
+        .eq('id', user.id)
         .single()
 
       if (error) {
-        console.error('Error fetching profile:', error)
-        throw new AppError(error.message, 'database_error')
+        const fallbackName =
+          (user.user_metadata && (user.user_metadata as { nome_completo?: string }).nome_completo) ||
+          user.email ||
+          'Usuario'
+        const fallbackPermissoes = [
+          ...metadataPermissoes,
+          ...(metadataRole ? [metadataRole] : []),
+          ...(metadataIsFartech ? ['fartech_admin'] : []),
+          ...(emailIsFartechAdmin ? ['fartech_admin'] : []),
+        ]
+        const role = resolveRoleFromPermissoes(fallbackPermissoes)
+        return {
+          id: user.id,
+          email: user.email || '',
+          name: fallbackName,
+          role,
+          org_id: null,
+          is_fartech_admin: role === 'fartech_admin',
+        } as UserWithRole
       }
       
       if (!data) return null
       
       // Map to UserWithRole interface
+      const permissoes = data?.permissoes || []
+      const combinedPermissoes = Array.from(new Set([
+        ...permissoes,
+        ...metadataPermissoes,
+        ...(metadataRole ? [metadataRole] : []),
+        ...(metadataIsFartech ? ['fartech_admin'] : []),
+        ...(emailIsFartechAdmin ? ['fartech_admin'] : []),
+      ]))
+      const role = resolveRoleFromPermissoes(combinedPermissoes)
+      const isFartechAdmin = role === 'fartech_admin'
+
       return {
-        id: data.user_id,
+        id: data.id,
         email: data.email,
-        name: data.nome,
-        role: data.role,
-        org_id: data.org_id,
-        is_fartech_admin: data.is_fartech_admin || false,
+        name: data.nome_completo,
+        role,
+        org_id: null,
+        is_fartech_admin: isFartechAdmin,
       } as UserWithRole
     } catch (error) {
       console.error('Error getting current user:', error)
@@ -86,7 +157,7 @@ export const permissionsService = {
       }
 
       // For cross-org operations, verify org_id
-      if (check.target_org_id && check.target_org_id !== user.org_id) {
+      if (check.target_org_id && !user.is_fartech_admin) {
         return { 
           allowed: false, 
           reason: 'Operação não permitida em outra organização' 
@@ -206,18 +277,7 @@ export const permissionsService = {
    */
   async getUserOrgMembership(orgId: string): Promise<{ role: string; org_id: string } | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return null
-
-      const { data, error } = await supabase
-        .from('org_members')
-        .select('role, org_id')
-        .eq('user_id', user.id)
-        .eq('org_id', orgId)
-        .single()
-
-      if (error) return null
-      return data
+      return null
     } catch (error) {
       console.error('Error getting user org membership:', error)
       return null
@@ -236,7 +296,7 @@ export const permissionsService = {
       if (user.is_fartech_admin) return true
 
       // Other users can only access their own org
-      return user.org_id === targetOrgId
+      return false
     } catch (error) {
       return false
     }
@@ -282,15 +342,17 @@ export const permissionsService = {
       const sensitiveResources: Resource[] = ['organizations', 'users', 'billing']
       if (!sensitiveResources.includes(check.resource)) return
 
-      await supabase.from('permission_audit_logs').insert({
+      await supabase.from('audit_logs').insert({
+        org_id: user.org_id,
         user_id: user.id,
         action: check.action,
-        resource: check.resource,
-        resource_id: metadata?.resource_id,
-        org_id: user.org_id,
-        success: result.allowed,
-        reason: result.reason,
-        metadata,
+        entity_type: check.resource,
+        entity_id: metadata?.resource_id || null,
+        metadata: {
+          ...metadata,
+          success: result.allowed,
+          reason: result.reason,
+        },
         // ip_address and user_agent would come from request headers
       })
     } catch (error) {

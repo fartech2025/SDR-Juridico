@@ -17,10 +17,10 @@ import type {
 function mapDbToOrg(dbOrg: any): Organization {
   return {
     ...dbOrg,
-    name: dbOrg.nome || dbOrg.name || 'Sem nome',
-    slug: dbOrg.slug || dbOrg.nome?.toLowerCase().replace(/\s+/g, '-') || 'sem-slug',
-    status: dbOrg.ativo ? 'active' : 'suspended',
-    plan: dbOrg.plano || 'trial',
+    name: dbOrg.name || 'Sem nome',
+    slug: dbOrg.slug || dbOrg.name?.toLowerCase().replace(/\s+/g, '-') || 'sem-slug',
+    status: dbOrg.status || 'pending',
+    plan: dbOrg.plan || 'trial',
     primary_color: dbOrg.primary_color || '#10b981',
     max_users: dbOrg.max_users || 10,
     max_storage_gb: dbOrg.max_storage_gb || 5,
@@ -37,7 +37,7 @@ export const organizationsService = {
   async getAll(): Promise<Organization[]> {
     try {
       const { data, error } = await supabase
-        .from('orgs')
+        .from('organizations')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -57,7 +57,7 @@ export const organizationsService = {
   async getById(id: string): Promise<Organization | null> {
     try {
       const { data, error } = await supabase
-        .from('orgs')
+        .from('organizations')
         .select('*')
         .eq('id', id)
         .single()
@@ -81,7 +81,7 @@ export const organizationsService = {
   async getBySlug(slug: string): Promise<Organization | null> {
     try {
       const { data, error } = await supabase
-        .from('orgs')
+        .from('organizations')
         .select('*')
         .eq('slug', slug)
         .single()
@@ -246,17 +246,8 @@ export const organizationsService = {
    */
   async getStats(orgId: string): Promise<OrganizationStats> {
     try {
-      // Get user counts
-      const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', orgId)
-
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', orgId)
-        .not('metadata', 'is', null)
+      const totalUsers = 0
+      const activeUsers = 0
 
       // Get client count
       const { count: totalClients } = await supabase

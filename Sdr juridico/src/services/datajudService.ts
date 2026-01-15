@@ -3,8 +3,7 @@
  * Base Nacional de Dados do Poder Judiciário
  */
 
-import { supabase } from '@/lib/supabaseClient'
-import { getActiveOrgId } from '@/lib/org'
+import { integrationsService } from '@/services/integrationsService'
 
 // Em desenvolvimento, usa o proxy do Vite para evitar CORS
 // Em produção, deve usar um backend proxy ou configurar CORS
@@ -22,25 +21,8 @@ async function resolveDataJudApiKey(): Promise<string> {
     return ENV_DATAJUD_API_KEY
   }
 
-  const orgId = await getActiveOrgId()
-  let query = supabase
-    .from('integrations')
-    .select('secrets, settings')
-    .eq('provider', 'datajud')
-    .order('created_at', { ascending: false })
-    .limit(1)
-  if (orgId) query = query.eq('org_id', orgId)
-
-  const { data, error } = await query
-  if (error) {
-    cachedApiKey = ''
-    return ''
-  }
-
-  const row = data?.[0] as {
-    secrets?: Record<string, unknown> | null
-    settings?: Record<string, unknown> | null
-  } | undefined
+  const rows = await integrationsService.getIntegrations()
+  const row = rows.find((item) => item.provider === 'datajud')
   const secrets = row?.secrets || {}
   const settings = row?.settings || {}
   const apiKey =

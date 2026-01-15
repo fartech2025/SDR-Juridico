@@ -5,24 +5,14 @@
 
 import { supabase, type LeadRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
-import { getActiveOrgId } from '@/lib/org'
-
 export const leadsService = {
   // Buscar todos os leads
   async getLeads() {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase
+      const { data, error } = await supabase
         .from('leads')
         .select('*')
         .order('created_at', { ascending: false })
-      
-      // Filtrar por org_id se não for Fartech Admin
-      if (orgId) {
-        query = query.eq('org_id', orgId)
-      }
-
-      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return data as LeadRow[]
@@ -56,18 +46,7 @@ export const leadsService = {
   // Buscar leads por status
   async getLeadsByStatus(status: LeadRow['status']) {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase
-        .from('leads')
-        .select('*')
-        .eq('status', status)
-        .order('created_at', { ascending: false })
-      
-      if (orgId) {
-        query = query.eq('org_id', orgId)
-      }
-
-      const { data, error } = await query
+      const { data, error } = await supabase
         .from('leads')
         .select('*')
         .eq('status', status)
@@ -89,7 +68,7 @@ export const leadsService = {
       const leads = await this.getLeads()
       const now = Date.now()
       return leads.filter((lead) => {
-        const base = lead.last_contact_at || lead.created_at
+        const base = lead.ultimo_contato || lead.created_at
         if (!base) return false
         const diffDays = (now - new Date(base).getTime()) / (1000 * 60 * 60 * 24)
         return diffDays <= 2
@@ -107,8 +86,8 @@ export const leadsService = {
     try {
       const payload = {
         ...lead,
-        canal: lead.canal || 'whatsapp',
-        qualificacao: lead.qualificacao || {},
+        status: lead.status || 'novo',
+        heat: lead.heat || 'frio',
       }
       const { data, error } = await supabase
         .from('leads')

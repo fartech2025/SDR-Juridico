@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { notasService } from '@/services/notasService'
 import type { TimelineEvent } from '@/types/domain'
-import { mapNotaRowToTimelineEvent } from '@/lib/mappers'
+import { mapTimelineRowToTimelineEvent } from '@/lib/mappers'
 
 interface UseNotasState {
   notas: TimelineEvent[]
@@ -22,7 +22,7 @@ export function useNotas() {
       const notas = await notasService.getNotas()
       setState((prev) => ({
         ...prev,
-        notas: notas.map(mapNotaRowToTimelineEvent),
+        notas: notas.map(mapTimelineRowToTimelineEvent),
         loading: false,
       }))
     } catch (error) {
@@ -38,7 +38,7 @@ export function useNotas() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
       const notas = await notasService.getNotasByEntidade(entidade, entidadeId)
-      const mapped = notas.map(mapNotaRowToTimelineEvent)
+      const mapped = notas.map(mapTimelineRowToTimelineEvent)
       setState((prev) => ({ ...prev, notas: mapped, loading: false }))
       return mapped
     } catch (error) {

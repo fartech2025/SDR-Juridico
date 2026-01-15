@@ -45,15 +45,17 @@ export function useClientes() {
         const latest = sorted[0]
         const caseCount = cliente.casos_count ?? casosCliente.length
         
-        const hasCritico = casosCliente.some((caso) => (caso.prioridade ?? 0) >= 3)
-        const hasAtencao = casosCliente.some((caso) => (caso.prioridade ?? 0) === 2)
+        const hasCritico = casosCliente.some((caso) =>
+          ['alta', 'critica'].includes(caso.prioridade)
+        )
+        const hasAtencao = casosCliente.some((caso) => caso.prioridade === 'media')
 
         return mapClienteRowToCliente(cliente, {
           caseCount,
           area: latest?.area || 'Geral',
           status: caseCount === 0 ? 'inativo' : hasCritico ? 'em_risco' : 'ativo',
           health: hasCritico ? 'critico' : hasAtencao ? 'atencao' : 'ok',
-          lastUpdate: latest?.created_at || cliente.created_at,
+          lastUpdate: latest?.updated_at || latest?.created_at || cliente.updated_at,
         })
       })
 
@@ -79,7 +81,7 @@ export function useClientes() {
         area: 'Geral',
         status: 'ativo',
         health: 'ok',
-        lastUpdate: cliente.created_at,
+        lastUpdate: cliente.updated_at,
       })
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
@@ -101,7 +103,7 @@ export function useClientes() {
           area: 'Geral',
           status: 'ativo',
           health: 'ok',
-          lastUpdate: cliente.created_at,
+          lastUpdate: cliente.updated_at,
         })
       )
       setState((prev) => ({ ...prev, clientes: mapped, loading: false }))
@@ -127,7 +129,7 @@ export function useClientes() {
             area: 'Geral',
             status: 'ativo',
             health: 'ok',
-            lastUpdate: cliente.created_at,
+            lastUpdate: cliente.updated_at,
           })
         : null
     } catch (error) {
@@ -140,7 +142,7 @@ export function useClientes() {
   /**
    * Cria um novo cliente (com atualização otimista)
    */
-  const createCliente = useCallback(async (cliente: Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>) => {
+  const createCliente = useCallback(async (cliente: Omit<ClienteRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoCliente = await clientesService.createCliente(cliente)
@@ -149,7 +151,7 @@ export function useClientes() {
         area: 'Geral',
         status: 'ativo',
         health: 'ok',
-        lastUpdate: novoCliente.created_at,
+        lastUpdate: novoCliente.updated_at,
       })
       setState((prev) => ({ ...prev, clientes: [mapped, ...prev.clientes] }))
       return mapped
@@ -164,7 +166,7 @@ export function useClientes() {
    * Atualiza um cliente (com atualização otimista)
    */
   const updateCliente = useCallback(
-    async (id: string, updates: Partial<Omit<ClienteRow, 'id' | 'created_at'>>) => {
+    async (id: string, updates: Partial<Omit<ClienteRow, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const clienteAtualizado = await clientesService.updateCliente(id, updates)
@@ -173,7 +175,7 @@ export function useClientes() {
         area: 'Geral',
         status: 'ativo',
         health: 'ok',
-        lastUpdate: clienteAtualizado.created_at,
+        lastUpdate: clienteAtualizado.updated_at,
       })
       setState((prev) => ({
         ...prev,

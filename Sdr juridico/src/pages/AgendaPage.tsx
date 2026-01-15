@@ -102,12 +102,14 @@ const statusIcons: Record<AgendaStatus, React.ReactNode> = {
   confirmado: <CheckCircle2 className="h-3.5 w-3.5" />,
   pendente: <AlertCircle className="h-3.5 w-3.5" />,
   cancelado: <XCircle className="h-3.5 w-3.5" />,
+  concluido: <CheckCircle2 className="h-3.5 w-3.5" />,
 }
 
 const statusLabels: Record<AgendaStatus, string> = {
   confirmado: 'Confirmada',
   pendente: 'Pendente',
   cancelado: 'Cancelada',
+  concluido: 'Concluida',
 }
 
 const statusStyles: Record<
@@ -128,6 +130,11 @@ const statusStyles: Record<
     container: 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/30 border-red-300 dark:border-red-700/50 text-red-900 dark:text-red-100',
     badge: 'bg-red-100 dark:bg-red-900/60 border-red-200 dark:border-red-700 text-red-700 dark:text-red-200',
     button: 'bg-red-50 dark:bg-red-800/50 text-red-700 dark:text-red-100 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800',
+  },
+  concluido: {
+    container: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/40 dark:to-emerald-900/30 border-emerald-300 dark:border-emerald-700/50 text-emerald-900 dark:text-emerald-100',
+    badge: 'bg-emerald-100 dark:bg-emerald-900/60 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-200',
+    button: 'bg-emerald-50 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-100 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-800',
   },
 }
 
@@ -386,20 +393,19 @@ export const AgendaPage = () => {
     
     try {
       await createEvento({
-        title: 'Horário de Almoço',
-        start_at: startAt.toISOString(),
-        end_at: endAt.toISOString(),
-        location: 'Escritório',
-        description: null,
-        owner_user_id: user?.id ?? null,
-        lead_id: null,
+        titulo: 'Horario de Almoco',
+        data_inicio: startAt.toISOString(),
+        data_fim: endAt.toISOString(),
+        local: 'Escritorio',
+        descricao: null,
         cliente_id: null,
         caso_id: null,
-        external_provider: null,
-        external_event_id: null,
-        meta: {
-          tipo: 'interno',
-        },
+        responsavel: displayName || 'Sistema',
+        tipo: 'interno',
+        status: 'confirmado',
+        cliente_nome: null,
+        duracao_minutos: 60,
+        observacoes: null,
       })
       alert('Horário de almoço bloqueado com sucesso!')
     } catch (err) {
@@ -416,33 +422,31 @@ export const AgendaPage = () => {
       const startAt = new Date(`${formState.date}T${formState.time}:00`)
       const endAt = new Date(startAt)
       endAt.setMinutes(endAt.getMinutes() + duration)
-      const meta = {
-        tipo: editingItem?.type ?? 'Compromisso',
-        status: formState.status,
-      }
-
       if (editorMode === 'edit' && editingItem) {
         await updateEvento(editingItem.id, {
-          title,
-          start_at: startAt.toISOString(),
-          end_at: endAt.toISOString(),
-          location: formState.location.trim() || null,
-          meta,
+          titulo: title,
+          data_inicio: startAt.toISOString(),
+          data_fim: endAt.toISOString(),
+          local: formState.location.trim() || null,
+          tipo: editingItem.type || 'reuniao',
+          status: formState.status,
+          duracao_minutos: duration,
         })
       } else {
         await createEvento({
-          title,
-          start_at: startAt.toISOString(),
-          end_at: endAt.toISOString(),
-          location: formState.location.trim() || null,
-          description: null,
-          owner_user_id: user?.id ?? null,
-          lead_id: null,
+          titulo: title,
+          data_inicio: startAt.toISOString(),
+          data_fim: endAt.toISOString(),
+          local: formState.location.trim() || null,
+          descricao: null,
           cliente_id: null,
           caso_id: null,
-          external_provider: null,
-          external_event_id: null,
-          meta,
+          responsavel: displayName || 'Sistema',
+          tipo: editingItem?.type || 'reuniao',
+          status: formState.status,
+          cliente_nome: null,
+          duracao_minutos: duration,
+          observacoes: null,
         })
       }
 

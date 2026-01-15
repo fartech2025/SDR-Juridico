@@ -43,11 +43,16 @@ export function FartechGuard({
   loadingComponent = <div>Verificando acesso...</div>,
 }: FartechGuardProps) {
   const isFartechAdmin = useIsFartechAdmin()
-  const { user } = usePermissions()
+  const { user, loading } = usePermissions()
   
   // Still loading user data
-  if (!user) {
+  if (loading) {
     return <>{loadingComponent}</>
+  }
+  
+  // Not authenticated: go to login
+  if (!user) {
+    return <Navigate to="/login" replace />
   }
   
   // User is not Fartech admin

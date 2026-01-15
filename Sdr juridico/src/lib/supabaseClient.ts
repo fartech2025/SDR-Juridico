@@ -25,107 +25,100 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 export const isSupabaseConfigured = hasValidCredentials
 
 // Tipos para as tabelas
-export type LeadStatus =
-  | 'novo'
-  | 'em_triagem'
-  | 'qualificado'
-  | 'nao_qualificado'
-  | 'convertido'
-  | 'perdido'
+export type LeadStatus = 'novo' | 'em_contato' | 'qualificado' | 'proposta' | 'ganho' | 'perdido'
 
 export type CaseStatus =
   | 'aberto'
-  | 'triagem'
-  | 'negociacao'
-  | 'contrato'
-  | 'andamento'
+  | 'em_andamento'
+  | 'resolvido'
+  | 'fechado'
+  | 'ativo'
+  | 'suspenso'
   | 'encerrado'
-  | 'arquivado'
 
-export type TaskStatus = 'pendente' | 'em_andamento' | 'concluida' | 'cancelada'
-export type ChannelType = 'whatsapp' | 'email' | 'telefone' | 'webchat' | 'outro'
-export type DocumentVisibility = 'privado' | 'interno' | 'cliente'
-export type UserRole = 'admin' | 'gestor' | 'advogado' | 'secretaria' | 'leitura'
+export type CasePriority = 'baixa' | 'media' | 'alta' | 'critica'
+export type LeadHeat = 'quente' | 'morno' | 'frio'
+export type CaseStage = 'triagem' | 'negociacao' | 'em_andamento' | 'conclusao'
+export type SlaRisk = 'ok' | 'atencao' | 'critico'
+export type UsuarioStatus = 'ativo' | 'inativo' | 'suspenso'
+export type UserRole = 'fartech_admin' | 'org_admin' | 'user'
 
-export interface OrgRow {
+export interface UsuarioRow {
   id: string
-  created_at: string
-  nome: string
-  cnpj: string | null
-  plano: string | null
-  ativo: boolean
-  settings: Record<string, unknown>
-}
-
-export interface ProfileRow {
-  user_id: string
-  created_at: string
-  nome: string | null
-  email: string | null
+  nome_completo: string
+  email: string
   telefone: string | null
-  avatar_url: string | null
-  metadata: Record<string, unknown>
-}
-
-export interface OrgMemberRow {
-  id: string
+  cargo: string | null
+  departamento: string | null
+  foto_url: string | null
+  permissoes: string[]
+  status: UsuarioStatus
+  ultimo_acesso: string | null
+  preferencias: Record<string, unknown> | null
   created_at: string
-  org_id: string
-  user_id: string
-  role: UserRole
-  ativo: boolean
+  updated_at: string
 }
 
 export interface LeadRow {
   id: string
   created_at: string
-  org_id?: string
-  status: LeadStatus
-  canal: ChannelType
-  nome: string | null
+  updated_at: string
+  org_id?: string | null
+  nome: string
+  email: string
   telefone: string | null
-  email: string | null
+  empresa: string | null
+  area: string | null
   origem: string | null
-  assunto: string | null
-  resumo: string | null
-  qualificacao: Record<string, unknown>
-  assigned_user_id: string | null
-  cliente_id: string | null
-  remote_id: string | null
-  last_contact_at: string | null
+  status: LeadStatus
+  heat: LeadHeat
+  ultimo_contato: string | null
+  responsavel: string | null
+  observacoes: string | null
 }
 
 export interface ClienteRow {
   id: string
   created_at: string
-  org_id: string
-  tipo: string
+  updated_at: string
+  org_id?: string | null
   nome: string
+  email: string
   telefone: string | null
-  documento: string | null
-  email: string | null
-  endereco: Record<string, unknown>
-  tags: string[]
+  empresa: string | null
+  cnpj: string | null
+  cpf: string | null
+  endereco: string | null
+  cidade: string | null
+  estado: string | null
+  cep: string | null
+  area_atuacao: string | null
+  responsavel: string | null
+  status: 'ativo' | 'em_risco' | 'inativo'
+  health: 'ok' | 'atencao' | 'critico' | null
   observacoes: string | null
-  owner_user_id: string | null
 }
 
 export interface CasoRow {
   id: string
   created_at: string
-  org_id: string
-  status: CaseStatus
+  updated_at: string
+  org_id?: string | null
   titulo: string
-  area: string | null
-  subarea: string | null
   descricao: string | null
   cliente_id: string | null
   lead_id: string | null
-  responsavel_user_id: string | null
-  prioridade: number
-  valor_estimado: number | null
-  fase_atual: string | null
-  encerrado_em: string | null
+  area: string
+  status: CaseStatus
+  prioridade: CasePriority
+  heat: LeadHeat | null
+  stage: CaseStage | null
+  valor: number | null
+  sla_risk: SlaRisk | null
+  tags: string[] | null
+  responsavel: string | null
+  data_abertura: string | null
+  data_encerramento: string | null
   cliente?: {
     nome: string | null
   } | null
@@ -134,89 +127,51 @@ export interface CasoRow {
 export interface DocumentoRow {
   id: string
   created_at: string
-  org_id: string
-  title: string
-  description: string | null
-  visibility: DocumentVisibility
-  bucket: string
-  storage_path: string
-  mime_type: string | null
-  size_bytes: number | null
-  lead_id: string | null
-  cliente_id: string | null
+  updated_at: string
+  org_id?: string | null
+  titulo: string
+  descricao: string | null
   caso_id: string | null
-  uploaded_by: string | null
-  tags: string[]
-  meta: Record<string, unknown>
+  cliente_nome: string | null
+  tipo: string
+  status: 'pendente' | 'aprovado' | 'rejeitado' | 'solicitado' | 'completo'
+  url: string | null
+  arquivo_nome: string | null
+  arquivo_tamanho: number | null
+  mime_type: string | null
+  solicitado_por: string | null
+  tags: string[] | null
 }
 
 export interface AgendaRow {
   id: string
   created_at: string
-  org_id: string
-  title: string
-  start_at: string
-  end_at: string
-  location: string | null
-  description: string | null
-  owner_user_id: string | null
-  lead_id: string | null
+  updated_at: string
+  titulo: string
+  descricao: string | null
+  tipo: string
+  data_inicio: string
+  data_fim: string
+  duracao_minutos: number | null
+  cliente_nome: string | null
   cliente_id: string | null
   caso_id: string | null
-  external_provider: string | null
-  external_event_id: string | null
-  meta: Record<string, unknown>
+  responsavel: string
+  local: string | null
+  status: 'confirmado' | 'pendente' | 'cancelado' | 'concluido'
+  observacoes: string | null
 }
 
-export interface IntegrationRow {
+export interface TimelineEventRow {
   id: string
-  created_at: string
-  org_id: string
-  provider: string
-  name: string | null
-  enabled: boolean
-  secrets: Record<string, unknown> | null
-  settings: Record<string, unknown> | null
-}
-
-export interface NotaRow {
-  id: string
-  created_at: string
-  org_id: string
-  entidade: string
-  entidade_id: string
-  texto: string
-  created_by: string | null
+  caso_id: string
+  titulo: string
+  descricao: string | null
+  categoria: 'docs' | 'agenda' | 'comercial' | 'juridico' | 'automacao' | 'humano'
+  canal: string | null
+  autor: string | null
   tags: string[] | null
-}
-
-export interface ConversaRow {
-  id: string
+  data_evento: string
   created_at: string
-  org_id: string
-  canal: ChannelType
-  remote_id: string
-  lead_id: string | null
-  cliente_id: string | null
-  caso_id: string | null
-  aberto: boolean
-  ultimo_evento_em: string | null
-  humano_na_conversa: boolean
-  bloqueado: boolean
-  expirar_bloqueado: string | null
-}
-
-export interface MensagemRow {
-  id: string
-  created_at: string
-  org_id: string
-  conversa_id: string
-  direction: string
-  from_remote: string | null
-  to_remote: string | null
-  body: string | null
-  payload: Record<string, unknown> | null
-  provider_msg_id: string | null
-  delivered_at: string | null
-  read_at: string | null
+  org_id?: string | null
 }

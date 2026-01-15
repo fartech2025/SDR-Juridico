@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import { getActiveOrgId } from '@/lib/org'
-
 interface UseGoogleCalendarSync {
   isConnected: boolean
   isLoading: boolean
@@ -25,27 +22,8 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSync {
    */
   const checkConnection = useCallback(async () => {
     try {
-      const orgId = await getActiveOrgId()
-      if (!orgId) return false
-
-      const { data, error: err } = await supabase
-        .from('integrations')
-        .select('enabled, secrets, settings, updated_at')
-        .eq('org_id', orgId)
-        .eq('provider', 'google_calendar')
-        .maybeSingle()
-
-      if (err || !data) return false
-
-      const secrets = data.secrets || {}
-      const hasToken = Boolean(secrets.access_token)
-
-      if (hasToken) {
-        setLastSync(data.updated_at ? new Date(data.updated_at) : null)
-      }
-
-      setIsConnected(hasToken && data.enabled)
-      return hasToken
+      setIsConnected(false)
+      return false
     } catch {
       return false
     }
@@ -56,18 +34,7 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSync {
    */
   const fetchEventCount = useCallback(async () => {
     try {
-      const orgId = getActiveOrgId()
-      if (!orgId) return
-
-      const { count, error: err } = await supabase
-        .from('agendamentos')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', orgId)
-        .eq('external_provider', 'google_calendar')
-
-      if (!err && count !== null) {
-        setEventCount(count)
-      }
+      setEventCount(0)
     } catch {
       // Ignorar erros de contagem
     }
@@ -80,48 +47,7 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSync {
     try {
       setIsLoading(true)
       setError(null)
-
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession()
-
-      if (sessionError || !session) {
-        throw new Error('Sessão expirada. Faça login novamente.')
-      }
-
-      const orgId = await getActiveOrgId()
-      if (!orgId) {
-        throw new Error('Organização não encontrada.')
-      }
-
-      // Obter ID da integração
-      const { data: integration, error: integrationError } = await supabase
-        .from('integrations')
-        .select('id')
-        .eq('org_id', orgId)
-        .eq('provider', 'google_calendar')
-        .maybeSingle()
-
-      if (integrationError || !integration) {
-        throw new Error('Integração do Google Calendar não encontrada.')
-      }
-
-      // Redirecionar para OAuth
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-      if (!supabaseUrl) {
-        throw new Error('Supabase não configurado.')
-      }
-
-      const returnTo = `${window.location.origin}/app/config`
-      const oauthUrl = new URL(
-        `${supabaseUrl.replace(/\/$/, '')}/functions/v1/google-calendar-oauth`
-      )
-      oauthUrl.searchParams.set('integration_id', integration.id)
-      oauthUrl.searchParams.set('org_id', orgId)
-      oauthUrl.searchParams.set('return_to', returnTo)
-
-      window.location.href = oauthUrl.toString()
+      throw new Error('Integração Google Calendar não disponível no schema atual.')
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Erro ao vincular')
       setError(error)
@@ -138,37 +64,7 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSync {
     try {
       setIsLoading(true)
       setError(null)
-
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession()
-
-      if (sessionError || !session) {
-        throw new Error('Sessão expirada. Faça login novamente.')
-      }
-
-      const orgId = await getActiveOrgId()
-      if (!orgId) {
-        throw new Error('Organização não encontrada.')
-      }
-
-      // Chamar edge function de sincronização
-      const { error: syncError } = await supabase.functions.invoke(
-        'google-calendar-sync',
-        {
-          body: { org_id: orgId },
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }
-      )
-
-      if (syncError) {
-        throw syncError
-      }
-
-      // Atualizar estado
-      setLastSync(new Date())
-      await fetchEventCount()
+      throw new Error('Integração Google Calendar não disponível no schema atual.')
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Erro ao sincronizar')
       setError(error)

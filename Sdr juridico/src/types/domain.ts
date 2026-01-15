@@ -41,7 +41,7 @@ export interface Caso {
   slaRisk: 'ok' | 'atencao' | 'critico'
 }
 
-export type DocumentoStatus = 'pendente' | 'aprovado' | 'rejeitado' | 'solicitado'
+export type DocumentoStatus = 'pendente' | 'aprovado' | 'rejeitado' | 'solicitado' | 'completo'
 
 export interface Documento {
   id: string
@@ -56,7 +56,7 @@ export interface Documento {
   tags: string[]
 }
 
-export type AgendaStatus = 'confirmado' | 'pendente' | 'cancelado'
+export type AgendaStatus = 'confirmado' | 'pendente' | 'cancelado' | 'concluido'
 
 export interface AgendaItem {
   id: string

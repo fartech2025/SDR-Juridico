@@ -58,11 +58,12 @@ export const LeadsPage = () => {
     nome: '',
     email: '',
     telefone: '',
+    empresa: '',
+    area: '',
     origem: '',
-    assunto: '',
-    resumo: '',
     status: 'novo' as LeadRow['status'],
-    canal: 'whatsapp' as LeadRow['canal'],
+    heat: 'frio' as LeadRow['heat'],
+    observacoes: '',
   })
 
   const tabs = ['Todos', 'Quentes 🔥', 'Em Negociação 💰', 'Fechados ✅']
@@ -138,16 +139,14 @@ export const LeadsPage = () => {
         nome: formData.nome,
         email: formData.email,
         telefone: formData.telefone,
+        empresa: formData.empresa || null,
+        area: formData.area || null,
         origem: formData.origem || null,
-        assunto: formData.assunto || null,
-        resumo: formData.resumo || null,
         status: formData.status,
-        canal: formData.canal,
-        qualificacao: {},
-        assigned_user_id: null,
-        cliente_id: null,
-        remote_id: null,
-        last_contact_at: null,
+        heat: formData.heat,
+        ultimo_contato: null,
+        responsavel: null,
+        observacoes: formData.observacoes || null,
       })
       
       // Resetar formulário e voltar para lista
@@ -155,11 +154,12 @@ export const LeadsPage = () => {
         nome: '',
         email: '',
         telefone: '',
+        empresa: '',
+        area: '',
         origem: '',
-        assunto: '',
-        resumo: '',
         status: 'novo',
-        canal: 'whatsapp',
+        heat: 'frio',
+        observacoes: '',
       })
       setShowNewLeadForm(false)
     } catch (error) {
@@ -322,6 +322,27 @@ export const LeadsPage = () => {
 
                     <div className="space-y-2">
                       <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                        Empresa
+                      </label>
+                      <div className="relative">
+                        <Briefcase className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <input
+                          type="text"
+                          value={formData.empresa}
+                          onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
+                          className={cn(
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
+                            isDark
+                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                          )}
+                          placeholder="Nome da empresa"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
                         Origem
                       </label>
                       <div className="relative">
@@ -374,11 +395,11 @@ export const LeadsPage = () => {
 
                     <div className="space-y-2">
                       <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
-                        Canal de Contato
+                        Temperatura
                       </label>
                       <select
-                        value={formData.canal}
-                        onChange={(e) => setFormData({ ...formData, canal: e.target.value as LeadRow['canal'] })}
+                        value={formData.heat}
+                        onChange={(e) => setFormData({ ...formData, heat: e.target.value as LeadRow['heat'] })}
                         className={cn(
                           'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
                           isDark
@@ -386,23 +407,22 @@ export const LeadsPage = () => {
                             : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
                         )}
                       >
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="email">Email</option>
-                        <option value="telefone">Telefone</option>
-                        <option value="presencial">Presencial</option>
+                        <option value="frio">Frio</option>
+                        <option value="morno">Morno</option>
+                        <option value="quente">Quente</option>
                       </select>
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
                       <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
-                        Assunto
+                        Area de Interesse
                       </label>
                       <div className="relative">
                         <Briefcase className={cn('absolute left-4 top-4 h-5 w-5', isDark ? 'text-slate-500' : 'text-slate-400')} />
                         <input
                           type="text"
-                          value={formData.assunto}
-                          onChange={(e) => setFormData({ ...formData, assunto: e.target.value })}
+                          value={formData.area}
+                          onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                           className={cn(
                             'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
                             isDark
@@ -419,8 +439,8 @@ export const LeadsPage = () => {
                         Resumo / Observações
                       </label>
                       <textarea
-                        value={formData.resumo}
-                        onChange={(e) => setFormData({ ...formData, resumo: e.target.value })}
+                        value={formData.observacoes}
+                        onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                         rows={4}
                         className={cn(
                           'w-full rounded-xl border-2 p-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',

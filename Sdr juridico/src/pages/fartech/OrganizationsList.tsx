@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useFartechAdmin } from '@/hooks/useFartechAdmin'
 import { FartechGuard } from '@/components/guards'
+import { organizationsService } from '@/services/organizationsService'
 import type { Organization, OrganizationStatus, OrganizationPlan } from '@/types/organization'
 
 type SortField = 'name' | 'created_at' | 'plan' | 'status'
@@ -44,20 +45,29 @@ export default function OrganizationsList() {
     loadOrgsWithStats()
   }, [])
 
-  // Load user stats for each org
+  // Load stats for each org (clientes, casos, armazenamento)
   useEffect(() => {
     const loadStats = async () => {
       if (!allOrgs) return
-      
-      // Mock stats - em produção viria do banco
-      const withStats = allOrgs.map(org => ({
-        ...org,
-        userCount: Math.floor(Math.random() * 20) + 3,
-        adminCount: Math.floor(Math.random() * 3) + 1,
-        caseCount: Math.floor(Math.random() * 50) + 5,
-        storageUsed: Math.floor(Math.random() * 80) + 10,
-      }))
-      setOrgsWithStats(withStats)
+
+      try {
+        const stats = await Promise.all(
+          allOrgs.map(async (org) => {
+            const orgStats = await organizationsService.getStats(org.id)
+            return {
+              ...org,
+              userCount: orgStats.total_users,
+              adminCount: orgStats.active_users,
+              caseCount: orgStats.total_cases,
+              storageUsed: Math.round(orgStats.storage_used_gb),
+            } as OrgWithStats
+          })
+        )
+        setOrgsWithStats(stats)
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas das organizações:', error)
+        setOrgsWithStats(allOrgs)
+      }
     }
     
     loadStats()

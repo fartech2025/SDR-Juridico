@@ -1,6 +1,4 @@
-import { supabase, type IntegrationRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
-import { getActiveOrgId } from '@/lib/org'
 
 const defaultIntegrations = [
   { provider: 'whatsapp', name: 'WhatsApp', enabled: false },
@@ -13,24 +11,56 @@ const defaultIntegrations = [
   { provider: 'avisa', name: 'Avisa', enabled: false },
 ]
 
+export interface IntegrationRow {
+  id: string
+  provider: string
+  name: string | null
+  enabled: boolean
+  secrets: Record<string, unknown> | null
+  settings: Record<string, unknown> | null
+  created_at: string
+}
+
+const STORAGE_KEY = 'sdr_integrations'
+
+const loadIntegrations = (): IntegrationRow[] => {
+  if (typeof window === 'undefined') return []
+  const raw = window.localStorage.getItem(STORAGE_KEY)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const saveIntegrations = (rows: IntegrationRow[]) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
+}
+
+const seedDefaults = () => {
+  const existing = loadIntegrations()
+  if (existing.length > 0) return existing
+  const now = new Date().toISOString()
+  const seeded = defaultIntegrations.map((item) => ({
+    id: `${item.provider}-${now}`,
+    provider: item.provider,
+    name: item.name,
+    enabled: item.enabled,
+    secrets: {},
+    settings: {},
+    created_at: now,
+  }))
+  saveIntegrations(seeded)
+  return seeded
+}
+
 export const integrationsService = {
   async getIntegrations(): Promise<IntegrationRow[]> {
     try {
-      const orgId = await getActiveOrgId()
-      let query = supabase
-        .from('integrations')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
-      // Fartech admins (orgId=null) veem tudo, outros filtram por org
-      if (orgId) {
-        query = query.eq('org_id', orgId)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw new AppError(error.message, 'database_error')
-      return data || []
+      return seedDefaults()
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao buscar integracoes',
@@ -40,13 +70,7 @@ export const integrationsService = {
   },
 
   async cleanupDuplicates(): Promise<number> {
-    const { data, error } = await supabase
-      .from('integrations')
-      .select('id, provider, enabled, created_at')
-      .order('created_at', { ascending: false })
-
-    if (error) throw new AppError(error.message, 'database_error')
-    const rows = data || []
+    const rows = seedDefaults()
     const idsToDelete: string[] = []
     const grouped = new Map<string, typeof rows>()
 
@@ -71,12 +95,8 @@ export const integrationsService = {
     })
 
     if (idsToDelete.length === 0) return 0
-    const { error: deleteError } = await supabase
-      .from('integrations')
-      .delete()
-      .in('id', idsToDelete)
-
-    if (deleteError) throw new AppError(deleteError.message, 'database_error')
+    const filtered = rows.filter((row) => !idsToDelete.includes(row.id))
+    saveIntegrations(filtered)
     return idsToDelete.length
   },
 
@@ -85,16 +105,14 @@ export const integrationsService = {
     updates: Partial<Pick<IntegrationRow, 'enabled' | 'settings' | 'secrets' | 'name'>>
   ): Promise<IntegrationRow> {
     try {
-      const { data, error } = await supabase
-        .from('integrations')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) throw new AppError(error.message, 'database_error')
-      if (!data) throw new AppError('Integracao nao encontrada', 'not_found')
-      return data
+      const rows = seedDefaults()
+      const idx = rows.findIndex((row) => row.id === id)
+      if (idx === -1) throw new AppError('Integracao nao encontrada', 'not_found')
+      const updated = { ...rows[idx], ...updates }
+      const next = [...rows]
+      next[idx] = updated
+      saveIntegrations(next)
+      return updated
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao atualizar integracao',
@@ -105,26 +123,7 @@ export const integrationsService = {
 
   async ensureDefaultIntegrations(): Promise<void> {
     try {
-      const { data, error } = await supabase
-        .from('integrations')
-        .select('provider')
-
-      if (error) throw new AppError(error.message, 'database_error')
-
-      const existing = new Set((data || []).map((row) => row.provider))
-      const payload = defaultIntegrations
-        .filter((item) => !existing.has(item.provider))
-        .map((item) => ({
-          provider: item.provider,
-          name: item.name,
-          enabled: item.enabled,
-          secrets: {},
-          settings: {},
-        }))
-
-      if (payload.length === 0) return
-      const { error: insertError } = await supabase.from('integrations').insert(payload)
-      if (insertError) throw new AppError(insertError.message, 'database_error')
+      seedDefaults()
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao criar integracoes padrao',

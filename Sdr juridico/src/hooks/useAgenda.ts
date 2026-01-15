@@ -167,7 +167,7 @@ export function useAgenda() {
    * Cria um novo evento (com atualização otimista)
    */
   const createEvento = useCallback(
-    async (evento: Omit<AgendaRow, 'id' | 'created_at' | 'org_id'>) => {
+    async (evento: Omit<AgendaRow, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const novoEvento = await agendaService.createEvento(evento)
@@ -187,7 +187,7 @@ export function useAgenda() {
    * Atualiza um evento (com atualização otimista)
    */
   const updateEvento = useCallback(
-    async (id: string, updates: Partial<Omit<AgendaRow, 'id' | 'created_at'>>) => {
+    async (id: string, updates: Partial<Omit<AgendaRow, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
       setState((prev) => ({ ...prev, error: null }))
       const eventoAtualizado = await agendaService.updateEvento(id, updates)
