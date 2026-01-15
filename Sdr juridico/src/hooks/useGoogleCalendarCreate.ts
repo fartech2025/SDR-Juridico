@@ -74,6 +74,7 @@ export function useGoogleCalendarCreate() {
   const createMeeting = useCallback(
     async (meeting: GoogleMeetingInput): Promise<CreatedGoogleMeeting> => {
       try {
+        void meeting
         setIsLoading(true)
         setError(null)
         throw new Error('Integração Google Calendar não disponível no schema atual.')
@@ -102,7 +103,9 @@ export function useGoogleCalendarCreate() {
       }
     ): Promise<{ googleEvent: CreatedGoogleMeeting; agendaId?: string }> => {
       try {
+        void agendaData
         const googleEvent = await createMeeting(meeting)
+        setLastCreated(googleEvent)
         return { googleEvent }
       } catch (err) {
         throw err

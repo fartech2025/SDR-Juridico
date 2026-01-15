@@ -97,7 +97,9 @@ export const casosService = {
   /**
    * Cria um novo caso
    */
-  async createCaso(caso: Omit<CasoRow, 'id' | 'created_at' | 'org_id'>): Promise<CasoRow> {
+  async createCaso(
+    caso: Omit<CasoRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>
+  ): Promise<CasoRow> {
     try {
       const payload = {
         ...caso,
@@ -124,7 +126,7 @@ export const casosService = {
    */
   async updateCaso(
     id: string,
-    updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'org_id'>>
+    updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>>
   ): Promise<CasoRow> {
     try {
       const { data, error } = await supabase

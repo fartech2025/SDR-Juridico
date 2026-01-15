@@ -52,6 +52,7 @@ export function useTeamsMeetingCreate(): UseTeamsMeetingCreate {
   const createMeeting = useCallback(
     async (params: CreateTeamsMeetingParams): Promise<TeamsMeetingData> => {
       try {
+        void params
         setIsLoading(true)
         setError(null)
         throw new Error('Integração Microsoft Teams não disponível no schema atual.')
@@ -74,6 +75,7 @@ export function useTeamsMeetingCreate(): UseTeamsMeetingCreate {
       params: CreateTeamsMeetingParams & { agendaData: any }
     ): Promise<{ meeting: TeamsMeetingData; agendaItem: any }> => {
       try {
+        void params.agendaData
         setIsLoading(true)
         setError(null)
 
@@ -85,6 +87,7 @@ export function useTeamsMeetingCreate(): UseTeamsMeetingCreate {
           attendees: params.attendees,
         })
 
+        setLastCreated(meeting)
         return { meeting, agendaItem: null }
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Erro ao sincronizar')

@@ -2,14 +2,12 @@
 // Date: 2026-01-13
 
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft,
   Save,
   Building2,
-  Palette,
   MapPin,
-  Settings,
   Key,
   Globe,
   Database,
@@ -50,7 +48,6 @@ interface IntegrationConfig {
 
 export default function OrganizationSettingsPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -139,8 +136,28 @@ export default function OrganizationSettingsPage() {
       
       // APIs & Integrations from settings JSON
       const settings = org.settings || {}
-      setApis(settings.apis || [])
-      setIntegrations(settings.integrations || [])
+      const rawApis = Array.isArray(settings.apis) ? settings.apis : []
+      const rawIntegrations = Array.isArray(settings.integrations) ? settings.integrations : []
+
+      const nextApis: APIConfig[] = rawApis.map((api, idx) => ({
+        id: api.id ?? `api-${idx}`,
+        name: api.name ?? 'API',
+        enabled: Boolean(api.enabled),
+        apiKey: api.apiKey ?? '',
+        apiUrl: api.apiUrl ?? '',
+        additionalConfig: api.additionalConfig ?? api.additional_config ?? {},
+      }))
+
+      const nextIntegrations: IntegrationConfig[] = rawIntegrations.map((integration, idx) => ({
+        id: integration.id ?? `integration-${idx}`,
+        name: integration.name ?? 'Integracao',
+        type: integration.type ?? 'other',
+        enabled: Boolean(integration.enabled),
+        credentials: integration.credentials ?? {},
+      }))
+
+      setApis(nextApis)
+      setIntegrations(nextIntegrations)
       
     } catch (err) {
       console.error(err)
@@ -729,7 +746,18 @@ export default function OrganizationSettingsPage() {
                               </>
                             ) : (
                               <>
-              
+                                <XCircle className="w-4 h-4 text-gray-400" />
+                                <span className="text-gray-500 dark:text-gray-400">Inativa</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Monitoring Tab */}
               {activeTab === 'monitoring' && (
                 <div className="space-y-6">
@@ -945,17 +973,6 @@ export default function OrganizationSettingsPage() {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-                                <XCircle className="w-4 h-4 text-gray-400" />
-                                <span className="text-gray-500 dark:text-gray-400">Inativa</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )}
             </div>

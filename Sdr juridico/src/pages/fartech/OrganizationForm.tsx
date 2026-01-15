@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Save, ArrowLeft } from 'lucide-react'
 import { organizationsService } from '@/services/organizationsService'
 import { FartechGuard } from '@/components/guards'
-import type { CreateOrganizationInput, Organization, OrganizationPlan } from '@/types/organization'
+import type { CreateOrganizationInput, OrganizationPlan } from '@/types/organization'
 
 // Extended form data with optional branding fields
 interface OrganizationFormData extends CreateOrganizationInput {
@@ -30,7 +30,6 @@ export default function OrganizationForm() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [organization, setOrganization] = useState<Organization | null>(null)
   
   const [formData, setFormData] = useState<OrganizationFormData>({
     name: '',
@@ -63,7 +62,6 @@ export default function OrganizationForm() {
       setLoading(true)
       const org = await organizationsService.getById(orgId)
       if (org) {
-        setOrganization(org)
         setFormData({
           name: org.name,
           slug: org.slug,
@@ -140,7 +138,7 @@ export default function OrganizationForm() {
         await organizationsService.create(formData)
       }
       
-      navigate('/fartech/organizations')
+      navigate('/admin/organizations', { state: { refresh: true } })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar organização'
       setError(message)
@@ -167,7 +165,7 @@ export default function OrganizationForm() {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <button
-                  onClick={() => navigate('/fartech/organizations')}
+                  onClick={() => navigate('/admin/organizations')}
                   className="mr-4 p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -492,7 +490,7 @@ export default function OrganizationForm() {
             <div className="flex items-center justify-end gap-4">
               <button
                 type="button"
-                onClick={() => navigate('/fartech/organizations')}
+                onClick={() => navigate('/admin/organizations')}
                 className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancelar

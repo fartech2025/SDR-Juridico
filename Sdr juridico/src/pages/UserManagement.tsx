@@ -2,7 +2,7 @@
 // Date: 2026-01-13
 
 import { useState, useEffect } from 'react'
-import { Users, Plus, Edit, Trash2, Shield, Mail, Search, UserPlus } from 'lucide-react'
+import { Users, Edit, Trash2, Shield, Search, UserPlus } from 'lucide-react'
 import { OrgAdminGuard } from '@/components/guards'
 import { useOrganization } from '@/hooks/useOrganization'
 import { supabase } from '@/lib/supabaseClient'

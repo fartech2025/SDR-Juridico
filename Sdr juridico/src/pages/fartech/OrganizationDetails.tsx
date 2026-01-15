@@ -12,8 +12,6 @@ import {
   TrendingUp,
   Calendar,
   MapPin,
-  Mail,
-  Phone,
   Building2,
   AlertCircle,
   CheckCircle,
@@ -34,6 +32,13 @@ export default function OrganizationDetails() {
   const [stats, setStats] = useState<OrganizationStats | null>(null)
   const [usage, setUsage] = useState<OrganizationUsage | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const settings = (organization?.settings || {}) as Record<string, any>
+  const trialEndsAt = settings.trial_ends_at as string | undefined
+  const enableApiAccess = Boolean(settings.enable_api_access)
+  const enableWhiteLabel = Boolean(settings.enable_white_label)
+  const enableCustomDomain = Boolean(settings.enable_custom_domain)
+  const enableSso = Boolean(settings.enable_sso)
   
   useEffect(() => {
     if (id) {
@@ -72,7 +77,7 @@ export default function OrganizationDetails() {
   const handleViewAsOrg = async () => {
     if (id) {
       await viewOrganization(id)
-      navigate('/dashboard')
+      navigate('/app/dashboard')
     }
   }
   
@@ -91,7 +96,7 @@ export default function OrganizationDetails() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">{error || 'Organização não encontrada'}</p>
           <button
-            onClick={() => navigate('/fartech/organizations')}
+            onClick={() => navigate('/admin/organizations')}
             className="mt-4 text-emerald-600 hover:underline"
           >
             Voltar para lista
@@ -110,7 +115,7 @@ export default function OrganizationDetails() {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <button
-                  onClick={() => navigate('/fartech/organizations')}
+                  onClick={() => navigate('/admin/organizations')}
                   className="mr-4 p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -148,7 +153,7 @@ export default function OrganizationDetails() {
                 </button>
                 
                 <Link
-                  to={`/fartech/organizations/${id}/edit`}
+                  to={`/admin/organizations/${id}/edit`}
                   className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                 >
                   <Edit className="w-4 h-4 mr-2" />
@@ -183,7 +188,7 @@ export default function OrganizationDetails() {
               />
               <StatCard
                 title="Armazenamento"
-                value={`${stats.total_storage_gb.toFixed(1)}GB`}
+                value={`${stats.storage_used_gb.toFixed(1)}GB`}
                 icon={HardDrive}
                 color="red"
               />
@@ -223,8 +228,8 @@ export default function OrganizationDetails() {
                       <UsageBar
                         label="Casos"
                         current={usage.cases.current}
-                        limit={usage.cases.limit!}
-                        percentage={usage.cases.percentage}
+                        limit={usage.cases.limit ?? 0}
+                        percentage={usage.cases.percentage ?? 0}
                         unit="casos"
                       />
                     )}
@@ -339,12 +344,12 @@ export default function OrganizationDetails() {
                     </div>
                   </div>
                   
-                  {organization.trial_ends_at && (
+                  {trialEndsAt && (
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Trial termina em</p>
                       <div className="flex items-center text-gray-900 dark:text-white">
                         <Calendar className="w-4 h-4 mr-2" />
-                        {new Date(organization.trial_ends_at).toLocaleDateString('pt-BR')}
+                        {new Date(trialEndsAt).toLocaleDateString('pt-BR')}
                       </div>
                     </div>
                   )}
@@ -407,19 +412,19 @@ export default function OrganizationDetails() {
                 
                 <div className="p-6 space-y-3">
                   <FeatureItem 
-                    enabled={organization.enable_api_access} 
+                    enabled={enableApiAccess} 
                     label="Acesso API" 
                   />
                   <FeatureItem 
-                    enabled={organization.enable_white_label} 
+                    enabled={enableWhiteLabel} 
                     label="White Label" 
                   />
                   <FeatureItem 
-                    enabled={organization.enable_custom_domain} 
+                    enabled={enableCustomDomain} 
                     label="Domínio Customizado" 
                   />
                   <FeatureItem 
-                    enabled={organization.enable_sso} 
+                    enabled={enableSso} 
                     label="SSO" 
                   />
                 </div>

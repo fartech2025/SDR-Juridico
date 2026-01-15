@@ -59,7 +59,7 @@ export const AppShell = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { signOut } = useAuth()
-  const { displayName, shortName, initials, roleLabel, orgName } = useCurrentUser()
+  const { displayName, shortName, initials, roleLabel } = useCurrentUser()
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin = useIsOrgAdmin()
   const [logoutOpen, setLogoutOpen] = React.useState(false)

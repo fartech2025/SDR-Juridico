@@ -16,42 +16,11 @@ import {
   FARTECH_ADMIN_PERMISSIONS,
 } from '@/types/permissions'
 
-const extractMetadataPermissoes = (
-  metadata?: Record<string, unknown>
-): string[] => {
-  if (!metadata) return []
-  const permissao = metadata.permissoes
-  if (Array.isArray(permissao)) {
-    return permissao.filter((item): item is string => typeof item === 'string')
-  }
-  if (typeof permissao === 'string') return [permissao]
-  return []
-}
-
-const extractMetadataRole = (metadata?: Record<string, unknown>) => {
-  if (!metadata) return null
-  return typeof metadata.role === 'string' ? metadata.role : null
-}
-
-const extractIsFartechAdmin = (metadata?: Record<string, unknown>) =>
-  metadata?.is_fartech_admin === true
-
 const resolveRoleFromPermissoes = (permissoes: string[]) => {
   if (permissoes.includes('fartech_admin')) return 'fartech_admin'
   if (permissoes.includes('org_admin')) return 'org_admin'
   return 'user'
 }
-
-const fartechAdminEmails = new Set([
-  'admin@fartch.com.br',
-  'admin@fartech.com.br',
-])
-
-const isFartechAdminEmail = (email?: string | null) =>
-  !!email &&
-  (fartechAdminEmails.has(email.toLowerCase()) ||
-    email.toLowerCase().endsWith('@fartch.com.br') ||
-    email.toLowerCase().endsWith('@fartech.com.br'))
 
 export const permissionsService = {
   /**
@@ -61,12 +30,6 @@ export const permissionsService = {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
-
-      const metadata = (user.user_metadata ?? {}) as Record<string, unknown>
-      const metadataPermissoes = extractMetadataPermissoes(metadata)
-      const metadataRole = extractMetadataRole(metadata)
-      const metadataIsFartech = extractIsFartechAdmin(metadata)
-      const emailIsFartechAdmin = isFartechAdminEmail(user.email)
 
       const { data, error } = await supabase
         .from('usuarios')
@@ -79,20 +42,13 @@ export const permissionsService = {
           (user.user_metadata && (user.user_metadata as { nome_completo?: string }).nome_completo) ||
           user.email ||
           'Usuario'
-        const fallbackPermissoes = [
-          ...metadataPermissoes,
-          ...(metadataRole ? [metadataRole] : []),
-          ...(metadataIsFartech ? ['fartech_admin'] : []),
-          ...(emailIsFartechAdmin ? ['fartech_admin'] : []),
-        ]
-        const role = resolveRoleFromPermissoes(fallbackPermissoes)
         return {
           id: user.id,
           email: user.email || '',
           name: fallbackName,
-          role,
+          role: 'user',
           org_id: null,
-          is_fartech_admin: role === 'fartech_admin',
+          is_fartech_admin: false,
         } as UserWithRole
       }
       
@@ -100,14 +56,7 @@ export const permissionsService = {
       
       // Map to UserWithRole interface
       const permissoes = data?.permissoes || []
-      const combinedPermissoes = Array.from(new Set([
-        ...permissoes,
-        ...metadataPermissoes,
-        ...(metadataRole ? [metadataRole] : []),
-        ...(metadataIsFartech ? ['fartech_admin'] : []),
-        ...(emailIsFartechAdmin ? ['fartech_admin'] : []),
-      ]))
-      const role = resolveRoleFromPermissoes(combinedPermissoes)
+      const role = resolveRoleFromPermissoes(permissoes)
       const isFartechAdmin = role === 'fartech_admin'
 
       return {
@@ -275,8 +224,9 @@ export const permissionsService = {
   /**
    * Get user's organization membership with role
    */
-  async getUserOrgMembership(orgId: string): Promise<{ role: string; org_id: string } | null> {
+  async getUserOrgMembership(_orgId: string): Promise<{ role: string; org_id: string } | null> {
     try {
+      void _orgId
       return null
     } catch (error) {
       console.error('Error getting user org membership:', error)
@@ -287,8 +237,9 @@ export const permissionsService = {
   /**
    * Validate if user can perform action on specific org
    */
-  async validateOrgAccess(targetOrgId: string): Promise<boolean> {
+  async validateOrgAccess(_targetOrgId: string): Promise<boolean> {
     try {
+      void _targetOrgId
       const user = await this.getCurrentUser()
       if (!user) return false
 

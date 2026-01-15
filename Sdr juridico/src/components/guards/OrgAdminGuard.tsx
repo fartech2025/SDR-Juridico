@@ -9,7 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions'
 interface OrgAdminGuardProps {
   children: ReactNode
   
-  // Redirect path if not org admin (default: '/dashboard')
+  // Redirect path if not org admin (default: '/app/dashboard')
   redirectTo?: string
   
   // Fallback component to show instead of redirect
@@ -41,7 +41,7 @@ interface OrgAdminGuardProps {
  */
 export function OrgAdminGuard({
   children,
-  redirectTo = '/dashboard',
+  redirectTo = '/app/dashboard',
   fallback,
   loadingComponent = <div>Verificando acesso...</div>,
   allowFartechAdmin = true,

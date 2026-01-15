@@ -74,7 +74,7 @@ export default function FartechDashboard() {
               </div>
               
               <Link
-                to="/fartech/organizations/new"
+                to="/admin/organizations/new"
                 className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -151,7 +151,7 @@ export default function FartechDashboard() {
                     </div>
                     
                     <Link
-                      to={`/fartech/organizations/${org.id}`}
+                      to={`/admin/organizations/${org.id}`}
                       className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
                     >
                       Ver detalhes
@@ -171,7 +171,7 @@ export default function FartechDashboard() {
                 </h2>
                 
                 <Link
-                  to="/fartech/organizations"
+                  to="/admin/organizations"
                   className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
                 >
                   Ver todas
@@ -252,7 +252,7 @@ export default function FartechDashboard() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <Link
-                            to={`/fartech/organizations/${org.id}`}
+                            to={`/admin/organizations/${org.id}`}
                             className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm"
                           >
                             Ver detalhes

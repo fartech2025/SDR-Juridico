@@ -1,17 +1,18 @@
 import * as React from 'react'
-import { CheckCircle2, Lock, Mail, ShieldCheck, ArrowRight } from 'lucide-react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Lock, Mail, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import logoMark from '@/assets/logo-mark.svg'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { permissionsService } from '@/services/permissionsService'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export const LoginPage = () => {
   const navigate = useNavigate()
-  const location = useLocation()
   const { signIn } = useAuth()
+  const { refreshPermissions } = usePermissions()
   const [status, setStatus] = React.useState<'idle' | 'loading' | 'error'>(
     'idle',
   )
@@ -50,6 +51,7 @@ export const LoginPage = () => {
       return lastUser
     }
 
+    await refreshPermissions()
     const currentUser = await resolveUserProfile()
     
     // Log para debug (pode remover depois)

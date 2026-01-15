@@ -37,6 +37,16 @@ export interface Organization {
   primary_color: string
   secondary_color: string | null
   custom_domain: string | null
+
+  // Flattened address fields (legacy forms)
+  address_street?: string
+  address_number?: string
+  address_complement?: string
+  address_neighborhood?: string
+  address_city?: string
+  address_state?: string
+  address_postal_code?: string
+  address_country?: string
   
   // Metadata
   settings: OrganizationSettings
@@ -66,6 +76,17 @@ export interface OrganizationAddress {
 }
 
 export interface OrganizationSettings {
+  status?: OrganizationStatus
+  activated_at?: string | null
+  suspended_at?: string | null
+  cancelled_at?: string | null
+  trial_ends_at?: string | null
+  enable_api_access?: boolean
+  enable_white_label?: boolean
+  enable_custom_domain?: boolean
+  enable_sso?: boolean
+  apis?: Array<Record<string, any>>
+  integrations?: Array<Record<string, any>>
   // Features enabled
   features?: {
     google_calendar?: boolean
@@ -108,6 +129,7 @@ export interface OrganizationSettings {
 export interface OrganizationStats {
   total_users: number
   active_users: number
+  admin_users?: number
   total_clients: number
   total_cases: number
   active_cases: number
@@ -154,14 +176,25 @@ export interface CreateOrganizationInput {
 
 export interface UpdateOrganizationInput {
   name?: string
+  slug?: string
+  cnpj?: string
   email?: string
   phone?: string
   address?: OrganizationAddress
   billing_email?: string
   logo_url?: string
   primary_color?: string
-  secondary_color?: string
+  secondary_color?: string | null
+  plan?: OrganizationPlan
   settings?: Partial<OrganizationSettings>
+  address_street?: string
+  address_number?: string
+  address_complement?: string
+  address_neighborhood?: string
+  address_city?: string
+  address_state?: string
+  address_postal_code?: string
+  address_country?: string
 }
 
 export interface UpdateOrganizationPlanInput {

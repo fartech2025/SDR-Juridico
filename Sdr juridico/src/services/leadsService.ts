@@ -82,7 +82,7 @@ export const leadsService = {
   },
 
   // Criar novo lead
-  async createLead(lead: Omit<LeadRow, 'id' | 'created_at' | 'org_id'>) {
+  async createLead(lead: Omit<LeadRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>) {
     try {
       const payload = {
         ...lead,
@@ -106,7 +106,10 @@ export const leadsService = {
   },
 
   // Atualizar lead
-  async updateLead(id: string, updates: Partial<Omit<LeadRow, 'id' | 'created_at'>>) {
+  async updateLead(
+    id: string,
+    updates: Partial<Omit<LeadRow, 'id' | 'created_at' | 'updated_at'>>
+  ) {
     try {
       const { data, error } = await supabase
         .from('leads')

@@ -2,7 +2,7 @@
 // Date: 2026-01-13
 
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { 
   Building2, 
   Search, 
@@ -34,16 +34,17 @@ interface OrgWithStats extends Organization {
 
 export default function OrganizationsList() {
   const { allOrgs, loadOrgsWithStats, loading } = useFartechAdmin()
+  const location = useLocation()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<OrganizationStatus | 'all'>('all')
   const [planFilter, setPlanFilter] = useState<OrganizationPlan | 'all'>('all')
-  const [sortField, setSortField] = useState<SortField>('created_at')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [sortField] = useState<SortField>('created_at')
+  const [sortOrder] = useState<SortOrder>('desc')
   const [orgsWithStats, setOrgsWithStats] = useState<OrgWithStats[]>([])
   
   useEffect(() => {
     loadOrgsWithStats()
-  }, [])
+  }, [loadOrgsWithStats, location.state])
 
   // Load stats for each org (clientes, casos, armazenamento)
   useEffect(() => {
@@ -54,12 +55,16 @@ export default function OrganizationsList() {
         const stats = await Promise.all(
           allOrgs.map(async (org) => {
             const orgStats = await organizationsService.getStats(org.id)
+            const userCount = orgStats.total_users || 0
+            const caseCount = orgStats.total_cases || 0
+            const storageUsed = Math.round(orgStats.storage_used_percentage || 0)
+            const adminCount = orgStats.admin_users || 0
             return {
               ...org,
-              userCount: orgStats.total_users,
-              adminCount: orgStats.active_users,
-              caseCount: orgStats.total_cases,
-              storageUsed: Math.round(orgStats.storage_used_gb),
+              userCount,
+              adminCount,
+              caseCount,
+              storageUsed,
             } as OrgWithStats
           })
         )
@@ -112,15 +117,6 @@ export default function OrganizationsList() {
   const totalOrgs = filteredOrgs.length
   const activeOrgs = filteredOrgs.filter(org => org.status === 'active').length
   
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortOrder('asc')
-    }
-  }
-  
   const exportToCSV = () => {
     if (!filteredOrgs || filteredOrgs.length === 0) return
     
@@ -170,7 +166,7 @@ export default function OrganizationsList() {
                 </button>
                 
                 <Link
-                  to="/fartech/organizations/new"
+                  to="/admin/organizations/new"
                   className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -316,7 +312,7 @@ export default function OrganizationsList() {
                 {!searchTerm && statusFilter === 'all' && planFilter === 'all' && (
                   <div className="mt-6">
                     <Link
-                      to="/fartech/organizations/new"
+                      to="/admin/organizations/new"
                       className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -415,14 +411,14 @@ function OrgCard({ org }: { org: OrgWithStats }) {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to={`/fartech/organizations/${org.id}`}
+            to={`/admin/organizations/${org.id}`}
             className="inline-flex items-center px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <Eye className="w-4 h-4 mr-1.5" />
             Ver Detalhes
           </Link>
           <Link
-            to={`/fartech/organizations/${org.id}/edit`}
+            to={`/admin/organizations/${org.id}/edit`}
             className="inline-flex items-center px-3 py-1.5 text-sm text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
           >
             <Edit className="w-4 h-4 mr-1.5" />

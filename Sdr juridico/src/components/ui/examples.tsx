@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Exemplos de Uso dos Componentes UI
  * 

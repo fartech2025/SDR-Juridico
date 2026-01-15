@@ -35,7 +35,7 @@ export default function UnauthorizedPage() {
           </button>
           
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/app/dashboard')}
             className="inline-flex items-center justify-center px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
           >
             Ir para Dashboard

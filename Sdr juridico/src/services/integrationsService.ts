@@ -40,7 +40,7 @@ const saveIntegrations = (rows: IntegrationRow[]) => {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
 }
 
-const seedDefaults = () => {
+const seedDefaults = (): IntegrationRow[] => {
   const existing = loadIntegrations()
   if (existing.length > 0) return existing
   const now = new Date().toISOString()

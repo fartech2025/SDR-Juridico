@@ -13,20 +13,127 @@ import type {
   OrganizationUsage,
 } from '@/types/organization'
 
-// Helper to map database columns to TypeScript types
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+const normalizePlan = (value?: string): Organization['plan'] => {
+  if (!value) return 'trial'
+  const lowered = value.toLowerCase()
+  if (lowered === 'pro') return 'professional'
+  if (lowered === 'enterprise') return 'enterprise'
+  if (lowered === 'basic') return 'basic'
+  if (lowered === 'professional') return 'professional'
+  return 'trial'
+}
+
+const resolveStatus = (ativo?: boolean | null, settings?: Record<string, any>) => {
+  if (settings?.status) return settings.status as Organization['status']
+  if (ativo === null || ativo === undefined) return 'pending'
+  return ativo ? 'active' : 'suspended'
+}
+
+const buildAddressFromSettings = (settings?: Record<string, any>) => {
+  const address = settings?.address
+  if (!address || typeof address !== 'object') return null
+  return address as Organization['address']
+}
+
+const buildSettingsFromInput = (
+  input: Record<string, any>,
+  existing: Record<string, any> = {}
+) => {
+  const incomingSettings =
+    input.settings && typeof input.settings === 'object' ? input.settings : {}
+  const next: Record<string, any> = { ...existing, ...incomingSettings }
+
+  if (input.slug) next.slug = input.slug
+  if (input.email) next.email = input.email
+  if (input.phone) next.phone = input.phone
+  if (input.billing_email) next.billing_email = input.billing_email
+  if (input.billing_cycle) next.billing_cycle = input.billing_cycle
+  if (input.logo_url) next.logo_url = input.logo_url
+  if (input.primary_color) next.primary_color = input.primary_color
+  if (input.secondary_color) next.secondary_color = input.secondary_color
+  if (input.custom_domain) next.custom_domain = input.custom_domain
+  if (input.max_users !== undefined) next.max_users = input.max_users
+  if (input.max_storage_gb !== undefined) next.max_storage_gb = input.max_storage_gb
+  if (input.max_cases !== undefined) next.max_cases = input.max_cases
+
+  if (input.address) {
+    next.address = input.address
+  } else {
+    const address = {
+      street: input.address_street,
+      number: input.address_number,
+      complement: input.address_complement,
+      neighborhood: input.address_neighborhood,
+      city: input.address_city,
+      state: input.address_state,
+      zip_code: input.address_postal_code,
+      country: input.address_country,
+    }
+    const hasAnyAddress = Object.values(address).some((value) => value)
+    if (hasAnyAddress) {
+      next.address = { ...next.address, ...address }
+    }
+  }
+
+  if (input.status) next.status = input.status
+
+  return next
+}
+
+// Helper to map database columns to TypeScript types (orgs table)
 function mapDbToOrg(dbOrg: any): Organization {
+  const settings = dbOrg.settings || {}
+  const name = dbOrg.nome || dbOrg.name || 'Sem nome'
+  const slug = settings.slug || slugify(name) || 'sem-slug'
+  const plan = normalizePlan(dbOrg.plano || settings.plan)
+  const status = resolveStatus(dbOrg.ativo, settings)
+  const address = buildAddressFromSettings(settings)
+
   return {
-    ...dbOrg,
-    name: dbOrg.name || 'Sem nome',
-    slug: dbOrg.slug || dbOrg.name?.toLowerCase().replace(/\s+/g, '-') || 'sem-slug',
-    status: dbOrg.status || 'pending',
-    plan: dbOrg.plan || 'trial',
-    primary_color: dbOrg.primary_color || '#10b981',
-    max_users: dbOrg.max_users || 10,
-    max_storage_gb: dbOrg.max_storage_gb || 5,
-    billing_cycle: dbOrg.billing_cycle || 'monthly',
-    settings: dbOrg.settings || {},
-    metadata: dbOrg.metadata || {},
+    id: dbOrg.id,
+    name,
+    slug,
+    cnpj: dbOrg.cnpj || null,
+    email: settings.email || settings.billing_email || '',
+    phone: settings.phone || null,
+    address,
+    address_street: address?.street || '',
+    address_number: address?.number || '',
+    address_complement: address?.complement || '',
+    address_neighborhood: address?.neighborhood || '',
+    address_city: address?.city || '',
+    address_state: address?.state || '',
+    address_postal_code: address?.zip_code || '',
+    address_country: address?.country || '',
+    plan,
+    max_users: settings.max_users || 5,
+    max_storage_gb: settings.max_storage_gb || 10,
+    max_cases: settings.max_cases ?? null,
+    status,
+    billing_email: settings.billing_email || null,
+    billing_cycle: settings.billing_cycle || 'monthly',
+    next_billing_date: settings.next_billing_date || null,
+    logo_url: settings.logo_url || null,
+    primary_color: settings.primary_color || '#059669',
+    secondary_color: settings.secondary_color || null,
+    custom_domain: settings.custom_domain || null,
+    settings,
+    metadata: settings.metadata || {},
+    created_at: dbOrg.created_at,
+    updated_at: dbOrg.updated_at || dbOrg.created_at,
+    activated_at: settings.activated_at || null,
+    suspended_at: settings.suspended_at || null,
+    cancelled_at: settings.cancelled_at || null,
+    provisioned_by: settings.provisioned_by || null,
+    managed_by: settings.managed_by || null,
   }
 }
 
@@ -37,7 +144,7 @@ export const organizationsService = {
   async getAll(): Promise<Organization[]> {
     try {
       const { data, error } = await supabase
-        .from('organizations')
+        .from('orgs')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -57,7 +164,7 @@ export const organizationsService = {
   async getById(id: string): Promise<Organization | null> {
     try {
       const { data, error } = await supabase
-        .from('organizations')
+        .from('orgs')
         .select('*')
         .eq('id', id)
         .single()
@@ -81,9 +188,9 @@ export const organizationsService = {
   async getBySlug(slug: string): Promise<Organization | null> {
     try {
       const { data, error } = await supabase
-        .from('organizations')
+        .from('orgs')
         .select('*')
-        .eq('slug', slug)
+        .filter('settings->>slug', 'eq', slug)
         .single()
 
       if (error) {
@@ -108,22 +215,19 @@ export const organizationsService = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new AppError('Usuário não autenticado', 'auth_error')
 
+      const settings = buildSettingsFromInput(input as Record<string, any>, {
+        status: 'active',
+        provisioned_by: user.id,
+      })
+
       const { data, error } = await supabase
-        .from('organizations')
+        .from('orgs')
         .insert({
-          name: input.name,
-          slug: input.slug,
+          nome: input.name,
           cnpj: input.cnpj || null,
-          email: input.email,
-          phone: input.phone || null,
-          address: input.address || null,
-          plan: input.plan,
-          max_users: input.max_users || 5,
-          max_storage_gb: input.max_storage_gb || 10,
-          billing_email: input.billing_email || input.email,
-          billing_cycle: input.billing_cycle || 'monthly',
-          status: 'pending',
-          provisioned_by: user.id,
+          plano: input.plan,
+          ativo: true,
+          settings,
         })
         .select()
         .single()
@@ -143,9 +247,17 @@ export const organizationsService = {
    */
   async update(id: string, input: UpdateOrganizationInput): Promise<Organization> {
     try {
+      const existing = await this.getById(id)
+      const settings = buildSettingsFromInput(input as Record<string, any>, existing?.settings || {})
+
       const { data, error } = await supabase
-        .from('organizations')
-        .update(input)
+        .from('orgs')
+        .update({
+          nome: input.name ?? existing?.name,
+          cnpj: input.cnpj ?? existing?.cnpj,
+          plano: (input as any).plan ?? existing?.plan,
+          settings,
+        })
         .eq('id', id)
         .select()
         .single()
@@ -165,13 +277,20 @@ export const organizationsService = {
    */
   async updatePlan(id: string, input: UpdateOrganizationPlanInput): Promise<Organization> {
     try {
+      const existing = await this.getById(id)
+      const settings = buildSettingsFromInput(input as Record<string, any>, existing?.settings || {})
+
       const { data, error } = await supabase
-        .from('organizations')
+        .from('orgs')
         .update({
-          plan: input.plan,
-          max_users: input.max_users,
-          max_storage_gb: input.max_storage_gb,
-          max_cases: input.max_cases,
+          plano: input.plan,
+          settings: {
+            ...settings,
+            max_users: input.max_users ?? settings.max_users,
+            max_storage_gb: input.max_storage_gb ?? settings.max_storage_gb,
+            max_cases: input.max_cases ?? settings.max_cases,
+            status: settings.status || (existing?.status ?? 'active'),
+          },
         })
         .eq('id', id)
         .select()
@@ -192,19 +311,26 @@ export const organizationsService = {
    */
   async updateStatus(id: string, input: UpdateOrganizationStatusInput): Promise<Organization> {
     try {
-      const updates: any = { status: input.status }
-      
+      const existing = await this.getById(id)
+      const nextSettings = {
+        ...(existing?.settings || {}),
+        status: input.status,
+      }
+
       if (input.status === 'active') {
-        updates.activated_at = new Date().toISOString()
+        nextSettings.activated_at = new Date().toISOString()
       } else if (input.status === 'suspended') {
-        updates.suspended_at = new Date().toISOString()
+        nextSettings.suspended_at = new Date().toISOString()
       } else if (input.status === 'cancelled') {
-        updates.cancelled_at = new Date().toISOString()
+        nextSettings.cancelled_at = new Date().toISOString()
       }
 
       const { data, error } = await supabase
-        .from('organizations')
-        .update(updates)
+        .from('orgs')
+        .update({
+          ativo: input.status === 'active',
+          settings: nextSettings,
+        })
         .eq('id', id)
         .select()
         .single()
@@ -224,11 +350,16 @@ export const organizationsService = {
    */
   async delete(id: string): Promise<void> {
     try {
+      const existing = await this.getById(id)
       const { error } = await supabase
-        .from('organizations')
+        .from('orgs')
         .update({
-          status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
+          ativo: false,
+          settings: {
+            ...(existing?.settings || {}),
+            status: 'cancelled',
+            cancelled_at: new Date().toISOString(),
+          },
         })
         .eq('id', id)
 
@@ -246,8 +377,22 @@ export const organizationsService = {
    */
   async getStats(orgId: string): Promise<OrganizationStats> {
     try {
-      const totalUsers = 0
-      const activeUsers = 0
+      const { count: totalUsers, error: usersError } = await supabase
+        .from('org_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+
+      const { count: activeUsers, error: activeUsersError } = await supabase
+        .from('org_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .eq('ativo', true)
+
+      const { count: adminUsers, error: adminUsersError } = await supabase
+        .from('org_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .in('role', ['admin', 'org_admin', 'fartech_admin'])
 
       // Get client count
       const { count: totalClients } = await supabase
@@ -268,16 +413,26 @@ export const organizationsService = {
         .eq('status', 'ativo')
 
       // TODO: Calculate storage used
-      const storageUsedGb = 0
+      const org = await this.getById(orgId)
+      const storageUsedGb =
+        (org?.settings && (org.settings as { storage_used_gb?: number }).storage_used_gb) || 0
+      const maxStorageGb = org?.max_storage_gb || 0
+      const storageUsedPercentage =
+        maxStorageGb > 0 ? Math.min(100, Math.round((storageUsedGb / maxStorageGb) * 100)) : 0
+
+      if (usersError || activeUsersError || adminUsersError) {
+        console.warn('Erro ao carregar membros da org:', usersError || activeUsersError || adminUsersError)
+      }
 
       return {
         total_users: totalUsers || 0,
         active_users: activeUsers || 0,
+        admin_users: adminUsers || 0,
         total_clients: totalClients || 0,
         total_cases: totalCases || 0,
         active_cases: activeCases || 0,
         storage_used_gb: storageUsedGb,
-        storage_used_percentage: 0,
+        storage_used_percentage: storageUsedPercentage,
       }
     } catch (error) {
       throw new AppError(
@@ -330,9 +485,9 @@ export const organizationsService = {
   async isSlugAvailable(slug: string, excludeId?: string): Promise<boolean> {
     try {
       let query = supabase
-        .from('organizations')
+        .from('orgs')
         .select('id')
-        .eq('slug', slug)
+        .filter('settings->>slug', 'eq', slug)
 
       if (excludeId) {
         query = query.neq('id', excludeId)
@@ -355,12 +510,19 @@ export const organizationsService = {
    */
   async activate(orgId: string, adminUserId: string): Promise<Organization> {
     try {
+      const existing = await this.getById(orgId)
+      const settings = {
+        ...(existing?.settings || {}),
+        status: 'active',
+        activated_at: new Date().toISOString(),
+        managed_by: adminUserId,
+      }
+
       const { data, error } = await supabase
-        .from('organizations')
+        .from('orgs')
         .update({
-          status: 'active',
-          activated_at: new Date().toISOString(),
-          managed_by: adminUserId,
+          ativo: true,
+          settings,
         })
         .eq('id', orgId)
         .select()

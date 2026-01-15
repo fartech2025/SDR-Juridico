@@ -75,7 +75,7 @@ export function DatabasePage() {
       { name: 'documentos', icon: FileText },
       { name: 'agenda', icon: Calendar },
       { name: 'usuarios', icon: Users },
-      { name: 'organizations', icon: Users },
+      { name: 'orgs', icon: Users },
       { name: 'timeline_events', icon: Activity },
       { name: 'notificacoes', icon: AlertCircle }
     ]

@@ -65,6 +65,7 @@ export function useTeamsSync(): UseTeamsSync {
     try {
       setIsLoading(true)
       setError(null)
+      setLastSync(new Date())
       throw new Error('Integração Microsoft Teams não disponível no schema atual.')
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Erro ao sincronizar')

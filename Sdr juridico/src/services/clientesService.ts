@@ -79,7 +79,9 @@ export const clientesService = {
   /**
    * Cria um novo cliente
    */
-  async createCliente(cliente: Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>): Promise<ClienteRow> {
+  async createCliente(
+    cliente: Omit<ClienteRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>
+  ): Promise<ClienteRow> {
     try {
       const payload = {
         ...cliente,
@@ -106,7 +108,7 @@ export const clientesService = {
    */
   async updateCliente(
     id: string,
-    updates: Partial<Omit<ClienteRow, 'id' | 'created_at' | 'org_id'>>
+    updates: Partial<Omit<ClienteRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>>
   ): Promise<ClienteRow> {
     try {
       const { data, error } = await supabase

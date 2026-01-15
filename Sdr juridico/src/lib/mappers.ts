@@ -13,7 +13,6 @@ import type {
   Documento,
   Lead,
   LeadHeat,
-  LeadStatus,
   TimelineCategory,
   TimelineEvent,
 } from '@/types/domain'
@@ -29,8 +28,6 @@ const toLocalTime = (value: string) => {
   const date = new Date(value)
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
-
-const shortUserLabel = (value: string) => `Usuario ${value.slice(0, 8)}`
 
 const resolveHeat = (row: LeadRow): LeadHeat => {
   if (row.heat) return row.heat

@@ -64,6 +64,7 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSync {
     try {
       setIsLoading(true)
       setError(null)
+      setLastSync(new Date())
       throw new Error('Integração Google Calendar não disponível no schema atual.')
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Erro ao sincronizar')

@@ -9,7 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions'
 interface FartechGuardProps {
   children: ReactNode
   
-  // Redirect path if not Fartech admin (default: '/dashboard')
+  // Redirect path if not Fartech admin (default: '/app/dashboard')
   redirectTo?: string
   
   // Fallback component to show instead of redirect
@@ -38,7 +38,7 @@ interface FartechGuardProps {
  */
 export function FartechGuard({
   children,
-  redirectTo = '/dashboard',
+  redirectTo = '/app/dashboard',
   fallback,
   loadingComponent = <div>Verificando acesso...</div>,
 }: FartechGuardProps) {
