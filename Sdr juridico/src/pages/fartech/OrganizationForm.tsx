@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Save, ArrowLeft } from 'lucide-react'
 import { organizationsService } from '@/services/organizationsService'
+import { supabase } from '@/lib/supabaseClient'
 import { FartechGuard } from '@/components/guards'
 import type { CreateOrganizationInput, OrganizationPlan } from '@/types/organization'
 
@@ -36,6 +37,9 @@ export default function OrganizationForm() {
     slug: '',
     cnpj: '',
     email: '',
+    responsavel_email: '',
+    admin_email: '',
+    admin_name: '',
     plan: 'trial',
     max_users: 5,
     max_storage_gb: 10,
@@ -68,6 +72,13 @@ export default function OrganizationForm() {
           cnpj: org.cnpj || '',
           email: org.email,
           phone: org.phone || '',
+          responsavel_email:
+            (org.settings && (org.settings as { responsavel_email?: string }).responsavel_email) ||
+            '',
+          admin_email:
+            (org.settings && (org.settings as { admin_email?: string }).admin_email) || '',
+          admin_name:
+            (org.settings && (org.settings as { admin_name?: string }).admin_name) || '',
           plan: org.plan,
           max_users: org.max_users,
           max_storage_gb: org.max_storage_gb,
@@ -134,10 +145,39 @@ export default function OrganizationForm() {
       
       if (isEditMode && id) {
         await organizationsService.update(id, formData)
-      } else {
-        await organizationsService.create(formData)
+        navigate('/admin/organizations', { state: { refresh: true } })
+        return
       }
-      
+
+      const created = await organizationsService.create(formData)
+
+      if (formData.admin_email) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const accessToken = sessionData.session?.access_token
+
+        if (!accessToken) {
+          setError('Sessão expirada. Faça login novamente para convidar o admin.')
+          return
+        }
+
+        const { error: inviteError } = await supabase.functions.invoke('invite-org-admin', {
+          body: {
+            orgId: created.id,
+            adminEmail: formData.admin_email,
+            adminName: formData.admin_name,
+            responsavelEmail: formData.responsavel_email,
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+
+        if (inviteError) {
+          setError(`Organização criada, mas falhou ao convidar o admin: ${inviteError.message}`)
+          return
+        }
+      }
+
       navigate('/admin/organizations', { state: { refresh: true } })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar organização'
@@ -243,6 +283,51 @@ export default function OrganizationForm() {
                     onChange={(e) => setFormData(prev => ({ ...prev, cnpj: e.target.value }))}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                     placeholder="00.000.000/0000-00"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email do Responsável
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.responsavel_email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, responsavel_email: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      placeholder="responsavel@escritorio.com.br"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email do Admin da Organização
+                    </label>
+                    <input
+                      type="email"
+                      required={!isEditMode}
+                      value={formData.admin_email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, admin_email: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                      placeholder="admin@escritorio.com.br"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Esse admin receberá o email para cadastrar usuários do escritório.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nome do Admin (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.admin_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, admin_name: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Nome completo"
                   />
                 </div>
               </div>

@@ -60,6 +60,9 @@ const buildSettingsFromInput = (
   if (input.primary_color) next.primary_color = input.primary_color
   if (input.secondary_color) next.secondary_color = input.secondary_color
   if (input.custom_domain) next.custom_domain = input.custom_domain
+  if ((input as any).admin_email) next.admin_email = (input as any).admin_email
+  if ((input as any).admin_name) next.admin_name = (input as any).admin_name
+  if ((input as any).responsavel_email) next.responsavel_email = (input as any).responsavel_email
   if (input.max_users !== undefined) next.max_users = input.max_users
   if (input.max_storage_gb !== undefined) next.max_storage_gb = input.max_storage_gb
   if (input.max_cases !== undefined) next.max_cases = input.max_cases
@@ -233,7 +236,7 @@ export const organizationsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data
+      return mapDbToOrg(data)
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao criar organização',
@@ -263,7 +266,7 @@ export const organizationsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data
+      return mapDbToOrg(data)
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao atualizar organização',
@@ -297,7 +300,7 @@ export const organizationsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data
+      return mapDbToOrg(data)
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao atualizar plano',
@@ -336,7 +339,7 @@ export const organizationsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data
+      return mapDbToOrg(data)
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao atualizar status',
@@ -529,7 +532,7 @@ export const organizationsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data
+      return mapDbToOrg(data)
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao ativar organização',

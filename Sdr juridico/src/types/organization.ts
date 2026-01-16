@@ -172,6 +172,7 @@ export interface CreateOrganizationInput {
   // Initial admin user info
   admin_email?: string
   admin_name?: string
+  responsavel_email?: string
 }
 
 export interface UpdateOrganizationInput {

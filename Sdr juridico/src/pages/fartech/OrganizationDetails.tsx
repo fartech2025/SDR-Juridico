@@ -15,11 +15,13 @@ import {
   Building2,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Mail
 } from 'lucide-react'
 import { organizationsService } from '@/services/organizationsService'
 import { useFartechAdmin } from '@/hooks/useFartechAdmin'
 import { FartechGuard } from '@/components/guards'
+import { supabase } from '@/lib/supabaseClient'
 import type { Organization, OrganizationStats, OrganizationUsage } from '@/types/organization'
 
 export default function OrganizationDetails() {
@@ -32,6 +34,8 @@ export default function OrganizationDetails() {
   const [stats, setStats] = useState<OrganizationStats | null>(null)
   const [usage, setUsage] = useState<OrganizationUsage | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [inviteStatus, setInviteStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [inviteLoading, setInviteLoading] = useState(false)
 
   const settings = (organization?.settings || {}) as Record<string, any>
   const trialEndsAt = settings.trial_ends_at as string | undefined
@@ -39,6 +43,9 @@ export default function OrganizationDetails() {
   const enableWhiteLabel = Boolean(settings.enable_white_label)
   const enableCustomDomain = Boolean(settings.enable_custom_domain)
   const enableSso = Boolean(settings.enable_sso)
+  const adminEmail = settings.admin_email as string | undefined
+  const adminName = settings.admin_name as string | undefined
+  const responsavelEmail = settings.responsavel_email as string | undefined
   
   useEffect(() => {
     if (id) {
@@ -78,6 +85,51 @@ export default function OrganizationDetails() {
     if (id) {
       await viewOrganization(id)
       navigate('/app/dashboard')
+    }
+  }
+
+  const handleResendInvite = async () => {
+    if (!id) return
+    if (!adminEmail) {
+      setInviteStatus({ type: 'error', message: 'Defina o e-mail do admin nas configurações da organização.' })
+      return
+    }
+
+    setInviteLoading(true)
+    setInviteStatus(null)
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+
+      if (!accessToken) {
+        setInviteStatus({ type: 'error', message: 'Sessão expirada. Faça login novamente.' })
+        return
+      }
+
+      const { error: inviteError } = await supabase.functions.invoke('invite-org-admin', {
+        body: {
+          orgId: id,
+          adminEmail,
+          adminName,
+          responsavelEmail,
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
+      if (inviteError) {
+        setInviteStatus({ type: 'error', message: `Falha ao reenviar convite: ${inviteError.message}` })
+        return
+      }
+
+      setInviteStatus({ type: 'success', message: 'Convite reenviado com sucesso.' })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao reenviar convite'
+      setInviteStatus({ type: 'error', message })
+    } finally {
+      setInviteLoading(false)
     }
   }
   
@@ -151,6 +203,15 @@ export default function OrganizationDetails() {
                 >
                   Visualizar como Org
                 </button>
+
+                <button
+                  onClick={handleResendInvite}
+                  disabled={inviteLoading}
+                  className="inline-flex items-center px-4 py-2 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  {inviteLoading ? 'Enviando...' : 'Reenviar convite'}
+                </button>
                 
                 <Link
                   to={`/admin/organizations/${id}/edit`}
@@ -165,6 +226,17 @@ export default function OrganizationDetails() {
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {inviteStatus && (
+            <div
+              className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
+                inviteStatus.type === 'success'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200'
+                  : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200'
+              }`}
+            >
+              {inviteStatus.message}
+            </div>
+          )}
           {/* Stats Cards */}
           {stats && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
