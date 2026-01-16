@@ -100,7 +100,12 @@ export default function OrganizationDetails() {
 
     try {
       const { data: sessionData } = await supabase.auth.getSession()
-      const accessToken = sessionData.session?.access_token
+      let accessToken = sessionData.session?.access_token
+
+      if (!accessToken) {
+        const { data: refreshed } = await supabase.auth.refreshSession()
+        accessToken = refreshed.session?.access_token
+      }
 
       if (!accessToken) {
         setInviteStatus({ type: 'error', message: 'Sessão expirada. Faça login novamente.' })
@@ -116,6 +121,7 @@ export default function OrganizationDetails() {
         },
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
       })
 

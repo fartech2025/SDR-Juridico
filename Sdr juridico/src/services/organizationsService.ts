@@ -395,7 +395,7 @@ export const organizationsService = {
         .from('org_members')
         .select('*', { count: 'exact', head: true })
         .eq('org_id', orgId)
-        .in('role', ['admin', 'org_admin', 'fartech_admin'])
+        .eq('role', 'admin')
 
       // Get client count
       const { count: totalClients } = await supabase

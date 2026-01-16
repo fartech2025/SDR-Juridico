@@ -153,7 +153,12 @@ export default function OrganizationForm() {
 
       if (formData.admin_email) {
         const { data: sessionData } = await supabase.auth.getSession()
-        const accessToken = sessionData.session?.access_token
+        let accessToken = sessionData.session?.access_token
+
+        if (!accessToken) {
+          const { data: refreshed } = await supabase.auth.refreshSession()
+          accessToken = refreshed.session?.access_token
+        }
 
         if (!accessToken) {
           setError('Sessão expirada. Faça login novamente para convidar o admin.')
@@ -169,6 +174,7 @@ export default function OrganizationForm() {
           },
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
         })
 
