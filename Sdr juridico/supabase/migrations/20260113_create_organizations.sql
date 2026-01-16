@@ -1,4 +1,4 @@
--- Migration: Create organizations table and multi-tenancy structure
+-- Migration: Create orgs table and multi-tenancy structure
 -- Date: 2026-01-13
 -- Description: Adds multi-tenant support with organizations
 
@@ -6,9 +6,9 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================
--- TABLE: organizations
+-- TABLE: orgs
 -- ============================================
-CREATE TABLE IF NOT EXISTS organizations (
+CREATE TABLE IF NOT EXISTS orgs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- Basic Info
@@ -60,12 +60,12 @@ CREATE TABLE IF NOT EXISTS organizations (
   CONSTRAINT valid_billing_cycle CHECK (billing_cycle IN ('monthly', 'yearly'))
 );
 
--- Indexes for organizations
-CREATE INDEX idx_organizations_slug ON organizations(slug);
-CREATE INDEX idx_organizations_status ON organizations(status);
-CREATE INDEX idx_organizations_cnpj ON organizations(cnpj);
-CREATE INDEX idx_organizations_plan ON organizations(plan);
-CREATE INDEX idx_organizations_created_at ON organizations(created_at);
+-- Indexes for orgs
+CREATE INDEX idx_orgs_slug ON orgs(slug);
+CREATE INDEX idx_orgs_status ON orgs(status);
+CREATE INDEX idx_orgs_cnpj ON orgs(cnpj);
+CREATE INDEX idx_orgs_plan ON orgs(plan);
+CREATE INDEX idx_orgs_created_at ON orgs(created_at);
 
 -- Trigger for updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -76,8 +76,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_organizations_updated_at
-  BEFORE UPDATE ON organizations
+CREATE TRIGGER update_orgs_updated_at
+  BEFORE UPDATE ON orgs
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -87,7 +87,7 @@ CREATE TRIGGER update_organizations_updated_at
 
 -- Add org_id and role columns to users table
 ALTER TABLE users
-ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE,
 ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user',
 ADD COLUMN IF NOT EXISTS is_fartech_admin BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS department VARCHAR(100),
@@ -104,23 +104,23 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_is_fartech_admin ON users(is_fartech_admin);
 
 -- Update foreign keys
-ALTER TABLE organizations
-ADD CONSTRAINT fk_organizations_provisioned_by 
+ALTER TABLE orgs
+ADD CONSTRAINT fk_orgs_provisioned_by 
   FOREIGN KEY (provisioned_by) REFERENCES users(id) ON DELETE SET NULL;
 
-ALTER TABLE organizations
-ADD CONSTRAINT fk_organizations_managed_by 
+ALTER TABLE orgs
+ADD CONSTRAINT fk_orgs_managed_by 
   FOREIGN KEY (managed_by) REFERENCES users(id) ON DELETE SET NULL;
 
 -- ============================================
--- Enable RLS on organizations
+-- Enable RLS on orgs
 -- ============================================
 
-ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orgs ENABLE ROW LEVEL SECURITY;
 
--- Policy: Fartech admins see all organizations
-CREATE POLICY "Fartech admins see all organizations"
-  ON organizations FOR SELECT
+-- Policy: Fartech admins see all orgs
+CREATE POLICY "Fartech admins see all orgs"
+  ON orgs FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM users
@@ -131,7 +131,7 @@ CREATE POLICY "Fartech admins see all organizations"
 
 -- Policy: Org admins see their own organization
 CREATE POLICY "Org admins see their organization"
-  ON organizations FOR SELECT
+  ON orgs FOR SELECT
   USING (
     id = (
       SELECT org_id FROM users
@@ -141,7 +141,7 @@ CREATE POLICY "Org admins see their organization"
 
 -- Policy: Fartech admins can manage all organizations
 CREATE POLICY "Fartech admins manage all organizations"
-  ON organizations FOR ALL
+  ON orgs FOR ALL
   USING (
     EXISTS (
       SELECT 1 FROM users
@@ -152,7 +152,7 @@ CREATE POLICY "Fartech admins manage all organizations"
 
 -- Policy: Org admins can update their organization
 CREATE POLICY "Org admins update their organization"
-  ON organizations FOR UPDATE
+  ON orgs FOR UPDATE
   USING (
     id = (
       SELECT org_id FROM users
@@ -216,12 +216,12 @@ CREATE POLICY "Org admins manage their org users"
 -- COMMENTS
 -- ============================================
 
-COMMENT ON TABLE organizations IS 'Multi-tenant organizations (law firms)';
-COMMENT ON COLUMN organizations.slug IS 'URL-friendly identifier for the organization';
-COMMENT ON COLUMN organizations.status IS 'pending: awaiting activation, active: operational, suspended: temporarily disabled, cancelled: permanently closed';
-COMMENT ON COLUMN organizations.plan IS 'Subscription plan level';
-COMMENT ON COLUMN organizations.provisioned_by IS 'Fartech admin who created this organization';
-COMMENT ON COLUMN organizations.managed_by IS 'Current organization administrator';
+COMMENT ON TABLE orgs IS 'Multi-tenant organizations (law firms)';
+COMMENT ON COLUMN orgs.slug IS 'URL-friendly identifier for the organization';
+COMMENT ON COLUMN orgs.status IS 'pending: awaiting activation, active: operational, suspended: temporarily disabled, cancelled: permanently closed';
+COMMENT ON COLUMN orgs.plan IS 'Subscription plan level';
+COMMENT ON COLUMN orgs.provisioned_by IS 'Fartech admin who created this organization';
+COMMENT ON COLUMN orgs.managed_by IS 'Current organization administrator';
 
 COMMENT ON COLUMN users.org_id IS 'Organization this user belongs to';
 COMMENT ON COLUMN users.role IS 'User role: fartech_admin (Fartech super admin), org_admin (organization manager), user (regular user)';

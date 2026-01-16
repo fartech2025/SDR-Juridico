@@ -12,7 +12,7 @@
 -- Audit Logs: registra todas as ações importantes
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   action TEXT NOT NULL, -- 'create', 'update', 'delete', 'login', 'logout', 'error'
   entity_type TEXT NOT NULL, -- 'leads', 'casos', 'clientes', etc
@@ -34,7 +34,7 @@ CREATE INDEX idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
 -- Analytics Events: tracking de eventos e comportamento
 CREATE TABLE IF NOT EXISTS public.analytics_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   session_id UUID,
   event_name TEXT NOT NULL,
@@ -54,7 +54,7 @@ CREATE INDEX idx_analytics_events_created_at ON public.analytics_events(created_
 CREATE TABLE IF NOT EXISTS public.active_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE,
   session_token TEXT UNIQUE,
   device_info JSONB DEFAULT '{}'::jsonb,
   ip_address INET,
@@ -111,7 +111,7 @@ CREATE INDEX idx_role_permissions_permission_id ON public.role_permissions(permi
 -- Org Features: controle de features habilitadas por organização
 CREATE TABLE IF NOT EXISTS public.org_features (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  org_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   feature_key TEXT NOT NULL,
   enabled BOOLEAN DEFAULT true,
   metadata JSONB DEFAULT '{}'::jsonb,
@@ -134,7 +134,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'clientes' AND column_name = 'org_id'
   ) THEN
-    ALTER TABLE public.clientes ADD COLUMN org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    ALTER TABLE public.clientes ADD COLUMN org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE;
     CREATE INDEX idx_clientes_org_id ON public.clientes(org_id);
   END IF;
 END $$;
@@ -146,7 +146,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'casos' AND column_name = 'org_id'
   ) THEN
-    ALTER TABLE public.casos ADD COLUMN org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    ALTER TABLE public.casos ADD COLUMN org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE;
     CREATE INDEX idx_casos_org_id ON public.casos(org_id);
   END IF;
 END $$;
@@ -158,7 +158,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'documentos' AND column_name = 'org_id'
   ) THEN
-    ALTER TABLE public.documentos ADD COLUMN org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    ALTER TABLE public.documentos ADD COLUMN org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE;
     CREATE INDEX idx_documentos_org_id ON public.documentos(org_id);
   END IF;
 END $$;
@@ -170,7 +170,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'agendamentos' AND column_name = 'org_id'
   ) THEN
-    ALTER TABLE public.agendamentos ADD COLUMN org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    ALTER TABLE public.agendamentos ADD COLUMN org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE;
     CREATE INDEX idx_agendamentos_org_id ON public.agendamentos(org_id);
   END IF;
 END $$;
@@ -182,7 +182,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'notificacoes' AND column_name = 'org_id'
   ) THEN
-    ALTER TABLE public.notificacoes ADD COLUMN org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    ALTER TABLE public.notificacoes ADD COLUMN org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE;
     CREATE INDEX idx_notificacoes_org_id ON public.notificacoes(org_id);
   END IF;
 END $$;
@@ -194,7 +194,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'timeline_events' AND column_name = 'org_id'
   ) THEN
-    ALTER TABLE public.timeline_events ADD COLUMN org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    ALTER TABLE public.timeline_events ADD COLUMN org_id UUID REFERENCES public.orgs(id) ON DELETE CASCADE;
     CREATE INDEX idx_timeline_events_org_id ON public.timeline_events(org_id);
   END IF;
 END $$;
@@ -540,11 +540,11 @@ VALUES
   ('users.manage', 'users', 'manage', 'Gerenciar todos usuários'),
   
   -- Organizações (apenas Fartech Admin)
-  ('orgs.create', 'organizations', 'create', 'Criar organizações'),
-  ('orgs.read', 'organizations', 'read', 'Visualizar organizações'),
-  ('orgs.update', 'organizations', 'update', 'Atualizar organizações'),
-  ('orgs.delete', 'organizations', 'delete', 'Deletar organizações'),
-  ('orgs.manage', 'organizations', 'manage', 'Gerenciar todas organizações'),
+  ('orgs.create', 'orgs', 'create', 'Criar organizações'),
+  ('orgs.read', 'orgs', 'read', 'Visualizar organizações'),
+  ('orgs.update', 'orgs', 'update', 'Atualizar organizações'),
+  ('orgs.delete', 'orgs', 'delete', 'Deletar organizações'),
+  ('orgs.manage', 'orgs', 'manage', 'Gerenciar todas organizações'),
   
   -- Analytics
   ('analytics.read', 'analytics', 'read', 'Visualizar analytics'),
@@ -574,14 +574,14 @@ BEGIN
   -- Org Admin: todas exceto org management
   INSERT INTO public.role_permissions (role_id, permission_id)
   SELECT org_admin_id, id FROM public.permissions
-  WHERE resource != 'organizations'
+  WHERE resource != 'orgs'
   ON CONFLICT DO NOTHING;
   
   -- User: apenas read/create básico
   INSERT INTO public.role_permissions (role_id, permission_id)
   SELECT user_id, id FROM public.permissions
   WHERE action IN ('read', 'create', 'update')
-  AND resource NOT IN ('organizations', 'users', 'analytics', 'settings')
+  AND resource NOT IN ('orgs', 'users', 'analytics', 'settings')
   ON CONFLICT DO NOTHING;
 END $$;
 

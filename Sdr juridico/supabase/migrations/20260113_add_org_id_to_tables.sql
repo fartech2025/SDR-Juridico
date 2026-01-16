@@ -7,7 +7,7 @@
 -- ============================================
 
 ALTER TABLE leads
-ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_leads_org_id ON leads(org_id);
 
@@ -35,7 +35,7 @@ CREATE POLICY "Fartech admins access all leads"
 -- ============================================
 
 ALTER TABLE clientes
-ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_clientes_org_id ON clientes(org_id);
 
@@ -62,7 +62,7 @@ CREATE POLICY "Fartech admins access all clients"
 -- ============================================
 
 ALTER TABLE casos
-ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_casos_org_id ON casos(org_id);
 
@@ -89,7 +89,7 @@ CREATE POLICY "Fartech admins access all cases"
 -- ============================================
 
 ALTER TABLE documentos
-ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_documentos_org_id ON documentos(org_id);
 
@@ -116,7 +116,7 @@ CREATE POLICY "Fartech admins access all documents"
 -- ============================================
 
 ALTER TABLE agenda_eventos
-ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_agenda_eventos_org_id ON agenda_eventos(org_id);
 
@@ -143,7 +143,7 @@ CREATE POLICY "Fartech admins access all agenda"
 -- ============================================
 
 ALTER TABLE integrations
-ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_integrations_org_id ON integrations(org_id);
 
@@ -173,7 +173,7 @@ DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'tags') THEN
     ALTER TABLE tags
-    ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+    ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
     
     CREATE INDEX IF NOT EXISTS idx_tags_org_id ON tags(org_id);
     
@@ -205,7 +205,7 @@ DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'comentarios') THEN
     ALTER TABLE comentarios
-    ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+    ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
     
     CREATE INDEX IF NOT EXISTS idx_comentarios_org_id ON comentarios(org_id);
     
@@ -237,7 +237,7 @@ DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'historico_alteracoes') THEN
     ALTER TABLE historico_alteracoes
-    ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+    ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES orgs(id) ON DELETE CASCADE;
     
     CREATE INDEX IF NOT EXISTS idx_historico_alteracoes_org_id ON historico_alteracoes(org_id);
     

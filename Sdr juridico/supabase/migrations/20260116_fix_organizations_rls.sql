@@ -1,15 +1,15 @@
--- Fix organizations RLS to use public.usuarios permissions
+-- Fix orgs RLS to use public.usuarios permissions
 -- Date: 2026-01-16
 
-ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orgs ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Fartech admins see all organizations" ON organizations;
-DROP POLICY IF EXISTS "Org admins see their organization" ON organizations;
-DROP POLICY IF EXISTS "Fartech admins manage all organizations" ON organizations;
-DROP POLICY IF EXISTS "Org admins update their organization" ON organizations;
+DROP POLICY IF EXISTS "Fartech admins see all orgs" ON orgs;
+DROP POLICY IF EXISTS "Org admins see their organization" ON orgs;
+DROP POLICY IF EXISTS "Fartech admins manage all orgs" ON orgs;
+DROP POLICY IF EXISTS "Org admins update their organization" ON orgs;
 
-CREATE POLICY "Fartech admins see all organizations"
-  ON organizations FOR SELECT
+CREATE POLICY "Fartech admins see all orgs"
+  ON orgs FOR SELECT
   USING (
     EXISTS (
       SELECT 1
@@ -20,13 +20,13 @@ CREATE POLICY "Fartech admins see all organizations"
   );
 
 CREATE POLICY "Org admins see their organization"
-  ON organizations FOR SELECT
+  ON orgs FOR SELECT
   USING (
     managed_by = auth.uid()
   );
 
-CREATE POLICY "Fartech admins manage all organizations"
-  ON organizations FOR ALL
+CREATE POLICY "Fartech admins manage all orgs"
+  ON orgs FOR ALL
   USING (
     EXISTS (
       SELECT 1
@@ -37,7 +37,7 @@ CREATE POLICY "Fartech admins manage all organizations"
   );
 
 CREATE POLICY "Org admins update their organization"
-  ON organizations FOR UPDATE
+  ON orgs FOR UPDATE
   USING (
     managed_by = auth.uid()
   );

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.org_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- Relations
-  org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  org_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   
   -- Role and Status
