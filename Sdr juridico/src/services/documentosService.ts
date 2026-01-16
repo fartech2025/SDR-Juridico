@@ -2,6 +2,72 @@ import { supabase } from '@/lib/supabaseClient'
 import type { DocumentoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
+type DbDocumentoRow = {
+  id: string
+  created_at: string
+  org_id?: string | null
+  title: string
+  description?: string | null
+  visibility?: string | null
+  bucket?: string | null
+  storage_path: string
+  mime_type?: string | null
+  size_bytes?: number | null
+  lead_id?: string | null
+  cliente_id?: string | null
+  caso_id?: string | null
+  uploaded_by?: string | null
+  tags?: string[] | null
+  meta?: Record<string, any> | null
+}
+
+const mapDbDocumentoToDocumentoRow = (row: DbDocumentoRow): DocumentoRow => {
+  const meta = row.meta || {}
+  return {
+    id: row.id,
+    created_at: row.created_at,
+    updated_at: row.created_at,
+    org_id: row.org_id ?? null,
+    titulo: row.title,
+    descricao: row.description || null,
+    caso_id: row.caso_id || null,
+    cliente_nome: meta.cliente_nome || null,
+    tipo: meta.tipo || row.bucket || 'docs',
+    status: meta.status || 'pendente',
+    url: row.storage_path,
+    arquivo_nome: meta.arquivo_nome || row.title,
+    arquivo_tamanho: row.size_bytes || null,
+    mime_type: row.mime_type || null,
+    solicitado_por: row.uploaded_by || null,
+    tags: row.tags || [],
+  }
+}
+
+const buildDocumentoPayload = (doc: Partial<DocumentoRow>, applyDefaults: boolean) => {
+  const payload: Partial<DbDocumentoRow> = {}
+
+  if (doc.titulo !== undefined) payload.title = doc.titulo
+  if (doc.descricao !== undefined) payload.description = doc.descricao
+  if (doc.caso_id !== undefined) payload.caso_id = doc.caso_id
+  if (doc.mime_type !== undefined) payload.mime_type = doc.mime_type
+  if (doc.arquivo_tamanho !== undefined) payload.size_bytes = doc.arquivo_tamanho
+  if (doc.tags !== undefined) payload.tags = doc.tags
+  if (doc.url !== undefined) payload.storage_path = doc.url
+
+  const meta: Record<string, any> = {}
+  if (doc.tipo !== undefined) meta.tipo = doc.tipo
+  if (doc.status !== undefined) meta.status = doc.status
+  if (doc.arquivo_nome !== undefined) meta.arquivo_nome = doc.arquivo_nome
+  if (doc.cliente_nome !== undefined) meta.cliente_nome = doc.cliente_nome
+  if (Object.keys(meta).length > 0) payload.meta = meta
+
+  if (applyDefaults) {
+    if (!payload.bucket) payload.bucket = 'docs'
+  }
+
+  return payload
+}
+
 export const documentosService = {
   /**
    * Busca todos os documentos
@@ -14,14 +80,14 @@ export const documentosService = {
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data || []
+      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
   },
 
   /**
-   * Busca um documento específico
+   * Busca um documento especifico
    */
   async getDocumento(id: string): Promise<DocumentoRow> {
     try {
@@ -32,16 +98,16 @@ export const documentosService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      if (!data) throw new AppError('Documento não encontrado', 'not_found')
+      if (!data) throw new AppError('Documento nao encontrado', 'not_found')
 
-      return data
+      return mapDbDocumentoToDocumentoRow(data as DbDocumentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documento', 'database_error')
     }
   },
 
   /**
-   * Busca documentos de um caso específico
+   * Busca documentos de um caso especifico
    */
   async getDocumentosByCaso(casoId: string): Promise<DocumentoRow[]> {
     try {
@@ -52,7 +118,7 @@ export const documentosService = {
         .order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data || []
+      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos do caso', 'database_error')
     }
@@ -63,8 +129,14 @@ export const documentosService = {
    */
   async getDocumentosByStatus(status: string): Promise<DocumentoRow[]> {
     try {
-      const documentos = await this.getDocumentos()
-      return documentos.filter((doc) => doc.status === status)
+      const { data, error } = await supabase
+        .from('documentos')
+        .select('*')
+        .filter('meta->>status', 'eq', status)
+        .order('created_at', { ascending: false })
+
+      if (error) throw new AppError(error.message, 'database_error')
+      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
@@ -75,8 +147,14 @@ export const documentosService = {
    */
   async getDocumentosByTipo(tipo: string): Promise<DocumentoRow[]> {
     try {
-      const documentos = await this.getDocumentos()
-      return documentos.filter((doc) => doc.tipo === tipo)
+      const { data, error } = await supabase
+        .from('documentos')
+        .select('*')
+        .filter('meta->>tipo', 'eq', tipo)
+        .order('created_at', { ascending: false })
+
+      if (error) throw new AppError(error.message, 'database_error')
+      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
@@ -89,16 +167,17 @@ export const documentosService = {
     documento: Omit<DocumentoRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>
   ): Promise<DocumentoRow> {
     try {
+      const payload = buildDocumentoPayload(documento, true)
       const { data, error } = await supabase
         .from('documentos')
-        .insert([documento])
-        .select()
+        .insert([payload])
+        .select('*')
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Erro ao criar documento', 'database_error')
 
-      return data
+      return mapDbDocumentoToDocumentoRow(data as DbDocumentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao criar documento', 'database_error')
     }
@@ -112,17 +191,18 @@ export const documentosService = {
     updates: Partial<Omit<DocumentoRow, 'id' | 'created_at' | 'updated_at' | 'org_id'>>
   ): Promise<DocumentoRow> {
     try {
+      const payload = buildDocumentoPayload(updates, false)
       const { data, error } = await supabase
         .from('documentos')
-        .update(updates)
+        .update(payload)
         .eq('id', id)
-        .select()
+        .select('*')
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      if (!data) throw new AppError('Documento não encontrado', 'not_found')
+      if (!data) throw new AppError('Documento nao encontrado', 'not_found')
 
-      return data
+      return mapDbDocumentoToDocumentoRow(data as DbDocumentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao atualizar documento', 'database_error')
     }
@@ -166,7 +246,7 @@ export const documentosService = {
   },
 
   /**
-   * Busca estatísticas de documentos
+   * Busca estatisticas de documentos
    */
   async getEstatisticas(): Promise<{
     total: number
@@ -182,7 +262,7 @@ export const documentosService = {
         completos: documentos.filter((doc) => doc.status === 'aprovado').length,
       }
     } catch (error) {
-      throw error instanceof AppError ? error : new AppError('Erro ao buscar estatísticas', 'database_error')
+      throw error instanceof AppError ? error : new AppError('Erro ao buscar estatisticas', 'database_error')
     }
   },
 
@@ -201,13 +281,13 @@ export const documentosService = {
 
       // Validar arquivo
       if (!arquivo) {
-        throw new AppError('Arquivo é obrigatório', 'validation_error')
+        throw new AppError('Arquivo e obrigatorio', 'validation_error')
       }
 
       // Validar tamanho (10MB)
-      const MAX_SIZE = 10 * 1024 * 1024
-      if (arquivo.size > MAX_SIZE) {
-        throw new AppError('Arquivo muito grande. Tamanho máximo: 10MB', 'validation_error')
+      const maxSize = 10 * 1024 * 1024
+      if (arquivo.size > maxSize) {
+        throw new AppError('Arquivo muito grande. Tamanho maximo: 10MB', 'validation_error')
       }
 
       // Validar tipo de arquivo
@@ -225,26 +305,22 @@ export const documentosService = {
       ]
 
       if (!tiposPermitidos.includes(arquivo.type)) {
-        throw new AppError('Tipo de arquivo não permitido. Use PDF, imagens ou documentos Office', 'validation_error')
+        throw new AppError('Tipo de arquivo nao permitido. Use PDF, imagens ou documentos Office', 'validation_error')
       }
 
-      // Obter usuário autenticado
+      // Obter usuario autenticado
       const { data: { session }, error: authError } = await supabase.auth.getSession()
       if (authError || !session?.user) {
-        throw new AppError('Usuário não autenticado. Faça login para fazer upload de documentos.', 'auth_error')
+        throw new AppError('Usuario nao autenticado. Faca login para fazer upload de documentos.', 'auth_error')
       }
 
       const user = session.user
-      // Gerar nome único para o arquivo
       const timestamp = Date.now()
       const randomStr = Math.random().toString(36).substring(2, 9)
       const extensao = arquivo.name.split('.').pop()
       const nomeArquivo = `${timestamp}_${randomStr}.${extensao}`
-      
-      // Path no storage: user_id/nome_arquivo
       const storagePath = `${user.id}/${nomeArquivo}`
 
-      // Upload para o Storage
       const { error: uploadError } = await supabase.storage
         .from('documentos')
         .upload(storagePath, arquivo, {
@@ -256,39 +332,42 @@ export const documentosService = {
         throw new AppError(uploadError.message, 'storage_error')
       }
 
-      // Registrar no banco de dados
+      const payload: Partial<DbDocumentoRow> = {
+        title: arquivo.name,
+        description: descricao || null,
+        bucket: 'docs',
+        storage_path: storagePath,
+        mime_type: arquivo.type,
+        size_bytes: arquivo.size,
+        caso_id: casoId || null,
+        uploaded_by: user.id,
+        tags: tags || [],
+        meta: {
+          status: 'pendente',
+          tipo: categoria || 'geral',
+          arquivo_nome: arquivo.name,
+        },
+      }
+
       const { data: documento, error: dbError } = await supabase
         .from('documentos')
-        .insert({
-          titulo: arquivo.name,
-          descricao: descricao || null,
-          tipo: categoria || 'geral',
-          status: 'pendente',
-          url: storagePath,
-          arquivo_nome: arquivo.name,
-          arquivo_tamanho: arquivo.size,
-          mime_type: arquivo.type,
-          solicitado_por: user.id,
-          tags: tags || [],
-          caso_id: casoId || null,
-        })
-        .select()
+        .insert(payload)
+        .select('*')
         .single()
 
       if (dbError) {
-        // Se falhar ao registrar no banco, tentar deletar do storage
         await supabase.storage.from('documentos').remove([storagePath])
         throw new AppError(dbError.message, 'database_error')
       }
 
-      return documento
+      return mapDbDocumentoToDocumentoRow(documento as DbDocumentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao fazer upload do documento', 'unknown_error')
     }
   },
 
   /**
-   * Obtém URL pública temporária para visualizar/baixar documento
+   * Obtem URL publica temporaria para visualizar/baixar documento
    */
   async obterUrlDocumento(storagePath: string): Promise<string> {
     try {
@@ -297,7 +376,7 @@ export const documentosService = {
       }
       const { data, error } = await supabase.storage
         .from('documentos')
-        .createSignedUrl(storagePath, 3600) // 1 hora
+        .createSignedUrl(storagePath, 3600)
 
       if (error) throw new AppError(error.message, 'storage_error')
       if (!data.signedUrl) throw new AppError('Erro ao gerar URL', 'storage_error')
@@ -329,7 +408,6 @@ export const documentosService = {
         fileData = data
       }
 
-      // Criar link de download
       const url = URL.createObjectURL(fileData)
       const a = document.createElement('a')
       a.href = url
@@ -345,7 +423,7 @@ export const documentosService = {
 }
 
 /**
- * Formata tamanho de arquivo em formato legível
+ * Formata tamanho de arquivo em formato legivel
  */
 export function formatarTamanhoArquivo(bytes: number): string {
   if (bytes === 0) return '0 Bytes'
@@ -358,12 +436,12 @@ export function formatarTamanhoArquivo(bytes: number): string {
 }
 
 /**
- * Obtém ícone baseado no tipo de arquivo
+ * Obtem icone baseado no tipo de arquivo
  */
 export function obterIconeArquivo(tipoArquivo: string): string {
-  if (tipoArquivo.includes('pdf')) return '📄'
-  if (tipoArquivo.includes('image')) return '🖼️'
-  if (tipoArquivo.includes('word') || tipoArquivo.includes('document')) return '📝'
-  if (tipoArquivo.includes('excel') || tipoArquivo.includes('sheet')) return '📊'
-  return '📎'
+  if (tipoArquivo.includes('pdf')) return '[PDF]'
+  if (tipoArquivo.includes('image')) return '[IMG]'
+  if (tipoArquivo.includes('word') || tipoArquivo.includes('document')) return '[DOC]'
+  if (tipoArquivo.includes('excel') || tipoArquivo.includes('sheet')) return '[XLS]'
+  return '[FILE]'
 }

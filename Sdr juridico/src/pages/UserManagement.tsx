@@ -33,15 +33,15 @@ export default function UserManagement() {
       setLoading(true)
       const { data, error } = await supabase
         .from('usuarios')
-        .select('id, email, nome_completo, permissoes, created_at, ultimo_acesso')
+        .select('id, email, nome_completo, permissoes, created_at, updated_at')
         .order('created_at', { ascending: false })
       
       if (error) throw error
       const mapped = (data || []).map((row) => {
         const permissoes = row.permissoes || []
-        const role: UserRole = permissoes.includes('fartech_admin')
+        const role: UserRole = permissoes.includes('admin') || permissoes.includes('fartech_admin')
           ? 'fartech_admin'
-          : permissoes.includes('org_admin')
+          : permissoes.includes('gestor') || permissoes.includes('org_admin')
             ? 'org_admin'
             : 'user'
 
@@ -51,7 +51,7 @@ export default function UserManagement() {
           nome: row.nome_completo,
           role,
           created_at: row.created_at,
-          last_sign_in_at: row.ultimo_acesso,
+          last_sign_in_at: row.updated_at,
         } as OrgUser
       })
       setUsers(mapped)

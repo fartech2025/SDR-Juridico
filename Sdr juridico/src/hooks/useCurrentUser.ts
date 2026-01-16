@@ -74,7 +74,7 @@ export function useCurrentUser() {
 
       const { data, error: profileError } = await supabase
         .from('usuarios')
-        .select('id, nome_completo, email, telefone, foto_url, permissoes, status, created_at, updated_at')
+        .select('id, nome_completo, email, permissoes, created_at, updated_at')
         .eq('id', user.id)
         .single()
 
@@ -92,9 +92,9 @@ export function useCurrentUser() {
       const nextProfile = (data as UsuarioRow) || null
       setProfile(nextProfile)
       const permissoes = nextProfile?.permissoes || []
-      if (permissoes.includes('fartech_admin')) {
+      if (permissoes.includes('admin') || permissoes.includes('fartech_admin')) {
         setRole('fartech_admin')
-      } else if (permissoes.includes('org_admin')) {
+      } else if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
         setRole('org_admin')
       } else {
         setRole('user')

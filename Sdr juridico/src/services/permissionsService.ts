@@ -17,8 +17,12 @@ import {
 } from '@/types/permissions'
 
 const resolveRoleFromPermissoes = (permissoes: string[]) => {
-  if (permissoes.includes('fartech_admin')) return 'fartech_admin'
-  if (permissoes.includes('org_admin')) return 'org_admin'
+  if (permissoes.includes('admin') || permissoes.includes('fartech_admin')) {
+    return 'fartech_admin'
+  }
+  if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
+    return 'org_admin'
+  }
   return 'user'
 }
 
@@ -293,13 +297,13 @@ export const permissionsService = {
       const sensitiveResources: Resource[] = ['organizations', 'users', 'billing']
       if (!sensitiveResources.includes(check.resource)) return
 
-      await supabase.from('audit_logs').insert({
+      await supabase.from('audit_log').insert({
         org_id: user.org_id,
-        user_id: user.id,
+        actor_user_id: user.id,
         action: check.action,
-        entity_type: check.resource,
+        entity: check.resource,
         entity_id: metadata?.resource_id || null,
-        metadata: {
+        details: {
           ...metadata,
           success: result.allowed,
           reason: result.reason,

@@ -2,6 +2,79 @@ import { supabase } from '@/lib/supabaseClient'
 import type { AgendaRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 
+type DbAgendamentoRow = {
+  id: string
+  created_at: string
+  org_id?: string | null
+  title: string
+  start_at: string
+  end_at: string
+  location?: string | null
+  description?: string | null
+  owner_user_id?: string | null
+  lead_id?: string | null
+  cliente_id?: string | null
+  caso_id?: string | null
+  external_provider?: string | null
+  external_event_id?: string | null
+  meta?: Record<string, any> | null
+}
+
+const mapDbAgendamentoToAgenda = (row: DbAgendamentoRow): AgendaRow => {
+  const meta = row.meta || {}
+  const durationMinutes =
+    typeof meta.duracao_minutos === 'number'
+      ? meta.duracao_minutos
+      : Math.max(
+          0,
+          Math.round(
+            (new Date(row.end_at).getTime() - new Date(row.start_at).getTime()) / 60000
+          )
+        )
+
+  return {
+    id: row.id,
+    created_at: row.created_at,
+    updated_at: row.created_at,
+    titulo: row.title,
+    descricao: row.description || null,
+    tipo: meta.tipo || 'reuniao',
+    data_inicio: row.start_at,
+    data_fim: row.end_at,
+    duracao_minutos: durationMinutes || null,
+    cliente_nome: meta.cliente_nome || null,
+    cliente_id: row.cliente_id || null,
+    caso_id: row.caso_id || null,
+    responsavel: meta.responsavel || null,
+    local: row.location || null,
+    status: meta.status || 'pendente',
+    observacoes: meta.observacoes || null,
+  }
+}
+
+const buildAgendamentoPayload = (evento: Partial<AgendaRow>) => {
+  const payload: Partial<DbAgendamentoRow> = {}
+
+  if (evento.titulo !== undefined) payload.title = evento.titulo
+  if (evento.descricao !== undefined) payload.description = evento.descricao
+  if (evento.data_inicio !== undefined) payload.start_at = evento.data_inicio
+  if (evento.data_fim !== undefined) payload.end_at = evento.data_fim
+  if (evento.local !== undefined) payload.location = evento.local
+  if (evento.cliente_id !== undefined) payload.cliente_id = evento.cliente_id
+  if (evento.caso_id !== undefined) payload.caso_id = evento.caso_id
+
+  const meta: Record<string, any> = {}
+  if (evento.tipo !== undefined) meta.tipo = evento.tipo
+  if (evento.status !== undefined) meta.status = evento.status
+  if (evento.observacoes !== undefined) meta.observacoes = evento.observacoes
+  if (evento.responsavel !== undefined) meta.responsavel = evento.responsavel
+  if (evento.cliente_nome !== undefined) meta.cliente_nome = evento.cliente_nome
+  if (evento.duracao_minutos !== undefined) meta.duracao_minutos = evento.duracao_minutos
+  if (Object.keys(meta).length > 0) payload.meta = meta
+
+  return payload
+}
+
 export const agendaService = {
   /**
    * Busca todos os eventos da agenda
@@ -9,51 +82,51 @@ export const agendaService = {
   async getEventos(): Promise<AgendaRow[]> {
     try {
       const { data, error } = await supabase
-        .from('agenda')
+        .from('agendamentos')
         .select('*')
-        .order('data_inicio', { ascending: true })
+        .order('start_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data || []
+      return (data || []).map((row: DbAgendamentoRow) => mapDbAgendamentoToAgenda(row))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar eventos', 'database_error')
     }
   },
 
   /**
-   * Busca um evento específico
+   * Busca um evento especifico
    */
   async getEvento(id: string): Promise<AgendaRow> {
     try {
       const { data, error } = await supabase
-        .from('agenda')
+        .from('agendamentos')
         .select('*')
         .eq('id', id)
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      if (!data) throw new AppError('Evento não encontrado', 'not_found')
+      if (!data) throw new AppError('Evento nao encontrado', 'not_found')
 
-      return data
+      return mapDbAgendamentoToAgenda(data as DbAgendamentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar evento', 'database_error')
     }
   },
 
   /**
-   * Busca eventos de um período específico
+   * Busca eventos de um periodo especifico
    */
   async getEventosPorPeriodo(dataInicio: Date, dataFim: Date): Promise<AgendaRow[]> {
     try {
       const query = supabase
-        .from('agenda')
+        .from('agendamentos')
         .select('*')
-        .gte('data_inicio', dataInicio.toISOString())
-        .lte('data_inicio', dataFim.toISOString())
-      const { data, error } = await query.order('data_inicio', { ascending: true })
+        .gte('start_at', dataInicio.toISOString())
+        .lte('start_at', dataFim.toISOString())
+      const { data, error } = await query.order('start_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
-      return data || []
+      return (data || []).map((row: DbAgendamentoRow) => mapDbAgendamentoToAgenda(row))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar eventos', 'database_error')
     }
@@ -75,7 +148,7 @@ export const agendaService = {
   },
 
   /**
-   * Busca eventos de um período (semana, mês)
+   * Busca eventos de um periodo (semana, mes)
    */
   async getEventosDaSemana(): Promise<AgendaRow[]> {
     try {
@@ -108,16 +181,17 @@ export const agendaService = {
     evento: Omit<AgendaRow, 'id' | 'created_at' | 'updated_at'>
   ): Promise<AgendaRow> {
     try {
+      const payload = buildAgendamentoPayload(evento)
       const { data, error } = await supabase
-        .from('agenda')
-        .insert([evento])
+        .from('agendamentos')
+        .insert([payload])
         .select()
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Erro ao criar evento', 'database_error')
 
-      return data
+      return mapDbAgendamentoToAgenda(data as DbAgendamentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao criar evento', 'database_error')
     }
@@ -131,17 +205,18 @@ export const agendaService = {
     updates: Partial<Omit<AgendaRow, 'id' | 'created_at' | 'updated_at'>>
   ): Promise<AgendaRow> {
     try {
+      const payload = buildAgendamentoPayload(updates)
       const { data, error } = await supabase
-        .from('agenda')
-        .update(updates)
+        .from('agendamentos')
+        .update(payload)
         .eq('id', id)
         .select()
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      if (!data) throw new AppError('Evento não encontrado', 'not_found')
+      if (!data) throw new AppError('Evento nao encontrado', 'not_found')
 
-      return data
+      return mapDbAgendamentoToAgenda(data as DbAgendamentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao atualizar evento', 'database_error')
     }
@@ -153,7 +228,7 @@ export const agendaService = {
   async deleteEvento(id: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('agenda')
+        .from('agendamentos')
         .delete()
         .eq('id', id)
 
@@ -164,7 +239,7 @@ export const agendaService = {
   },
 
   /**
-   * Busca próximos eventos
+   * Busca proximos eventos
    */
   async getProximosEventos(dias: number = 7): Promise<AgendaRow[]> {
     try {
@@ -174,7 +249,7 @@ export const agendaService = {
 
       return this.getEventosPorPeriodo(hoje, futuro)
     } catch (error) {
-      throw error instanceof AppError ? error : new AppError('Erro ao buscar próximos eventos', 'database_error')
+      throw error instanceof AppError ? error : new AppError('Erro ao buscar proximos eventos', 'database_error')
     }
   },
 
@@ -194,7 +269,7 @@ export const agendaService = {
   },
 
   /**
-   * Busca estatísticas de agenda
+   * Busca estatisticas de agenda
    */
   async getEstatisticas(): Promise<{
     total: number
@@ -217,7 +292,7 @@ export const agendaService = {
         proximos_7_dias: proximos.length,
       }
     } catch (error) {
-      throw error instanceof AppError ? error : new AppError('Erro ao buscar estatísticas', 'database_error')
+      throw error instanceof AppError ? error : new AppError('Erro ao buscar estatisticas', 'database_error')
     }
   },
 }

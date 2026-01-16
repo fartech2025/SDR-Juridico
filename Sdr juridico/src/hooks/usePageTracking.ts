@@ -16,17 +16,16 @@ export function usePageTracking() {
         if (!analyticsAvailable) return
         const { data: { user } } = await supabase.auth.getUser()
         if (!active) return
-        const { error } = await supabase.from('analytics_events').insert({
+        const { error } = await supabase.from('audit_log').insert({
           org_id: null,
-          user_id: user?.id ?? null,
-          session_id: null,
-          event_name: location.pathname,
-          event_type: 'page_view',
-          properties: {
+          actor_user_id: user?.id ?? null,
+          action: 'page_view',
+          entity: 'navigation',
+          entity_id: null,
+          details: {
             path: location.pathname,
             search: location.search,
           },
-          device_info: {},
         })
         if (error?.code === '42P01' || error?.status === 404) {
           analyticsAvailable = false
