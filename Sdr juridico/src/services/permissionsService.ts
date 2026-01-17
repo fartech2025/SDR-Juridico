@@ -302,6 +302,7 @@ export const permissionsService = {
     try {
       const user = await this.getCurrentUser()
       if (!user) return
+      if (!user.org_id) return
 
       // Only log if explicitly enabled or for sensitive operations
       const sensitiveResources: Resource[] = ['organizations', 'users', 'billing']

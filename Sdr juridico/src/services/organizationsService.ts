@@ -413,7 +413,7 @@ export const organizationsService = {
         .from('casos')
         .select('*', { count: 'exact', head: true })
         .eq('org_id', orgId)
-        .eq('status', 'ativo')
+        .in('status', ['triagem', 'negociacao', 'contrato', 'andamento'])
 
       // TODO: Calculate storage used
       const org = await this.getById(orgId)

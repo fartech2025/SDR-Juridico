@@ -187,7 +187,21 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
 export function useOrganizationContext() {
   const context = useContext(OrganizationContext)
   if (context === undefined) {
-    throw new Error('useOrganizationContext must be used within OrganizationProvider')
+    return {
+      currentOrg: null,
+      loading: false,
+      error: null,
+      stats: null,
+      usage: null,
+      isFartechAdmin: false,
+      currentRole: null,
+      isLoading: false,
+      refreshOrg: async () => undefined,
+      refreshStats: async () => undefined,
+      switchOrg: async () => undefined,
+      allOrgs: [],
+      loadAllOrgs: async () => undefined,
+    }
   }
   return context
 }

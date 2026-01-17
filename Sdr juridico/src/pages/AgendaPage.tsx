@@ -866,8 +866,8 @@ export const AgendaPage = () => {
                   ) : (
                     <div className="space-y-3">
                       <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        {monthDayLabels.map((label) => (
-                          <span key={label}>{label}</span>
+                        {monthDayLabels.map((label, index) => (
+                          <span key={`${label}-${index}`}>{label}</span>
                         ))}
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-xs">
@@ -957,8 +957,8 @@ export const AgendaPage = () => {
                         <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">{monthLabel}</span>
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-center text-xs text-slate-600 dark:text-slate-300 font-medium">
-                        {monthDayLabels.map((label) => (
-                          <span key={label}>{label}</span>
+                        {monthDayLabels.map((label, index) => (
+                          <span key={`${label}-${index}`}>{label}</span>
                         ))}
                         {monthMatrix.map((day, index) => {
                           if (!day) {

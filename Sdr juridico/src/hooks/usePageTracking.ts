@@ -15,10 +15,19 @@ export function usePageTracking() {
       try {
         if (!analyticsAvailable) return
         const { data: { user } } = await supabase.auth.getUser()
-        if (!active) return
+        if (!active || !user) return
+        const { data: member } = await supabase
+          .from('org_members')
+          .select('org_id')
+          .eq('user_id', user.id)
+          .eq('ativo', true)
+          .limit(1)
+          .maybeSingle()
+
+        if (!member?.org_id) return
         const { error } = await supabase.from('audit_log').insert({
-          org_id: null,
-          actor_user_id: user?.id ?? null,
+          org_id: member.org_id,
+          actor_user_id: user.id,
           action: 'page_view',
           entity: 'navigation',
           entity_id: null,
