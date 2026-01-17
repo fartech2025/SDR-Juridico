@@ -23,11 +23,12 @@ const extractTagValue = (tags: string[] | null | undefined, prefix: string) => {
   return tag ? tag.slice(prefix.length + 1) : null
 }
 
-const mapDbClienteToClienteRow = (row: DbClienteRow): ClienteRow => {
+const mapDbClienteToClienteRow = (row: DbClienteRow, ownerNames?: Map<string, string>): ClienteRow => {
   const endereco = row.endereco || {}
   const status = (extractTagValue(row.tags, 'status') || 'ativo') as ClienteRow['status']
   const health = (extractTagValue(row.tags, 'health') || 'ok') as ClienteRow['health']
   const area = extractTagValue(row.tags, 'area')
+  const ownerName = row.owner_user_id ? ownerNames?.get(row.owner_user_id) : null
   const enderecoFull =
     endereco.full ||
     [endereco.street, endereco.number, endereco.neighborhood, endereco.city, endereco.state]
@@ -51,7 +52,7 @@ const mapDbClienteToClienteRow = (row: DbClienteRow): ClienteRow => {
     estado: endereco.state || null,
     cep: endereco.zip_code || endereco.cep || null,
     area_atuacao: area || null,
-    responsavel: row.owner_user_id || null,
+    responsavel: ownerName || row.owner_user_id || null,
     status,
     health,
     observacoes: row.observacoes || null,
@@ -247,12 +248,45 @@ export const clientesService = {
 
       if (error) throw new AppError(error.message, 'database_error')
 
+      const ownerIds = (data || [])
+        .map((client: any) => client.owner_user_id)
+        .filter(Boolean) as string[]
+      const uniqueOwnerIds = Array.from(new Set(ownerIds))
+
+      let ownerNames = new Map<string, string>()
+      if (uniqueOwnerIds.length) {
+        const { data: owners, error: ownersError } = await supabase
+          .from('usuarios')
+          .select('id, nome_completo')
+          .in('id', uniqueOwnerIds)
+        if (ownersError) throw new AppError(ownersError.message, 'database_error')
+        ownerNames = new Map((owners || []).map((owner) => [owner.id, owner.nome_completo]))
+      }
+
       return (data || []).map((client: any) => ({
-        ...mapDbClienteToClienteRow(client as DbClienteRow),
+        ...mapDbClienteToClienteRow(client as DbClienteRow, ownerNames),
         casos_count: client.casos?.[0]?.count || 0,
       }))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar clientes', 'database_error')
+    }
+  },
+
+  async assignClienteAdvogado(clienteId: string, advogadoId: string): Promise<ClienteRow> {
+    try {
+      const { data, error } = await supabase
+        .from('clientes')
+        .update({ owner_user_id: advogadoId })
+        .eq('id', clienteId)
+        .select('*')
+        .single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      if (!data) throw new AppError('Cliente nao encontrado', 'not_found')
+
+      return mapDbClienteToClienteRow(data as DbClienteRow)
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao encaminhar cliente', 'database_error')
     }
   },
 }

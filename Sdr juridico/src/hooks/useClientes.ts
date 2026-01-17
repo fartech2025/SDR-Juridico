@@ -209,6 +209,18 @@ export function useClientes() {
     }
   }, [])
 
+  const assignClienteAdvogado = useCallback(async (id: string, advogadoId: string) => {
+    try {
+      setState((prev) => ({ ...prev, error: null }))
+      await clientesService.assignClienteAdvogado(id, advogadoId)
+      await fetchClientes()
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Erro desconhecido')
+      setState((prev) => ({ ...prev, error: err }))
+      throw err
+    }
+  }, [fetchClientes])
+
   /**
    * Carrega clientes ao montar componente
    */
@@ -225,5 +237,6 @@ export function useClientes() {
     createCliente,
     updateCliente,
     deleteCliente,
+    assignClienteAdvogado,
   }
 }

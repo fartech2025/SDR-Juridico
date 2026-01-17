@@ -183,6 +183,20 @@ export function useDocumentos() {
   }, [updateDocumento])
 
   /**
+   * Marca documento como rejeitado
+   */
+  const marcarRejeitado = useCallback(async (id: string) => {
+    return updateDocumento(id, { status: 'rejeitado' })
+  }, [updateDocumento])
+
+  /**
+   * Solicita documento novamente
+   */
+  const solicitarNovamente = useCallback(async (id: string) => {
+    return updateDocumento(id, { status: 'solicitado' })
+  }, [updateDocumento])
+
+  /**
    * Marca documento como pendente
    */
   const marcarPendente = useCallback(async (id: string) => {
@@ -221,7 +235,9 @@ export function useDocumentos() {
     updateDocumento,
     deleteDocumento,
     marcarCompleto,
+    marcarRejeitado,
     marcarPendente,
+    solicitarNovamente,
     fetchEstatisticas,
   }
 }

@@ -9,8 +9,10 @@ import { FormularioContrato } from '@/components/FormularioContrato'
 
 interface UploadDocumentosProps {
   casoId?: string
+  orgId?: string
   onUploadComplete?: () => void
   className?: string
+  disabled?: boolean
 }
 
 interface ArquivoUpload {
@@ -177,7 +179,7 @@ interface DadosContrato {
   observacoes: string
 }
 
-export function UploadDocumentos({ casoId, onUploadComplete, className }: UploadDocumentosProps) {
+export function UploadDocumentos({ casoId, orgId, onUploadComplete, className, disabled = false }: UploadDocumentosProps) {
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
   const [tipoDocumento, setTipoDocumento] = React.useState('')
@@ -297,6 +299,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
   const inputCameraRef = React.useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
+    if (disabled) return
     e.preventDefault()
     e.stopPropagation()
     if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -307,6 +310,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
   }
 
   const handleDrop = (e: React.DragEvent) => {
+    if (disabled) return
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
@@ -317,12 +321,17 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return
     if (e.target.files && e.target.files.length > 0) {
       handleArquivos(Array.from(e.target.files))
     }
   }
 
   const handleArquivos = (novosArquivos: File[]) => {
+    if (disabled) {
+      toast.error('Voce nao tem permissao para enviar documentos.')
+      return
+    }
     // Validar se tipo de documento foi selecionado
     if (!tipoDocumento) {
       toast.error('Por favor, selecione o tipo de documento antes de fazer o upload')
@@ -343,7 +352,6 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
         'image/jpg',
         'image/png',
         'image/webp',
-        'image/heic',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
@@ -395,6 +403,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
       await documentosService.uploadDocumento({
         arquivo: upload.arquivo,
         casoId,
+        orgId,
         categoria: tipoDocumento || 'geral',
         descricao: descricaoCompleta || undefined,
       })
@@ -1032,6 +1041,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
               variant="outline"
               size="sm"
               onClick={() => inputFileRef.current?.click()}
+              disabled={disabled}
             >
               <FileUp className="h-4 w-4 mr-2" />
               Selecionar Arquivos
@@ -1041,6 +1051,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
               variant="outline"
               size="sm"
               onClick={() => inputCameraRef.current?.click()}
+              disabled={disabled}
             >
               <Image className="h-4 w-4 mr-2" />
               Tirar Foto
@@ -1055,6 +1066,7 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
             className="hidden"
             onChange={handleFileInput}
             accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"
+            disabled={disabled}
           />
 
           {/* Input para capturar foto */}
@@ -1065,10 +1077,11 @@ export function UploadDocumentos({ casoId, onUploadComplete, className }: Upload
             capture="environment"
             className="hidden"
             onChange={handleFileInput}
+            disabled={disabled}
           />
 
           <p className="text-xs text-text-muted mt-4">
-            Formatos aceitos: PDF, Imagens (JPG, PNG, WebP, HEIC), Word, Excel
+            Formatos aceitos: PDF, Imagens (JPG, PNG, WebP), Word, Excel
             <br />
             Tamanho máximo: 10MB por arquivo
           </p>

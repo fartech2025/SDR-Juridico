@@ -172,6 +172,18 @@ export function useCasos() {
     }
   }, [])
 
+  const assignCasoAdvogado = useCallback(async (id: string, advogadoId: string) => {
+    try {
+      setState((prev) => ({ ...prev, error: null }))
+      await casosService.assignCasoAdvogado(id, advogadoId)
+      await fetchCasos()
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Erro desconhecido')
+      setState((prev) => ({ ...prev, error: err }))
+      throw err
+    }
+  }, [fetchCasos])
+
   /**
    * Muda status de um caso
    */
@@ -216,6 +228,7 @@ export function useCasos() {
     createCaso,
     updateCaso,
     deleteCaso,
+    assignCasoAdvogado,
     mudarStatus,
     mudarPrioridade,
     fetchEstatisticas,

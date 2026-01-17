@@ -124,6 +124,23 @@ export function useLeads() {
     }
   }, [])
 
+  const assignLeadAdvogado = useCallback(async (id: string, advogadoId: string, advogadoNome: string) => {
+    try {
+      const updated = await leadsService.assignLeadAdvogado(id, advogadoId, advogadoNome)
+      setState((prev) => ({
+        ...prev,
+        leads: prev.leads.map((lead) =>
+          lead.id === id ? mapLeadRowToLead(updated) : lead
+        ),
+      }))
+      return mapLeadRowToLead(updated)
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Erro desconhecido')
+      setState((prev) => ({ ...prev, error: err }))
+      throw err
+    }
+  }, [])
+
   // Carregar leads ao montar
   useEffect(() => {
     fetchLeads()
@@ -137,5 +154,6 @@ export function useLeads() {
     createLead,
     updateLead,
     deleteLead,
+    assignLeadAdvogado,
   }
 }

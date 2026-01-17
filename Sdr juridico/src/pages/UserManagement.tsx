@@ -39,7 +39,7 @@ export default function UserManagement() {
       if (error) throw error
       const mapped = (data || []).map((row) => {
         const permissoes = row.permissoes || []
-        const role: UserRole = permissoes.includes('admin') || permissoes.includes('fartech_admin')
+        const role: UserRole = permissoes.includes('fartech_admin')
           ? 'fartech_admin'
           : permissoes.includes('gestor') || permissoes.includes('org_admin')
             ? 'org_admin'

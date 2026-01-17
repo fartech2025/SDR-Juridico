@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Check, Plus, X, Upload as UploadIcon } from 'lucide-react'
+import { Check, Plus, X, Upload as UploadIcon, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
@@ -12,6 +12,7 @@ import { formatDateTime } from '@/utils/format'
 import type { Documento } from '@/types/domain'
 import { useDocumentos } from '@/hooks/useDocumentos'
 import { useCasos } from '@/hooks/useCasos'
+import { useOrganization } from '@/hooks/useOrganization'
 import { useTheme } from '@/contexts/ThemeContext'
 import { cn } from '@/utils/cn'
 
@@ -33,16 +34,30 @@ const statusPill = (status: Documento['status']) => {
 }
 
 export const DocumentosPage = () => {
-  const { documentos, loading, error } = useDocumentos()
+  const {
+    documentos,
+    loading,
+    error,
+    updateDocumento,
+    deleteDocumento,
+    marcarCompleto,
+    marcarRejeitado,
+    solicitarNovamente,
+  } = useDocumentos()
   const { casos } = useCasos()
+  const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const canManageDocs = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const [params] = useSearchParams()
   const [statusFilter, setStatusFilter] = React.useState('todos')
   const [typeFilter, setTypeFilter] = React.useState('todos')
   const [clienteFilter, setClienteFilter] = React.useState('todos')
   const [activeTab, setActiveTab] = React.useState('Tudo')
   const [mostrarUpload, setMostrarUpload] = React.useState(false)
+  const [editingDoc, setEditingDoc] = React.useState<Documento | null>(null)
+  const [docForm, setDocForm] = React.useState({ title: '', type: '' })
+  const [savingDoc, setSavingDoc] = React.useState(false)
 
   const tabs = ['Tudo', 'Docs', 'Agenda', 'Comercial', 'Juridico', 'Automacao']
 
@@ -97,6 +112,85 @@ export const DocumentosPage = () => {
     setTimeout(() => {
       setMostrarUpload(false)
     }, 1500)
+  }
+
+  const handleAprovar = async (docId: string, titulo: string) => {
+    try {
+      await marcarCompleto(docId)
+      toast.success(`Documento aprovado: ${titulo}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao aprovar documento'
+      toast.error(message)
+    }
+  }
+
+  const handleRejeitar = async (docId: string, titulo: string) => {
+    try {
+      await marcarRejeitado(docId)
+      toast.success(`Documento rejeitado: ${titulo}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao rejeitar documento'
+      toast.error(message)
+    }
+  }
+
+  const handleSolicitar = async (docId: string, titulo: string) => {
+    try {
+      await solicitarNovamente(docId)
+      toast.success(`Solicitado novamente: ${titulo}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao solicitar documento'
+      toast.error(message)
+    }
+  }
+
+  const resetEditForm = () => {
+    setEditingDoc(null)
+    setDocForm({ title: '', type: '' })
+  }
+
+  const handleEditarDocumento = (doc: Documento) => {
+    if (!canManageDocs) {
+      toast.error('Apenas gestores podem editar documentos.')
+      return
+    }
+    setEditingDoc(doc)
+    setDocForm({ title: doc.title, type: doc.type })
+    setMostrarUpload(false)
+  }
+
+  const handleSalvarEdicao = async () => {
+    if (!editingDoc) return
+    setSavingDoc(true)
+    try {
+      await updateDocumento(editingDoc.id, {
+        titulo: docForm.title || editingDoc.title,
+        tipo: docForm.type || editingDoc.type,
+      })
+      toast.success(`Documento atualizado: ${editingDoc.title}`)
+      resetEditForm()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar documento'
+      toast.error(message)
+    } finally {
+      setSavingDoc(false)
+    }
+  }
+
+  const handleExcluirDocumento = async (docId: string, titulo: string) => {
+    if (!canManageDocs) {
+      toast.error('Apenas gestores podem excluir documentos.')
+      return
+    }
+    const confirmed = window.confirm(`Excluir o documento "${titulo}"? Essa ação não pode ser desfeita.`)
+    if (!confirmed) return
+    try {
+      await deleteDocumento(docId)
+      toast.success(`Documento excluído: ${titulo}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao excluir documento'
+      toast.error(message)
+    }
   }
 
   return (
@@ -167,8 +261,84 @@ export const DocumentosPage = () => {
               <CardContent>
                 <UploadDocumentos
                   casoId={clienteFilter !== 'todos' ? selectedCase?.id : undefined}
+                  orgId={currentOrg?.id}
                   onUploadComplete={handleUploadComplete}
+                  disabled={!canManageDocs}
                 />
+              </CardContent>
+            </Card>
+          )}
+          {editingDoc && (
+            <Card
+              className={cn(
+                'xl:col-span-2 border',
+                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              )}
+            >
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Editar documento</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetEditForm}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={cn('text-xs font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      Titulo
+                    </label>
+                    <input
+                      value={docForm.title}
+                      onChange={(event) => setDocForm((prev) => ({ ...prev, title: event.target.value }))}
+                      className={cn(
+                        'h-11 w-full rounded-xl border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
+                        isDark
+                          ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                          : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+                      )}
+                      placeholder="Nome do documento"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={cn('text-xs font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      Tipo
+                    </label>
+                    <input
+                      value={docForm.type}
+                      onChange={(event) => setDocForm((prev) => ({ ...prev, type: event.target.value }))}
+                      className={cn(
+                        'h-11 w-full rounded-xl border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
+                        isDark
+                          ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
+                          : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+                      )}
+                      placeholder="Ex: contrato, procuração"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 rounded-full px-5"
+                    onClick={resetEditForm}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="h-10 rounded-full px-5"
+                    onClick={handleSalvarEdicao}
+                    disabled={savingDoc}
+                  >
+                    {savingDoc ? 'Salvando...' : 'Salvar alterações'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -192,12 +362,24 @@ export const DocumentosPage = () => {
                   variant="primary"
                   size="sm"
                   className="h-10 rounded-full px-4"
-                  onClick={() => setMostrarUpload(!mostrarUpload)}
+                  onClick={() => {
+                    if (!canManageDocs) {
+                      toast.error('Apenas gestores podem enviar documentos.')
+                      return
+                    }
+                    setMostrarUpload(!mostrarUpload)
+                  }}
+                  disabled={!canManageDocs}
                 >
                   <UploadIcon className="h-4 w-4 mr-2" />
                   {mostrarUpload ? 'Ocultar Upload' : 'Upload Documento'}
                 </Button>
-                <Button variant="outline" size="sm" className="h-10 rounded-full px-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-10 rounded-full px-4"
+                  disabled={!canManageDocs}
+                >
                   Nova solicitacao
                 </Button>
               </div>
@@ -358,50 +540,82 @@ export const DocumentosPage = () => {
                           {formatDateTime(doc.updatedAt)}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex flex-wrap items-center gap-3 text-xs">
-                            <button
-                              type="button"
-                              className={cn(
-                                'inline-flex items-center gap-1',
-                                isDark ? 'text-slate-300 hover:text-success' : 'text-[#7a4a1a] hover:text-success',
-                              )}
-                              onClick={(event) => {
-                                event.stopPropagation()
-                                toast.success(`Documento aprovado: ${doc.title}`)
-                              }}
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                              Validar
-                            </button>
-                            <button
-                              type="button"
-                              className={cn(
-                                'inline-flex items-center gap-1',
-                                isDark ? 'text-slate-300 hover:text-danger' : 'text-[#7a4a1a] hover:text-danger',
-                              )}
-                              onClick={(event) => {
-                                event.stopPropagation()
-                                toast.error(`Documento rejeitado: ${doc.title}`)
-                              }}
-                            >
-                              <X className="h-3.5 w-3.5" />
-                              Rejeitar
-                            </button>
-                            <button
-                              type="button"
-                              className={cn(
-                                'inline-flex items-center gap-1',
-                                isDark ? 'text-slate-300 hover:text-primary' : 'text-[#7a4a1a] hover:text-primary',
-                              )}
-                              onClick={(event) => {
-                                event.stopPropagation()
-                                toast.message(`Solicitado novamente: ${doc.title}`)
-                              }}
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              Solicitar
-                            </button>
-                          </div>
+                          {canManageDocs ? (
+                            <div className="flex flex-wrap items-center gap-3 text-xs">
+                              <button
+                                type="button"
+                                className={cn(
+                                  'inline-flex items-center gap-1',
+                                  isDark ? 'text-slate-300 hover:text-success' : 'text-[#7a4a1a] hover:text-success',
+                                )}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  void handleAprovar(doc.id, doc.title)
+                                }}
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                Validar
+                              </button>
+                              <button
+                                type="button"
+                                className={cn(
+                                  'inline-flex items-center gap-1',
+                                  isDark ? 'text-slate-300 hover:text-danger' : 'text-[#7a4a1a] hover:text-danger',
+                                )}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  void handleRejeitar(doc.id, doc.title)
+                                }}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                                Rejeitar
+                              </button>
+                              <button
+                                type="button"
+                                className={cn(
+                                  'inline-flex items-center gap-1',
+                                  isDark ? 'text-slate-300 hover:text-primary' : 'text-[#7a4a1a] hover:text-primary',
+                                )}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  void handleSolicitar(doc.id, doc.title)
+                                }}
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                Solicitar
+                              </button>
+                              <button
+                                type="button"
+                                className={cn(
+                                  'inline-flex items-center gap-1',
+                                  isDark ? 'text-slate-300 hover:text-emerald-400' : 'text-[#7a4a1a] hover:text-emerald-600',
+                                )}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleEditarDocumento(doc)
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                className={cn(
+                                  'inline-flex items-center gap-1',
+                                  isDark ? 'text-slate-300 hover:text-danger' : 'text-[#7a4a1a] hover:text-danger',
+                                )}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  void handleExcluirDocumento(doc.id, doc.title)
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Excluir
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-text-subtle">Sem permissao</span>
+                          )}
                         </td>
                       </tr>
                     ))}

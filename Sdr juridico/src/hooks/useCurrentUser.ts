@@ -92,7 +92,7 @@ export function useCurrentUser() {
       const nextProfile = (data as UsuarioRow) || null
       setProfile(nextProfile)
       const permissoes = nextProfile?.permissoes || []
-      if (permissoes.includes('admin') || permissoes.includes('fartech_admin')) {
+      if (permissoes.includes('fartech_admin')) {
         setRole('fartech_admin')
       } else if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
         setRole('org_admin')

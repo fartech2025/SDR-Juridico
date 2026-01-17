@@ -1,5 +1,5 @@
 -- RLS admin global access and role helpers
--- Uses public.usuarios.permissoes with values: admin, fartech_admin
+-- Uses public.usuarios.permissoes with value: fartech_admin
 -- Uses public.org_members.role with values: admin, gestor, advogado, secretaria, leitura
 
 begin;
@@ -15,10 +15,7 @@ as $$
     select 1
     from public.usuarios u
     where u.id = auth.uid()
-      and (
-        u.permissoes @> array['admin']::text[]
-        or u.permissoes @> array['fartech_admin']::text[]
-      )
+      and u.permissoes @> array['fartech_admin']::text[]
   );
 $$;
 
@@ -153,8 +150,11 @@ end $$;
 do $$
 begin
   if to_regclass('public.leads') is not null then
+    execute 'drop policy if exists fartech_admin_all_leads on public.leads';
+    execute 'drop policy if exists users_own_org_leads on public.leads';
     execute 'drop policy if exists leads_member_select on public.leads';
     execute 'drop policy if exists leads_staff_write on public.leads';
+    execute 'drop policy if exists leads_adminish_write on public.leads';
     execute $sql$
       create policy leads_member_select
       on public.leads
@@ -162,17 +162,20 @@ begin
       using (public.is_member(org_id))
     $sql$;
     execute $sql$
-      create policy leads_staff_write
+      create policy leads_adminish_write
       on public.leads
       for all
-      using (public.is_staff(org_id))
-      with check (public.is_staff(org_id))
+      using (public.is_adminish(org_id))
+      with check (public.is_adminish(org_id))
     $sql$;
   end if;
 
   if to_regclass('public.clientes') is not null then
+    execute 'drop policy if exists fartech_admin_all_clientes on public.clientes';
+    execute 'drop policy if exists users_own_org_clientes on public.clientes';
     execute 'drop policy if exists clientes_member_select on public.clientes';
     execute 'drop policy if exists clientes_staff_write on public.clientes';
+    execute 'drop policy if exists clientes_adminish_write on public.clientes';
     execute $sql$
       create policy clientes_member_select
       on public.clientes
@@ -180,17 +183,20 @@ begin
       using (public.is_member(org_id))
     $sql$;
     execute $sql$
-      create policy clientes_staff_write
+      create policy clientes_adminish_write
       on public.clientes
       for all
-      using (public.is_staff(org_id))
-      with check (public.is_staff(org_id))
+      using (public.is_adminish(org_id))
+      with check (public.is_adminish(org_id))
     $sql$;
   end if;
 
   if to_regclass('public.casos') is not null then
+    execute 'drop policy if exists fartech_admin_all_casos on public.casos';
+    execute 'drop policy if exists users_own_org_casos on public.casos';
     execute 'drop policy if exists casos_member_select on public.casos';
     execute 'drop policy if exists casos_staff_write on public.casos';
+    execute 'drop policy if exists casos_adminish_write on public.casos';
     execute $sql$
       create policy casos_member_select
       on public.casos
@@ -198,11 +204,31 @@ begin
       using (public.is_member(org_id))
     $sql$;
     execute $sql$
-      create policy casos_staff_write
+      create policy casos_adminish_write
       on public.casos
       for all
-      using (public.is_staff(org_id))
-      with check (public.is_staff(org_id))
+      using (public.is_adminish(org_id))
+      with check (public.is_adminish(org_id))
+    $sql$;
+  end if;
+end $$;
+
+-- Restrict documentos write access to admin/gestor and above
+do $$
+begin
+  if to_regclass('public.documentos') is not null then
+    execute 'drop policy if exists documentos_insert_scoped on public.documentos';
+    execute 'drop policy if exists documentos_update_scoped on public.documentos';
+    execute 'drop policy if exists documentos_delete_scoped on public.documentos';
+    execute 'drop policy if exists users_own_org_documentos on public.documentos';
+    execute 'drop policy if exists fartech_admin_all_documentos on public.documentos';
+    execute 'drop policy if exists documentos_adminish_write on public.documentos';
+    execute $sql$
+      create policy documentos_adminish_write
+      on public.documentos
+      for all
+      using (public.is_adminish(org_id))
+      with check (public.is_adminish(org_id))
     $sql$;
   end if;
 end $$;

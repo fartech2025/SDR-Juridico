@@ -103,6 +103,40 @@ const buildLeadPayload = (lead: Partial<LeadRow>, applyDefaults: boolean) => {
 }
 
 export const leadsService = {
+  async assignLeadAdvogado(leadId: string, advogadoId: string, advogadoNome: string) {
+    try {
+      const { data: current, error: currentError } = await supabase
+        .from('leads')
+        .select('qualificacao')
+        .eq('id', leadId)
+        .single()
+
+      if (currentError) throw new AppError(currentError.message, 'database_error')
+
+      const qualificacao = {
+        ...(current?.qualificacao || {}),
+        responsavel: advogadoNome,
+        responsavel_id: advogadoId,
+      }
+
+      const { data, error } = await supabase
+        .from('leads')
+        .update({ assigned_user_id: advogadoId, qualificacao })
+        .eq('id', leadId)
+        .select(
+          'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
+        )
+        .single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      return mapDbLeadToLeadRow(data as DbLeadRow)
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : 'Erro ao encaminhar lead',
+        'database_error'
+      )
+    }
+  },
   // Buscar todos os leads
   async getLeads() {
     try {

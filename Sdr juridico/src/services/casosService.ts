@@ -148,6 +148,23 @@ const buildCasoPayload = (caso: Partial<CasoRow>, applyDefaults: boolean) => {
 }
 
 export const casosService = {
+  async assignCasoAdvogado(casoId: string, advogadoId: string): Promise<CasoRow> {
+    try {
+      const { data, error } = await supabase
+        .from('casos')
+        .update({ responsavel_user_id: advogadoId })
+        .eq('id', casoId)
+        .select('*, cliente:clientes(nome)')
+        .single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      if (!data) throw new AppError('Caso nao encontrado', 'not_found')
+
+      return mapDbCasoToCasoRow(data as DbCasoRow)
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao encaminhar caso', 'database_error')
+    }
+  },
   /**
    * Busca todos os casos
    */

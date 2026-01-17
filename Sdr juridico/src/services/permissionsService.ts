@@ -17,7 +17,7 @@ import {
 } from '@/types/permissions'
 
 const resolveRoleFromPermissoes = (permissoes: string[]) => {
-  if (permissoes.includes('admin') || permissoes.includes('fartech_admin')) {
+  if (permissoes.includes('fartech_admin')) {
     return 'fartech_admin'
   }
   if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
@@ -60,15 +60,25 @@ export const permissionsService = {
       
       // Map to UserWithRole interface
       const permissoes = data?.permissoes || []
-      const role = resolveRoleFromPermissoes(permissoes)
-      const isFartechAdmin = role === 'fartech_admin'
+      const isFartechAdmin = resolveRoleFromPermissoes(permissoes) === 'fartech_admin'
+      const { data: memberData } = await supabase
+        .from('org_members')
+        .select('org_id, role')
+        .eq('user_id', data.id)
+        .eq('ativo', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      const membershipRole = memberData?.role || null
+      const role = membershipRole || resolveRoleFromPermissoes(permissoes)
 
       return {
         id: data.id,
         email: data.email,
         name: data.nome_completo,
         role,
-        org_id: null,
+        org_id: memberData?.org_id || null,
         is_fartech_admin: isFartechAdmin,
       } as UserWithRole
     } catch (error) {

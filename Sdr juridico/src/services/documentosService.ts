@@ -21,6 +21,18 @@ type DbDocumentoRow = {
   meta?: Record<string, any> | null
 }
 
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]
+
 const mapDbDocumentoToDocumentoRow = (row: DbDocumentoRow): DocumentoRow => {
   const meta = row.meta || {}
   return {
@@ -66,6 +78,30 @@ const buildDocumentoPayload = (doc: Partial<DocumentoRow>, applyDefaults: boolea
   }
 
   return payload
+}
+
+const resolveOrgId = async (userId: string, casoId?: string) => {
+  if (casoId) {
+    const { data, error } = await supabase
+      .from('casos')
+      .select('org_id')
+      .eq('id', casoId)
+      .single()
+
+    if (!error && data?.org_id) {
+      return data.org_id as string
+    }
+  }
+
+  const { data } = await supabase
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', userId)
+    .eq('ativo', true)
+    .limit(1)
+    .maybeSingle()
+
+  return data?.org_id || null
 }
 
 export const documentosService = {
@@ -232,6 +268,20 @@ export const documentosService = {
   },
 
   /**
+   * Marca documento como rejeitado
+   */
+  async marcarRejeitado(id: string): Promise<DocumentoRow> {
+    return this.updateDocumento(id, { status: 'rejeitado' })
+  },
+
+  /**
+   * Solicita documento novamente
+   */
+  async solicitarNovamente(id: string): Promise<DocumentoRow> {
+    return this.updateDocumento(id, { status: 'solicitado' })
+  },
+
+  /**
    * Marca documento como pendente
    */
   async marcarPendente(id: string): Promise<DocumentoRow> {
@@ -275,9 +325,10 @@ export const documentosService = {
     casoId?: string
     tags?: string[]
     descricao?: string
+    orgId?: string
   }): Promise<DocumentoRow> {
     try {
-      const { arquivo, categoria = 'geral', casoId, tags, descricao } = params
+      const { arquivo, categoria = 'geral', casoId, tags, descricao, orgId } = params
 
       // Validar arquivo
       if (!arquivo) {
@@ -291,20 +342,7 @@ export const documentosService = {
       }
 
       // Validar tipo de arquivo
-      const tiposPermitidos = [
-        'application/pdf',
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/webp',
-        'image/heic',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ]
-
-      if (!tiposPermitidos.includes(arquivo.type)) {
+      if (!ALLOWED_MIME_TYPES.includes(arquivo.type)) {
         throw new AppError('Tipo de arquivo nao permitido. Use PDF, imagens ou documentos Office', 'validation_error')
       }
 
@@ -315,11 +353,15 @@ export const documentosService = {
       }
 
       const user = session.user
+      const resolvedOrgId = orgId || await resolveOrgId(user.id, casoId)
+      if (!resolvedOrgId) {
+        throw new AppError('Nao foi possivel identificar a organizacao do usuario.', 'validation_error')
+      }
       const timestamp = Date.now()
       const randomStr = Math.random().toString(36).substring(2, 9)
       const extensao = arquivo.name.split('.').pop()
       const nomeArquivo = `${timestamp}_${randomStr}.${extensao}`
-      const storagePath = `${user.id}/${nomeArquivo}`
+      const storagePath = `${user.id}/${resolvedOrgId}/${nomeArquivo}`
 
       const { error: uploadError } = await supabase.storage
         .from('documentos')
@@ -342,6 +384,7 @@ export const documentosService = {
         caso_id: casoId || null,
         uploaded_by: user.id,
         tags: tags || [],
+        org_id: resolvedOrgId,
         meta: {
           status: 'pendente',
           tipo: categoria || 'geral',

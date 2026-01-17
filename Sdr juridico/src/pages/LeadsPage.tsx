@@ -1,5 +1,6 @@
-import * as React from 'react'
-import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase } from 'lucide-react'
+﻿import * as React from 'react'
+import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
 import { LeadDrawer } from '@/components/LeadDrawer'
@@ -11,9 +12,12 @@ import type { Lead } from '@/types/domain'
 import { formatDateTime, formatPhone } from '@/utils/format'
 import { useLeads } from '@/hooks/useLeads'
 import { useCasos } from '@/hooks/useCasos'
+import { useOrganization } from '@/hooks/useOrganization'
+import { useAdvogados } from '@/hooks/useAdvogados'
 import { useTheme } from '@/contexts/ThemeContext'
 import { cn } from '@/utils/cn'
 import type { LeadRow } from '@/lib/supabaseClient'
+import { leadsService } from '@/services/leadsService'
 
 const resolveStatus = (
   value: string | null,
@@ -40,10 +44,13 @@ const heatPill = (heat: Lead['heat']) => {
 }
 
 export const LeadsPage = () => {
-  const { leads, loading, error, createLead } = useLeads()
+  const { leads, loading, error, createLead, updateLead, deleteLead, assignLeadAdvogado } = useLeads()
   const { casos } = useCasos()
+  const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const canManageLeads = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
+  const { advogados } = useAdvogados(currentOrg?.id || null, canManageLeads)
   const [params] = useSearchParams()
   const [query, setQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('todos')
@@ -51,10 +58,12 @@ export const LeadsPage = () => {
   const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null)
   const [activeTab, setActiveTab] = React.useState('Todos')
   const [showNewLeadForm, setShowNewLeadForm] = React.useState(false)
+  const [editingLeadId, setEditingLeadId] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
+  const [assigningLeadId, setAssigningLeadId] = React.useState<string | null>(null)
+  const [selectedAdvogadoId, setSelectedAdvogadoId] = React.useState('')
 
-  // Estado do formulário de novo lead
-  const [formData, setFormData] = React.useState({
+  const initialFormData = React.useMemo(() => ({
     nome: '',
     email: '',
     telefone: '',
@@ -64,7 +73,11 @@ export const LeadsPage = () => {
     status: 'novo' as LeadRow['status'],
     heat: 'frio' as LeadRow['heat'],
     observacoes: '',
-  })
+  }), [])
+
+  // Estado do formulário de novo lead
+  const [formData, setFormData] = React.useState(initialFormData)
+  const isEditing = Boolean(editingLeadId)
 
   const tabs = ['Todos', 'Quentes 🔥', 'Em Negociação 💰', 'Fechados ✅']
 
@@ -127,15 +140,90 @@ export const LeadsPage = () => {
     setHeatFilter('todos')
   }
 
+  const resetLeadForm = () => {
+    setFormData(initialFormData)
+    setEditingLeadId(null)
+  }
+
+  const handleEditLead = async (leadId: string) => {
+    if (!canManageLeads) {
+      toast.error('Apenas gestores podem editar leads.')
+      return
+    }
+    setSaving(true)
+    try {
+      const lead = await leadsService.getLead(leadId)
+      setFormData({
+        nome: lead.nome || '',
+        email: lead.email || '',
+        telefone: lead.telefone || '',
+        empresa: lead.empresa || '',
+        area: lead.area || '',
+        origem: lead.origem || '',
+        status: lead.status,
+        heat: lead.heat,
+        observacoes: lead.observacoes || '',
+      })
+      setEditingLeadId(leadId)
+      setShowNewLeadForm(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar lead para edicao'
+      toast.error(message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteLead = async (leadId: string, leadName: string) => {
+    if (!canManageLeads) {
+      toast.error('Apenas gestores podem excluir leads.')
+      return
+    }
+    const confirmed = window.confirm(`Excluir o lead "${leadName}"? Essa acao nao pode ser desfeita.`)
+    if (!confirmed) return
+    try {
+      await deleteLead(leadId)
+      toast.success(`Lead excluido: ${leadName}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao excluir lead'
+      toast.error(message)
+    }
+  }
+
+  const handleEncaminharLead = async (leadId: string) => {
+    if (!selectedAdvogadoId) {
+      toast.error('Selecione um advogado para encaminhar.')
+      return
+    }
+    const advogado = advogados.find((item) => item.id === selectedAdvogadoId)
+    if (!advogado) {
+      toast.error('Advogado nao encontrado.')
+      return
+    }
+    try {
+      await assignLeadAdvogado(leadId, advogado.id, advogado.nome)
+      toast.success(`Lead encaminhado para ${advogado.nome}`)
+      setAssigningLeadId(null)
+      setSelectedAdvogadoId('')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao encaminhar lead'
+      toast.error(message)
+    }
+  }
+
   const handleSaveLead = async () => {
+    if (!canManageLeads) {
+      toast.error('Apenas gestores podem adicionar leads.')
+      return
+    }
     if (!formData.nome || !formData.email || !formData.telefone) {
-      alert('Por favor, preencha os campos obrigatórios: Nome, Email e Telefone')
+      alert('Por favor, preencha os campos obrigatorios: Nome, Email e Telefone')
       return
     }
 
     setSaving(true)
     try {
-      await createLead({
+      const payload = {
         nome: formData.nome,
         email: formData.email,
         telefone: formData.telefone,
@@ -144,23 +232,22 @@ export const LeadsPage = () => {
         origem: formData.origem || null,
         status: formData.status,
         heat: formData.heat,
-        ultimo_contato: null,
-        responsavel: null,
         observacoes: formData.observacoes || null,
-      })
-      
-      // Resetar formulário e voltar para lista
-      setFormData({
-        nome: '',
-        email: '',
-        telefone: '',
-        empresa: '',
-        area: '',
-        origem: '',
-        status: 'novo',
-        heat: 'frio',
-        observacoes: '',
-      })
+      }
+
+      if (editingLeadId) {
+        await updateLead(editingLeadId, payload)
+        toast.success('Lead atualizado com sucesso.')
+      } else {
+        await createLead({
+          ...payload,
+          ultimo_contato: null,
+          responsavel: null,
+        })
+        toast.success('Lead criado com sucesso.')
+      }
+
+      resetLeadForm()
       setShowNewLeadForm(false)
     } catch (error) {
       alert('Erro ao salvar lead. Tente novamente.')
@@ -212,18 +299,21 @@ export const LeadsPage = () => {
                         isDark ? 'text-emerald-300' : 'text-emerald-700',
                       )}
                     >
-                      Novo Lead
+                      {isEditing ? 'Editar Lead' : 'Novo Lead'}
                     </p>
                   </div>
                   <h2 className={cn('font-display text-4xl font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
-                    Adicionar Oportunidade
+                    {isEditing ? 'Atualizar Oportunidade' : 'Adicionar Oportunidade'}
                   </h2>
                   <p className={cn('text-base', isDark ? 'text-slate-400' : 'text-[#7a4a1a]')}>
-                    Preencha os dados do novo lead para adicionar ao pipeline
+                    {isEditing ? 'Ajuste os dados do lead e salve as alterações' : 'Preencha os dados do novo lead para adicionar ao pipeline'}
                   </p>
                 </div>
                 <Button 
-                  onClick={() => setShowNewLeadForm(false)}
+                  onClick={() => {
+                    resetLeadForm()
+                    setShowNewLeadForm(false)
+                  }}
                   variant="outline"
                   className={cn(
                     'h-14 rounded-full px-8 font-bold shadow-lg transition-all hover:scale-105',
@@ -468,11 +558,14 @@ export const LeadsPage = () => {
                     )}
                   >
                     <Save className="mr-2 h-5 w-5" />
-                    {saving ? 'Salvando...' : 'Salvar Lead'}
+                    {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar Lead'}
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => setShowNewLeadForm(false)}
+                    onClick={() => {
+                      resetLeadForm()
+                      setShowNewLeadForm(false)
+                    }}
                     variant="outline"
                     className={cn(
                       'h-14 rounded-xl border-2 px-8 font-bold transition-all hover:scale-105',
@@ -543,13 +636,21 @@ export const LeadsPage = () => {
                 </p>
               </div>
               <Button 
-                onClick={() => setShowNewLeadForm(true)}
+                onClick={() => {
+                  if (!canManageLeads) {
+                    toast.error('Apenas gestores podem adicionar leads.')
+                    return
+                  }
+                  resetLeadForm()
+                  setShowNewLeadForm(true)
+                }}
                 className={cn(
                   'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl',
                   isDark 
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'
                     : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
                 )}
+                disabled={!canManageLeads}
               >
                 <Zap className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
                 Novo Lead
@@ -860,9 +961,119 @@ export const LeadsPage = () => {
                             >
                               <MessageSquare className="h-4 w-4" />
                             </Button>
+                            {canManageLeads && (
+                              <>
+                                <button
+                                  type="button"
+                                  title="Encaminhar"
+                                  className={cn(
+                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition',
+                                    isDark
+                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:border-emerald-500/60 hover:text-emerald-300'
+                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-emerald-400 hover:text-emerald-600'
+                                  )}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setAssigningLeadId((current) => (current === lead.id ? null : lead.id))
+                                    setSelectedAdvogadoId('')
+                                  }}
+                                >
+                                  <User className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition',
+                                    isDark
+                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:border-emerald-500/60 hover:text-emerald-300'
+                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-emerald-400 hover:text-emerald-600'
+                                  )}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    void handleEditLead(lead.id)
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition',
+                                    isDark
+                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:border-red-500/60 hover:text-red-400'
+                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-red-400 hover:text-red-600'
+                                  )}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    void handleDeleteLead(lead.id, lead.name)
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
+
+                      {canManageLeads && assigningLeadId === lead.id && (
+                        <div
+                          className={cn(
+                            'mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-xs',
+                            isDark
+                              ? 'border-slate-700 bg-slate-900/60 text-slate-300'
+                              : 'border-[#f0d9b8] bg-[#fff3e0]/70 text-[#7a4a1a]',
+                          )}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <span className="text-xs font-semibold">Encaminhar para</span>
+                          <select
+                            className={cn(
+                              'h-9 rounded-lg border px-3 text-xs',
+                              isDark
+                                ? 'border-slate-700 bg-slate-900 text-slate-100'
+                                : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                            )}
+                            value={selectedAdvogadoId}
+                            onChange={(event) => setSelectedAdvogadoId(event.target.value)}
+                          >
+                            <option value="">Selecione um advogado</option>
+                            {advogados.map((advogado) => (
+                              <option key={advogado.id} value={advogado.id}>
+                                {advogado.nome}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            size="sm"
+                            className="h-9 px-4 text-xs"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void handleEncaminharLead(lead.id)
+                            }}
+                          >
+                            Encaminhar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn(
+                              'h-9 px-4 text-xs',
+                              isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+                            )}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setAssigningLeadId(null)
+                              setSelectedAdvogadoId('')
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                          {advogados.length === 0 && (
+                            <span className="text-xs">Nenhum advogado cadastrado</span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Rodapé do Card */}
                       {lead.lastContactAt && (
@@ -898,3 +1109,4 @@ export const LeadsPage = () => {
     </div>
   )
 }
+
