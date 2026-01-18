@@ -1,6 +1,9 @@
 -- Migration: Create org_members table
 -- Date: 2026-01-16
 -- Description: Creates the org_members table to track organization memberships and roles
+-- Improvements:
+-- 1) Helpers SECURITY DEFINER com row_security=off para evitar recursao em RLS.
+-- 2) Policies de org_members atualizadas para usar os helpers.
 
 -- ============================================
 -- TABLE: org_members
@@ -26,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.org_members (
   updated_at TIMESTAMPTZ DEFAULT now(),
   
   -- Constraints
-  CONSTRAINT valid_org_member_role CHECK (role IN ('admin', 'user', 'viewer')),
+  CONSTRAINT valid_org_member_role CHECK (role IN ('admin', 'gestor', 'advogado', 'secretaria', 'leitura', 'user', 'viewer')),
   CONSTRAINT unique_org_user UNIQUE (org_id, user_id)
 );
 
@@ -48,15 +51,51 @@ CREATE TRIGGER update_org_members_updated_at
 
 ALTER TABLE public.org_members ENABLE ROW LEVEL SECURITY;
 
+-- Helpers for org_members RLS (avoid recursion)
+CREATE OR REPLACE FUNCTION public.is_org_member(_org_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth
+SET row_security = off
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.org_members om
+    WHERE om.org_id = _org_id
+      AND om.user_id = auth.uid()
+      AND om.ativo = true
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_org_admin_for_org(_org_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth
+SET row_security = off
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.org_members om
+    WHERE om.org_id = _org_id
+      AND om.user_id = auth.uid()
+      AND om.ativo = true
+      AND om.role IN ('admin', 'gestor')
+  );
+$$;
+
 -- Policy: Fartech admins see all org_members
 DROP POLICY IF EXISTS "Fartech admins see all org members" ON public.org_members;
 CREATE POLICY "Fartech admins see all org members"
   ON public.org_members FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.is_fartech_admin = TRUE
+      SELECT 1 FROM public.usuarios u
+      WHERE u.id = auth.uid()
+      AND u.permissoes @> ARRAY['fartech_admin']::text[]
     )
   );
 
@@ -65,11 +104,7 @@ DROP POLICY IF EXISTS "Users see their organization members" ON public.org_membe
 CREATE POLICY "Users see their organization members"
   ON public.org_members FOR SELECT
   USING (
-    org_id IN (
-      SELECT org_id FROM public.org_members
-      WHERE user_id = auth.uid()
-      AND ativo = true
-    )
+    public.is_org_member(org_id)
   );
 
 -- Policy: Org admins can manage members in their org
@@ -77,12 +112,7 @@ DROP POLICY IF EXISTS "Org admins manage their org members" ON public.org_member
 CREATE POLICY "Org admins manage their org members"
   ON public.org_members FOR ALL
   USING (
-    org_id IN (
-      SELECT org_id FROM public.org_members
-      WHERE user_id = auth.uid()
-      AND role = 'admin'
-      AND ativo = true
-    )
+    public.is_org_admin_for_org(org_id)
   );
 
 -- Policy: Fartech admins can manage all org_members
@@ -91,9 +121,9 @@ CREATE POLICY "Fartech admins manage all org members"
   ON public.org_members FOR ALL
   USING (
     EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.is_fartech_admin = TRUE
+      SELECT 1 FROM public.usuarios u
+      WHERE u.id = auth.uid()
+      AND u.permissoes @> ARRAY['fartech_admin']::text[]
     )
   );
 
@@ -116,3 +146,5 @@ CREATE OR REPLACE VIEW public.organization_members AS
 SELECT * FROM public.org_members;
 
 COMMENT ON VIEW public.organization_members IS 'View for backward compatibility - references org_members table';
+
+

@@ -231,9 +231,9 @@ AS $$
 DECLARE
   is_admin BOOLEAN;
 BEGIN
-  SELECT is_fartech_admin INTO is_admin
-  FROM public.profiles
-  WHERE id = auth.uid();
+  SELECT (u.permissoes @> ARRAY['fartech_admin']::text[]) INTO is_admin
+  FROM public.usuarios u
+  WHERE u.id = auth.uid();
   
   RETURN COALESCE(is_admin, false);
 END;

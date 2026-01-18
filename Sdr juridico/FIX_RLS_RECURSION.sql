@@ -1,11 +1,16 @@
+﻿-- =====================================================
+-- DEPRECATED: Este script usa profiles. Padrao atual: usuarios + org_members.
+-- Use SETUP_MULTITENANT_INCREMENTAL.sql para o fluxo atualizado.
+-- =====================================================
+
 -- ================================================
 -- FIX: RLS RECURSION - Problema de Login Infinito
 -- Data: 14/01/2026
--- Problema: Policies com funções SECURITY DEFINER causam recursão
--- Solução: Policies simples sem funções
+-- Problema: Policies com funÃ§Ãµes SECURITY DEFINER causam recursÃ£o
+-- SoluÃ§Ã£o: Policies simples sem funÃ§Ãµes
 -- ================================================
 
--- PARTE 1: REMOVER TODAS AS POLICIES PROBLEMÁTICAS
+-- PARTE 1: REMOVER TODAS AS POLICIES PROBLEMÃTICAS
 -- ================================================
 
 DROP POLICY IF EXISTS "fartech_admin_all_profiles" ON profiles;
@@ -18,15 +23,15 @@ DROP POLICY IF EXISTS "users_same_org_profiles" ON profiles;
 DROP POLICY IF EXISTS "fartech_admin_view_all" ON profiles;
 DROP POLICY IF EXISTS "org_members_view" ON profiles;
 
--- PARTE 2: CRIAR POLICIES SIMPLES SEM RECURSÃO
+-- PARTE 2: CRIAR POLICIES SIMPLES SEM RECURSÃƒO
 -- ================================================
 
--- Policy 1: SELECT - Usuário vê SEU PRÓPRIO profile
+-- Policy 1: SELECT - UsuÃ¡rio vÃª SEU PRÃ“PRIO profile
 CREATE POLICY "select_own_profile" ON profiles
   FOR SELECT
   USING (user_id = auth.uid());
 
--- Policy 2: UPDATE - Usuário atualiza SEU PRÓPRIO profile
+-- Policy 2: UPDATE - UsuÃ¡rio atualiza SEU PRÃ“PRIO profile
 CREATE POLICY "update_own_profile" ON profiles
   FOR UPDATE
   USING (user_id = auth.uid())
@@ -38,16 +43,16 @@ CREATE POLICY "insert_own_profile" ON profiles
   WITH CHECK (user_id = auth.uid());
 
 -- Policy 4: DELETE - Apenas service role pode deletar
--- (não criar policy = negar acesso)
+-- (nÃ£o criar policy = negar acesso)
 
 -- ================================================
--- PARTE 3: GARANTIR QUE RLS ESTÁ HABILITADO
+-- PARTE 3: GARANTIR QUE RLS ESTÃ HABILITADO
 -- ================================================
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- ================================================
--- PARTE 4: VERIFICAÇÕES
+-- PARTE 4: VERIFICAÃ‡Ã•ES
 -- ================================================
 
 -- Verificar policies criadas
@@ -59,7 +64,7 @@ BEGIN
   FROM pg_policies
   WHERE schemaname = 'public' AND tablename = 'profiles';
 
-  RAISE NOTICE '✅ % policies criadas em profiles', policy_count;
+  RAISE NOTICE 'âœ… % policies criadas em profiles', policy_count;
   
   IF policy_count < 3 THEN
     RAISE WARNING 'Esperado 3 policies, encontrado %', policy_count;
@@ -76,9 +81,9 @@ BEGIN
   WHERE schemaname = 'public' AND tablename = 'profiles';
 
   IF rls_enabled THEN
-    RAISE NOTICE '✅ RLS habilitado em profiles';
+    RAISE NOTICE 'âœ… RLS habilitado em profiles';
   ELSE
-    RAISE EXCEPTION 'RLS NÃO está habilitado em profiles!';
+    RAISE EXCEPTION 'RLS NÃƒO estÃ¡ habilitado em profiles!';
   END IF;
 END $$;
 
@@ -87,9 +92,9 @@ END $$;
 -- ================================================
 
 SELECT 
-  '🎯 FIX APLICADO' AS status,
-  'Policies simplificadas (sem funções)' AS correcao_1,
-  'Sem recursão' AS correcao_2,
+  'ðŸŽ¯ FIX APLICADO' AS status,
+  'Policies simplificadas (sem funÃ§Ãµes)' AS correcao_1,
+  'Sem recursÃ£o' AS correcao_2,
   'RLS habilitado' AS correcao_3;
 
 -- Listar policies ativas
@@ -98,10 +103,10 @@ SELECT
   policyname,
   cmd AS comando,
   CASE 
-    WHEN cmd = 'SELECT' THEN '👁️ Leitura'
-    WHEN cmd = 'UPDATE' THEN '✏️ Atualização'
-    WHEN cmd = 'INSERT' THEN '➕ Criação'
-    WHEN cmd = 'DELETE' THEN '🗑️ Deleção'
+    WHEN cmd = 'SELECT' THEN 'ðŸ‘ï¸ Leitura'
+    WHEN cmd = 'UPDATE' THEN 'âœï¸ AtualizaÃ§Ã£o'
+    WHEN cmd = 'INSERT' THEN 'âž• CriaÃ§Ã£o'
+    WHEN cmd = 'DELETE' THEN 'ðŸ—‘ï¸ DeleÃ§Ã£o'
     ELSE cmd
   END AS tipo
 FROM pg_policies
@@ -109,31 +114,31 @@ WHERE schemaname = 'public' AND tablename = 'profiles'
 ORDER BY cmd, policyname;
 
 -- ================================================
--- IMPORTANTE: LIMITAÇÕES DESTA SOLUÇÃO
+-- IMPORTANTE: LIMITAÃ‡Ã•ES DESTA SOLUÃ‡ÃƒO
 -- ================================================
 
--- ⚠️ FARTECH ADMIN NÃO VERÁ TODOS OS PROFILES VIA RLS
+-- âš ï¸ FARTECH ADMIN NÃƒO VERÃ TODOS OS PROFILES VIA RLS
 -- Para Fartech Admin acessar todos os dados, deve-se:
 -- 1. Usar Service Role Key no backend
--- 2. OU criar endpoint API específico
--- 3. OU usar função SECURITY DEFINER em stored procedure
+-- 2. OU criar endpoint API especÃ­fico
+-- 3. OU usar funÃ§Ã£o SECURITY DEFINER em stored procedure
 
--- ✅ USUÁRIOS NORMAIS: Veem apenas seus próprios dados
--- ✅ ORG MEMBERS: Precisam de lógica no backend para compartilhamento
--- ✅ SEM RECURSÃO: Login funcionará normalmente
+-- âœ… USUÃRIOS NORMAIS: Veem apenas seus prÃ³prios dados
+-- âœ… ORG MEMBERS: Precisam de lÃ³gica no backend para compartilhamento
+-- âœ… SEM RECURSÃƒO: Login funcionarÃ¡ normalmente
 
 -- ================================================
--- TESTE RÁPIDO
+-- TESTE RÃPIDO
 -- ================================================
 
--- Executar como usuário autenticado:
+-- Executar como usuÃ¡rio autenticado:
 -- SELECT * FROM profiles WHERE user_id = auth.uid();
--- Deve retornar APENAS o profile do usuário logado
+-- Deve retornar APENAS o profile do usuÃ¡rio logado
 
 -- ================================================
--- ROLLBACK (se necessário)
+-- ROLLBACK (se necessÃ¡rio)
 -- ================================================
 
--- Para voltar atrás:
+-- Para voltar atrÃ¡s:
 -- ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
 -- Depois executar CORRECOES_CRITICAS.sql novamente

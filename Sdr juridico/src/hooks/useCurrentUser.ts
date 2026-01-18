@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { UsuarioRow, UserRole } from '@/lib/supabaseClient'
 import { useAuth } from '@/contexts/AuthContext'
@@ -7,6 +7,19 @@ const roleLabels: Record<UserRole, string> = {
   fartech_admin: 'Admin',
   org_admin: 'Gestor',
   user: 'Usuario',
+}
+
+const resolveRoleFromPermissoes = (permissoes: string[], memberRole?: string | null): UserRole => {
+  if (permissoes.includes('fartech_admin')) {
+    return 'fartech_admin'
+  }
+  if (memberRole && ['admin', 'gestor', 'org_admin'].includes(memberRole)) {
+    return 'org_admin'
+  }
+  if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
+    return 'org_admin'
+  }
+  return 'user'
 }
 
 const deriveDisplayName = (
@@ -33,6 +46,8 @@ export function useCurrentUser() {
   const { user, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState<UsuarioRow | null>(null)
   const [role, setRole] = useState<UserRole>('user')
+  const [orgId, setOrgId] = useState<string | null>(null)
+  const [orgName, setOrgName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const missingTableRef = useRef(false)
@@ -55,6 +70,8 @@ export function useCurrentUser() {
     if (!user) {
       setProfile(null)
       setRole('user')
+      setOrgId(null)
+      setOrgName(null)
       setError(null)
       setLoading(false)
       return
@@ -68,6 +85,8 @@ export function useCurrentUser() {
       if (missingTableRef.current) {
         setProfile(null)
         setRole('user')
+        setOrgId(null)
+        setOrgName(null)
         setLoading(false)
         return
       }
@@ -92,12 +111,34 @@ export function useCurrentUser() {
       const nextProfile = (data as UsuarioRow) || null
       setProfile(nextProfile)
       const permissoes = nextProfile?.permissoes || []
-      if (permissoes.includes('fartech_admin')) {
-        setRole('fartech_admin')
-      } else if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
-        setRole('org_admin')
+
+      const { data: memberData } = await supabase
+        .from('org_members')
+        .select('org_id, role')
+        .eq('user_id', user.id)
+        .eq('ativo', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      const membershipRole = memberData?.role || null
+      setRole(resolveRoleFromPermissoes(permissoes, membershipRole))
+      setOrgId(memberData?.org_id || null)
+
+      if (memberData?.org_id) {
+        const { data: orgData } = await supabase
+          .from('orgs')
+          .select('id, nome, name, slug')
+          .eq('id', memberData.org_id)
+          .maybeSingle()
+
+        const resolvedOrgName =
+          (orgData && ((orgData as { nome?: string }).nome || (orgData as { name?: string }).name)) ||
+          (orgData as { slug?: string } | null)?.slug ||
+          null
+        setOrgName(resolvedOrgName)
       } else {
-        setRole('user')
+        setOrgName(null)
       }
 
       setLoading(false)
@@ -118,8 +159,6 @@ export function useCurrentUser() {
   const shortName = useMemo(() => displayName.split(' ').filter(Boolean)[0] || displayName, [displayName])
   const initials = useMemo(() => deriveInitials(displayName), [displayName])
   const roleLabel = roleLabels[role]
-  const orgId = null
-  const orgName = 'SDR Juridico Online'
 
   return {
     loading,
@@ -127,7 +166,7 @@ export function useCurrentUser() {
     user,
     profile,
     orgId,
-    orgName,
+    orgName: orgName || 'SDR Juridico Online',
     role,
     roleLabel,
     displayName,

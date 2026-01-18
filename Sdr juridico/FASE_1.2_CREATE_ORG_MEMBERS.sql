@@ -1,32 +1,40 @@
 -- ============================================
 -- CRIAR TABELA ORG_MEMBERS
--- Relacionamento usuários x organizações
+-- Relacionamento usuarios x organizacoes
 -- ============================================
+-- Melhorias aplicadas:
+-- 1) Coluna updated_at garantida para tabelas legadas.
+-- 2) Helpers SECURITY DEFINER com row_security=off para evitar recursao em RLS.
+-- 3) Policies de org_members atualizadas para usar os helpers.
 
 -- Criar tabela org_members
 CREATE TABLE IF NOT EXISTS org_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id UUID NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role VARCHAR(50) NOT NULL DEFAULT 'user',
   ativo BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   
-  -- Constraint: usuário não pode estar duplicado na mesma org
+  -- Constraint: usuario nao pode estar duplicado na mesma org
   UNIQUE(org_id, user_id)
 );
 
--- Índices para performance
+-- Garantir coluna updated_at caso a tabela ja exista sem a coluna
+ALTER TABLE org_members
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+
+-- Indices para performance
 CREATE INDEX IF NOT EXISTS idx_org_members_org_id ON org_members(org_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_user_id ON org_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_ativo ON org_members(ativo);
 CREATE INDEX IF NOT EXISTS idx_org_members_role ON org_members(role);
 
--- Comentários
-COMMENT ON TABLE org_members IS 'Relacionamento entre usuários e organizações';
-COMMENT ON COLUMN org_members.role IS 'Papel do usuário na organização: admin, gestor, advogado, secretaria, leitura';
-COMMENT ON COLUMN org_members.ativo IS 'Se o membro está ativo na organização';
+-- Comentarios
+COMMENT ON TABLE org_members IS 'Relacionamento entre usuarios e organizacoes';
+COMMENT ON COLUMN org_members.role IS 'Papel do usuario na organizacao: admin, gestor, advogado, secretaria, leitura';
+COMMENT ON COLUMN org_members.ativo IS 'Se o membro esta ativo na organizacao';
 
 -- Trigger para atualizar updated_at automaticamente
 CREATE OR REPLACE FUNCTION update_org_members_updated_at()
@@ -47,6 +55,42 @@ CREATE TRIGGER trigger_update_org_members_updated_at
 -- RLS (Row Level Security) para org_members
 -- ============================================
 
+-- Helpers para evitar recursao em policies de org_members
+CREATE OR REPLACE FUNCTION public.is_org_member(_org_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth
+SET row_security = off
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.org_members om
+    WHERE om.org_id = _org_id
+      AND om.user_id = auth.uid()
+      AND om.ativo = true
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_org_admin_for_org(_org_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth
+SET row_security = off
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.org_members om
+    WHERE om.org_id = _org_id
+      AND om.user_id = auth.uid()
+      AND om.ativo = true
+      AND om.role IN ('admin', 'gestor')
+  );
+$$;
+
 ALTER TABLE org_members ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Fartech Admins veem todos os membros
@@ -56,9 +100,9 @@ CREATE POLICY "fartech_admin_all_members"
   FOR ALL
   USING (
     EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.is_fartech_admin = true
+      SELECT 1 FROM usuarios u
+      WHERE u.id = auth.uid()
+      AND u.permissoes @> ARRAY['fartech_admin']::text[]
     )
   );
 
@@ -68,26 +112,19 @@ CREATE POLICY "org_admin_own_org_members"
   ON org_members
   FOR ALL
   USING (
-    org_id IN (
-      SELECT org_id FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'admin'
-    )
+    public.is_org_admin_for_org(org_id)
   );
 
--- Policy 3: Usuários veem membros da mesma org (somente leitura)
+-- Policy 3: Usuarios veem membros da mesma org (somente leitura)
 DROP POLICY IF EXISTS "users_same_org_members" ON org_members;
 CREATE POLICY "users_same_org_members"
   ON org_members
   FOR SELECT
   USING (
-    org_id IN (
-      SELECT org_id FROM profiles
-      WHERE profiles.id = auth.uid()
-    )
+    public.is_org_member(org_id)
   );
 
--- Policy 4: Usuários podem ver seus próprios dados de membro
+-- Policy 4: Usuarios podem ver seus proprios dados de membro
 DROP POLICY IF EXISTS "users_own_member_record" ON org_members;
 CREATE POLICY "users_own_member_record"
   ON org_members
@@ -95,7 +132,7 @@ CREATE POLICY "users_own_member_record"
   USING (user_id = auth.uid());
 
 -- ============================================
--- VERIFICAÇÃO
+-- VERIFICACAO
 -- ============================================
 
 -- Verificar se tabela foi criada
@@ -127,7 +164,7 @@ FROM pg_tables
 WHERE schemaname = 'public'
   AND tablename = 'org_members';
 
--- Verificar políticas criadas
+-- Verificar politicas criadas
 SELECT 
   schemaname,
   tablename,
@@ -139,3 +176,4 @@ FROM pg_policies
 WHERE schemaname = 'public'
   AND tablename = 'org_members'
 ORDER BY policyname;
+

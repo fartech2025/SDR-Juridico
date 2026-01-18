@@ -19,6 +19,7 @@
     "test:google-calendar-create": "node scripts/test-google-calendar-create.mjs",
     "deploy:teams-create": "bash scripts/deploy-teams-create.sh",
     "test:teams-create": "node scripts/test-teams-create.mjs",
+    "test:permissions": "node scripts/verify-permissions.mjs",
     "setup:teams": "node scripts/setup-teams.mjs"
   },
   "dependencies": {

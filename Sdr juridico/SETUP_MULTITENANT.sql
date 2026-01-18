@@ -1,3 +1,8 @@
+﻿-- =====================================================
+-- DEPRECATED: Este script usa profiles. Padrao atual: usuarios + org_members.
+-- Use SETUP_MULTITENANT_INCREMENTAL.sql para o fluxo atualizado.
+-- =====================================================
+
 -- ============================================
 -- SETUP MULTI-TENANT - Execute no SQL Editor do Supabase
 -- ============================================
@@ -191,7 +196,7 @@ DROP POLICY IF EXISTS "Org admins see their organization" ON organizations;
 DROP POLICY IF EXISTS "Fartech admins manage all organizations" ON organizations;
 DROP POLICY IF EXISTS "Org admins update their organization" ON organizations;
 
--- Fartech admins veem todas organizações
+-- Fartech admins veem todas organizaÃ§Ãµes
 CREATE POLICY "Fartech admins see all organizations"
   ON organizations FOR SELECT
   USING (
@@ -202,7 +207,7 @@ CREATE POLICY "Fartech admins see all organizations"
     )
   );
 
--- Org admins veem sua própria organização
+-- Org admins veem sua prÃ³pria organizaÃ§Ã£o
 CREATE POLICY "Org admins see their organization"
   ON organizations FOR SELECT
   USING (
@@ -220,7 +225,7 @@ CREATE POLICY "Fartech admins manage all organizations"
     )
   );
 
--- Org admins atualizam sua organização
+-- Org admins atualizam sua organizaÃ§Ã£o
 CREATE POLICY "Org admins update their organization"
   ON organizations FOR UPDATE
   USING (
@@ -243,7 +248,7 @@ DROP POLICY IF EXISTS "Users see their organization members" ON users;
 DROP POLICY IF EXISTS "Users update their own profile" ON users;
 DROP POLICY IF EXISTS "Org admins manage their org users" ON users;
 
--- Fartech admins veem todos usuários
+-- Fartech admins veem todos usuÃ¡rios
 CREATE POLICY "Fartech admins see all users"
   ON public.users FOR SELECT
   USING (
@@ -254,7 +259,7 @@ CREATE POLICY "Fartech admins see all users"
     )
   );
 
--- Org admins veem usuários da sua org
+-- Org admins veem usuÃ¡rios da sua org
 CREATE POLICY "Org admins see their organization users"
   ON public.users FOR SELECT
   USING (
@@ -265,19 +270,19 @@ CREATE POLICY "Org admins see their organization users"
     )
   );
 
--- Usuários veem membros da sua org
+-- UsuÃ¡rios veem membros da sua org
 CREATE POLICY "Users see their organization members"
   ON public.users FOR SELECT
   USING (
     org_id = (SELECT org_id FROM public.users WHERE id = auth.uid())
   );
 
--- Usuários atualizam seu próprio perfil
+-- UsuÃ¡rios atualizam seu prÃ³prio perfil
 CREATE POLICY "Users update their own profile"
   ON public.users FOR UPDATE
   USING (id = auth.uid());
 
--- Org admins gerenciam usuários da org
+-- Org admins gerenciam usuÃ¡rios da org
 CREATE POLICY "Org admins manage their org users"
   ON public.users FOR ALL
   USING (
@@ -289,7 +294,7 @@ CREATE POLICY "Org admins manage their org users"
   );
 
 -- ============================================
--- PARTE 4: Adicionar org_id às tabelas existentes
+-- PARTE 4: Adicionar org_id Ã s tabelas existentes
 -- ============================================
 
 -- LEADS
@@ -360,13 +365,13 @@ CREATE POLICY "Fartech admins access all documents"
 -- PARTE 5: Criar dados de teste
 -- ============================================
 
--- Criar organização de teste
+-- Criar organizaÃ§Ã£o de teste
 INSERT INTO organizations (name, slug, email, plan, status)
-VALUES ('Minha Organização Teste', 'minha-org-teste', 'contato@minhaorg.com', 'professional', 'active')
+VALUES ('Minha OrganizaÃ§Ã£o Teste', 'minha-org-teste', 'contato@minhaorg.com', 'professional', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================
--- PARTE 6: Atribuir organização ao usuário teste
+-- PARTE 6: Atribuir organizaÃ§Ã£o ao usuÃ¡rio teste
 -- ============================================
 -- Usando email de teste: gestor@demo.local
 
@@ -375,13 +380,13 @@ DECLARE
   v_org_id UUID;
   v_user_id UUID;
 BEGIN
-  -- Pegar ID da organização criada
+  -- Pegar ID da organizaÃ§Ã£o criada
   SELECT id INTO v_org_id FROM organizations WHERE slug = 'minha-org-teste';
   
   -- Pegar user_id pelo email de auth.users
   SELECT id INTO v_user_id FROM auth.users WHERE email = 'gestor@demo.local';
   
-  -- Criar registro em public.users se não existir
+  -- Criar registro em public.users se nÃ£o existir
   INSERT INTO public.users (id, email, full_name, org_id, role, is_fartech_admin, created_at)
   VALUES (v_user_id, 'gestor@demo.local', 'Gestor Demo', v_org_id, 'org_admin', FALSE, NOW())
   ON CONFLICT (id) DO UPDATE
@@ -391,20 +396,20 @@ BEGIN
     is_fartech_admin = FALSE;
   
   IF v_user_id IS NOT NULL THEN
-    RAISE NOTICE 'Usuário atualizado com sucesso!';
+    RAISE NOTICE 'UsuÃ¡rio atualizado com sucesso!';
   ELSE
-    RAISE NOTICE 'Usuário não encontrado em auth.users. Crie o usuário primeiro via signup.';
+    RAISE NOTICE 'UsuÃ¡rio nÃ£o encontrado em auth.users. Crie o usuÃ¡rio primeiro via signup.';
   END IF;
 END $$;
 
 -- ============================================
--- VERIFICAÇÃO: Ver o que foi criado
+-- VERIFICAÃ‡ÃƒO: Ver o que foi criado
 -- ============================================
 
--- Ver organizações
+-- Ver organizaÃ§Ãµes
 SELECT id, name, slug, plan, status, created_at FROM organizations;
 
--- Ver usuários
+-- Ver usuÃ¡rios
 SELECT id, email, org_id, role, is_fartech_admin, created_at 
 FROM public.users 
 WHERE email = 'gestor@demo.local';
@@ -412,5 +417,5 @@ WHERE email = 'gestor@demo.local';
 -- ============================================
 -- FIM DO SETUP
 -- ============================================
--- Agora você pode testar a aplicação!
--- Faça login e verá as novas opções no menu.
+-- Agora vocÃª pode testar a aplicaÃ§Ã£o!
+-- FaÃ§a login e verÃ¡ as novas opÃ§Ãµes no menu.

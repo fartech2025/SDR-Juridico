@@ -1,8 +1,8 @@
-import { useOrganization } from '@/contexts/OrganizationContext'
+﻿import { useOrganization } from '@/contexts/OrganizationContext'
 
 /**
  * Hook to check if the current user is a Fartech Admin
- * Fartech Admins have is_fartech_admin = true in profiles table
+ * Fartech Admins have "fartech_admin" in usuarios.permissoes
  */
 export function useIsFartechAdmin() {
   const { isFartechAdmin, isLoading } = useOrganization()

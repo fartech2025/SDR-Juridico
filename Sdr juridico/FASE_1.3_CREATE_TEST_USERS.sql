@@ -1,219 +1,196 @@
--- ============================================
--- FASE 1.3: CRIAR USUÁRIOS DE TESTE
+﻿-- ============================================
+-- FASE 1.3: CRIAR USUARIOS DE TESTE
 -- ============================================
 
--- IMPORTANTE: Antes de executar este script, criar os usuários manualmente em:
--- Supabase Dashboard → Authentication → Users → Create User
-
--- ============================================
--- INSTRUÇÕES PARA CRIAR USUÁRIOS NO SUPABASE
--- ============================================
+-- IMPORTANTE: Antes de executar este script, criar os usuarios manualmente em:
+-- Supabase Dashboard > Authentication > Users > Create User
 
 /*
-PASSO 1: Criar 3 usuários manualmente no Supabase Authentication:
+PASSO 1: Criar 3 usuarios manualmente no Supabase Authentication:
 
 1. FARTECH ADMIN:
    Email: admin@fartech.com.br
    Password: Fartech@2024
-   Confirm Password: Fartech@2024
    [X] Auto Confirm User
-   
+
 2. ORG ADMIN:
    Email: gestor@demo.local
    Password: Demo@2024
-   Confirm Password: Demo@2024
    [X] Auto Confirm User
 
 3. USER REGULAR:
    Email: user@demo.local
    Password: Demo@2024
-   Confirm Password: Demo@2024
    [X] Auto Confirm User
 
-PASSO 2: Depois de criar os 3 usuários, execute o SQL abaixo:
+PASSO 2: Depois de criar os 3 usuarios, execute o SQL abaixo:
 */
+
+-- ============================================
+-- GARANTIR ENTRADAS EM USUARIOS (caso o trigger nao tenha criado)
+-- ============================================
+
+INSERT INTO usuarios (id, email, nome_completo, permissoes, created_at, updated_at)
+SELECT
+  id,
+  email,
+  COALESCE(raw_user_meta_data->>'nome_completo', email),
+  ARRAY['user']::text[],
+  NOW(),
+  NOW()
+FROM auth.users
+WHERE email IN ('admin@fartech.com.br', 'gestor@demo.local', 'user@demo.local')
+ON CONFLICT (id) DO UPDATE
+SET
+  email = EXCLUDED.email,
+  nome_completo = EXCLUDED.nome_completo,
+  updated_at = NOW();
 
 -- ============================================
 -- CONFIGURAR FARTECH ADMIN
 -- ============================================
 
-UPDATE profiles 
-SET 
-  is_fartech_admin = true,
-  role = 'admin',
-  org_id = NULL,  -- Fartech admins não têm org específica
-  updated_at = NOW()
+UPDATE usuarios
+SET permissoes = ARRAY['fartech_admin']::text[],
+    updated_at = NOW()
 WHERE email = 'admin@fartech.com.br';
 
--- Verificar Fartech Admin
-SELECT 
+SELECT
   id,
   email,
-  nome,
-  role,
-  org_id,
-  is_fartech_admin,
+  nome_completo,
+  permissoes,
   created_at
-FROM profiles
+FROM usuarios
 WHERE email = 'admin@fartech.com.br';
 
 -- ============================================
 -- CONFIGURAR ORG ADMIN
 -- ============================================
 
--- Atualizar profile do Org Admin
-UPDATE profiles 
-SET 
-  org_id = 'c1e7b3a0-0000-0000-0000-000000000001',
-  role = 'admin',
-  is_fartech_admin = false,
-  updated_at = NOW()
+UPDATE usuarios
+SET permissoes = ARRAY['gestor']::text[],
+    updated_at = NOW()
 WHERE email = 'gestor@demo.local';
 
--- Adicionar em org_members
 INSERT INTO org_members (org_id, user_id, role, ativo)
-SELECT 
+SELECT
   'c1e7b3a0-0000-0000-0000-000000000001'::uuid,
   id,
   'admin',
   true
-FROM profiles
+FROM usuarios
 WHERE email = 'gestor@demo.local'
 ON CONFLICT (org_id, user_id) DO UPDATE
-SET 
+SET
   role = EXCLUDED.role,
-  ativo = EXCLUDED.ativo,
-  updated_at = NOW();
+  ativo = EXCLUDED.ativo;
 
--- Verificar Org Admin
-SELECT 
-  p.id,
-  p.email,
-  p.nome,
-  p.role AS profile_role,
-  p.org_id,
-  p.is_fartech_admin,
+SELECT
+  u.id,
+  u.email,
+  u.nome_completo,
+  u.permissoes,
   om.role AS member_role,
   om.ativo,
   o.nome AS org_name
-FROM profiles p
-LEFT JOIN org_members om ON om.user_id = p.id
-LEFT JOIN orgs o ON o.id = p.org_id
-WHERE p.email = 'gestor@demo.local';
+FROM usuarios u
+LEFT JOIN org_members om ON om.user_id = u.id
+LEFT JOIN orgs o ON o.id = om.org_id
+WHERE u.email = 'gestor@demo.local';
 
 -- ============================================
 -- CONFIGURAR USER REGULAR
 -- ============================================
 
--- Atualizar profile do User
-UPDATE profiles 
-SET 
-  org_id = 'c1e7b3a0-0000-0000-0000-000000000001',
-  role = 'advogado',
-  is_fartech_admin = false,
-  updated_at = NOW()
+UPDATE usuarios
+SET permissoes = ARRAY['user']::text[],
+    updated_at = NOW()
 WHERE email = 'user@demo.local';
 
--- Adicionar em org_members
 INSERT INTO org_members (org_id, user_id, role, ativo)
-SELECT 
+SELECT
   'c1e7b3a0-0000-0000-0000-000000000001'::uuid,
   id,
   'advogado',
   true
-FROM profiles
+FROM usuarios
 WHERE email = 'user@demo.local'
 ON CONFLICT (org_id, user_id) DO UPDATE
-SET 
+SET
   role = EXCLUDED.role,
-  ativo = EXCLUDED.ativo,
-  updated_at = NOW();
+  ativo = EXCLUDED.ativo;
 
--- Verificar User Regular
-SELECT 
-  p.id,
-  p.email,
-  p.nome,
-  p.role AS profile_role,
-  p.org_id,
-  p.is_fartech_admin,
+SELECT
+  u.id,
+  u.email,
+  u.nome_completo,
+  u.permissoes,
   om.role AS member_role,
   om.ativo,
   o.nome AS org_name
-FROM profiles p
-LEFT JOIN org_members om ON om.user_id = p.id
-LEFT JOIN orgs o ON o.id = p.org_id
-WHERE p.email = 'user@demo.local';
+FROM usuarios u
+LEFT JOIN org_members om ON om.user_id = u.id
+LEFT JOIN orgs o ON o.id = om.org_id
+WHERE u.email = 'user@demo.local';
 
 -- ============================================
--- VERIFICAÇÃO FINAL DE TODOS OS USUÁRIOS
+-- VERIFICACAO FINAL DE TODOS OS USUARIOS
 -- ============================================
 
--- Listar todos os usuários de teste configurados
-SELECT 
-  p.id,
-  p.email,
-  p.nome,
-  p.role AS profile_role,
-  p.org_id,
-  p.is_fartech_admin,
+SELECT
+  u.id,
+  u.email,
+  u.nome_completo,
+  u.permissoes,
   om.role AS member_role,
   om.ativo,
   o.nome AS org_name,
-  CASE 
-    WHEN p.is_fartech_admin = true THEN '🔴 FARTECH ADMIN'
-    WHEN p.role = 'admin' THEN '🟡 ORG ADMIN'
-    ELSE '🟢 USER'
+  CASE
+    WHEN u.permissoes @> ARRAY['fartech_admin']::text[] THEN 'FARTECH ADMIN'
+    WHEN om.role IN ('admin', 'gestor') THEN 'ORG ADMIN'
+    ELSE 'USER'
   END AS tipo_usuario
-FROM profiles p
-LEFT JOIN org_members om ON om.user_id = p.id
-LEFT JOIN orgs o ON o.id = p.org_id
-WHERE p.email IN (
+FROM usuarios u
+LEFT JOIN org_members om ON om.user_id = u.id
+LEFT JOIN orgs o ON o.id = om.org_id
+WHERE u.email IN (
   'admin@fartech.com.br',
   'gestor@demo.local',
   'user@demo.local'
 )
-ORDER BY 
-  CASE 
-    WHEN p.is_fartech_admin = true THEN 1
-    WHEN p.role = 'admin' THEN 2
+ORDER BY
+  CASE
+    WHEN u.permissoes @> ARRAY['fartech_admin']::text[] THEN 1
+    WHEN om.role IN ('admin', 'gestor') THEN 2
     ELSE 3
   END;
 
--- Verificar que demo organization existe
-SELECT 
+SELECT
   id,
   nome,
   slug,
   created_at,
-  '✅ Organização de teste existe' AS status
+  'Organizacao de teste existe' AS status
 FROM orgs
 WHERE id = 'c1e7b3a0-0000-0000-0000-000000000001';
 
--- ============================================
--- CREDENCIAIS DE TESTE - RESUMO
--- ============================================
-
 /*
-📋 CREDENCIAIS PARA TESTES:
+CREDENCIAIS PARA TESTES:
 
-🔴 FARTECH ADMIN (Super Admin - Gerencia todas as orgs)
-   Email: admin@fartech.com.br
-   Senha: Fartech@2024
-   Acesso: /fartech/organizations
+FARTECH ADMIN
+  Email: admin@fartech.com.br
+  Senha: Fartech@2024
+  Acesso: /admin/organizations
 
-🟡 ORG ADMIN (Admin da Demo Organization)
-   Email: gestor@demo.local
-   Senha: Demo@2024
-   Acesso: /app/users, /app/settings
+ORG ADMIN (Demo Organization)
+  Email: gestor@demo.local
+  Senha: Demo@2024
+  Acesso: /org/users, /org/settings
 
-🟢 USER (Usuário Regular da Demo Organization)
-   Email: user@demo.local
-   Senha: Demo@2024
-   Acesso: /app/dashboard (sem menus admin)
-
-🏢 ORGANIZAÇÃO DE TESTE:
-   Nome: Demo Organization
-   Slug: demo
-   ID: c1e7b3a0-0000-0000-0000-000000000001
+USER (Demo Organization)
+  Email: user@demo.local
+  Senha: Demo@2024
+  Acesso: /app/dashboard
 */
+

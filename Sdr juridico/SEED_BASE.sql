@@ -62,17 +62,16 @@ begin
     email text,
     nome text,
     permissoes text[],
-    role user_role,
-    is_fartech_admin boolean
+    role text
   ) on commit drop;
 
-  insert into _seed_users (user_id, email, nome, permissoes, role, is_fartech_admin)
+  insert into _seed_users (user_id, email, nome, permissoes, role)
   values
-    (u_admin,  'admin@demo.local',      'Admin Demo',  array['gestor'],               'admin', false),
-    (u_gestor, 'gestor@demo.local',     'Gestor',      array['user'],                 'gestor', false),
-    (u_adv1,   'adv1@demo.local',       'Advogado 1',  array['user'],                 'advogado', false),
-    (u_adv2,   'adv2@demo.local',       'Advogado 2',  array['user'],                 'advogado', false),
-    (u_sec,    'secretaria@demo.local', 'Secretaria',  array['user'],                 'secretaria', false);
+    (u_admin,  'admin@demo.local',      'Admin Demo',  array['gestor'],               'admin'),
+    (u_gestor, 'gestor@demo.local',     'Gestor',      array['user'],                 'gestor'),
+    (u_adv1,   'adv1@demo.local',       'Advogado 1',  array['user'],                 'advogado'),
+    (u_adv2,   'adv2@demo.local',       'Advogado 2',  array['user'],                 'advogado'),
+    (u_sec,    'secretaria@demo.local', 'Secretaria',  array['user'],                 'secretaria');
 
   insert into public.usuarios (id, nome_completo, email, permissoes)
   select user_id, nome, email, permissoes
@@ -82,15 +81,6 @@ begin
     nome_completo = excluded.nome_completo,
     email = excluded.email,
     permissoes = excluded.permissoes;
-
-  insert into public.profiles (user_id, org_id, role, is_fartech_admin)
-  select user_id, v_org, role::text, is_fartech_admin
-  from _seed_users
-  on conflict (user_id)
-  do update set
-    org_id = excluded.org_id,
-    role = excluded.role,
-    is_fartech_admin = excluded.is_fartech_admin;
 
   insert into public.org_members (org_id, user_id, role, ativo)
   select v_org, su.user_id, su.role, true

@@ -1,21 +1,26 @@
+﻿-- =====================================================
+-- DEPRECATED: Este script usa profiles. Padrao atual: usuarios + org_members.
+-- Use SETUP_MULTITENANT_INCREMENTAL.sql para o fluxo atualizado.
+-- =====================================================
+
 -- ========================================
--- CORREÇÕES CRÍTICAS - BANCO DE DADOS
+-- CORREÃ‡Ã•ES CRÃTICAS - BANCO DE DADOS
 -- Data: 14/01/2026
--- Projeto: SDR Jurídico - Multi-Tenant
+-- Projeto: SDR JurÃ­dico - Multi-Tenant
 -- ========================================
 
--- Este script resolve os problemas críticos identificados na análise:
--- 1. Recursão infinita em RLS policies
+-- Este script resolve os problemas crÃ­ticos identificados na anÃ¡lise:
+-- 1. RecursÃ£o infinita em RLS policies
 -- 2. Missing CASCADE rules em Foreign Keys
 -- 3. Missing UNIQUE constraint em profiles.user_id
--- 4. Re-habilitação segura de RLS em profiles
+-- 4. Re-habilitaÃ§Ã£o segura de RLS em profiles
 
 -- ========================================
--- PARTE 1: CRIAR FUNÇÕES HELPER (Resolver Recursão)
+-- PARTE 1: CRIAR FUNÃ‡Ã•ES HELPER (Resolver RecursÃ£o)
 -- ========================================
 
--- Função para verificar se usuário é Fartech Admin
--- SECURITY DEFINER permite acesso direto sem recursão RLS
+-- FunÃ§Ã£o para verificar se usuÃ¡rio Ã© Fartech Admin
+-- SECURITY DEFINER permite acesso direto sem recursÃ£o RLS
 CREATE OR REPLACE FUNCTION is_fartech_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -27,7 +32,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Função para obter org_id do usuário atual
+-- FunÃ§Ã£o para obter org_id do usuÃ¡rio atual
 CREATE OR REPLACE FUNCTION get_user_org_id()
 RETURNS UUID AS $$
 BEGIN
@@ -39,7 +44,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Função para verificar se usuário é admin da org
+-- FunÃ§Ã£o para verificar se usuÃ¡rio Ã© admin da org
 CREATE OR REPLACE FUNCTION is_org_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -55,7 +60,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- PARTE 2: ADICIONAR UNIQUE CONSTRAINT
 -- ========================================
 
--- Garantir que user_id seja único em profiles
+-- Garantir que user_id seja Ãºnico em profiles
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -133,15 +138,15 @@ DROP POLICY IF EXISTS "users_own_profile" ON profiles;
 DROP POLICY IF EXISTS "users_view_own_org" ON profiles;
 
 -- ========================================
--- PARTE 5: CRIAR NOVAS POLICIES SEM RECURSÃO
+-- PARTE 5: CRIAR NOVAS POLICIES SEM RECURSÃƒO
 -- ========================================
 
--- Policy 1: Fartech Admin vê todos os profiles
+-- Policy 1: Fartech Admin vÃª todos os profiles
 CREATE POLICY "fartech_admin_all_profiles" ON profiles
   FOR ALL
   USING (is_fartech_admin());
 
--- Policy 2: Org Admin vê profiles da própria org
+-- Policy 2: Org Admin vÃª profiles da prÃ³pria org
 CREATE POLICY "org_admin_own_org_profiles" ON profiles
   FOR ALL
   USING (
@@ -149,7 +154,7 @@ CREATE POLICY "org_admin_own_org_profiles" ON profiles
     AND org_id = get_user_org_id()
   );
 
--- Policy 3: Usuários veem apenas seu próprio profile
+-- Policy 3: UsuÃ¡rios veem apenas seu prÃ³prio profile
 CREATE POLICY "users_own_profile" ON profiles
   FOR ALL
   USING (user_id = auth.uid());
@@ -158,38 +163,38 @@ CREATE POLICY "users_own_profile" ON profiles
 -- PARTE 6: RE-HABILITAR RLS EM PROFILES
 -- ========================================
 
--- Habilitar RLS em profiles (agora sem recursão!)
+-- Habilitar RLS em profiles (agora sem recursÃ£o!)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- ========================================
--- PARTE 7: VERIFICAÇÕES DE INTEGRIDADE
+-- PARTE 7: VERIFICAÃ‡Ã•ES DE INTEGRIDADE
 -- ========================================
 
--- Verificar se funções foram criadas
+-- Verificar se funÃ§Ãµes foram criadas
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc WHERE proname = 'is_fartech_admin'
   ) THEN
-    RAISE EXCEPTION 'Função is_fartech_admin() não foi criada!';
+    RAISE EXCEPTION 'FunÃ§Ã£o is_fartech_admin() nÃ£o foi criada!';
   END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc WHERE proname = 'get_user_org_id'
   ) THEN
-    RAISE EXCEPTION 'Função get_user_org_id() não foi criada!';
+    RAISE EXCEPTION 'FunÃ§Ã£o get_user_org_id() nÃ£o foi criada!';
   END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc WHERE proname = 'is_org_admin'
   ) THEN
-    RAISE EXCEPTION 'Função is_org_admin() não foi criada!';
+    RAISE EXCEPTION 'FunÃ§Ã£o is_org_admin() nÃ£o foi criada!';
   END IF;
 
-  RAISE NOTICE '✅ Todas as funções foram criadas com sucesso!';
+  RAISE NOTICE 'âœ… Todas as funÃ§Ãµes foram criadas com sucesso!';
 END $$;
 
--- Verificar se RLS está habilitado
+-- Verificar se RLS estÃ¡ habilitado
 DO $$
 DECLARE
   rls_enabled BOOLEAN;
@@ -199,10 +204,10 @@ BEGIN
   WHERE schemaname = 'public' AND tablename = 'profiles';
 
   IF NOT rls_enabled THEN
-    RAISE EXCEPTION 'RLS não está habilitado em profiles!';
+    RAISE EXCEPTION 'RLS nÃ£o estÃ¡ habilitado em profiles!';
   END IF;
 
-  RAISE NOTICE '✅ RLS habilitado em profiles!';
+  RAISE NOTICE 'âœ… RLS habilitado em profiles!';
 END $$;
 
 -- Verificar se policies foram criadas
@@ -215,20 +220,20 @@ BEGIN
   WHERE schemaname = 'public' AND tablename = 'profiles';
 
   IF policy_count < 3 THEN
-    RAISE EXCEPTION 'Policies de profiles não foram criadas corretamente!';
+    RAISE EXCEPTION 'Policies de profiles nÃ£o foram criadas corretamente!';
   END IF;
 
-  RAISE NOTICE '✅ % policies criadas em profiles!', policy_count;
+  RAISE NOTICE 'âœ… % policies criadas em profiles!', policy_count;
 END $$;
 
 -- ========================================
 -- RESULTADO ESPERADO
 -- ========================================
 
--- Exibir resumo das correções
+-- Exibir resumo das correÃ§Ãµes
 SELECT 
-  '🎯 CORREÇÕES APLICADAS' AS status,
-  'Funções helper criadas (sem recursão)' AS correcao_1,
+  'ðŸŽ¯ CORREÃ‡Ã•ES APLICADAS' AS status,
+  'FunÃ§Ãµes helper criadas (sem recursÃ£o)' AS correcao_1,
   'CASCADE rules adicionadas em FKs' AS correcao_2,
   'UNIQUE constraint em profiles.user_id' AS correcao_3,
   'RLS re-habilitado em profiles' AS correcao_4;
@@ -239,8 +244,8 @@ SELECT
   policyname,
   cmd,
   CASE 
-    WHEN qual IS NOT NULL THEN '✅ Com USING'
-    ELSE '⚠️ Sem USING'
+    WHEN qual IS NOT NULL THEN 'âœ… Com USING'
+    ELSE 'âš ï¸ Sem USING'
   END AS status
 FROM pg_policies
 WHERE schemaname = 'public' AND tablename = 'profiles'
@@ -253,8 +258,8 @@ SELECT
   ccu.table_name AS referencia,
   rc.delete_rule AS regra_delete,
   CASE 
-    WHEN rc.delete_rule IN ('CASCADE', 'SET NULL') THEN '✅'
-    ELSE '⚠️'
+    WHEN rc.delete_rule IN ('CASCADE', 'SET NULL') THEN 'âœ…'
+    ELSE 'âš ï¸'
   END AS status
 FROM information_schema.table_constraints AS tc
 JOIN information_schema.key_column_usage AS kcu
