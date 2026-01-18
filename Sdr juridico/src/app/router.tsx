@@ -17,6 +17,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
+import AuthCallback from '@/pages/auth/AuthCallback'
 
 // Admin Pages
 import OrganizationsList from '@/pages/fartech/OrganizationsList'
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallback />,
   },
   {
     path: '/forgot-password',

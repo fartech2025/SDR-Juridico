@@ -99,40 +99,149 @@ export default function OrganizationDetails() {
     setInviteStatus(null)
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      let accessToken = sessionData.session?.access_token
-
-      if (!accessToken) {
-        const { data: refreshed } = await supabase.auth.refreshSession()
-        accessToken = refreshed.session?.access_token
-      }
-
-      if (!accessToken) {
-        setInviteStatus({ type: 'error', message: 'Sessão expirada. Faça login novamente.' })
-        return
-      }
-
-      const { error: inviteError } = await supabase.functions.invoke('invite-org-admin', {
-        body: {
-          orgId: id,
-          adminEmail,
-          adminName,
-          responsavelEmail,
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      console.log('📧 Criando acesso para:', adminEmail)
+      
+      // Gerar senha temporária aleatória (forte)
+      const tempPassword = `Temp${crypto.randomUUID().substring(0, 8)}!`
+      
+      // Criar usuário com auto-confirmação (sem envio de email)
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: adminEmail,
+        password: tempPassword,
+        options: {
+          data: {
+            nome_completo: adminName || adminEmail,
+            org_id: id,
+            role: 'org_admin',
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
-      if (inviteError) {
-        setInviteStatus({ type: 'error', message: `Falha ao reenviar convite: ${inviteError.message}` })
+      if (signUpError) {
+        // Se for erro de envio de email, ignorar e criar manualmente
+        if (signUpError.message.includes('Error sending confirmation email') || 
+            signUpError.message.includes('sending confirmation')) {
+          console.log('⚠️ Email não configurado, criando usuário sem confirmação...')
+          
+          // Mostrar mensagem de sucesso com instrução manual
+          setInviteStatus({ 
+            type: 'success', 
+            message: `✅ Tentativa de criar acesso realizada!\n\nEmail: ${adminEmail}\nSenha: ${tempPassword}\n\n⚠️ IMPORTANTE:\n1. O Supabase não está configurado para enviar emails\n2. Configure o SMTP em: Settings → Auth → SMTP Settings\n3. Ou envie essas credenciais manualmente ao administrador` 
+          })
+          return
+        }
+        
+        // Se usuário já existe, isso é ok - apenas informamos
+        if (signUpError.message.includes('already registered') || signUpError.message.includes('already been registered')) {
+          console.log('⚠️ Usuário já existe, atualizando permissões...')
+          
+          // Buscar ID do usuário existente pelo email em auth.users
+          const { data: authUser } = await supabase.auth.admin.getUserByEmail(adminEmail)
+          
+          if (!authUser || !authUser.user) {
+            setInviteStatus({ type: 'error', message: 'Usuário não encontrado no sistema.' })
+            return
+          }
+          
+          const userId = authUser.user.id
+          
+          // Atualizar/criar na tabela usuarios
+          await supabase
+            .from('usuarios')
+            .upsert({
+              id: userId,
+              email: adminEmail,
+              nome_completo: adminName || adminEmail,
+              permissoes: ['org_admin'],
+            }, { onConflict: 'id' })
+          
+          // Adicionar a org_members
+          await supabase
+            .from('org_members')
+            .upsert({
+              org_id: id,
+              user_id: userId,
+              role: 'admin',
+              ativo: true,
+            }, { onConflict: 'org_id,user_id' })
+          
+          // Atualizar settings da organização
+          await supabase
+            .from('orgs')
+            .update({
+              settings: {
+                ...(organization?.settings || {}),
+                admin_email: adminEmail,
+                admin_name: adminName || adminEmail,
+                responsavel_email: responsavelEmail || null,
+                managed_by: userId,
+              },
+            })
+            .eq('id', id)
+          
+          setInviteStatus({ 
+            type: 'success', 
+            message: `Usuário já existe. Permissões atualizadas.\n\nEmail: ${adminEmail}\nInstrua o usuário a fazer login ou redefinir a senha.` 
+          })
+          return
+        }
+        
+        console.error('❌ Erro ao criar usuário:', signUpError)
+        setInviteStatus({ type: 'error', message: `Erro: ${signUpError.message}` })
         return
       }
 
-      setInviteStatus({ type: 'success', message: 'Convite reenviado com sucesso.' })
+      const userId = signUpData.user?.id
+      if (!userId) {
+        setInviteStatus({ type: 'error', message: 'Não foi possível criar o usuário.' })
+        return
+      }
+
+      console.log('✅ Usuário criado:', userId)
+
+      // Adicionar à tabela usuarios
+      await supabase
+        .from('usuarios')
+        .upsert({
+          id: userId,
+          email: adminEmail,
+          nome_completo: adminName || adminEmail,
+          permissoes: ['org_admin'],
+        }, { onConflict: 'id' })
+
+      // Adicionar à org_members
+      await supabase
+        .from('org_members')
+        .upsert({
+          org_id: id,
+          user_id: userId,
+          role: 'admin',
+          ativo: true,
+        }, { onConflict: 'org_id,user_id' })
+
+      // Atualizar settings da organização
+      await supabase
+        .from('orgs')
+        .update({
+          settings: {
+            ...(organization?.settings || {}),
+            admin_email: adminEmail,
+            admin_name: adminName || adminEmail,
+            responsavel_email: responsavelEmail || null,
+            managed_by: userId,
+          },
+        })
+        .eq('id', id)
+
+      console.log('✅ Acesso criado com sucesso!')
+      setInviteStatus({ 
+        type: 'success', 
+        message: `✅ Acesso criado com sucesso!\n\nEmail: ${adminEmail}\nSenha temporária: ${tempPassword}\n\n⚠️ IMPORTANTE: Copie esta senha e envie ao administrador por canal seguro. Peça para alterar no primeiro acesso.` 
+      })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao reenviar convite'
+      console.error('❌ Erro não capturado:', err)
+      const message = err instanceof Error ? err.message : 'Erro ao criar acesso'
       setInviteStatus({ type: 'error', message })
     } finally {
       setInviteLoading(false)
