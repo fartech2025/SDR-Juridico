@@ -64,7 +64,7 @@ export function GoogleMeetingQuickCreate({
     <>
       <button
         onClick={() => setShowDialog(true)}
-        className="inline-flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
+        className="inline-flex items-center gap-2 px-3 py-2 bg-success text-text-inverse rounded-md hover:bg-success-dark text-sm font-medium"
         title="Criar Google Meet agora"
       >
         <svg
@@ -89,7 +89,7 @@ export function GoogleMeetingQuickCreate({
             <h2 className="text-lg font-bold mb-4">Criar Google Meet Agora</h2>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm mb-4">
+              <div className="p-3 bg-danger-bg border border-danger-border rounded text-danger text-sm mb-4">
                 {error.message}
               </div>
             )}
@@ -142,7 +142,7 @@ export function GoogleMeetingQuickCreate({
               <button
                 onClick={handleCreate}
                 disabled={!title.trim() || isLoading}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                className="flex-1 px-4 py-2 bg-success text-text-inverse rounded-md hover:bg-success-dark disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
               >
                 {isLoading ? 'Criando...' : 'Criar'}
               </button>

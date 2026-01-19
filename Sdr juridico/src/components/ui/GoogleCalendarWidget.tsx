@@ -9,7 +9,6 @@ interface GoogleCalendarWidgetProps {
   onConnect: () => void
   onSync: () => void
   disabled?: boolean
-  isDark?: boolean
 }
 
 export function GoogleCalendarWidget({
@@ -19,7 +18,6 @@ export function GoogleCalendarWidget({
   onConnect,
   onSync,
   disabled = false,
-  isDark = false,
 }: GoogleCalendarWidgetProps) {
   const formatLastSync = (date: Date) => {
     const now = new Date()
@@ -34,24 +32,24 @@ export function GoogleCalendarWidget({
   }
 
   return (
-    <Card className={isDark ? 'dark:bg-slate-900 dark:border-slate-700' : ''}>
+    <Card className="bg-surface border-border">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${isDark ? 'dark:bg-blue-900/30' : 'bg-blue-100'}`}>
-            <Calendar className={`w-5 h-5 ${isDark ? 'dark:text-blue-400' : 'text-blue-600'}`} />
+          <div className="p-2 rounded-lg bg-brand-primary-subtle">
+            <Calendar className="w-5 h-5 text-brand-primary" />
           </div>
           <div className="flex-1">
-            <CardTitle className={isDark ? 'dark:text-slate-200' : ''}>
+            <CardTitle className="text-text">
               Google Calendar
             </CardTitle>
-            <p className={`text-sm ${isDark ? 'dark:text-slate-400' : 'text-gray-600'}`}>
+            <p className="text-sm text-text-muted">
               Sincronize sua agenda automaticamente
             </p>
           </div>
           {isConnected && (
             <div className="flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <span className="text-sm text-green-600 font-medium">Conectado</span>
+              <CheckCircle2 className="w-4 h-4 text-success" />
+              <span className="text-sm text-success font-medium">Conectado</span>
             </div>
           )}
         </div>
@@ -59,13 +57,13 @@ export function GoogleCalendarWidget({
       <CardContent className="space-y-4">
         {!isConnected ? (
           <>
-            <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-900/50">
-              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 bg-warning-bg rounded-lg border border-warning-border">
+              <AlertCircle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                <p className="text-sm font-medium text-warning-dark">
                   Não conectado
                 </p>
-                <p className={`text-sm mt-1 ${isDark ? 'dark:text-amber-300/80' : 'text-amber-700'}`}>
+                <p className="text-sm mt-1 text-warning">
                   Clique em "Vincular" para autorizar o acesso ao seu Google Calendar
                 </p>
               </div>
@@ -73,7 +71,7 @@ export function GoogleCalendarWidget({
             <Button
               onClick={onConnect}
               disabled={disabled || isLoading}
-              className={`w-full ${isDark ? 'dark:bg-blue-600 dark:hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+              className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white"
             >
               {isLoading ? (
                 <>
@@ -88,12 +86,12 @@ export function GoogleCalendarWidget({
         ) : (
           <>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-900/50">
+              <div className="flex items-center justify-between p-3 bg-success-bg rounded-lg border border-success-border">
                 <div>
-                  <p className="text-sm font-medium text-green-900 dark:text-green-200">
+                  <p className="text-sm font-medium text-success-dark">
                     Sincronização automática
                   </p>
-                  <p className={`text-xs mt-1 ${isDark ? 'dark:text-green-300/70' : 'text-green-700'}`}>
+                  <p className="text-xs mt-1 text-success">
                     {lastSync ? `Última: ${formatLastSync(lastSync)}` : 'Nunca sincronizado'}
                   </p>
                 </div>
@@ -105,7 +103,7 @@ export function GoogleCalendarWidget({
                 onClick={onSync}
                 disabled={disabled || isLoading}
                 variant="outline"
-                className={`${isDark ? 'dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800' : ''}`}
+                className="border-border text-text hover:bg-surface-alt"
               >
                 {isLoading ? (
                   <>
@@ -124,14 +122,14 @@ export function GoogleCalendarWidget({
                 onClick={onConnect}
                 disabled={disabled || isLoading}
                 variant="outline"
-                className={`${isDark ? 'dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800' : ''}`}
+                className="border-border text-text hover:bg-surface-alt"
               >
                 Reconectar
               </Button>
             </div>
 
-            <div className={`text-xs p-3 rounded-lg ${isDark ? 'dark:bg-slate-800 dark:text-slate-400' : 'bg-gray-100 text-gray-600'}`}>
-              <p className="font-medium mb-1">ℹ️ Sincronização:</p>
+            <div className="text-xs p-3 rounded-lg bg-surface-alt text-text-muted">
+              <p className="font-medium mb-1 text-text">ℹ️ Sincronização:</p>
               <ul className="space-y-1 list-disc list-inside">
                 <li>Eventos são sincronizados a cada hora automaticamente</li>
                 <li>Você pode sincronizar manualmente a qualquer momento</li>

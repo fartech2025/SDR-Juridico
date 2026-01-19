@@ -92,7 +92,7 @@ export function GoogleMeetingForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+        <div className="p-3 bg-danger-bg border border-danger-border rounded text-danger text-sm">
           {error?.message}
         </div>
       )}

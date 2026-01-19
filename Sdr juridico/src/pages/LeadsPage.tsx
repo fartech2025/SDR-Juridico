@@ -14,7 +14,6 @@ import { useLeads } from '@/hooks/useLeads'
 import { useCasos } from '@/hooks/useCasos'
 import { useOrganization } from '@/hooks/useOrganization'
 import { useAdvogados } from '@/hooks/useAdvogados'
-import { useTheme } from '@/contexts/ThemeContext'
 import { cn } from '@/utils/cn'
 import type { LeadRow } from '@/lib/supabaseClient'
 import { leadsService } from '@/services/leadsService'
@@ -29,26 +28,24 @@ const resolveStatus = (
 }
 
 const statusPill = (status: Lead['status']) => {
-  if (status === 'ganho') return 'border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-  if (status === 'perdido') return 'border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400'
-  if (status === 'proposta') return 'border-amber-500/30 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-  if (status === 'qualificado') return 'border-blue-500/30 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
-  if (status === 'em_contato') return 'border-purple-500/30 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400'
-  return 'border-slate-300 bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+  if (status === 'ganho') return 'border-success-border bg-success-bg text-success'
+  if (status === 'perdido') return 'border-danger-border bg-danger-bg text-danger'
+  if (status === 'proposta') return 'border-warning-border bg-warning-bg text-warning'
+  if (status === 'qualificado') return 'border-info-border bg-info-bg text-info'
+  if (status === 'em_contato') return 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary'
+  return 'border-border bg-surface-2 text-text-muted'
 }
 
 const heatPill = (heat: Lead['heat']) => {
-  if (heat === 'quente') return 'border-red-500/50 bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg shadow-red-500/20'
-  if (heat === 'morno') return 'border-yellow-500/50 bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/20'
-  return 'border-blue-500/50 bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/20'
+  if (heat === 'quente') return 'border-danger-border bg-danger-bg text-danger'
+  if (heat === 'morno') return 'border-warning-border bg-warning-bg text-warning'
+  return 'border-info-border bg-info-bg text-info'
 }
 
 export const LeadsPage = () => {
   const { leads, loading, error, createLead, updateLead, deleteLead, assignLeadAdvogado } = useLeads()
   const { casos } = useCasos()
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
   const canManageLeads = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const { advogados } = useAdvogados(currentOrg?.id || null, canManageLeads)
   const [params] = useSearchParams()
@@ -263,23 +260,20 @@ export const LeadsPage = () => {
       <div
         className={cn(
           'min-h-screen pb-12',
-          isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+          'bg-base text-text',
         )}
       >
         <div className="space-y-6">
           {/* Header */}
           <header
             className={cn(
-              'relative overflow-hidden rounded-3xl border p-8 shadow-2xl',
-              isDark
-                ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#1a1f2e] to-[#0b0f14]'
-                : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#ffe0b2]',
+              'relative overflow-hidden rounded-3xl border p-8 shadow-2xl','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
             )}
           >
             <div
               className={cn(
                 'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-                isDark ? 'opacity-10' : 'opacity-50',
+                'opacity-90',
               )}
               style={{ backgroundImage: `url(${heroLight})` }}
             />
@@ -289,23 +283,23 @@ export const LeadsPage = () => {
                   <div className="flex items-center gap-2">
                     <div className={cn(
                       'rounded-full p-2',
-                      isDark ? 'bg-emerald-500/10' : 'bg-emerald-500/20'
+                      'bg-emerald-500/20'
                     )}>
-                      <Zap className={cn('h-5 w-5', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+                      <Zap className={cn('h-5 w-5', 'text-emerald-600')} />
                     </div>
                     <p
                       className={cn(
                         'text-xs font-bold uppercase tracking-[0.3em]',
-                        isDark ? 'text-emerald-300' : 'text-emerald-700',
+                        'text-emerald-700',
                       )}
                     >
                       {isEditing ? 'Editar Lead' : 'Novo Lead'}
                     </p>
                   </div>
-                  <h2 className={cn('font-display text-4xl font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                  <h2 className={cn('font-display text-4xl font-bold', 'text-text')}>
                     {isEditing ? 'Atualizar Oportunidade' : 'Adicionar Oportunidade'}
                   </h2>
-                  <p className={cn('text-base', isDark ? 'text-slate-400' : 'text-[#7a4a1a]')}>
+                  <p className={cn('text-base', 'text-text-muted')}>
                     {isEditing ? 'Ajuste os dados do lead e salve as alterações' : 'Preencha os dados do novo lead para adicionar ao pipeline'}
                   </p>
                 </div>
@@ -316,10 +310,7 @@ export const LeadsPage = () => {
                   }}
                   variant="outline"
                   className={cn(
-                    'h-14 rounded-full px-8 font-bold shadow-lg transition-all hover:scale-105',
-                    isDark 
-                      ? 'border-slate-700 hover:bg-slate-800'
-                      : 'border-[#f3c988] hover:bg-[#fff3e0]'
+                    'h-14 rounded-full px-8 font-bold shadow-lg transition-all hover:scale-105','border-border hover:bg-surface-2'
                   )}
                 >
                   <ArrowLeft className="mr-2 h-5 w-5" />
@@ -333,33 +324,30 @@ export const LeadsPage = () => {
           <Card
             className={cn(
               'border',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              'border-border bg-surface/90',
             )}
           >
             <CardContent className="p-8">
               <form className="space-y-6">
                 {/* Informações Pessoais */}
                 <div>
-                  <h3 className={cn('mb-4 text-lg font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                  <h3 className={cn('mb-4 text-lg font-bold', 'text-text')}>
                     Informações do Lead
                   </h3>
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Nome Completo *
                       </label>
                       <div className="relative">
-                        <User className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <User className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
                         <input
                           type="text"
                           required
                           value={formData.nome}
                           onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                           className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                            isDark
-                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                           )}
                           placeholder="Digite o nome completo"
                         />
@@ -367,21 +355,18 @@ export const LeadsPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Email *
                       </label>
                       <div className="relative">
-                        <Mail className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <Mail className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
                         <input
                           type="email"
                           required
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                            isDark
-                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                           )}
                           placeholder="email@exemplo.com"
                         />
@@ -389,21 +374,18 @@ export const LeadsPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Telefone *
                       </label>
                       <div className="relative">
-                        <Phone className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <Phone className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
                         <input
                           type="tel"
                           required
                           value={formData.telefone}
                           onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                           className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                            isDark
-                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                           )}
                           placeholder="(00) 00000-0000"
                         />
@@ -411,20 +393,17 @@ export const LeadsPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Empresa
                       </label>
                       <div className="relative">
-                        <Briefcase className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <Briefcase className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
                         <input
                           type="text"
                           value={formData.empresa}
                           onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
                           className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                            isDark
-                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                           )}
                           placeholder="Nome da empresa"
                         />
@@ -432,20 +411,17 @@ export const LeadsPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Origem
                       </label>
                       <div className="relative">
-                        <MapPin className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <MapPin className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
                         <input
                           type="text"
                           value={formData.origem}
                           onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
                           className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                            isDark
-                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                           )}
                           placeholder="Ex: Website, Indicação, Redes Sociais"
                         />
@@ -456,22 +432,19 @@ export const LeadsPage = () => {
 
                 {/* Detalhes do Lead */}
                 <div>
-                  <h3 className={cn('mb-4 text-lg font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                  <h3 className={cn('mb-4 text-lg font-bold', 'text-text')}>
                     Detalhes da Oportunidade
                   </h3>
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Status
                       </label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as LeadRow['status'] })}
                         className={cn(
-                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                          isDark
-                            ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                            : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
                         )}
                       >
                         <option value="novo">Novo</option>
@@ -484,17 +457,14 @@ export const LeadsPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Temperatura
                       </label>
                       <select
                         value={formData.heat}
                         onChange={(e) => setFormData({ ...formData, heat: e.target.value as LeadRow['heat'] })}
                         className={cn(
-                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                          isDark
-                            ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                            : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
                         )}
                       >
                         <option value="frio">Frio</option>
@@ -504,20 +474,17 @@ export const LeadsPage = () => {
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Area de Interesse
                       </label>
                       <div className="relative">
-                        <Briefcase className={cn('absolute left-4 top-4 h-5 w-5', isDark ? 'text-slate-500' : 'text-slate-400')} />
+                        <Briefcase className={cn('absolute left-4 top-4 h-5 w-5', 'text-slate-400')} />
                         <input
                           type="text"
                           value={formData.area}
                           onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                           className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                            isDark
-                              ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                           )}
                           placeholder="Ex: Consultoria jurídica, Contrato empresarial"
                         />
@@ -525,7 +492,7 @@ export const LeadsPage = () => {
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
                         Resumo / Observações
                       </label>
                       <textarea
@@ -533,10 +500,7 @@ export const LeadsPage = () => {
                         onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                         rows={4}
                         className={cn(
-                          'w-full rounded-xl border-2 p-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                          isDark
-                            ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                            : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                          'w-full rounded-xl border-2 p-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                         )}
                         placeholder="Descreva informações adicionais sobre o lead..."
                       />
@@ -551,10 +515,7 @@ export const LeadsPage = () => {
                     onClick={handleSaveLead}
                     disabled={saving}
                     className={cn(
-                      'h-14 flex-1 rounded-xl px-8 font-bold shadow-xl transition-all hover:scale-105 disabled:opacity-50',
-                      isDark 
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'
-                        : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                      'h-14 flex-1 rounded-xl px-8 font-bold shadow-xl transition-all hover:scale-105 disabled:opacity-50','bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
                     )}
                   >
                     <Save className="mr-2 h-5 w-5" />
@@ -568,10 +529,7 @@ export const LeadsPage = () => {
                     }}
                     variant="outline"
                     className={cn(
-                      'h-14 rounded-xl border-2 px-8 font-bold transition-all hover:scale-105',
-                      isDark
-                        ? 'border-slate-700 hover:bg-slate-800'
-                        : 'border-[#f0d9b8] hover:bg-[#fff3e0]'
+                      'h-14 rounded-xl border-2 px-8 font-bold transition-all hover:scale-105','border-border hover:bg-surface-2'
                     )}
                   >
                     Cancelar
@@ -589,23 +547,20 @@ export const LeadsPage = () => {
     <div
       className={cn(
         'min-h-screen pb-12',
-        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+        'bg-base text-text',
       )}
     >
       <div className="space-y-6">
         {/* Header com gradiente moderno voltado para vendas */}
         <header
           className={cn(
-            'relative overflow-hidden rounded-3xl border p-8 shadow-2xl',
-            isDark
-              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#1a1f2e] to-[#0b0f14]'
-              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#ffe0b2]',
+            'relative overflow-hidden rounded-3xl border p-8 shadow-2xl','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
               'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              isDark ? 'opacity-10' : 'opacity-50',
+              'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
           />
@@ -615,23 +570,23 @@ export const LeadsPage = () => {
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     'rounded-full p-2',
-                    isDark ? 'bg-emerald-500/10' : 'bg-emerald-500/20'
+                    'bg-emerald-500/20'
                   )}>
-                    <TrendingUp className={cn('h-5 w-5', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+                    <TrendingUp className={cn('h-5 w-5', 'text-emerald-600')} />
                   </div>
                   <p
                     className={cn(
                       'text-xs font-bold uppercase tracking-[0.3em]',
-                      isDark ? 'text-emerald-300' : 'text-emerald-700',
+                      'text-emerald-700',
                     )}
                   >
                     Pipeline de Vendas
                   </p>
                 </div>
-                <h2 className={cn('font-display text-4xl font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                <h2 className={cn('font-display text-4xl font-bold', 'text-text')}>
                   Gestão de Leads
                 </h2>
-                <p className={cn('text-base', isDark ? 'text-slate-400' : 'text-[#7a4a1a]')}>
+                <p className={cn('text-base', 'text-text-muted')}>
                   Acompanhe oportunidades e impulsione suas vendas
                 </p>
               </div>
@@ -645,10 +600,7 @@ export const LeadsPage = () => {
                   setShowNewLeadForm(true)
                 }}
                 className={cn(
-                  'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl',
-                  isDark 
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                  'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl','bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
                 )}
                 disabled={!canManageLeads}
               >
@@ -664,24 +616,24 @@ export const LeadsPage = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className={cn(
             'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-blue-500/50' : 'border-[#f0d9b8] bg-white hover:border-blue-500/30'
+            'border-border bg-white hover:border-blue-500/30'
           )}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
                     Total Pipeline
                   </p>
                   <p className="text-4xl font-bold tracking-tight">{metrics.total}</p>
-                  <p className={cn('text-xs font-medium', isDark ? 'text-slate-500' : 'text-slate-500')}>
+                  <p className={cn('text-xs font-medium', 'text-slate-500')}>
                     oportunidades ativas
                   </p>
                 </div>
                 <div className={cn(
                   'rounded-2xl p-4 transition-colors',
-                  isDark ? 'bg-blue-500/10 group-hover:bg-blue-500/20' : 'bg-blue-50 group-hover:bg-blue-100'
+                  'bg-blue-50 group-hover:bg-blue-100'
                 )}>
-                  <TrendingUp className={cn('h-8 w-8', isDark ? 'text-blue-400' : 'text-blue-600')} />
+                  <TrendingUp className={cn('h-8 w-8', 'text-blue-600')} />
                 </div>
               </div>
             </CardContent>
@@ -689,16 +641,16 @@ export const LeadsPage = () => {
 
           <Card className={cn(
             'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-red-500/50' : 'border-[#f0d9b8] bg-white hover:border-red-500/30'
+            'border-border bg-white hover:border-red-500/30'
           )}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
                     Leads Quentes
                   </p>
                   <p className="text-4xl font-bold tracking-tight text-red-500">{metrics.quentes}</p>
-                  <p className={cn('text-xs font-medium uppercase', isDark ? 'text-red-400' : 'text-red-600')}>
+                  <p className={cn('text-xs font-medium uppercase', 'text-red-600')}>
                     🔥 Ação Imediata
                   </p>
                 </div>
@@ -711,16 +663,16 @@ export const LeadsPage = () => {
 
           <Card className={cn(
             'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-amber-500/50' : 'border-[#f0d9b8] bg-white hover:border-amber-500/30'
+            'border-border bg-white hover:border-amber-500/30'
           )}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
                     Em Negociação
                   </p>
                   <p className="text-4xl font-bold tracking-tight text-amber-500">{metrics.emNegociacao}</p>
-                  <p className={cn('text-xs font-medium', isDark ? 'text-amber-400' : 'text-amber-600')}>
+                  <p className={cn('text-xs font-medium', 'text-amber-600')}>
                     💰 propostas ativas
                   </p>
                 </div>
@@ -728,7 +680,7 @@ export const LeadsPage = () => {
                   'rounded-2xl p-4 transition-colors',
                   'bg-amber-500/10 group-hover:bg-amber-500/20'
                 )}>
-                  <Clock className={cn('h-8 w-8', isDark ? 'text-amber-400' : 'text-amber-600')} />
+                  <Clock className={cn('h-8 w-8', 'text-amber-600')} />
                 </div>
               </div>
             </CardContent>
@@ -736,16 +688,16 @@ export const LeadsPage = () => {
 
           <Card className={cn(
             'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            isDark ? 'border-slate-800 bg-slate-900/70 hover:border-emerald-500/50' : 'border-[#f0d9b8] bg-white hover:border-emerald-500/30'
+            'border-border bg-white hover:border-emerald-500/30'
           )}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
                     Taxa de Conversão
                   </p>
                   <p className="text-4xl font-bold tracking-tight text-emerald-500">{metrics.taxaConversao}%</p>
-                  <p className={cn('text-xs font-medium', isDark ? 'text-emerald-400' : 'text-emerald-600')}>
+                  <p className={cn('text-xs font-medium', 'text-emerald-600')}>
                     ✅ {metrics.ganhos} fechamentos
                   </p>
                 </div>
@@ -753,7 +705,7 @@ export const LeadsPage = () => {
                   'rounded-2xl p-4 transition-colors',
                   'bg-emerald-500/10 group-hover:bg-emerald-500/20'
                 )}>
-                  <DollarSign className={cn('h-8 w-8', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+                  <DollarSign className={cn('h-8 w-8', 'text-emerald-600')} />
                 </div>
               </div>
             </CardContent>
@@ -764,7 +716,7 @@ export const LeadsPage = () => {
         <Card
           className={cn(
             'border',
-            isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            'border-border bg-surface/90',
           )}
         >
           <CardContent className="p-6 space-y-5">
@@ -779,12 +731,8 @@ export const LeadsPage = () => {
                     className={cn(
                       'rounded-full border-2 px-6 py-2.5 text-sm font-bold transition-all',
                       activeTab === tab
-                        ? isDark
-                          ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300 shadow-lg shadow-emerald-500/20'
-                          : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-500/10'
-                        : isDark
-                          ? 'border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600 hover:bg-slate-800'
-                          : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-emerald-400 hover:bg-[#fff3e0]'
+                        ?'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-500/10'
+                        :'border-border bg-white text-text-muted hover:border-emerald-400 hover:bg-surface-2'
                     )}
                   >
                     {tab}
@@ -797,14 +745,11 @@ export const LeadsPage = () => {
                 <div className="relative flex-1 min-w-[300px]">
                   <Search className={cn(
                     'absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2',
-                    isDark ? 'text-slate-400' : 'text-slate-500'
+                    'text-slate-500'
                   )} />
                   <input
                     className={cn(
-                      'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
+                      'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
                     )}
                     placeholder="Buscar por nome, telefone ou área..."
                     value={query}
@@ -815,10 +760,7 @@ export const LeadsPage = () => {
                 {/* Filtros */}
                 <select
                   className={cn(
-                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                    isDark
-                      ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                      : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
                   )}
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
@@ -833,10 +775,7 @@ export const LeadsPage = () => {
 
                 <select
                   className={cn(
-                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                    isDark
-                      ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                      : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
+                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
                   )}
                   value={heatFilter}
                   onChange={(event) => setHeatFilter(event.target.value)}
@@ -853,10 +792,7 @@ export const LeadsPage = () => {
                   variant="outline"
                   onClick={resetFilters}
                   className={cn(
-                    'h-12 rounded-xl border-2 px-6 font-semibold',
-                    isDark
-                      ? 'border-slate-700 hover:bg-slate-800'
-                      : 'border-[#f0d9b8] hover:bg-[#fff3e0]'
+                    'h-12 rounded-xl border-2 px-6 font-semibold','border-border hover:bg-surface-2'
                   )}
                 >
                   <Filter className="mr-2 h-4 w-4" />
@@ -884,19 +820,13 @@ export const LeadsPage = () => {
                       key={lead.id}
                       onClick={() => setSelectedLead(lead)}
                       className={cn(
-                        'group cursor-pointer rounded-2xl border-2 p-5 transition-all hover:scale-[1.01] hover:shadow-xl',
-                        isDark
-                          ? 'border-slate-800 bg-slate-800/50 hover:border-emerald-500/50 hover:bg-slate-800'
-                          : 'border-[#f0d9b8] bg-white hover:border-emerald-400 hover:bg-emerald-50/30',
+                        'group cursor-pointer rounded-2xl border-2 p-5 transition-all hover:scale-[1.01] hover:shadow-xl','border-border bg-white hover:border-emerald-400 hover:bg-emerald-50/30',
                       )}
                     >
                       <div className="flex flex-wrap items-center gap-4">
                         {/* Avatar */}
                         <div className={cn(
-                          'flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold shadow-lg transition-transform group-hover:scale-110',
-                          isDark
-                            ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white'
-                            : 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white'
+                          'flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold shadow-lg transition-transform group-hover:scale-110','bg-gradient-to-br from-emerald-500 to-teal-500 text-white'
                         )}>
                           {initials}
                         </div>
@@ -906,7 +836,7 @@ export const LeadsPage = () => {
                           <div className="flex items-center gap-2">
                             <h3 className={cn(
                               'text-lg font-bold',
-                              isDark ? 'text-slate-100' : 'text-[#2a1400]'
+                              'text-text'
                             )}>
                               {lead.name}
                             </h3>
@@ -921,11 +851,11 @@ export const LeadsPage = () => {
                             </span>
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-3 text-sm">
-                            <span className={cn('flex items-center gap-1', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                            <span className={cn('flex items-center gap-1', 'text-slate-600')}>
                               <Mail className="h-4 w-4" />
                               {lead.email}
                             </span>
-                            <span className={cn('flex items-center gap-1', isDark ? 'text-slate-400' : 'text-slate-600')}>
+                            <span className={cn('flex items-center gap-1', 'text-slate-600')}>
                               <Phone className="h-4 w-4" />
                               {formatPhone(lead.phone)}
                             </span>
@@ -943,7 +873,7 @@ export const LeadsPage = () => {
                             >
                               {lead.status}
                             </span>
-                            <p className={cn('mt-1 text-xs font-medium', isDark ? 'text-slate-500' : 'text-slate-500')}>
+                            <p className={cn('mt-1 text-xs font-medium', 'text-slate-500')}>
                               {lead.area}
                             </p>
                           </div>
@@ -967,10 +897,7 @@ export const LeadsPage = () => {
                                   type="button"
                                   title="Encaminhar"
                                   className={cn(
-                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition',
-                                    isDark
-                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:border-emerald-500/60 hover:text-emerald-300'
-                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-emerald-400 hover:text-emerald-600'
+                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition','border-border bg-white text-text-muted hover:border-emerald-400 hover:text-emerald-600'
                                   )}
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -983,10 +910,7 @@ export const LeadsPage = () => {
                                 <button
                                   type="button"
                                   className={cn(
-                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition',
-                                    isDark
-                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:border-emerald-500/60 hover:text-emerald-300'
-                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-emerald-400 hover:text-emerald-600'
+                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition','border-border bg-white text-text-muted hover:border-emerald-400 hover:text-emerald-600'
                                   )}
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -998,10 +922,7 @@ export const LeadsPage = () => {
                                 <button
                                   type="button"
                                   className={cn(
-                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition',
-                                    isDark
-                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:border-red-500/60 hover:text-red-400'
-                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:border-red-400 hover:text-red-600'
+                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition','border-border bg-white text-text-muted hover:border-red-400 hover:text-red-600'
                                   )}
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -1019,20 +940,14 @@ export const LeadsPage = () => {
                       {canManageLeads && assigningLeadId === lead.id && (
                         <div
                           className={cn(
-                            'mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-xs',
-                            isDark
-                              ? 'border-slate-700 bg-slate-900/60 text-slate-300'
-                              : 'border-[#f0d9b8] bg-[#fff3e0]/70 text-[#7a4a1a]',
+                            'mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-xs','border-border bg-surface-2/70 text-text-muted',
                           )}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <span className="text-xs font-semibold">Encaminhar para</span>
                           <select
                             className={cn(
-                              'h-9 rounded-lg border px-3 text-xs',
-                              isDark
-                                ? 'border-slate-700 bg-slate-900 text-slate-100'
-                                : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                              'h-9 rounded-lg border px-3 text-xs','border-border bg-white text-text',
                             )}
                             value={selectedAdvogadoId}
                             onChange={(event) => setSelectedAdvogadoId(event.target.value)}
@@ -1059,7 +974,7 @@ export const LeadsPage = () => {
                             size="sm"
                             className={cn(
                               'h-9 px-4 text-xs',
-                              isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+                              'text-text-muted hover:text-text',
                             )}
                             onClick={(event) => {
                               event.stopPropagation()
@@ -1079,7 +994,7 @@ export const LeadsPage = () => {
                       {lead.lastContactAt && (
                         <div className={cn(
                           'mt-3 flex items-center gap-2 border-t pt-3 text-xs font-medium',
-                          isDark ? 'border-slate-700 text-slate-500' : 'border-slate-200 text-slate-500'
+                          'border-slate-200 text-slate-500'
                         )}>
                           <Clock className="h-3.5 w-3.5" />
                           Último contato: {formatDateTime(lead.lastContactAt)}

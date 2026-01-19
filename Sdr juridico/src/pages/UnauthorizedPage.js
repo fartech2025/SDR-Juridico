@@ -1,0 +1,9 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+// UnauthorizedPage - Page shown when user doesn't have permission
+// Date: 2026-01-13
+import { useNavigate } from 'react-router-dom';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
+export default function UnauthorizedPage() {
+    const navigate = useNavigate();
+    return (_jsx("div", { className: "min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4", children: _jsxs("div", { className: "max-w-md w-full text-center", children: [_jsx("div", { className: "mb-8", children: _jsx("div", { className: "mx-auto w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center", children: _jsx(ShieldAlert, { className: "w-12 h-12 text-red-600 dark:text-red-400" }) }) }), _jsx("h1", { className: "text-3xl font-bold text-gray-900 dark:text-white mb-4", children: "Acesso Negado" }), _jsx("p", { className: "text-gray-600 dark:text-gray-400 mb-8", children: "Voc\u00EA n\u00E3o tem permiss\u00E3o para acessar este recurso. Entre em contato com o administrador da sua organiza\u00E7\u00E3o se voc\u00EA acredita que deveria ter acesso." }), _jsxs("div", { className: "flex flex-col sm:flex-row gap-4 justify-center", children: [_jsxs("button", { onClick: () => navigate(-1), className: "inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors", children: [_jsx(ArrowLeft, { className: "w-4 h-4 mr-2" }), "Voltar"] }), _jsx("button", { onClick: () => navigate('/app/dashboard'), className: "inline-flex items-center justify-center px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors", children: "Ir para Dashboard" })] })] }) }));
+}

@@ -1,0 +1,510 @@
+/* =====================================================
+   FORCE LIGHT MODE - OVERRIDE ABSOLUTO
+   Este arquivo DEVE ser importado por último
+   ===================================================== */
+
+/* FONT SCALE - Aplicado via custom property */
+:root {
+  --font-scale: 1;
+  --scaled-text-xs: calc(0.75rem * var(--font-scale));
+  --scaled-text-sm: calc(0.875rem * var(--font-scale));
+  --scaled-text-base: calc(1rem * var(--font-scale));
+  --scaled-text-lg: calc(1.125rem * var(--font-scale));
+  --scaled-text-xl: calc(1.25rem * var(--font-scale));
+  --scaled-text-2xl: calc(1.5rem * var(--font-scale));
+  --scaled-text-3xl: calc(1.875rem * var(--font-scale));
+}
+
+/* Aplica escala em TODOS os textos */
+* {
+  font-size: inherit !important;
+}
+
+html {
+  font-size: calc(16px * var(--font-scale)) !important;
+}
+
+/* Reset todas as variáveis do Tailwind v4 para light mode */
+*, *::before, *::after {
+  --tw-bg-opacity: 1 !important;
+  --tw-text-opacity: 1 !important;
+  --tw-border-opacity: 1 !important;
+}
+
+/* Força color-scheme em todos os elementos */
+:root, html, body, #root, * {
+  color-scheme: light only !important;
+}
+
+/* Variáveis de cor - light mode */
+:root,
+html,
+html[data-theme="light"],
+html:not(.dark) {
+  --color-base: #f9fbfd !important;
+  --color-surface: #ffffff !important;
+  --color-surface-2: #f8fafc !important;
+  --color-surface-alt: #f1f5f9 !important;
+  --color-surface-raised: #ffffff !important;
+  --color-surface-hover: #f8fafc !important;
+  --color-text: #0f172a !important;
+  --color-text-muted: #475569 !important;
+  --color-text-subtle: #64748b !important;
+  --color-text-disabled: #cbd5e1 !important;
+  --color-border: #e2e8f0 !important;
+  --color-border-soft: #f1f5f9 !important;
+  --color-border-strong: #cbd5e1 !important;
+  
+  /* Brand colors */
+  --brand-primary: #0066cc !important;
+  --brand-primary-dark: #004a99 !important;
+  --brand-primary-light: #3385ff !important;
+  --brand-primary-subtle: #e6f2ff !important;
+  --brand-secondary: #00a085 !important;
+  --brand-secondary-subtle: #e0faf7 !important;
+  
+  /* Semantic colors */
+  --color-success: #10b981 !important;
+  --color-success-bg: #ecfdf5 !important;
+  --color-warning: #f59e0b !important;
+  --color-warning-bg: #fffbeb !important;
+  --color-danger: #f43f5e !important;
+  --color-danger-bg: #ffe4e6 !important;
+  --color-info: #06b6d4 !important;
+  --color-info-bg: #ecf9ff !important;
+}
+
+/* Override media query dark */
+@media (prefers-color-scheme: dark) {
+  :root, html, body, #root {
+    --color-base: #f9fbfd !important;
+    --color-surface: #ffffff !important;
+    --color-text: #0f172a !important;
+    --color-text-muted: #475569 !important;
+    --color-border: #e2e8f0 !important;
+    color-scheme: light only !important;
+    background-color: #f9fbfd !important;
+    color: #0f172a !important;
+  }
+  
+  /* Anula TODAS as variáveis dark do Tailwind v4 */
+  *, *::before, *::after {
+    --tw-bg-opacity: 1 !important;
+    --tw-text-opacity: 1 !important;
+  }
+  
+  /* Força sidebar clara mesmo em dark mode do sistema */
+  aside,
+  aside.fixed,
+  .fixed.left-0.top-0,
+  aside[class] {
+    background-color: #f7f8fc !important;
+    background-image: none !important;
+    background: #f7f8fc !important;
+    color: #0f172a !important;
+  }
+  
+  /* Força header claro */
+  header,
+  header[class] {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+  }
+}
+
+/* Elementos raiz */
+html {
+  background-color: #f9fbfd !important;
+  color: #0f172a !important;
+}
+
+body {
+  background-color: #f9fbfd !important;
+  color: #0f172a !important;
+  min-height: 100vh;
+}
+
+#root {
+  background-color: #f9fbfd !important;
+  min-height: 100vh;
+}
+
+/* =====================================================
+   SIDEBAR - FORÇA TEMA CLARO (MÁXIMA ESPECIFICIDADE)
+   ===================================================== */
+
+/* Força sidebar clara com todos os seletores possíveis */
+aside,
+aside.fixed,
+.fixed.left-0.top-0,
+aside[class*="fixed"],
+aside[class*="h-screen"],
+div.fixed.left-0,
+[class*="lg:flex"][class*="fixed"][class*="left-0"] {
+  background-color: #f7f8fc !important;
+  background-image: none !important;
+  background: #f7f8fc !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Força todos os filhos da sidebar */
+aside *,
+aside > *,
+aside div,
+aside nav,
+aside p,
+aside span,
+aside a,
+aside button {
+  background-image: none !important;
+}
+
+aside nav {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+aside p, 
+aside span,
+aside .text-text,
+aside [class*="text-text"] {
+  color: #0f172a !important;
+}
+
+aside .text-text-subtle,
+aside [class*="text-text-subtle"] {
+  color: #64748b !important;
+}
+
+aside .text-text-muted,
+aside [class*="text-text-muted"] {
+  color: #475569 !important;
+}
+
+/* Links da navegação */
+aside a,
+aside nav a,
+aside [class*="NavLink"] {
+  color: #475569 !important;
+}
+
+aside a:hover,
+aside nav a:hover {
+  color: #0f172a !important;
+  background-color: #f1f5f9 !important;
+}
+
+aside a.active,
+aside nav a.active,
+aside [class*="bg-"][class*="E9EEFF"] {
+  background-color: #E9EEFF !important;
+  color: #0066cc !important;
+}
+
+/* Seção do perfil do usuário */
+aside .border-t,
+aside [class*="border-t"] {
+  border-color: #e2e8f0 !important;
+  background-color: transparent !important;
+}
+
+/* Avatar circle mantém o gradiente colorido - não sobrescrever */
+
+/* =====================================================
+   HEADER - FORÇA TEMA CLARO
+   ===================================================== */
+header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* =====================================================
+   CLASSES UTILITÁRIAS COM FORÇA MÁXIMA
+   ===================================================== */
+.bg-base { background-color: #f9fbfd !important; }
+.bg-surface { background-color: #ffffff !important; }
+.bg-surface-2 { background-color: #f8fafc !important; }
+.bg-surface-alt { background-color: #f1f5f9 !important; }
+.bg-white { background-color: #ffffff !important; }
+
+.text-text { color: #0f172a !important; }
+.text-text-muted { color: #475569 !important; }
+.text-text-subtle { color: #64748b !important; }
+
+.border-border { border-color: #e2e8f0 !important; }
+.border-border-soft { border-color: #f1f5f9 !important; }
+
+/* Override específico para divs com min-h-screen */
+div[class*="min-h-screen"] {
+  background-color: #f9fbfd !important;
+  color: #0f172a !important;
+}
+
+/* Override para cards e containers */
+div[class*="bg-surface"],
+div[class*="bg-base"],
+div[class*="bg-white"] {
+  background-color: #ffffff !important;
+}
+
+/* Override main content */
+main, section, article {
+  background-color: #f9fbfd !important;
+  color: #0f172a !important;
+}
+
+/* =====================================================
+   MENU MOBILE - FORÇA TEMA CLARO
+   ===================================================== */
+div[class*="fixed"][class*="inset-0"] > div {
+  background-color: #f7f8fc !important;
+}
+/* =====================================================
+   TIPOGRAFIA - GARANTIR VISIBILIDADE
+   ===================================================== */
+
+/* Títulos - sempre escuros e legíveis */
+h1, h2, h3, h4, h5, h6 {
+  color: #0f172a !important;
+}
+
+/* Parágrafos e texto geral */
+p {
+  color: #334155 !important;
+}
+
+/* Labels e textos pequenos */
+label {
+  color: #475569 !important;
+}
+
+/* Spans herdam do pai, mas garantir visibilidade */
+span:not([class*="text-white"]):not([class*="bg-"]) {
+  color: inherit;
+}
+
+/* Links */
+a:not([class*="text-white"]):not([class*="bg-primary"]):not([class*="bg-emerald"]) {
+  color: #0066cc !important;
+}
+
+a:hover {
+  color: #004a99 !important;
+}
+
+/* Texto em itens de lista */
+li {
+  color: #334155 !important;
+}
+
+/* =====================================================
+   BORDAS - VISÍVEIS MAS SUTIS
+   ===================================================== */
+
+/* Todas as bordas devem ser visíveis */
+[class*="border"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Bordas mais fortes para containers */
+[class*="border-border"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Divisores */
+hr, [class*="divide-"] > * {
+  border-color: #e2e8f0 !important;
+}
+
+/* =====================================================
+   FORMULÁRIOS - INPUTS VISÍVEIS
+   ===================================================== */
+
+input, 
+textarea, 
+select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #d1d5db !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #0066cc !important;
+  outline-color: #0066cc !important;
+}
+
+/* Inputs com fundo claro específico */
+input[class*="bg-slate"],
+input[class*="bg-gray"],
+textarea[class*="bg-slate"],
+textarea[class*="bg-gray"] {
+  background-color: #f8fafc !important;
+}
+
+/* =====================================================
+   TABELAS - LINHAS E TEXTO VISÍVEIS
+   ===================================================== */
+
+table {
+  border-color: #e2e8f0 !important;
+}
+
+th {
+  background-color: #f8fafc !important;
+  color: #374151 !important;
+  border-color: #e2e8f0 !important;
+}
+
+td {
+  color: #1f2937 !important;
+  border-color: #e5e7eb !important;
+}
+
+tr:hover td {
+  background-color: #f9fafb !important;
+}
+
+/* =====================================================
+   CARDS E CONTAINERS
+   ===================================================== */
+
+/* Cards devem ter fundo branco e texto escuro */
+[class*="rounded-"][class*="border"] {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+/* Badges e tags */
+[class*="badge"],
+[class*="tag"],
+[class*="chip"] {
+  color: #374151 !important;
+}
+
+/* =====================================================
+   BOTÕES - GARANTIR CONTRASTE
+   ===================================================== */
+
+/* Botões secundários/outline */
+button[class*="border"]:not([class*="bg-primary"]):not([class*="bg-emerald"]):not([class*="bg-blue"]):not([class*="bg-red"]) {
+  color: #374151 !important;
+  border-color: #d1d5db !important;
+}
+
+/* Botões ghost */
+button[class*="ghost"],
+[class*="variant-ghost"] {
+  color: #374151 !important;
+}
+
+/* =====================================================
+   ÍCONES - GARANTIR VISIBILIDADE
+   ===================================================== */
+
+svg:not([class*="text-white"]):not([class*="text-primary"]):not([class*="text-emerald"]):not([class*="text-blue"]):not([class*="text-red"]):not([class*="text-green"]):not([class*="text-yellow"]):not([class*="text-orange"]) {
+  color: #64748b !important;
+}
+
+/* =====================================================
+   DROPDOWNS E MENUS
+   ===================================================== */
+
+[role="menu"],
+[role="listbox"],
+[class*="dropdown"],
+[class*="popover"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #1f2937 !important;
+}
+
+[role="menuitem"],
+[role="option"] {
+  color: #374151 !important;
+}
+
+[role="menuitem"]:hover,
+[role="option"]:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* =====================================================
+   TOOLTIPS
+   ===================================================== */
+
+[role="tooltip"] {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* =====================================================
+   ESTADOS SEMÂNTICOS - CORES CLARAS
+   ===================================================== */
+
+/* Success */
+[class*="success"]:not([class*="bg-success"]) {
+  color: #059669 !important;
+}
+
+/* Warning */
+[class*="warning"]:not([class*="bg-warning"]) {
+  color: #d97706 !important;
+}
+
+/* Danger/Error */
+[class*="danger"]:not([class*="bg-danger"]),
+[class*="error"]:not([class*="bg-"]) {
+  color: #dc2626 !important;
+}
+
+/* Info */
+[class*="info"]:not([class*="bg-info"]) {
+  color: #0284c7 !important;
+}
+
+/* =====================================================
+   SCROLLBAR - ESTILO CLARO
+   ===================================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* =====================================================
+   SELEÇÃO DE TEXTO
+   ===================================================== */
+
+::selection {
+  background-color: #bfdbfe !important;
+  color: #1e3a8a !important;
+}
+
+/* =====================================================
+   CONTROLE DE TAMANHO DE FONTE - ESCALA GLOBAL
+   CSS é injetado dinamicamente via FontContext.tsx
+   ===================================================== */
+
+/* Placeholder - estilos são injetados via JavaScript */

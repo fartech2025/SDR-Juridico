@@ -142,16 +142,16 @@ export default function OrganizationsList() {
   
   return (
     <FartechGuard>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen pb-12" style={{ backgroundColor: '#f9fbfd', color: '#0f172a' }}>
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="border-b" style={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0' }}>
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-3xl font-bold" style={{ color: '#0f172a' }}>
                   Gestão de Organizações
                 </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm" style={{ color: '#475569' }}>
                   Painel de controle Fartech - Visão geral de todas as organizações
                 </p>
               </div>
@@ -159,7 +159,7 @@ export default function OrganizationsList() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={exportToCSV}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="inline-flex items-center rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold text-text transition hover:bg-surface-alt"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
@@ -167,7 +167,7 @@ export default function OrganizationsList() {
                 
                 <Link
                   to="/admin/organizations/new"
-                  className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                  className="inline-flex items-center rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-primary-strong"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Nova Organização
@@ -176,88 +176,101 @@ export default function OrganizationsList() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-                <div className="flex items-center justify-between">
+            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-6 shadow-lg border border-slate-600/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-blue-100">Total de Organizações</p>
-                    <p className="text-3xl font-bold mt-1">{totalOrgs}</p>
+                    <p className="text-xs font-semibold text-slate-400 tracking-wider uppercase">Total de Organizações</p>
+                    <p className="mt-2 text-3xl font-bold text-white">{totalOrgs}</p>
                   </div>
-                  <Building2 className="w-10 h-10 text-blue-200" />
+                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
+                    <Building2 className="h-7 w-7 text-slate-200" />
+                  </div>
                 </div>
-                <p className="text-xs text-blue-100 mt-2">{activeOrgs} ativas</p>
+                <p className="relative mt-3 text-xs font-medium text-slate-300">{activeOrgs} ativas</p>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg p-4 text-white">
-                <div className="flex items-center justify-between">
+              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-teal-900 p-6 shadow-lg border border-emerald-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-emerald-100">Total de Usuários</p>
-                    <p className="text-3xl font-bold mt-1">{totalUsers}</p>
+                    <p className="text-xs font-semibold text-emerald-300 tracking-wider uppercase">Total de Usuários</p>
+                    <p className="mt-2 text-3xl font-bold text-white">{totalUsers}</p>
                   </div>
-                  <Users className="w-10 h-10 text-emerald-200" />
+                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
+                    <Users className="h-7 w-7 text-emerald-200" />
+                  </div>
                 </div>
-                <p className="text-xs text-emerald-100 mt-2">Across all orgs</p>
+                <p className="relative mt-3 text-xs font-medium text-emerald-200">Across all orgs</p>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white">
-                <div className="flex items-center justify-between">
+              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-800 via-indigo-900 to-blue-900 p-6 shadow-lg border border-indigo-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-purple-100">Planos Enterprise</p>
-                    <p className="text-3xl font-bold mt-1">
+                    <p className="text-xs font-semibold text-indigo-300 tracking-wider uppercase">Planos Enterprise</p>
+                    <p className="mt-2 text-3xl font-bold text-white">
                       {filteredOrgs.filter(o => o.plan === 'enterprise').length}
                     </p>
                   </div>
-                  <TrendingUp className="w-10 h-10 text-purple-200" />
+                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
+                    <TrendingUp className="h-7 w-7 text-indigo-200" />
+                  </div>
                 </div>
-                <p className="text-xs text-purple-100 mt-2">Premium clients</p>
+                <p className="relative mt-3 text-xs font-medium text-indigo-200">Premium clients</p>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-4 text-white">
-                <div className="flex items-center justify-between">
+              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-800 via-amber-900 to-orange-900 p-6 shadow-lg border border-amber-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-orange-100">Atenção Requerida</p>
-                    <p className="text-3xl font-bold mt-1">
+                    <p className="text-xs font-semibold text-amber-300 tracking-wider uppercase">Atenção Requerida</p>
+                    <p className="mt-2 text-3xl font-bold text-white">
                       {filteredOrgs.filter(o => o.status === 'suspended').length}
                     </p>
                   </div>
-                  <AlertCircle className="w-10 h-10 text-orange-200" />
+                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
+                    <AlertCircle className="h-7 w-7 text-amber-200" />
+                  </div>
                 </div>
-                <p className="text-xs text-orange-100 mt-2">Orgs suspensas</p>
+                <p className="relative mt-3 text-xs font-medium text-amber-200">Orgs suspensas</p>
               </div>
             </div>
           </div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           {/* Filters */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="mb-6 rounded-3xl border p-6 shadow-soft" style={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0' }}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               {/* Search */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="mb-2 block text-sm font-semibold" style={{ color: '#0f172a' }}>
                   Buscar
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-text-muted" />
                   <input
                     type="text"
                     placeholder="Nome, slug ou CNPJ..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
+                    className="h-12 w-full rounded-2xl border px-4 pl-11 text-sm placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15"
+                    style={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a' }}
                   />
                 </div>
               </div>
               
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-text">
                   Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                  className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15"
                 >
                   <option value="all">Todos</option>
                   <option value="active">Ativo</option>
@@ -269,13 +282,13 @@ export default function OrganizationsList() {
               
               {/* Plan Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-text">
                   Plano
                 </label>
                 <select
                   value={planFilter}
                   onChange={(e) => setPlanFilter(e.target.value as any)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                  className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15"
                 >
                   <option value="all">Todos</option>
                   <option value="starter">Starter</option>
@@ -288,23 +301,23 @@ export default function OrganizationsList() {
           
           {/* Organizations Grid */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-gray-500 dark:text-gray-400">Carregando organizações...</div>
+            <div className="flex items-center justify-center py-12 text-text-muted">
+              Carregando organizações...
             </div>
           ) : filteredOrgs.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {filteredOrgs.map((org) => (
                 <OrgCard key={org.id} org={org} />
               ))}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12">
+            <div className="rounded-3xl border border-border bg-surface p-12 text-center shadow-soft">
               <div className="text-center">
-                <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                <Building2 className="mx-auto h-12 w-12 text-text-muted" />
+                <h3 className="mt-2 text-sm font-semibold text-text">
                   Nenhuma organização encontrada
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-text-muted">
                   {searchTerm || statusFilter !== 'all' || planFilter !== 'all'
                     ? 'Tente ajustar os filtros de busca'
                     : 'Comece criando sua primeira organização'}
@@ -313,7 +326,7 @@ export default function OrganizationsList() {
                   <div className="mt-6">
                     <Link
                       to="/admin/organizations/new"
-                      className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                      className="inline-flex items-center rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-primary-strong"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Nova Organização
@@ -332,9 +345,9 @@ export default function OrganizationsList() {
 // Organization Card Component
 function OrgCard({ org }: { org: OrgWithStats }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700">
+    <div className="rounded-3xl border border-border bg-surface shadow-soft transition-shadow hover:shadow-lg">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="border-b border-border/70 p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
             <div 
@@ -348,16 +361,16 @@ function OrgCard({ org }: { org: OrgWithStats }) {
               )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-text">
                 <Link 
                   to={`/admin/organizations/${org.id}/settings`}
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                  className="transition-colors hover:text-brand-primary"
                 >
                   {org.name || 'Sem nome'}
                 </Link>
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{org.slug || '-'}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-sm text-text-muted">{org.slug || '-'}</p>
+              <p className="mt-1 text-xs text-text-subtle">
                 {org.cnpj || 'CNPJ não cadastrado'}
               </p>
             </div>
@@ -372,54 +385,54 @@ function OrgCard({ org }: { org: OrgWithStats }) {
       {/* Metrics */}
       <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="text-center">
-          <div className="flex items-center justify-center w-10 h-10 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/20 mb-2">
-            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary-subtle mx-auto">
+            <Users className="h-5 w-5 text-brand-primary" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{org.userCount || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Usuários</p>
+          <p className="text-2xl font-bold text-text">{org.userCount || 0}</p>
+          <p className="text-xs text-text-muted">Usuários</p>
         </div>
 
         <div className="text-center">
-          <div className="flex items-center justify-center w-10 h-10 mx-auto rounded-full bg-purple-100 dark:bg-purple-900/20 mb-2">
-            <ShieldCheck className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-secondary-subtle">
+            <ShieldCheck className="h-5 w-5 text-brand-secondary" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{org.adminCount || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Admins</p>
+          <p className="text-2xl font-bold text-text">{org.adminCount || 0}</p>
+          <p className="text-xs text-text-muted">Admins</p>
         </div>
 
         <div className="text-center">
-          <div className="flex items-center justify-center w-10 h-10 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/20 mb-2">
-            <Briefcase className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-success-bg">
+            <Briefcase className="h-5 w-5 text-success" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{org.caseCount || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Casos</p>
+          <p className="text-2xl font-bold text-text">{org.caseCount || 0}</p>
+          <p className="text-xs text-text-muted">Casos</p>
         </div>
 
         <div className="text-center">
-          <div className="flex items-center justify-center w-10 h-10 mx-auto rounded-full bg-orange-100 dark:bg-orange-900/20 mb-2">
-            <Database className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-warning-bg">
+            <Database className="h-5 w-5 text-warning" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{org.storageUsed || 0}%</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Storage</p>
+          <p className="text-2xl font-bold text-text">{org.storageUsed || 0}%</p>
+          <p className="text-xs text-text-muted">Storage</p>
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-between border-t border-border/70 bg-surface-alt px-6 py-4">
+        <div className="text-xs text-text-muted">
           Criado em {new Date(org.created_at).toLocaleDateString('pt-BR')}
         </div>
         <div className="flex items-center gap-2">
           <Link
             to={`/admin/organizations/${org.id}`}
-            className="inline-flex items-center px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="inline-flex items-center rounded-xl border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-text transition hover:bg-surface-alt"
           >
             <Eye className="w-4 h-4 mr-1.5" />
             Ver Detalhes
           </Link>
           <Link
             to={`/admin/organizations/${org.id}/edit`}
-            className="inline-flex items-center px-3 py-1.5 text-sm text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            className="inline-flex items-center rounded-xl bg-brand-primary px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-primary-strong"
           >
             <Edit className="w-4 h-4 mr-1.5" />
             Editar
@@ -432,17 +445,17 @@ function OrgCard({ org }: { org: OrgWithStats }) {
 
 function StatusBadge({ status }: { status: OrganizationStatus }) {
   const statusConfig = {
-    active: { label: 'Ativo', class: 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' },
-    trial: { label: 'Trial', class: 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300' },
-    suspended: { label: 'Suspenso', class: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300' },
-    cancelled: { label: 'Cancelado', class: 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300' },
-    pending: { label: 'Pendente', class: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' },
+    active: { label: 'Ativo', class: 'border-success-border bg-success-bg text-success' },
+    trial: { label: 'Trial', class: 'border-info-border bg-info-bg text-info' },
+    suspended: { label: 'Suspenso', class: 'border-warning-border bg-warning-bg text-warning' },
+    cancelled: { label: 'Cancelado', class: 'border-danger-border bg-danger-bg text-danger' },
+    pending: { label: 'Pendente', class: 'border-border bg-surface-2 text-text-muted' },
   }
   
   const config = statusConfig[status] || statusConfig.pending
   
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.class}`}>
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${config.class}`}>
       {config.label}
     </span>
   )
@@ -450,16 +463,16 @@ function StatusBadge({ status }: { status: OrganizationStatus }) {
 
 function PlanBadge({ plan }: { plan: OrganizationPlan }) {
   const planConfig = {
-    trial: { label: 'Trial', class: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' },
-    basic: { label: 'Básico', class: 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300' },
-    professional: { label: 'Professional', class: 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300' },
-    enterprise: { label: 'Enterprise', class: 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300' },
+    trial: { label: 'Trial', class: 'border-border bg-surface-2 text-text-muted' },
+    basic: { label: 'Básico', class: 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary' },
+    professional: { label: 'Professional', class: 'border-brand-secondary-subtle bg-brand-secondary-subtle text-brand-secondary' },
+    enterprise: { label: 'Enterprise', class: 'border-info-border bg-info-bg text-info' },
   }
   
   const config = planConfig[plan] || planConfig.trial
   
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.class}`}>
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${config.class}`}>
       {config.label}
     </span>
   )

@@ -17,7 +17,6 @@ import { useCasos } from '@/hooks/useCasos'
 import { useDocumentos } from '@/hooks/useDocumentos'
 import { useLeads } from '@/hooks/useLeads'
 import { useNotas } from '@/hooks/useNotas'
-import { useTheme } from '@/contexts/ThemeContext'
 import type { KPI, Notification } from '@/types/domain'
 
 const resolveStatus = (
@@ -30,33 +29,33 @@ const resolveStatus = (
 }
 
 const slaBadgeClass = (value: string) => {
-  if (value === 'critico') return 'border-[#FFE1E1] bg-[#FFE1E1] text-[#9B3B3B]'
-  if (value === 'atencao') return 'border-[#FDE2E2] bg-[#FDE2E2] text-[#B24B4B]'
-  return 'border-[#E6F7EF] bg-[#E6F7EF] text-[#2F7A5C]'
+  if (value === 'critico') return 'border-danger-bg bg-danger-bg text-danger'
+  if (value === 'atencao') return 'border-warning-bg bg-warning-bg text-warning'
+  return 'border-success-bg bg-success-bg text-success'
 }
 
 const stageBadgeClass = (value: string) => {
   if (value === 'em_andamento') {
-    return 'border-[#E8E4FF] bg-[#E8E4FF] text-[#5A52B5]'
+    return 'border-info-bg bg-info-bg text-info'
   }
   if (value === 'negociacao') {
-    return 'border-[#DDEBFF] bg-[#DDEBFF] text-[#2F6BFF]'
+    return 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary'
   }
-  return 'border-[#EDF0F7] bg-[#EDF0F7] text-[#6B7280]'
+  return 'border-gray-200 bg-gray-100 text-gray-600'
 }
 
 const categoryBadgeClass = (value: string) => {
   const label = value.toLowerCase()
   if (label === 'juridico') {
-    return 'border-[#E8E4FF] bg-[#E8E4FF] text-[#5A52B5]'
+    return 'border-brand-secondary-subtle bg-brand-secondary-subtle text-brand-secondary'
   }
   if (label === 'comercial') {
-    return 'border-[#DDEBFF] bg-[#DDEBFF] text-[#2F6BFF]'
+    return 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary'
   }
   if (label === 'agenda') {
-    return 'border-[#E6F7EF] bg-[#E6F7EF] text-[#2F7A5C]'
+    return 'border-success-bg bg-success-bg text-success'
   }
-  return 'border-[#EDF0F7] bg-[#EDF0F7] text-[#6B7280]'
+  return 'border-gray-200 bg-gray-100 text-gray-600'
 }
 
 const toIsoDate = (value: Date) => {
@@ -145,8 +144,7 @@ const buildNotifications = (
 export const DashboardPage = () => {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  // Light-only app - no dark mode
   const status = resolveStatus(params.get('state'))
   const { leads, loading: leadsLoading, error: leadsError } = useLeads()
   const { casos, loading: casosLoading, error: casosError } = useCasos()
@@ -240,47 +238,28 @@ export const DashboardPage = () => {
   }, [agendaItems, casos, documentos, leads, todayIso])
 
   return (
-    <div
-      className={cn(
-        'min-h-screen pb-12',
-        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
-      )}
-    >
+    <div className="min-h-screen pb-12 bg-base text-text">
       <div className="space-y-6">
         <header
-          className={cn(
-            'relative overflow-hidden rounded-3xl border p-8 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
-            isDark
-              ? 'border-slate-800 bg-gradient-to-br from-[#0f141b] via-[#101721] to-[#151d28]'
-              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
-          )}
+          className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface p-8 shadow-lg"
         >
-          {isDark && (
-            <div className="absolute inset-0">
-              <div className="absolute -right-10 -top-10 h-52 w-52 rounded-full bg-emerald-500/15 blur-3xl" />
-              <div className="absolute -bottom-16 left-12 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
-            </div>
-          )}
+          {/* Light mode decorative elements */}
+          <div className="absolute inset-0">
+            <div className="absolute -right-10 -top-10 h-52 w-52 rounded-full bg-brand-primary/8 blur-3xl" />
+            <div className="absolute -bottom-16 left-12 h-64 w-64 rounded-full bg-brand-secondary/8 blur-3xl" />
+          </div>
           <div
-            className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              isDark ? 'opacity-15' : 'opacity-90',
-            )}
+            className="absolute inset-0 bg-no-repeat bg-right bg-[length:520px] opacity-90"
             style={{ backgroundImage: `url(${heroLight})` }}
           />
           <div className="relative z-10 space-y-3">
-            <p
-              className={cn(
-                'text-[11px] uppercase tracking-[0.32em]',
-                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
-              )}
-            >
+            <p className="text-[11px] uppercase tracking-[0.32em] text-text-muted">
               Dashboard
             </p>
-            <h2 className={cn('font-display text-3xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+            <h2 className="font-display text-3xl text-text">
               Resumo executivo
             </h2>
-            <p className={cn('max-w-2xl text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+            <p className="max-w-2xl text-sm text-text-muted">
               Foco em caso critico, produtividade e agenda juridica com uma visão clara do funil.
             </p>
           </div>
@@ -296,10 +275,7 @@ export const DashboardPage = () => {
               delta={item.delta}
               trend={item.trend}
               period={item.period}
-              className={cn(
-                'border',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
-              )}
+              className="border border-border bg-surface/90"
             />
           ))}
         </div>
@@ -317,12 +293,7 @@ export const DashboardPage = () => {
                 priority="P0"
                 actionLabel="Acelerar lead"
                 href="/app/leads"
-                className={cn(
-                  'border',
-                  isDark
-                    ? 'border-slate-800'
-                    : 'border-[#f0d9b8] !bg-white/95 !from-white !via-white !to-[#fde9f2] !text-[#2a1400]',
-                )}
+                className="border border-border bg-surface/95 from-surface via-surface to-surface-alt text-text"
               />
               <ActionCard
                 title="Documento pendente de validacao"
@@ -336,20 +307,12 @@ export const DashboardPage = () => {
                 href="/app/documentos"
                 secondaryActionLabel="Abrir dossie"
                 secondaryHref={`/app/caso/${docPending?.casoId ?? 'caso-sem-dados'}`}
-                className={cn(
-                  'border',
-                  isDark
-                    ? 'border-slate-800'
-                    : 'border-[#f0d9b8] !bg-white/95 !text-[#2a1400]',
-                )}
+                className="border border-border bg-surface/95 text-text"
               />
             </div>
 
             <Card
-              className={cn(
-                'border',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
-              )}
+              className="border border-border bg-surface/90"
             >
               <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
                 <div className="flex items-center gap-2">
@@ -370,22 +333,14 @@ export const DashboardPage = () => {
               </CardHeader>
               <CardContent className="space-y-3 px-6 pb-6">
                 {criticalEvents.length === 0 && (
-                  <div
-                    className={cn(
-                      'rounded-2xl border px-4 py-6 text-center text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
-                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
-                    )}
-                  >
+                  <div className="rounded-2xl border border-border bg-white px-4 py-6 text-center text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
                     Nenhum evento critico registrado hoje.
                   </div>
                 )}
                 {criticalEvents.map((event) => (
                   <div
                     key={event.id}
-                    className={cn(
-                      'rounded-2xl border px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
-                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
-                    )}
+                    className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="space-y-1">
@@ -418,10 +373,7 @@ export const DashboardPage = () => {
             </Card>
 
             <Card
-              className={cn(
-                'border',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
-              )}
+              className="border border-border bg-surface/90"
             >
               <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
                 <div className="flex items-center gap-2">
@@ -439,10 +391,7 @@ export const DashboardPage = () => {
                 {agendaToday.map((item) => (
                   <div
                     key={item.id}
-                    className={cn(
-                      'flex items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
-                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
-                    )}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 py-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                   >
                     <div>
                       <p className="text-sm font-semibold text-text">
@@ -464,10 +413,7 @@ export const DashboardPage = () => {
 
           <div className="space-y-4">
             <Card
-              className={cn(
-                'border',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/90',
-              )}
+              className="border border-border bg-surface/90"
             >
               <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
                 <div className="flex items-center gap-2">
@@ -478,10 +424,7 @@ export const DashboardPage = () => {
               <CardContent className="space-y-3 px-6 pb-6 text-sm text-text-muted">
                 {nextCase ? (
                   <div
-                    className={cn(
-                      'rounded-2xl border px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
-                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
-                    )}
+                    className="rounded-2xl border border-border bg-white px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                   >
                     <p className="text-sm font-semibold text-text">
                       {nextCase.title}
@@ -500,10 +443,7 @@ export const DashboardPage = () => {
                   </div>
                 ) : (
                   <div
-                    className={cn(
-                      'rounded-2xl border px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]',
-                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
-                    )}
+                    className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                   >
                     Nenhum caso ativo encontrado.
                   </div>
@@ -528,12 +468,7 @@ export const DashboardPage = () => {
 
             <NotificationCenter
               notifications={notifications.slice(0, 6)}
-              className={cn(
-                'border',
-                isDark
-                  ? 'border-slate-800 bg-slate-900/70'
-                  : 'border-[#f0d9b8] !bg-white/95 !text-[#2a1400]',
-              )}
+              className="border border-border bg-surface/95 text-text"
             />
           </div>
         </div>

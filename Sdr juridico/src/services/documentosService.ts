@@ -64,7 +64,7 @@ const buildDocumentoPayload = (doc: Partial<DocumentoRow>, applyDefaults: boolea
   if (doc.mime_type !== undefined) payload.mime_type = doc.mime_type
   if (doc.arquivo_tamanho !== undefined) payload.size_bytes = doc.arquivo_tamanho
   if (doc.tags !== undefined) payload.tags = doc.tags
-  if (doc.url !== undefined) payload.storage_path = doc.url
+  if (doc.url !== undefined) payload.storage_path = doc.url ?? undefined
 
   const meta: Record<string, any> = {}
   if (doc.tipo !== undefined) meta.tipo = doc.tipo

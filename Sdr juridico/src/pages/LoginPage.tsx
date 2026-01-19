@@ -83,62 +83,60 @@ export const LoginPage = () => {
       <div className="flex items-center gap-3">
         <img src={logoMark} alt="Logo" className="h-12 w-12 rounded-full bg-white p-2 shadow-md" />
         <div className="space-y-0.5">
-          <p className="text-xs uppercase tracking-[0.22em] text-(--auth-text-muted)">SDR Jurídico</p>
-          <p className="text-sm font-semibold text-(--auth-text)">Unir para avançar</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-slate-500">SDR Jurídico</p>
+          <p className="text-sm font-semibold text-slate-800">Unir para avançar</p>
         </div>
       </div>
 
-      <h2 className="mt-6 text-3xl font-semibold text-(--auth-text)">
+      <h2 className="mt-6 text-3xl font-semibold text-slate-800">
         Área administrativa com segurança OAB
       </h2>
-      <p className="mt-2 text-sm text-(--auth-text-muted)">
+      <p className="mt-2 text-sm text-slate-500">
         Utilize seu e-mail corporativo para acessar o painel. Dados protegidos e verificações automáticas de acesso.
       </p>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.22em] text-(--auth-text-muted)">
+          <label className="text-xs uppercase tracking-[0.22em] text-slate-500">
             Email profissional
           </label>
           <div className="relative">
-            <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--auth-text-muted)" />
+            <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="email"
               placeholder="seu.email@oab.org.br"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="h-12 w-full rounded-xl border bg-(--auth-input-bg) pl-11 pr-4 text-sm text-(--auth-text) placeholder:text-(--auth-text-muted) focus:border-(--brand-secondary) focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.18)]"
-              style={{ borderColor: 'var(--auth-input-border)' }}
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
         </div>
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.22em] text-(--auth-text-muted)">
+          <label className="text-xs uppercase tracking-[0.22em] text-slate-500">
             Senha
           </label>
           <div className="relative">
-            <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--auth-text-muted)" />
+            <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="password"
               placeholder="********"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="h-12 w-full rounded-xl border bg-(--auth-input-bg) pl-11 pr-4 text-sm text-(--auth-text) placeholder:text-(--auth-text-muted) focus:border-(--brand-primary-dark) focus:outline-none focus:ring-2 focus:ring-[rgba(5,150,105,0.16)]"
-              style={{ borderColor: 'var(--auth-input-border)' }}
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
         </div>
-        <div className="flex items-center justify-between text-xs text-(--auth-text-muted)">
+        <div className="flex items-center justify-between text-xs text-slate-500">
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-border accent-(--brand-secondary)"
+              className="h-4 w-4 rounded border-slate-300 accent-emerald-600"
             />
             Manter conectado
           </label>
           <Link
             to="/forgot-password"
-            className="text-(--auth-text-muted) hover:text-(--auth-text) hover:underline"
+            className="text-slate-500 hover:text-slate-800 hover:underline"
           >
             Esqueci minha senha
           </Link>
@@ -150,23 +148,22 @@ export const LoginPage = () => {
         )}
         <button
           type="submit"
-          className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-(--brand-secondary) text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-lg shadow-[rgba(99,102,241,0.35)] transition duration-200 hover:brightness-105 disabled:opacity-60"
+          className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-emerald-600 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-lg shadow-emerald-600/35 transition duration-200 hover:bg-emerald-700 disabled:opacity-60"
           disabled={status === 'loading'}
         >
-          <span className="absolute inset-0 bg-gradient-to-r from-[rgba(99,102,241,0.35)] via-transparent to-[rgba(212,32,39,0.22)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <span className="relative">{status === 'loading' ? 'Entrando...' : 'Entrar'}</span>
           <ArrowRight className="relative h-4 w-4" />
         </button>
-        <div className="flex items-center gap-2 text-xs text-(--auth-text-muted)">
-          <ShieldCheck className="h-4 w-4 text-(--brand-primary)" />
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <ShieldCheck className="h-4 w-4 text-blue-600" />
           Autenticação segura com monitoramento de acesso
         </div>
       </form>
-      <div className="mt-6 flex items-center justify-between text-xs text-(--auth-text-muted)">
+      <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
         <span>Ou entrar com</span>
-        <div className="flex items-center gap-3 font-semibold text-(--auth-text)">
-          <span className="rounded-full bg-white px-3 py-1 shadow-sm">GovBR</span>
-          <span className="rounded-full bg-white px-3 py-1 shadow-sm">OAuth</span>
+        <div className="flex items-center gap-3 font-semibold text-slate-700">
+          <span className="rounded-full bg-slate-100 px-3 py-1 shadow-sm">GovBR</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 shadow-sm">OAuth</span>
         </div>
       </div>
     </AuthLayout>

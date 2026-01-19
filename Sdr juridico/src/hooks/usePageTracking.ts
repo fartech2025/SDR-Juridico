@@ -36,7 +36,7 @@ export function usePageTracking() {
             search: location.search,
           },
         })
-        if (error?.code === '42P01' || error?.status === 404) {
+        if ((error as any)?.code === '42P01' || (error as any)?.status === 404) {
           analyticsAvailable = false
         }
       } catch {

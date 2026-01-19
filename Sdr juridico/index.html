@@ -1,13 +1,75 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light" style="color-scheme: light only; background-color: #f9fbfd;">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>interface-2-web--juridica</title>
+    <meta name="color-scheme" content="light only" />
+    <title>SDR Jurídico Online</title>
+    <style>
+      /* Força tema claro antes de qualquer CSS carregar */
+      :root {
+        color-scheme: light only !important;
+        --color-base: #f9fbfd !important;
+        --color-surface: #ffffff !important;
+        --color-text: #0f172a !important;
+        --color-text-muted: #475569 !important;
+        --color-border: #e2e8f0 !important;
+      }
+      html, body, #root {
+        background-color: #f9fbfd !important;
+        color: #0f172a !important;
+        overflow-x: hidden !important;
+      }
+      #font-scale-wrapper {
+        background-color: #f9fbfd !important;
+      }
+      /* SIDEBAR - FORÇA CLARO */
+      aside, 
+      aside.fixed,
+      .fixed.left-0.top-0.h-screen {
+        background-color: #f7f8fc !important;
+        background-image: none !important;
+        background: #f7f8fc !important;
+      }
+      /* HEADER - FORÇA CLARO */
+      header {
+        background-color: rgba(255,255,255,0.95) !important;
+        background: rgba(255,255,255,0.95) !important;
+      }
+      /* Override dark mode media query */
+      @media (prefers-color-scheme: dark) {
+        :root, html, body, #root {
+          background-color: #f9fbfd !important;
+          color: #0f172a !important;
+          color-scheme: light only !important;
+        }
+        aside, aside.fixed {
+          background-color: #f7f8fc !important;
+          background: #f7f8fc !important;
+        }
+        header {
+          background-color: rgba(255,255,255,0.95) !important;
+          background: rgba(255,255,255,0.95) !important;
+        }
+      }
+    </style>
+    <script>
+      // FORÇA MODO CLARO - Remove qualquer classe dark
+      (function() {
+        try {
+          const html = document.documentElement;
+          html.classList.remove('dark');
+          html.setAttribute('data-theme', 'light');
+          html.style.colorScheme = 'light only';
+          html.style.backgroundColor = '#f9fbfd';
+          document.body && (document.body.style.backgroundColor = '#f9fbfd');
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="background-color: #f9fbfd; color: #0f172a;">
+    <div id="root" style="background-color: #f9fbfd; min-height: 100vh;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -27,7 +27,6 @@ import type { AgendaItem, AgendaStatus } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
-import { useTheme } from '@/contexts/ThemeContext'
 import { useGoogleCalendarCreate } from '@/hooks/useGoogleCalendarCreate'
 
 const resolveStatus = (
@@ -117,24 +116,24 @@ const statusStyles: Record<
   { container: string; badge: string; button: string }
 > = {
   confirmado: {
-    container: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/30 border-blue-300 dark:border-blue-700/50 text-blue-900 dark:text-blue-100',
-    badge: 'bg-blue-100 dark:bg-blue-900/60 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-200',
-    button: 'bg-blue-50 dark:bg-blue-800/50 text-blue-700 dark:text-blue-100 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800',
+    container: 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300 text-blue-900',
+    badge: 'bg-blue-100 border-blue-200 text-blue-700',
+    button: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100:bg-blue-800',
   },
   pendente: {
-    container: 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/40 dark:to-amber-900/30 border-amber-300 dark:border-amber-700/50 text-amber-900 dark:text-amber-100',
-    badge: 'bg-amber-100 dark:bg-amber-900/60 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-200',
-    button: 'bg-amber-50 dark:bg-amber-800/50 text-amber-700 dark:text-amber-100 border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-800',
+    container: 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300 text-amber-900',
+    badge: 'bg-amber-100 border-amber-200 text-amber-700',
+    button: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100:bg-amber-800',
   },
   cancelado: {
-    container: 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/30 border-red-300 dark:border-red-700/50 text-red-900 dark:text-red-100',
-    badge: 'bg-red-100 dark:bg-red-900/60 border-red-200 dark:border-red-700 text-red-700 dark:text-red-200',
-    button: 'bg-red-50 dark:bg-red-800/50 text-red-700 dark:text-red-100 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800',
+    container: 'bg-gradient-to-br from-red-50 to-red-100 border-red-300 text-red-900',
+    badge: 'bg-red-100 border-red-200 text-red-700',
+    button: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100:bg-red-800',
   },
   concluido: {
-    container: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/40 dark:to-emerald-900/30 border-emerald-300 dark:border-emerald-700/50 text-emerald-900 dark:text-emerald-100',
-    badge: 'bg-emerald-100 dark:bg-emerald-900/60 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-200',
-    button: 'bg-emerald-50 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-100 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-800',
+    container: 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300 text-emerald-900',
+    badge: 'bg-emerald-100 border-emerald-200 text-emerald-700',
+    button: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100:bg-emerald-800',
   },
 }
 
@@ -171,8 +170,6 @@ export const AgendaPage = () => {
     deleteEvento,
   } = useAgenda()
   const { displayName, user } = useCurrentUser()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [viewMode, setViewMode] = React.useState<'week' | 'month'>('week')
@@ -494,22 +491,19 @@ export const AgendaPage = () => {
     <div
       className={cn(
         'min-h-screen pb-12',
-        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+        'bg-base text-text',
       )}
     >
       <div className="space-y-6">
         <header
           className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
-            isDark
-              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
-              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
               'absolute inset-0 bg-no-repeat bg-right bg-[length:420px]',
-              isDark ? 'opacity-20' : 'opacity-80',
+              'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
           />
@@ -517,7 +511,7 @@ export const AgendaPage = () => {
             <p
               className={cn(
                 'text-[11px] uppercase tracking-[0.32em]',
-                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+                'text-text-muted',
               )}
             >
               Agenda juridica
@@ -525,7 +519,7 @@ export const AgendaPage = () => {
             <h2
               className={cn(
                 'font-display text-3xl',
-                isDark ? 'text-slate-100' : 'text-[#2a1400]',
+                'text-text',
               )}
             >
               Agenda juridica
@@ -533,7 +527,7 @@ export const AgendaPage = () => {
             <p
               className={cn(
                 'text-sm',
-                isDark ? 'text-slate-300' : 'text-slate-700',
+                'text-black',
               )}
             >
               Bom dia, {displayName}
@@ -544,10 +538,7 @@ export const AgendaPage = () => {
         <PageState status={pageState} emptyTitle="Nenhum compromisso encontrado">
           <Card
             className={cn(
-              'border',
-              isDark
-                ? 'border-slate-800 bg-slate-900/70'
-                : 'border-[#f0d9b8] bg-white/95',
+              'border','border-border bg-white/95',
             )}
             style={{
               backgroundColor: 'var(--agenda-card)',
@@ -558,45 +549,45 @@ export const AgendaPage = () => {
             <CardContent className="space-y-4">
               {/* Métricas */}
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="flex items-center gap-3 rounded-2xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-4 shadow-sm">
-                  <div className="rounded-xl bg-blue-500 dark:bg-blue-600 p-2">
+                <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4 shadow-sm">
+                  <div className="rounded-xl bg-blue-500 p-2">
                     <Clock className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-200">{metrics.hoursScheduled}h</p>
-                    <p className="text-xs text-blue-600 dark:text-blue-300">Esta semana</p>
+                    <p className="text-2xl font-bold text-blue-700">{metrics.hoursScheduled}h</p>
+                    <p className="text-xs text-blue-600">Esta semana</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 rounded-2xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 p-4 shadow-sm">
-                  <div className="rounded-xl bg-green-500 dark:bg-green-600 p-2">
+                <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-green-100 p-4 shadow-sm">
+                  <div className="rounded-xl bg-green-500 p-2">
                     <BarChart3 className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-200">{metrics.eventsThisWeek}</p>
-                    <p className="text-xs text-green-600 dark:text-green-300">Eventos</p>
+                    <p className="text-2xl font-bold text-green-700">{metrics.eventsThisWeek}</p>
+                    <p className="text-xs text-green-600">Eventos</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 rounded-2xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 p-4 shadow-sm">
-                  <div className="rounded-xl bg-purple-500 dark:bg-purple-600 p-2">
+                <div className="flex items-center gap-3 rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 shadow-sm">
+                  <div className="rounded-xl bg-purple-500 p-2">
                     <TrendingUp className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-200">{metrics.confirmationRate}%</p>
-                    <p className="text-xs text-purple-600 dark:text-purple-300">Taxa confirmação</p>
+                    <p className="text-2xl font-bold text-purple-700">{metrics.confirmationRate}%</p>
+                    <p className="text-xs text-purple-600">Taxa confirmação</p>
                   </div>
                 </div>
               </div>
 
               {/* Filtros */}
               <div className="flex flex-wrap items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                <Filter className="h-4 w-4 text-black" />
                 <button
                   onClick={() => setActiveFilter('all')}
                   className={cn(
                     'rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'all'
                       ? 'border-emerald-600 bg-emerald-600 text-white shadow-md hover:bg-emerald-700'
-                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-emerald-600/30 dark:hover:border-emerald-600/50'
+                      : 'border-slate-200 bg-white text-black hover:bg-slate-50'
                   )}
                 >
                   Todos
@@ -607,7 +598,7 @@ export const AgendaPage = () => {
                     'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'reuniao'
                       ? 'border-primary bg-primary text-white shadow-md hover:bg-primary/90'
-                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-primary/30 dark:hover:border-primary/50'
+                      : 'border-slate-200 bg-white text-black hover:bg-slate-50'
                   )}
                 >
                   <Users className="h-3 w-3" />
@@ -619,7 +610,7 @@ export const AgendaPage = () => {
                     'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'ligacao'
                       ? 'border-primary bg-primary text-white shadow-md hover:bg-primary/90'
-                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-primary/30 dark:hover:border-primary/50'
+                      : 'border-slate-200 bg-white text-black hover:bg-slate-50'
                   )}
                 >
                   <Phone className="h-3 w-3" />
@@ -631,7 +622,7 @@ export const AgendaPage = () => {
                     'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     activeFilter === 'audiencia'
                       ? 'border-primary bg-primary text-white shadow-md hover:bg-primary/90'
-                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-primary/30 dark:hover:border-primary/50'
+                      : 'border-slate-200 bg-white text-black hover:bg-slate-50'
                   )}
                 >
                   <Gavel className="h-3 w-3" />
@@ -640,15 +631,15 @@ export const AgendaPage = () => {
               </div>
 
               {/* Controles da Agenda */}
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 p-3">
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setAgendaAberta(!agendaAberta)}
                     className={cn(
                       'flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all',
                       agendaAberta
-                        ? 'border-green-300 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                        : 'border-red-300 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                        ? 'border-green-300 bg-green-100 text-green-700'
+                        : 'border-red-300 bg-red-100 text-red-700'
                     )}
                   >
                     {agendaAberta ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
@@ -657,22 +648,22 @@ export const AgendaPage = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-                  <span className="text-xs text-slate-700 dark:text-slate-200">Almoço:</span>
+                  <Clock className="h-4 w-4 text-black" />
+                  <span className="text-xs text-black">Almoço:</span>
                   <select
                     value={horariosAlmoco.inicio}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, inicio: e.target.value }))}
-                    className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 text-slate-700 px-2 py-1 text-xs"
+                    className="rounded-lg border border-slate-300 bg-white text-black px-2 py-1 text-xs"
                   >
                     <option value="12:00">12:00</option>
                     <option value="12:30">12:30</option>
                     <option value="13:00">13:00</option>
                   </select>
-                  <span className="text-xs text-slate-700 dark:text-slate-200">até</span>
+                  <span className="text-xs text-black">até</span>
                   <select
                     value={horariosAlmoco.fim}
                     onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, fim: e.target.value }))}
-                    className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 text-slate-700 px-2 py-1 text-xs"
+                    className="rounded-lg border border-slate-300 bg-white text-black px-2 py-1 text-xs"
                   >
                     <option value="13:00">13:00</option>
                     <option value="13:30">13:30</option>
@@ -680,7 +671,7 @@ export const AgendaPage = () => {
                   </select>
                   <button
                     onClick={handleCreateLunchBreak}
-                    className="flex items-center gap-1 rounded-lg border border-amber-500 dark:border-amber-600 bg-amber-500 dark:bg-amber-600 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-amber-600 dark:hover:bg-amber-700 shadow-sm"
+                    className="flex items-center gap-1 rounded-lg border border-amber-500 bg-amber-500 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-amber-600:bg-amber-700 shadow-sm"
                   >
                     <Clock className="h-3 w-3" />
                     Bloquear Almoço
@@ -689,15 +680,12 @@ export const AgendaPage = () => {
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm text-text dark:text-slate-200">
+                <div className="flex items-center gap-2 text-sm text-text">
                   <Button
                     variant="outline"
                     size="sm"
                     className={cn(
-                      'border',
-                      isDark
-                        ? 'border-slate-600 bg-slate-700/50 text-slate-100 hover:bg-slate-700'
-                        : 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-white',
+                      'border','border-slate-300 bg-slate-50 text-black hover:bg-white',
                     )}
                     onClick={() => handleNavigate('prev')}
                   >
@@ -707,10 +695,7 @@ export const AgendaPage = () => {
                     variant="outline"
                     size="sm"
                     className={cn(
-                      'border',
-                      isDark
-                        ? 'border-slate-600 bg-slate-700/50 text-slate-100 hover:bg-slate-700'
-                        : 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-white',
+                      'border','border-slate-300 bg-slate-50 text-black hover:bg-white',
                     )}
                     onClick={() => handleNavigate('next')}
                   >
@@ -721,14 +706,14 @@ export const AgendaPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-1 text-xs">
+                  <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs">
                     <button
                       type="button"
                       className={cn(
                         'rounded-lg px-3 py-1.5 font-medium transition-all',
                         viewMode === 'week'
-                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50 shadow-sm border border-slate-200 dark:border-slate-600'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200',
+                          ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                          : 'text-black hover:text-slate-900:text-slate-200',
                       )}
                       onClick={() => setViewMode('week')}
                     >
@@ -739,8 +724,8 @@ export const AgendaPage = () => {
                       className={cn(
                         'rounded-lg px-3 py-1.5 font-medium transition-all',
                         viewMode === 'month'
-                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50 shadow-sm border border-slate-200 dark:border-slate-600'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200',
+                          ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                          : 'text-black hover:text-slate-900:text-slate-200',
                       )}
                       onClick={() => setViewMode('month')}
                     >
@@ -759,13 +744,13 @@ export const AgendaPage = () => {
 
               <div className="grid gap-4 xl:grid-cols-[2.3fr_1fr]">
                 <div
-                  className="rounded-3xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/50 p-4"
+                  className="rounded-3xl border border-slate-200 bg-white p-4"
                 >
                   {viewMode === 'week' ? (
                     <div className="space-y-2">
                       {/* Header com dias da semana */}
                       <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-2">
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400"></div>
+                        <div className="text-xs font-medium text-black"></div>
                         {weekDays.map((day) => (
                           <div
                             key={day.iso}
@@ -773,7 +758,7 @@ export const AgendaPage = () => {
                               'rounded-xl py-2 text-center text-sm font-semibold',
                               day.isToday 
                                 ? 'bg-emerald-500 text-white' 
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                : 'bg-slate-100 text-black'
                             )}
                           >
                             <div className="text-xs opacity-80">{day.label}</div>
@@ -786,7 +771,7 @@ export const AgendaPage = () => {
                       <div className="space-y-1">
                         {timeSlots.map((slot) => (
                           <div key={slot} className="grid grid-cols-[60px_repeat(5,1fr)] gap-2">
-                            <div className="text-right pr-3 pt-2 text-sm font-bold text-slate-800 dark:text-slate-100" style={{ height: '6rem' }}>
+                            <div className="text-right pr-3 pt-2 font-bold" style={{ height: '6rem', color: 'rgb(0, 0, 0)', fontSize: '0.875rem', WebkitTextFillColor: 'rgb(0, 0, 0)' } as React.CSSProperties}>
                               {slot}
                             </div>
                             {weekDays.map((day) => {
@@ -800,10 +785,10 @@ export const AgendaPage = () => {
                                 <div key={`${day.iso}-${slot}`} className="relative" style={{ height: '6rem' }}>
                                   <button
                                     type="button"
-                                    className="absolute inset-0 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-700/20 transition hover:bg-slate-100 dark:hover:bg-slate-700/40 hover:shadow-sm group"
+                                    className="absolute inset-0 rounded-xl border border-slate-200 bg-slate-50 transition hover:bg-slate-100 hover:shadow-sm group"
                                     onClick={() => handleSlotCreate(day.iso, slot)}
                                   >
-                                    <span className="absolute inset-0 flex items-center justify-center text-2xl font-light text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span className="absolute inset-0 flex items-center justify-center text-2xl font-light text-black opacity-0 group-hover:opacity-100 transition-opacity">
                                       +
                                     </span>
                                   </button>
@@ -837,7 +822,7 @@ export const AgendaPage = () => {
                                             {tipoIcon}
                                             <span>{event.item.time}</span>
                                           </div>
-                                          <span className="rounded-full bg-white/50 dark:bg-slate-900/50 px-1.5 py-0.5 text-[0.5625rem]">
+                                          <span className="rounded-full bg-white/50 px-1.5 py-0.5 text-[0.5625rem]">
                                             {event.item.durationMinutes || 30}min
                                           </span>
                                         </div>
@@ -865,7 +850,7 @@ export const AgendaPage = () => {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-black">
                         {monthDayLabels.map((label, index) => (
                           <span key={`${label}-${index}`}>{label}</span>
                         ))}
@@ -887,8 +872,8 @@ export const AgendaPage = () => {
                             <div
                               key={day.iso}
                               className={cn(
-                                'min-h-[110px] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/30 p-2 transition hover:bg-white dark:hover:bg-slate-800/60',
-                                isSelected && 'border-primary/40 dark:border-blue-600',
+                                'min-h-[110px] rounded-2xl border border-border bg-surface p-2 transition hover:bg-surface-hover',
+                                isSelected && 'border-primary/40',
                               )}
                               onClick={() => handleSlotCreate(day.iso)}
                               role="button"
@@ -903,14 +888,14 @@ export const AgendaPage = () => {
                                 <span
                                   className={cn(
                                     'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                                    isToday && 'bg-primary/15 dark:bg-blue-900/40 text-primary dark:text-blue-200',
-                                    isSelected && 'bg-primary dark:bg-blue-600 text-white',
+                                    isToday && 'bg-primary/15 text-primary',
+                                    isSelected && 'bg-primary text-white',
                                   )}
                                 >
                                   {day.number}
                                 </span>
                                 {dayEvents.length > 0 && (
-                                  <span className="text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                                  <span className="text-[10px] font-medium text-black">
                                     {dayEvents.length} eventos
                                   </span>
                                 )}
@@ -920,7 +905,7 @@ export const AgendaPage = () => {
                                   <button
                                     key={event.id}
                                     type="button"
-                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600/50 bg-slate-50 dark:bg-slate-700/40 px-2 py-1 text-left text-[11px] text-slate-700 dark:text-slate-100 shadow-sm dark:shadow-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition"
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-left text-[11px] text-black shadow-sm hover:bg-slate-100 transition"
                                     onClick={(eventClick) => {
                                       eventClick.stopPropagation()
                                       openEditor('edit', event)
@@ -929,13 +914,13 @@ export const AgendaPage = () => {
                                     <div className="truncate font-semibold">
                                       {event.title}
                                     </div>
-                                    <div className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">
+                                    <div className="text-[10px] text-black font-medium">
                                       {event.time}
                                     </div>
                                   </button>
                                 ))}
                                 {dayEvents.length > 3 && (
-                                  <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                                  <div className="text-[10px] font-medium text-black">
                                     +{dayEvents.length - 3} compromissos
                                   </div>
                                 )}
@@ -949,14 +934,14 @@ export const AgendaPage = () => {
                 </div>
                 <div className="space-y-4">
                   <Card
-                    className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50"
+                    className="border border-slate-200 bg-white"
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-100">
+                      <div className="flex items-center justify-between text-sm text-slate-900">
                         <span className="font-semibold">Calendario</span>
-                        <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">{monthLabel}</span>
+                        <span className="text-xs text-black font-medium">{monthLabel}</span>
                       </div>
-                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-slate-600 dark:text-slate-300 font-medium">
+                      <div className="grid grid-cols-7 gap-2 text-center text-xs text-black font-medium">
                         {monthDayLabels.map((label, index) => (
                           <span key={`${label}-${index}`}>{label}</span>
                         ))}
@@ -979,11 +964,11 @@ export const AgendaPage = () => {
                               key={day.iso}
                               type="button"
                               className={cn(
-                                'relative rounded-full py-1 text-xs font-medium transition hover:bg-emerald-50 dark:hover:bg-emerald-900/30',
-                                isSelected && 'bg-emerald-600 dark:bg-emerald-600 text-white font-bold',
-                                !isSelected && isToday && 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-200 font-bold ring-2 ring-emerald-300 dark:ring-emerald-600',
-                                hasEvents && !isSelected && !isToday && 'font-semibold text-slate-700 dark:text-slate-100',
-                                !hasEvents && !isSelected && !isToday && 'text-slate-600 dark:text-slate-300',
+                                'relative rounded-full py-1 text-xs font-medium transition hover:bg-emerald-50:bg-emerald-900/30',
+                                isSelected && 'bg-emerald-600 text-white font-bold',
+                                !isSelected && isToday && 'bg-emerald-100 text-emerald-700 font-bold ring-2 ring-emerald-300',
+                                hasEvents && !isSelected && !isToday && 'font-semibold text-black',
+                                !hasEvents && !isSelected && !isToday && 'text-black',
                               )}
                               onClick={() => setCurrentDate(day.date)}
                             >
@@ -991,7 +976,7 @@ export const AgendaPage = () => {
                               {hasEvents && (
                                 <span className={cn(
                                   "absolute -bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full",
-                                  isSelected ? "bg-white" : "bg-emerald-600 dark:bg-emerald-400"
+                                  isSelected ? "bg-white" : "bg-emerald-600"
                                 )} />
                               )}
                             </button>
@@ -999,19 +984,19 @@ export const AgendaPage = () => {
                         })}
                       </div>
                       <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium">
+                        <div className="flex items-center gap-2 text-black font-medium">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-blue-500">
                             <CheckCircle2 className="h-2 w-2 text-white" />
                           </div>
                           <span>Confirmada</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium">
+                        <div className="flex items-center gap-2 text-black font-medium">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-amber-500">
                             <AlertCircle className="h-2 w-2 text-white" />
                           </div>
                           <span>Pendente</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium">
+                        <div className="flex items-center gap-2 text-black font-medium">
                           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
                             <XCircle className="h-2 w-2 text-white" />
                           </div>
@@ -1022,21 +1007,21 @@ export const AgendaPage = () => {
                   </Card>
 
                   <Card
-                    className="border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/50"
+                    className="border border-slate-200 bg-white"
                   >
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-100">
+                      <div className="flex items-center justify-between text-sm text-slate-900">
                         <span className="font-semibold">Proximas reunioes</span>
                         <button
                           type="button"
-                          className="text-xs font-medium text-emerald-600 dark:text-emerald-300 hover:underline"
+                          className="text-xs font-medium text-emerald-600 hover:underline"
                           onClick={() => navigate('/app/agenda')}
                         >
                           Ver todos
                         </button>
                       </div>
                       {upcomingItems.length === 0 ? (
-                        <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                        <p className="text-xs text-black font-medium">
                           Nenhum compromisso agendado.
                         </p>
                       ) : (
@@ -1069,9 +1054,9 @@ export const AgendaPage = () => {
                                 <div className="flex-1">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     {tipoIcon}
-                                    <p className="font-semibold text-sm leading-tight text-slate-900 dark:text-slate-50">{item.title}</p>
+                                    <p className="font-semibold text-sm leading-tight text-slate-900">{item.title}</p>
                                   </div>
-                                  <p className="text-xs opacity-90 text-slate-700 dark:text-slate-200">
+                                  <p className="text-xs opacity-90 text-black">
                                     {item.time} • {item.cliente || 'Sem cliente'}
                                   </p>
                                   {diff < 2 * 60 * 60 * 1000 && diff > 0 && (
@@ -1130,7 +1115,7 @@ export const AgendaPage = () => {
             )}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1 sm:col-span-2">
-                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
+                <span className="text-xs uppercase tracking-wide font-semibold text-black">
                   Titulo
                 </span>
                 <Input
@@ -1144,7 +1129,7 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
+                <span className="text-xs uppercase tracking-wide font-semibold text-black">
                   Data
                 </span>
                 <Input
@@ -1159,7 +1144,7 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
+                <span className="text-xs uppercase tracking-wide font-semibold text-black">
                   Hora
                 </span>
                 <Input
@@ -1174,7 +1159,7 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
+                <span className="text-xs uppercase tracking-wide font-semibold text-black">
                   Duracao (min)
                 </span>
                 <Input
@@ -1191,11 +1176,11 @@ export const AgendaPage = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
+                <span className="text-xs uppercase tracking-wide font-semibold text-black">
                   Status
                 </span>
                 <select
-                  className="h-10 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-100 shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="h-10 w-full rounded-2xl border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-soft focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   value={formState.status}
                   onChange={(event) =>
                     setFormState((prev) => ({
@@ -1211,7 +1196,7 @@ export const AgendaPage = () => {
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
+                  <span className="text-xs uppercase tracking-wide font-semibold text-black">
                     Local
                   </span>
                   {formState.title && formState.date && formState.time && (

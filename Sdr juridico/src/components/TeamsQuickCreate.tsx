@@ -123,7 +123,7 @@ export function TeamsQuickCreate({ onSuccess, onError }: TeamsQuickCreateProps) 
             </div>
 
             {teams.error && (
-              <div className="mt-4 bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
+              <div className="mt-4 bg-danger-bg border border-danger-border text-danger p-3 rounded-lg text-sm">
                 {teams.error.message}
               </div>
             )}
@@ -133,9 +133,9 @@ export function TeamsQuickCreate({ onSuccess, onError }: TeamsQuickCreateProps) 
 
       {/* Exibição do link gerado */}
       {meetingUrl && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+        <div className="bg-success-bg border border-success-border rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-green-800">✓ Reunião criada no Teams!</p>
+            <p className="text-sm font-medium text-success">✓ Reunião criada no Teams!</p>
             <button
               onClick={() => {
                 setMeetingUrl(null)
@@ -153,7 +153,7 @@ export function TeamsQuickCreate({ onSuccess, onError }: TeamsQuickCreateProps) 
               href={meetingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-700 text-sm break-all font-medium"
+              className="text-brand-primary hover:text-brand-primary-dark text-sm break-all font-medium"
             >
               {meetingUrl}
             </a>

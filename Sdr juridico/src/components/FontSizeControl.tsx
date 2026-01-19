@@ -183,28 +183,38 @@ export function FontSizeButton() {
     mega: '++++++',
   }
 
+  const handleIncrease = () => {
+    console.log('🔼 Aumentar clicado! Tamanho atual:', fontSize)
+    increaseFontSize()
+  }
+
+  const handleDecrease = () => {
+    console.log('🔽 Diminuir clicado! Tamanho atual:', fontSize)
+    decreaseFontSize()
+  }
+
   return (
     <div className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2 py-1 shadow-soft">
       <button
-        onClick={decreaseFontSize}
+        onClick={handleDecrease}
         disabled={fontSize === 'xs'}
         className="rounded p-1 transition-colors hover:bg-surface-alt disabled:opacity-50"
         title="Diminuir"
         aria-label="Diminuir tamanho da fonte"
       >
-        <span className="text-xs font-bold text-text-muted">A</span>
+        <span className="text-xs font-bold text-text-muted">A-</span>
       </button>
-      <span className="text-xs font-semibold text-text-muted">
+      <span className="text-xs font-semibold text-text-muted px-1">
         {fontLabels[fontSize]}
       </span>
       <button
-        onClick={increaseFontSize}
+        onClick={handleIncrease}
         disabled={fontSize === 'mega'}
         className="rounded p-1 transition-colors hover:bg-surface-alt disabled:opacity-50"
         title="Aumentar"
         aria-label="Aumentar tamanho da fonte"
       >
-        <span className="text-xs font-bold text-text-muted">A</span>
+        <span className="text-xs font-bold text-text-muted">A+</span>
       </button>
     </div>
   )

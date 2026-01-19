@@ -33,20 +33,20 @@ export const ForgotPasswordPage = () => {
         <img src={logoMark} alt="Logo" className="h-10 w-10" />
       </div>
 
-      <h2 className="mt-6 text-2xl font-semibold text-(--auth-text)">
+      <h2 className="mt-6 text-2xl font-semibold text-slate-800">
         Recuperar acesso
       </h2>
-      <p className="mt-2 text-sm text-(--auth-text-muted)">
+      <p className="mt-2 text-sm text-slate-500">
         Informe seu email para receber o link de redefinicao.
       </p>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.2em] text-(--auth-text-muted)">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">
             Email
           </label>
           <div className="relative">
-            <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--auth-text-muted)" />
+            <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               type="email"
               placeholder="email@seudominio.com"
@@ -55,14 +55,14 @@ export const ForgotPasswordPage = () => {
                 setEmail(event.target.value)
                 setStatus('idle')
               }}
-              className="h-12 w-full rounded-full border bg-(--auth-input-bg) pl-11 pr-4 text-sm text-(--auth-text) placeholder:text-(--auth-text-muted) focus:border-(--auth-primary) focus:outline-none focus:ring-2 focus:ring-[rgba(47,107,255,0.2)]"
-              style={{ borderColor: 'var(--auth-input-border)' }}
+              className="h-12 w-full rounded-full border bg-slate-50 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-[rgba(47,107,255,0.2)]"
+              
             />
           </div>
         </div>
         {status === 'success' && (
           <div
-            className="flex items-center gap-2 rounded-2xl border bg-white px-3 py-3 text-xs text-(--auth-text-muted) shadow-soft"
+            className="flex items-center gap-2 rounded-2xl border bg-white px-3 py-3 text-xs text-slate-500 shadow-soft"
             style={{ borderColor: 'var(--auth-border)' }}
           >
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -76,14 +76,14 @@ export const ForgotPasswordPage = () => {
         )}
         <button
           type="submit"
-          className="h-12 w-full rounded-xl bg-(--auth-primary) text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-soft transition hover:brightness-95"
+          className="h-12 w-full rounded-xl bg-blue-600 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-soft transition hover:brightness-95"
           disabled={status === 'loading'}
         >
           {status === 'loading' ? 'Enviando...' : 'Enviar link'}
         </button>
         <Link
           to="/login"
-          className="block text-center text-xs text-(--auth-text-muted) hover:underline"
+          className="block text-center text-xs text-slate-500 hover:underline"
         >
           Voltar ao login
         </Link>

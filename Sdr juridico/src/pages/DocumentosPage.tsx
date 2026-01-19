@@ -13,7 +13,6 @@ import type { Documento } from '@/types/domain'
 import { useDocumentos } from '@/hooks/useDocumentos'
 import { useCasos } from '@/hooks/useCasos'
 import { useOrganization } from '@/hooks/useOrganization'
-import { useTheme } from '@/contexts/ThemeContext'
 import { cn } from '@/utils/cn'
 
 const resolveStatus = (
@@ -26,12 +25,23 @@ const resolveStatus = (
 }
 
 const statusPill = (status: Documento['status']) => {
-  if (status === 'aprovado') return 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
-  if (status === 'completo') return 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
-  if (status === 'solicitado') return 'border-[#D6E4FF] bg-[#E6F0FF] text-[#1D4ED8]'
-  if (status === 'rejeitado') return 'border-[#F5C2C2] bg-[#FFE1E1] text-[#B42318]'
-  return 'border-[#F1D28A] bg-[#FFF1CC] text-[#8A5A00]'
+  if (status === 'aprovado' || status === 'completo') {
+    return 'border-success-border bg-success-bg text-success'
+  }
+  if (status === 'solicitado') {
+    return 'border-info-border bg-info-bg text-info'
+  }
+  if (status === 'rejeitado') {
+    return 'border-danger-border bg-danger-bg text-danger'
+  }
+  return 'border-warning-border bg-warning-bg text-warning'
 }
+
+const filterControlClass =
+  'h-11 rounded-full border border-border bg-white px-4 text-sm text-text shadow-soft focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
+const formControlClass =
+  'h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text shadow-soft placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
+const labelClass = 'text-xs font-semibold text-text'
 
 export const DocumentosPage = () => {
   const {
@@ -46,8 +56,6 @@ export const DocumentosPage = () => {
   } = useDocumentos()
   const { casos } = useCasos()
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
   const canManageDocs = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const [params] = useSearchParams()
   const [statusFilter, setStatusFilter] = React.useState('todos')
@@ -197,22 +205,19 @@ export const DocumentosPage = () => {
     <div
       className={cn(
         'min-h-screen pb-12',
-        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+        'bg-base text-text',
       )}
     >
       <div className="space-y-5">
         <header
           className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
-            isDark
-              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
-              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
               'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              isDark ? 'opacity-20' : 'opacity-80',
+              'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
           />
@@ -220,15 +225,15 @@ export const DocumentosPage = () => {
             <p
               className={cn(
                 'text-xs uppercase tracking-[0.3em]',
-                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+                'text-text-muted',
               )}
             >
               Documentos
             </p>
-            <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+            <h2 className={cn('font-display text-2xl', 'text-text')}>
               Gestao central
             </h2>
-            <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+            <p className={cn('text-sm', 'text-text-muted')}>
               Filtre por status, tipo e cliente para validar pendencias.
             </p>
           </div>
@@ -245,7 +250,7 @@ export const DocumentosPage = () => {
             <Card
               className={cn(
                 'xl:col-span-2 border',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+                'border-border bg-surface/90',
               )}
             >
               <CardHeader className="flex flex-row items-center justify-between">
@@ -272,7 +277,7 @@ export const DocumentosPage = () => {
             <Card
               className={cn(
                 'xl:col-span-2 border',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+                'border-border bg-surface/90',
               )}
             >
               <CardHeader className="flex flex-row items-center justify-between">
@@ -288,34 +293,24 @@ export const DocumentosPage = () => {
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className={cn('text-xs font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                    <label className={labelClass}>
                       Titulo
                     </label>
                     <input
                       value={docForm.title}
                       onChange={(event) => setDocForm((prev) => ({ ...prev, title: event.target.value }))}
-                      className={cn(
-                        'h-11 w-full rounded-xl border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
-                        isDark
-                          ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                          : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-                      )}
+                      className={formControlClass}
                       placeholder="Nome do documento"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className={cn('text-xs font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                    <label className={labelClass}>
                       Tipo
                     </label>
                     <input
                       value={docForm.type}
                       onChange={(event) => setDocForm((prev) => ({ ...prev, type: event.target.value }))}
-                      className={cn(
-                        'h-11 w-full rounded-xl border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
-                        isDark
-                          ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                          : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-                      )}
+                      className={formControlClass}
                       placeholder="Ex: contrato, procuração"
                     />
                   </div>
@@ -346,7 +341,7 @@ export const DocumentosPage = () => {
           <Card
             className={cn(
               'border',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              'border-border bg-surface/90',
             )}
           >
             <CardHeader className="flex flex-wrap items-center justify-between gap-3">
@@ -388,7 +383,7 @@ export const DocumentosPage = () => {
               <div
                 className={cn(
                   'flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2 shadow-soft',
-                  isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+                  'border-border bg-white',
                 )}
               >
                 <div className="flex flex-wrap gap-2">
@@ -399,12 +394,8 @@ export const DocumentosPage = () => {
                       onClick={() => setActiveTab(tab)}
                       className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
                         activeTab === tab
-                          ? isDark
-                            ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300'
-                            : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600'
-                          : isDark
-                            ? 'border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800'
-                            : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:bg-[#fff3e0] hover:text-[#2a1400]'
+                          ?'border-brand-secondary/60 bg-brand-secondary/10 text-brand-secondary'
+                          :'border-border bg-white text-text-muted hover:bg-surface-2 hover:text-text'
                       }`}
                     >
                       {tab}
@@ -416,12 +407,7 @@ export const DocumentosPage = () => {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-3">
                   <select
-                    className={cn(
-                      'h-11 rounded-full border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
-                      isDark
-                        ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-                    )}
+                    className={filterControlClass}
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value)}
                   >
@@ -433,12 +419,7 @@ export const DocumentosPage = () => {
                     ))}
                   </select>
                   <select
-                    className={cn(
-                      'h-11 rounded-full border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
-                      isDark
-                        ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-                    )}
+                    className={filterControlClass}
                     value={typeFilter}
                     onChange={(event) => setTypeFilter(event.target.value)}
                   >
@@ -450,12 +431,7 @@ export const DocumentosPage = () => {
                     ))}
                   </select>
                   <select
-                    className={cn(
-                      'h-11 rounded-full border px-4 text-sm shadow-soft focus:outline-none focus:ring-2',
-                      isDark
-                        ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
-                    )}
+                    className={filterControlClass}
                     value={clienteFilter}
                     onChange={(event) => setClienteFilter(event.target.value)}
                   >
@@ -471,7 +447,7 @@ export const DocumentosPage = () => {
                   type="button"
                   className={cn(
                     'text-xs',
-                    isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+                    'text-text-muted hover:text-text',
                   )}
                   onClick={resetFilters}
                 >
@@ -482,14 +458,14 @@ export const DocumentosPage = () => {
               <div
                 className={cn(
                   'overflow-hidden rounded-2xl border shadow-soft',
-                  isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+                  'border-border bg-white',
                 )}
               >
                 <table className="w-full border-collapse text-left text-sm">
                   <thead
                     className={cn(
                       'text-[11px] uppercase tracking-[0.22em]',
-                      isDark ? 'bg-slate-800 text-slate-300' : 'bg-[#fff3e0] text-[#9a5b1e]',
+                      'bg-surface-2 text-text-muted',
                     )}
                   >
                     <tr>
@@ -506,10 +482,7 @@ export const DocumentosPage = () => {
                       <tr
                         key={doc.id}
                         className={cn(
-                          'border-t text-text',
-                          isDark
-                            ? 'border-slate-800 hover:bg-slate-800/60'
-                            : 'border-[#f0d9b8] hover:bg-[#fff3e0]/60',
+                          'border-t text-text','border-border hover:bg-surface-2/60',
                         )}
                       >
                         <td className="px-4 py-3">
@@ -546,7 +519,7 @@ export const DocumentosPage = () => {
                                 type="button"
                                 className={cn(
                                   'inline-flex items-center gap-1',
-                                  isDark ? 'text-slate-300 hover:text-success' : 'text-[#7a4a1a] hover:text-success',
+                                  'text-text-muted hover:text-success',
                                 )}
                                 onClick={(event) => {
                                   event.stopPropagation()
@@ -560,7 +533,7 @@ export const DocumentosPage = () => {
                                 type="button"
                                 className={cn(
                                   'inline-flex items-center gap-1',
-                                  isDark ? 'text-slate-300 hover:text-danger' : 'text-[#7a4a1a] hover:text-danger',
+                                  'text-text-muted hover:text-danger',
                                 )}
                                 onClick={(event) => {
                                   event.stopPropagation()
@@ -574,7 +547,7 @@ export const DocumentosPage = () => {
                                 type="button"
                                 className={cn(
                                   'inline-flex items-center gap-1',
-                                  isDark ? 'text-slate-300 hover:text-primary' : 'text-[#7a4a1a] hover:text-primary',
+                                  'text-text-muted hover:text-primary',
                                 )}
                                 onClick={(event) => {
                                   event.stopPropagation()
@@ -588,7 +561,7 @@ export const DocumentosPage = () => {
                                 type="button"
                                 className={cn(
                                   'inline-flex items-center gap-1',
-                                  isDark ? 'text-slate-300 hover:text-emerald-400' : 'text-[#7a4a1a] hover:text-emerald-600',
+                                  'text-text-muted hover:text-brand-secondary',
                                 )}
                                 onClick={(event) => {
                                   event.stopPropagation()
@@ -602,7 +575,7 @@ export const DocumentosPage = () => {
                                 type="button"
                                 className={cn(
                                   'inline-flex items-center gap-1',
-                                  isDark ? 'text-slate-300 hover:text-danger' : 'text-[#7a4a1a] hover:text-danger',
+                                  'text-text-muted hover:text-danger',
                                 )}
                                 onClick={(event) => {
                                   event.stopPropagation()
@@ -628,7 +601,7 @@ export const DocumentosPage = () => {
           <Card
             className={cn(
               'border',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              'border-border bg-surface/90',
             )}
           >
             <CardHeader>
@@ -640,7 +613,7 @@ export const DocumentosPage = () => {
                   <div
                     className={cn(
                       'rounded-2xl border px-3 py-3 shadow-soft',
-                      isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                      'border-border bg-white',
                     )}
                   >
                     <p className="text-sm font-semibold text-text">
@@ -654,7 +627,7 @@ export const DocumentosPage = () => {
                     <div
                       className={cn(
                         'rounded-2xl border px-3 py-3 shadow-soft',
-                        isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                        'border-border bg-white',
                       )}
                     >
                       Nenhum documento vinculado ao caso.
@@ -665,7 +638,7 @@ export const DocumentosPage = () => {
                       key={doc.id}
                       className={cn(
                         'flex items-center justify-between rounded-2xl border px-3 py-2 text-xs shadow-soft',
-                        isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                        'border-border bg-white',
                       )}
                     >
                       <span className="text-text">{doc.title}</span>
@@ -683,7 +656,7 @@ export const DocumentosPage = () => {
                 <div
                   className={cn(
                     'rounded-2xl border px-3 py-4 text-sm text-text-muted shadow-soft',
-                    isDark ? 'border-slate-800 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                    'border-border bg-white',
                   )}
                 >
                   Selecione um cliente para visualizar o checklist do caso.

@@ -1,8 +1,9 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  // Desativar dark mode - apenas modo claro
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -28,6 +29,7 @@ const config: Config = {
           alt: 'var(--color-surface-alt)',
           raised: 'var(--color-surface-raised)',
           hover: 'var(--color-surface-hover)',
+          elevated: 'var(--color-surface-elevated)',
         },
         // Text Colors
         text: {
@@ -42,6 +44,7 @@ const config: Config = {
           DEFAULT: 'var(--color-border)',
           soft: 'var(--color-border-soft)',
           strong: 'var(--color-border-strong)',
+          subtle: 'var(--color-border-soft)', /* Alias para soft */
           focus: 'var(--color-border-focus)',
         },
         // Semantic Colors

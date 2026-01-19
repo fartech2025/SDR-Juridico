@@ -1,13 +1,12 @@
 /**
  * Contexto para controle de tamanho de fonte
- * Permite usuários aumentar/diminuir tamanho da fonte
- * Persiste preferência em localStorage
+ * SOLUÇÃO ULTRA AGRESSIVA: Aplica zoom diretamente no body via JS
  */
 
 import type { ReactNode } from 'react'
-import { useEffect, useState, useCallback, createContext, useContext } from 'react'
+import { useEffect, useState, useCallback, createContext, useContext, useRef } from 'react'
 
-export type FontSize = 'xs' | 'sm' | 'md' | 'lg' | 'normal' | 'xl' | 'xxl' | 'xxxl' | 'huge' | 'mega'
+export type FontSize = 'xs' | 'sm' | 'md' | 'normal' | 'lg' | 'xl' | 'xxl' | 'xxxl' | 'huge' | 'mega'
 
 interface FontContextType {
   fontSize: FontSize
@@ -24,8 +23,8 @@ const fontScales: Record<FontSize, number> = {
   xs: 0.8,
   sm: 0.9,
   md: 0.95,
-  lg: 1.05,
   normal: 1,
+  lg: 1.05,
   xl: 1.2,
   xxl: 1.4,
   xxxl: 1.6,
@@ -33,13 +32,31 @@ const fontScales: Record<FontSize, number> = {
   mega: 2.2,
 }
 
-const fontSizeOrder: FontSize[] = ['xs', 'sm', 'md', 'lg', 'normal', 'xl', 'xxl', 'xxxl', 'huge', 'mega']
+const fontSizeOrder: FontSize[] = ['xs', 'sm', 'md', 'normal', 'lg', 'xl', 'xxl', 'xxxl', 'huge', 'mega']
+
+// Aplica escala via CSS custom property - funciona com fixed elements
+function applyZoom(scale: number) {
+  if (typeof window === 'undefined') return
+
+  const html = document.documentElement
+
+  // MÉTODO DEFINITIVO: Aplicar escala via --font-scale CSS variable
+  // Isso funciona com position: fixed e não depende de transform
+  html.style.setProperty('--font-scale', String(scale))
+  html.style.fontSize = `${16 * scale}px`
+  
+  // Forçar atualização de todos os elementos
+  document.body?.style.setProperty('--font-scale', String(scale))
+
+  // Escala aplicada com sucesso
+}
 
 export function FontProvider({ children }: { children: ReactNode }) {
   const [fontSize, setFontSize] = useState<FontSize>('normal')
   const [isMounted, setIsMounted] = useState(false)
+  const prevScaleRef = useRef<number>(fontScales['normal'])
 
-  // Carregar preferência do localStorage na montagem
+  // Carregar preferência do localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('sdr-font-size')
@@ -47,35 +64,38 @@ export function FontProvider({ children }: { children: ReactNode }) {
         setFontSize(saved as FontSize)
       }
     } catch {
-      console.warn('Erro ao carregar preferência de fonte')
+      // ignore
     }
     setIsMounted(true)
   }, [])
 
-  // Salvar preferência quando mudar
+  // Salvar preferência
   useEffect(() => {
     if (isMounted) {
       try {
         localStorage.setItem('sdr-font-size', fontSize)
       } catch {
-        console.warn('Erro ao salvar preferência de fonte')
+        // ignore
       }
     }
   }, [fontSize, isMounted])
 
-  // Aplicar escala ao document
+  // APLICAR ZOOM - Este é o efeito principal
   useEffect(() => {
-    const scale = fontScales[fontSize]
-    // Usar !important para garantir que sobrescreve CSS do Tailwind
-    document.documentElement.style.setProperty('--font-scale', scale.toString(), 'important')
-    console.log('FontScale aplicada:', fontSize, '=', scale) // Debug
+    const newScale = fontScales[fontSize]
+    if (prevScaleRef.current === newScale) return
+    prevScaleRef.current = newScale
+    applyZoom(newScale)
   }, [fontSize])
+
+  const scale = fontScales[fontSize]
 
   const increaseFontSize = useCallback(() => {
     setFontSize((current) => {
       const currentIndex = fontSizeOrder.indexOf(current)
       const nextIndex = Math.min(currentIndex + 1, fontSizeOrder.length - 1)
-      return fontSizeOrder[nextIndex]
+      const next = fontSizeOrder[nextIndex]
+      return next
     })
   }, [])
 
@@ -83,7 +103,8 @@ export function FontProvider({ children }: { children: ReactNode }) {
     setFontSize((current) => {
       const currentIndex = fontSizeOrder.indexOf(current)
       const nextIndex = Math.max(currentIndex - 1, 0)
-      return fontSizeOrder[nextIndex]
+      const next = fontSizeOrder[nextIndex]
+      return next
     })
   }, [])
 
@@ -93,23 +114,24 @@ export function FontProvider({ children }: { children: ReactNode }) {
 
   const value: FontContextType = {
     fontSize,
-    scale: fontScales[fontSize],
+    scale,
     setFontSize,
     increaseFontSize,
     decreaseFontSize,
     resetFontSize,
   }
 
-  return <FontContext.Provider value={value}>{children}</FontContext.Provider>
+  return (
+    <FontContext.Provider value={value}>
+      {children}
+    </FontContext.Provider>
+  )
 }
 
-/**
- * Hook para usar o contexto de fonte
- */
-export function useFont(): FontContextType {
+export function useFont() {
   const context = useContext(FontContext)
   if (!context) {
-    throw new Error('useFont deve ser usado dentro de FontProvider')
+    throw new Error('useFont deve ser usado dentro de um FontProvider')
   }
   return context
 }

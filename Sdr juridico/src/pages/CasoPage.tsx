@@ -139,25 +139,25 @@ export const CasoPage = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-[#fff6e9] pb-12 text-[#1d1d1f] dark:bg-[#0e1116] dark:text-slate-100">
+    <div className="min-h-screen bg-base pb-12 text-text">
       <div className="space-y-6">
-        <header className="relative overflow-hidden rounded-3xl border border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa] p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)] dark:border-slate-800 dark:from-[#141820] dark:via-[#10141b] dark:to-[#0b0f14]">
+        <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt p-6 shadow-card">
           <div
-            className="absolute inset-0 bg-no-repeat bg-right bg-[length:520px] opacity-80 dark:opacity-20"
+            className="absolute inset-0 bg-no-repeat bg-right bg-[length:520px] opacity-80"
             style={{ backgroundImage: `url(${heroLight})` }}
           />
           <div className="relative z-10 space-y-3">
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-[#f0d9b8] bg-white px-3 py-1 text-xs text-[#7a4a1a] shadow-soft dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1 text-xs text-text-muted shadow-soft"
             >
               <ChevronLeft className="h-4 w-4" />
               #{caso.id.replace('caso-', '')}
             </button>
-            <h2 className="font-display text-2xl text-[#2a1400] dark:text-slate-100">
+            <h2 className="font-display text-2xl text-text">
               {caso.id.replace('caso-', '#')} - {caso.cliente}
             </h2>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[#7a4a1a] dark:text-slate-300">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
               <Badge variant={statusBadge(caso.status)} className="capitalize">
                 {caso.status}
               </Badge>
@@ -179,8 +179,8 @@ export const CasoPage = () => {
                   className={cn(
                     'rounded-full border px-4 py-1.5 text-xs font-medium transition',
                     activeTab === tab
-                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:bg-[#fff3e0] hover:text-[#2a1400] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800',
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600'
+                      : 'border-border bg-white text-text-muted hover:bg-surface-2 hover:text-text',
                   )}
                 >
                   {tab}
@@ -193,7 +193,7 @@ export const CasoPage = () => {
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
                 <Input
                   placeholder="Buscar casos..."
-                  className="h-11 rounded-full border border-[#f0d9b8] bg-[#fff3e0] pl-11 text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-400 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-emerald-500/20"
+                  className="h-11 rounded-full border border-border bg-surface-2 pl-11 text-text placeholder:text-text-subtle focus:border-emerald-400 focus:ring-emerald-200"
                 />
               </div>
               <Button variant="outline" size="sm" className="h-11 rounded-full px-4">
@@ -204,7 +204,7 @@ export const CasoPage = () => {
 
             {activeTab === 'Tudo' && (
               <div className="space-y-4">
-                <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
+                <Card className="border-border bg-white/85">
                   <CardHeader className="flex-row items-center justify-between space-y-0">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -220,7 +220,7 @@ export const CasoPage = () => {
                   </CardHeader>
                   <CardContent className="space-y-4 text-sm text-text-muted">
                     <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border border-[#f0d9b8] bg-gradient-to-br from-[#FFF5F8] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+                      <div className="rounded-2xl border border-border bg-gradient-to-br from-[#FFF5F8] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
                         <div className="flex items-center gap-2 text-sm font-semibold text-text">
                           <FileText className="h-4 w-4 text-[#D36D8C]" />
                           Resumo gerado por IA
@@ -229,7 +229,7 @@ export const CasoPage = () => {
                           {highlights[0]?.content}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-[#f0d9b8] bg-gradient-to-br from-[#F2F7FF] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+                      <div className="rounded-2xl border border-border bg-gradient-to-br from-[#F2F7FF] via-white to-white p-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
                         <div className="flex items-center gap-2 text-sm font-semibold text-text">
                           <KeyRound className="h-4 w-4 text-[#6BB9A8]" />
                           Pontos relevantes
@@ -251,7 +251,7 @@ export const CasoPage = () => {
             )}
 
             {activeTab !== 'Tudo' && (
-              <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
+              <Card className="border-border bg-white/85">
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <CardTitle>{activeTab}</CardTitle>
                   <Button variant="outline" size="sm" onClick={() => setModalOpen(true)}>
@@ -263,7 +263,7 @@ export const CasoPage = () => {
                     filteredEvents.map((event) => (
                       <div
                         key={event.id}
-                        className="rounded-2xl border border-[#f0d9b8] bg-white p-3 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900"
+                        className="rounded-2xl border border-border bg-white p-3 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                       >
                         <p className="text-sm font-semibold text-text">{event.title}</p>
                         <p className="text-xs text-text-subtle">{event.description}</p>
@@ -273,7 +273,7 @@ export const CasoPage = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-2xl border border-[#f0d9b8] bg-white p-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900">
+                    <div className="rounded-2xl border border-border bg-white p-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
                       Sem eventos para esta categoria.
                     </div>
                   )}
@@ -283,7 +283,7 @@ export const CasoPage = () => {
           </div>
 
           <aside className="space-y-4">
-            <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
+            <Card className="border-border bg-white/85">
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -300,13 +300,13 @@ export const CasoPage = () => {
                     </p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 text-xs text-text shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900">
+                <div className="rounded-2xl border border-border bg-white px-3 py-2 text-xs text-text shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
                   {lead?.phone ?? '(11) 99999-0000'}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
+            <Card className="border-border bg-white/85">
               <CardHeader>
                 <CardTitle>Checklist Processual</CardTitle>
               </CardHeader>
@@ -314,7 +314,7 @@ export const CasoPage = () => {
                 {checklist.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900"
+                    className="flex items-center justify-between rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                   >
                     <span>{item.label}</span>
                     <span
@@ -332,7 +332,7 @@ export const CasoPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-[#f0d9b8] bg-white/85 dark:border-slate-800 dark:bg-slate-900/70">
+            <Card className="border-border bg-white/85">
               <CardHeader>
                 <CardTitle>Documentos recentes</CardTitle>
               </CardHeader>
@@ -340,7 +340,7 @@ export const CasoPage = () => {
                 {caseDocs.slice(0, 3).map((doc) => (
                   <div
                     key={doc.id}
-                    className="rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)] dark:border-slate-800 dark:bg-slate-900"
+                    className="rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                   >
                     <div className="text-sm font-semibold text-text">{doc.title}</div>
                     <div className="text-xs text-text-subtle">{doc.status}</div>
@@ -382,7 +382,7 @@ export const CasoPage = () => {
             <label className="text-xs uppercase tracking-wide text-text-subtle">
               Categoria
             </label>
-            <select className="h-10 w-full rounded-2xl border border-[#f0d9b8] bg-white px-3 text-sm text-[#2a1400] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            <select className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text">
               <option>Docs</option>
               <option>Agenda</option>
               <option>Comercial</option>
@@ -396,7 +396,7 @@ export const CasoPage = () => {
               Descricao
             </label>
             <textarea
-              className="min-h-[120px] w-full rounded-2xl border border-[#f0d9b8] bg-white px-3 py-2 text-sm text-[#2a1400] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className="min-h-[120px] w-full rounded-2xl border border-border bg-white px-3 py-2 text-sm text-text"
               placeholder="Detalhes do evento"
             />
           </div>

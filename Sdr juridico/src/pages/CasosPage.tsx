@@ -12,7 +12,6 @@ import { cn } from '@/utils/cn'
 import { useCasos } from '@/hooks/useCasos'
 import { useAdvogados } from '@/hooks/useAdvogados'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
-import { useTheme } from '@/contexts/ThemeContext'
 import { useOrganization } from '@/hooks/useOrganization'
 import { useClientes } from '@/hooks/useClientes'
 import type { CasoRow } from '@/lib/supabaseClient'
@@ -34,9 +33,9 @@ const statusLabel = (status: Caso['status']) => {
 }
 
 const slaTone = (sla: Caso['slaRisk']) => {
-  if (sla === 'critico') return 'bg-[#F26C6C]'
-  if (sla === 'atencao') return 'bg-[#F5B361]'
-  return 'bg-[#6BC5B3]'
+  if (sla === 'critico') return 'bg-danger'
+  if (sla === 'atencao') return 'bg-warning'
+  return 'bg-success'
 }
 
 const slaPercentByRisk = (sla: Caso['slaRisk']) => {
@@ -47,34 +46,41 @@ const slaPercentByRisk = (sla: Caso['slaRisk']) => {
 
 const areaPill = (area: Caso['area']) => {
   if (area === 'Trabalhista') {
-    return 'bg-[#E8F0FF] text-[#2F6BFF] border-[#D7E2FF]'
+    return 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary'
   }
   if (area === 'Previdenciario') {
-    return 'bg-[#E6F3FF] text-[#3371D8] border-[#D6E8FF]'
+    return 'border-info-border bg-info-bg text-info'
   }
   if (area === 'Empresarial') {
-    return 'bg-[#E8F7EF] text-[#2F7A5C] border-[#D2F0E2]'
+    return 'border-brand-secondary-subtle bg-brand-secondary-subtle text-brand-secondary'
   }
-  return 'bg-[#F1F3F8] text-[#6B7280] border-[#E4E8F0]'
+  return 'border-border bg-surface-2 text-text-muted'
 }
 
 const heatPill = (heat: Caso['heat']) => {
   if (heat === 'quente') {
-    return 'bg-[#FDE2E2] text-[#D14949] border-[#F7CFCF]'
+    return 'border-danger-border bg-danger-bg text-danger'
   }
   if (heat === 'morno') {
-    return 'bg-[#FFE9C2] text-[#B88220] border-[#F5D8A0]'
+    return 'border-warning-border bg-warning-bg text-warning'
   }
-  return 'bg-[#E5EEFF] text-[#4C6FFF] border-[#D6E2FF]'
+  return 'border-info-border bg-info-bg text-info'
 }
+
+const appShellClass = 'min-h-screen bg-base text-text pb-12'
+const heroCardClass =
+  'relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt p-8 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]'
+const formControlClass =
+  'h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm font-medium text-text shadow-sm placeholder:text-text-subtle transition focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
+const textareaControlClass =
+  'min-h-[120px] w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-text shadow-sm placeholder:text-text-subtle transition focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
+const labelClass = 'text-sm font-semibold text-text'
 
 export const CasosPage = () => {
   const { casos, loading, error, createCaso, updateCaso, deleteCaso, assignCasoAdvogado } = useCasos()
   const { clientes } = useClientes()
   const { displayName } = useCurrentUser()
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
   const canManageCasos = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const { advogados } = useAdvogados(currentOrg?.id || null, canManageCasos)
   const navigate = useNavigate()
@@ -117,10 +123,10 @@ export const CasosPage = () => {
   }, [query, areaFilter, heatFilter, casos])
 
   const chips = [
-    { id: 'chip-1', label: 'Trabalhista', tone: 'bg-[#DFF1F0] text-[#2F7A5C]' },
-    { id: 'chip-2', label: 'Quente', tone: 'bg-[#FDE2E2] text-[#D14949]' },
-    { id: 'chip-3', label: 'Empresarial', tone: 'bg-[#FFE9C2] text-[#B88220]' },
-    { id: 'chip-4', label: 'e-mails', tone: 'bg-[#E5EEFF] text-[#4C6FFF]' },
+    { id: 'chip-1', label: 'Trabalhista', tone: 'border-brand-secondary bg-brand-secondary-subtle text-brand-secondary' },
+    { id: 'chip-2', label: 'Quente', tone: 'border-danger-border bg-danger-bg text-danger' },
+    { id: 'chip-3', label: 'Empresarial', tone: 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary' },
+    { id: 'chip-4', label: 'e-mails', tone: 'border-info-border bg-info-bg text-info' },
   ]
 
   const resetCasoForm = () => {
@@ -251,25 +257,13 @@ export const CasosPage = () => {
 
   if (showForm) {
     return (
-      <div
-        className={cn(
-          'min-h-screen pb-12',
-          isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
-        )}
-      >
+      <div className={appShellClass}>
         <div className="space-y-6">
-          <header
-            className={cn(
-              'relative overflow-hidden rounded-3xl border p-8 shadow-2xl',
-              isDark
-                ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#1a1f2e] to-[#0b0f14]'
-                : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#ffe0b2]',
-            )}
-          >
+          <header className={heroCardClass}>
             <div
               className={cn(
                 'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-                isDark ? 'opacity-10' : 'opacity-50',
+                'opacity-90',
               )}
               style={{ backgroundImage: `url(${heroLight})` }}
             />
@@ -277,22 +271,22 @@ export const CasosPage = () => {
               <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className={cn('rounded-full p-2', isDark ? 'bg-emerald-500/10' : 'bg-emerald-500/20')}>
-                      <Plus className={cn('h-5 w-5', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+                    <div className={cn('rounded-full p-2', 'bg-brand-secondary/20')}>
+                      <Plus className={cn('h-5 w-5', 'text-brand-secondary')} />
                     </div>
                     <p
                       className={cn(
                         'text-xs font-bold uppercase tracking-[0.3em]',
-                        isDark ? 'text-emerald-300' : 'text-emerald-700',
+                        'text-brand-secondary',
                       )}
                     >
                       {isEditing ? 'Editar caso' : 'Novo caso'}
                     </p>
                   </div>
-                  <h2 className={cn('font-display text-4xl font-bold', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+                  <h2 className={cn('font-display text-4xl font-bold', 'text-text')}>
                     {isEditing ? 'Atualizar caso' : 'Cadastrar caso'}
                   </h2>
-                  <p className={cn('text-base', isDark ? 'text-slate-400' : 'text-[#7a4a1a]')}>
+                  <p className={cn('text-base', 'text-text-muted')}>
                     {isEditing ? 'Atualize os dados e salve as alteracoes.' : 'Preencha os dados para criar um novo caso.'}
                   </p>
                 </div>
@@ -304,7 +298,7 @@ export const CasosPage = () => {
                   variant="outline"
                   className={cn(
                     'h-14 rounded-full px-8 font-bold shadow-lg transition-all hover:scale-105',
-                    isDark ? 'border-slate-700 hover:bg-slate-800' : 'border-[#f3c988] hover:bg-[#fff3e0]',
+                    'border-border hover:bg-surface-2',
                   )}
                 >
                   Voltar
@@ -316,40 +310,30 @@ export const CasosPage = () => {
           <Card
             className={cn(
               'border',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              'border-border bg-surface/90',
             )}
           >
             <CardContent className="p-8 space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2 md:col-span-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Titulo *
                   </label>
                   <input
                     value={formData.titulo}
                     onChange={(event) => setFormData({ ...formData, titulo: event.target.value })}
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={formControlClass}
                     placeholder="Titulo do caso"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Cliente
                   </label>
                   <select
                     value={formData.clienteId}
                     onChange={(event) => setFormData({ ...formData, clienteId: event.target.value })}
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={formControlClass}
                   >
                     <option value="">Sem cliente</option>
                     {clientes.map((cliente) => (
@@ -360,34 +344,24 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Area
                   </label>
                   <input
                     value={formData.area}
                     onChange={(event) => setFormData({ ...formData, area: event.target.value })}
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={formControlClass}
                     placeholder="Ex: Trabalhista"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Status
                   </label>
                   <select
                     value={formData.status}
                     onChange={(event) => setFormData({ ...formData, status: event.target.value as CasoRow['status'] })}
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={formControlClass}
                   >
                     <option value="ativo">Ativo</option>
                     <option value="suspenso">Suspenso</option>
@@ -395,18 +369,13 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Prioridade
                   </label>
                   <select
                     value={formData.prioridade}
                     onChange={(event) => setFormData({ ...formData, prioridade: event.target.value as CasoRow['prioridade'] })}
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={formControlClass}
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Media</option>
@@ -415,18 +384,13 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Etapa
                   </label>
                   <select
-                    value={formData.stage}
+                    value={formData.stage || ''}
                     onChange={(event) => setFormData({ ...formData, stage: event.target.value as CasoRow['stage'] })}
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={formControlClass}
                   >
                     <option value="triagem">Triagem</option>
                     <option value="negociacao">Negociacao</option>
@@ -435,35 +399,25 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Valor estimado
                   </label>
                   <input
                     type="number"
                     value={formData.valor}
                     onChange={(event) => setFormData({ ...formData, valor: event.target.value })}
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={formControlClass}
                     placeholder="0"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className={cn('text-sm font-semibold', isDark ? 'text-slate-300' : 'text-slate-700')}>
+                  <label className={labelClass}>
                     Descricao
                   </label>
                   <textarea
                     value={formData.descricao}
                     onChange={(event) => setFormData({ ...formData, descricao: event.target.value })}
-                    className={cn(
-                      'min-h-[120px] w-full rounded-xl border-2 px-4 py-3 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4',
-                      isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                        : 'border-[#f0d9b8] bg-white text-[#2a1400] placeholder:text-[#9a5b1e] focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className={textareaControlClass}
                     placeholder="Descricao do caso"
                   />
                 </div>
@@ -478,7 +432,7 @@ export const CasosPage = () => {
                   }}
                   className={cn(
                     'h-12 rounded-xl border-2 px-6 text-sm font-semibold',
-                    isDark ? 'border-slate-700 hover:bg-slate-800' : 'border-[#f0d9b8] hover:bg-[#fff3e0]',
+                    'border-border hover:bg-surface-2',
                   )}
                 >
                   Cancelar
@@ -487,7 +441,7 @@ export const CasosPage = () => {
                   onClick={handleSaveCaso}
                   className={cn(
                     'h-12 rounded-xl px-8 text-sm font-semibold shadow-lg',
-                    'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600',
+                    'bg-gradient-to-r from-brand-secondary to-brand-accent hover:from-brand-secondary-dark hover:to-brand-accent-dark',
                   )}
                   disabled={saving}
                 >
@@ -502,41 +456,29 @@ export const CasosPage = () => {
   }
 
   return (
-    <div
-      className={cn(
-        'min-h-screen pb-12',
-        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
-      )}
-    >
+    <div className={appShellClass}>
       <div className="space-y-6">
-        <header
-          className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
-            isDark
-              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
-              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
-          )}
-        >
+        <header className={cn(heroCardClass, 'p-6')}>
           <div
             className={cn(
               'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              isDark ? 'opacity-20' : 'opacity-80',
+              'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
           />
           <div className="relative z-10 space-y-2">
-            <div className={cn('flex items-center gap-3 text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+            <div className={cn('flex items-center gap-3 text-sm', 'text-text-muted')}>
               <span
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full border',
-                  isDark ? 'border-slate-700 bg-slate-900' : 'border-[#f0d9b8] bg-white',
+                  'border-border bg-white',
                 )}
               >
-                <ChevronLeft className={cn('h-4 w-4', isDark ? 'text-slate-300' : 'text-[#9a5b1e]')} />
+                <ChevronLeft className={cn('h-4 w-4', 'text-text-muted')} />
               </span>
               <span>Bom dia, {displayName}</span>
             </div>
-            <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+            <h2 className={cn('font-display text-2xl', 'text-text')}>
               Casos
             </h2>
           </div>
@@ -545,7 +487,7 @@ export const CasosPage = () => {
         <Card
           className={cn(
             'border',
-            isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            'border-border bg-surface/90',
           )}
         >
         <CardContent className="space-y-4">
@@ -558,10 +500,7 @@ export const CasosPage = () => {
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Buscar casos..."
                   className={cn(
-                    'h-11 w-full rounded-full border pl-10 pr-3 text-sm shadow-soft focus:outline-none focus:ring-2',
-                    isDark
-                      ? 'border-slate-700 bg-slate-900 text-slate-100 focus:border-emerald-400 focus:ring-emerald-500/20'
-                      : 'border-[#f0d9b8] bg-white text-[#2a1400] focus:border-emerald-400 focus:ring-emerald-200',
+                    'h-11 w-full rounded-full border border-border bg-white pl-10 pr-3 text-sm text-text placeholder:text-text-subtle shadow-soft focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15',
                   )}
                 />
               </div>
@@ -579,7 +518,7 @@ export const CasosPage = () => {
           <div
             className={cn(
               'flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 shadow-soft',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+              'border-border bg-white',
             )}
           >
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -600,7 +539,7 @@ export const CasosPage = () => {
                 type="button"
                 className={cn(
                   'ml-2 text-xs',
-                  isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+                  'text-text-muted hover:text-text',
                 )}
                 onClick={() => {
                   setQuery('')
@@ -614,7 +553,7 @@ export const CasosPage = () => {
             <Button
               variant="primary"
               size="sm"
-              className="h-11 rounded-full bg-[#1f8a4c] px-5 text-sm font-semibold text-white shadow-[0_12px_20px_-12px_rgba(31,138,76,0.8)] hover:brightness-95 dark:bg-emerald-500"
+              className="h-11 rounded-full bg-brand-secondary px-5 text-sm font-semibold text-white shadow-[0_12px_20px_-12px_rgba(6,182,212,0.5)] hover:brightness-95"
               onClick={() => {
                 if (!canManageCasos) {
                   toast.error('Apenas gestores podem adicionar casos.')
@@ -637,10 +576,7 @@ export const CasosPage = () => {
                 value={areaFilter}
                 onChange={(event) => setAreaFilter(event.target.value)}
                 className={cn(
-                  'h-8 rounded-full border px-3 text-xs shadow-soft',
-                  isDark
-                    ? 'border-slate-700 bg-slate-900 text-slate-100'
-                    : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                  'h-8 rounded-full border px-3 text-xs shadow-soft','border-border bg-white text-text',
                 )}
               >
                 <option value="todos">Todos</option>
@@ -655,10 +591,7 @@ export const CasosPage = () => {
                 value={heatFilter}
                 onChange={(event) => setHeatFilter(event.target.value)}
                 className={cn(
-                  'h-8 rounded-full border px-3 text-xs shadow-soft',
-                  isDark
-                    ? 'border-slate-700 bg-slate-900 text-slate-100'
-                    : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                  'h-8 rounded-full border px-3 text-xs shadow-soft','border-border bg-white text-text',
                 )}
               >
                 <option value="todos">Todos</option>
@@ -679,14 +612,14 @@ export const CasosPage = () => {
             <div
               className={cn(
                 'overflow-hidden rounded-2xl border shadow-soft',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white',
+                'border-border bg-white',
               )}
             >
               <table className="w-full border-collapse text-left text-sm">
                 <thead
                   className={cn(
                     'text-[11px] uppercase tracking-[0.22em]',
-                    isDark ? 'bg-slate-800 text-slate-300' : 'bg-[#fff3e0] text-[#9a5b1e]',
+                    'bg-surface-2 text-text-muted',
                   )}
                 >
                   <tr>
@@ -711,10 +644,7 @@ export const CasosPage = () => {
                       <React.Fragment key={caso.id}>
                         <tr
                           className={cn(
-                            'border-t',
-                            isDark
-                              ? 'border-slate-800 hover:bg-slate-800/60'
-                              : 'border-[#f0d9b8] hover:bg-[#fff3e0]/60',
+                            'border-t','border-border hover:bg-surface-2/60',
                           )}
                           onClick={() => navigate(`/app/caso/${caso.id}`)}
                         >
@@ -786,10 +716,7 @@ export const CasosPage = () => {
                                 navigate(`/app/caso/${caso.id}`)
                               }}
                               className={cn(
-                                'inline-flex h-8 w-8 items-center justify-center rounded-full border',
-                                isDark
-                                  ? 'border-slate-700 bg-slate-900 text-slate-300 hover:text-slate-100'
-                                  : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:text-[#2a1400]',
+                                'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-text',
                               )}
                             >
                               <ChevronDown className="h-4 w-4" />
@@ -805,10 +732,7 @@ export const CasosPage = () => {
                                     setSelectedCasoAdvogadoId('')
                                   }}
                                   className={cn(
-                                    'inline-flex h-8 w-8 items-center justify-center rounded-full border',
-                                    isDark
-                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:text-emerald-300'
-                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:text-emerald-600',
+                                    'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-brand-secondary',
                                   )}
                                 >
                                   <UserPlus className="h-4 w-4" />
@@ -820,10 +744,7 @@ export const CasosPage = () => {
                                     void handleEditCaso(caso.id)
                                   }}
                                   className={cn(
-                                    'inline-flex h-8 w-8 items-center justify-center rounded-full border',
-                                    isDark
-                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:text-emerald-300'
-                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:text-emerald-600',
+                                    'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-brand-secondary',
                                   )}
                                 >
                                   <Pencil className="h-4 w-4" />
@@ -835,10 +756,7 @@ export const CasosPage = () => {
                                     void handleDeleteCaso(caso.id, caso.title)
                                   }}
                                   className={cn(
-                                    'inline-flex h-8 w-8 items-center justify-center rounded-full border',
-                                    isDark
-                                      ? 'border-slate-700 bg-slate-900 text-slate-300 hover:text-red-400'
-                                      : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:text-red-600',
+                                    'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-red-600',
                                   )}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -851,28 +769,19 @@ export const CasosPage = () => {
                       {canManageCasos && assigningCasoId === caso.id && (
                         <tr
                           className={cn(
-                            'border-t',
-                            isDark
-                              ? 'border-slate-800 bg-slate-900/70'
-                              : 'border-[#f0d9b8] bg-[#fff3e0]/60',
+                            'border-t','border-border bg-surface-2/60',
                           )}
                         >
                           <td colSpan={7} className="px-4 py-3">
                             <div
                               className={cn(
-                                'flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-xs',
-                                isDark
-                                  ? 'border-slate-700 bg-slate-900/60 text-slate-300'
-                                  : 'border-[#f0d9b8] bg-white text-[#7a4a1a]',
+                                'flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-xs','border-border bg-white text-text-muted',
                               )}
                             >
                               <span className="text-xs font-semibold">Encaminhar para</span>
                               <select
                                 className={cn(
-                                  'h-9 rounded-lg border px-3 text-xs',
-                                  isDark
-                                    ? 'border-slate-700 bg-slate-900 text-slate-100'
-                                    : 'border-[#f0d9b8] bg-white text-[#2a1400]',
+                                  'h-9 rounded-lg border px-3 text-xs','border-border bg-white text-text',
                                 )}
                                 value={selectedCasoAdvogadoId}
                                 onChange={(event) => setSelectedCasoAdvogadoId(event.target.value)}
@@ -898,7 +807,7 @@ export const CasosPage = () => {
                                 size="sm"
                                 className={cn(
                                   'h-9 px-4 text-xs',
-                                  isDark ? 'text-slate-300 hover:text-slate-100' : 'text-[#7a4a1a] hover:text-[#2a1400]',
+                                  'text-text-muted hover:text-text',
                                 )}
                                 onClick={() => {
                                   setAssigningCasoId(null)
@@ -921,10 +830,7 @@ export const CasosPage = () => {
               </table>
               <div
                 className={cn(
-                  'flex items-center justify-between border-t px-4 py-3 text-xs',
-                  isDark
-                    ? 'border-slate-800 bg-slate-800 text-slate-300'
-                    : 'border-[#f0d9b8] bg-[#fff3e0] text-[#9a5b1e]',
+                  'flex items-center justify-between border-t px-4 py-3 text-xs','border-border bg-surface-2 text-text-muted',
                 )}
               >
                 <span>
@@ -936,10 +842,7 @@ export const CasosPage = () => {
                       key={page}
                       type="button"
                       className={cn(
-                        'h-7 w-7 rounded-lg border text-xs',
-                        isDark
-                          ? 'border-slate-700 bg-slate-900 text-slate-300 hover:text-slate-100'
-                          : 'border-[#f0d9b8] bg-white text-[#7a4a1a] hover:text-[#2a1400]',
+                        'h-7 w-7 rounded-lg border text-xs','border-border bg-white text-text-muted hover:text-text',
                       )}
                     >
                       {page}

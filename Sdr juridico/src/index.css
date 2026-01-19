@@ -7,23 +7,7 @@
 
 /* Design System */
 @import "./styles/design-tokens.css";
-@import "./styles/dark-mode.css";
 @import "./styles/components.css";
 
-:root {
-  color-scheme: light;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: var(--line-height-normal);
-}
-
-body {
-  min-height: 100vh;
-  background-color: var(--color-base);
-  color: var(--color-text);
-  transition: background-color 250ms ease-in-out, color 250ms ease-in-out;
-}
+/* FORCE LIGHT MODE - DEVE SER O ÚLTIMO IMPORT */
+@import "./styles/force-light.css";

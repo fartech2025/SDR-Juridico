@@ -69,17 +69,17 @@ export default function UserManagement() {
   
   return (
     <OrgAdminGuard>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
                   <Users className="w-8 h-8 mr-3" />
                   Gerenciar Usuários
                 </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-gray-500">
                   {currentOrg?.name} • {filteredUsers.length} usuários
                 </p>
               </div>
@@ -97,19 +97,19 @@ export default function UserManagement() {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Usage Info */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                <p className="text-sm font-medium text-blue-900">
                   Usuários: {users.length} / {currentOrg?.max_users}
                 </p>
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                <p className="text-xs text-blue-700 mt-1">
                   {currentOrg && currentOrg.max_users - users.length} vagas disponíveis
                 </p>
               </div>
               
               {users.length >= (currentOrg?.max_users || 0) && (
-                <div className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="text-sm text-blue-700">
                   Limite atingido - entre em contato para aumentar
                 </div>
               )}
@@ -117,7 +117,7 @@ export default function UserManagement() {
           </div>
           
           {/* Search */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-4">
+          <div className="bg-white rounded-lg shadow mb-6 p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -125,56 +125,56 @@ export default function UserManagement() {
                 placeholder="Buscar por nome ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
           
           {/* Users Table */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700/50">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Usuário
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Função
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Cadastrado em
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Último Acesso
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Ações
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                         Carregando usuários...
                       </td>
                     </tr>
                   ) : filteredUsers.length > 0 ? (
                     filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <tr key={user.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                              <span className="text-emerald-600 font-semibold">
                                 {(user.nome || user.email)[0].toUpperCase()}
                               </span>
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900 dark:text-white">
+                              <p className="font-medium text-gray-900">
                                 {user.nome || 'Sem nome'}
                               </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                              <p className="text-sm text-gray-500">
                                 {user.email}
                               </p>
                             </div>
@@ -183,10 +183,10 @@ export default function UserManagement() {
                         <td className="px-6 py-4">
                           <RoleBadge role={user.role} />
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-4 text-sm text-gray-500">
                           {new Date(user.created_at).toLocaleDateString('pt-BR')}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-4 text-sm text-gray-500">
                           {user.last_sign_in_at 
                             ? new Date(user.last_sign_in_at).toLocaleDateString('pt-BR')
                             : 'Nunca'}
@@ -194,13 +194,13 @@ export default function UserManagement() {
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              className="p-2 text-gray-600 hover:text-blue-600hover:bg-gray-100 rounded-lg transition-colors"
                               title="Editar"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              className="p-2 text-gray-600 hover:text-red-600hover:bg-gray-100 rounded-lg transition-colors"
                               title="Remover"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -211,7 +211,7 @@ export default function UserManagement() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                         Nenhum usuário encontrado
                       </td>
                     </tr>
@@ -225,11 +225,11 @@ export default function UserManagement() {
         {/* Invite Modal - Placeholder */}
         {showInviteModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Convidar Usuário
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-gray-600 mb-4">
                 Funcionalidade em desenvolvimento
               </p>
               <button
@@ -250,17 +250,17 @@ function RoleBadge({ role }: { role: UserRole }) {
   const roleConfig = {
     fartech_admin: { 
       label: 'Fartech Admin', 
-      class: 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300',
+      class: 'bg-purple-100 text-purple-800',
       icon: Shield 
     },
     org_admin: { 
       label: 'Administrador', 
-      class: 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
+      class: 'bg-blue-100 text-blue-800',
       icon: Shield 
     },
     user: { 
       label: 'Usuário', 
-      class: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+      class: 'bg-gray-100 text-gray-800',
       icon: Users 
     },
   }

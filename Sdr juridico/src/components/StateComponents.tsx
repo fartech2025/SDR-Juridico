@@ -36,9 +36,9 @@ export const LoadingState = ({ message = 'Carregando...' }: { message?: string }
   <div className="flex flex-col items-center justify-center py-12">
     <div className="relative h-12 w-12 mb-4">
       <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-      <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 animate-spin"></div>
+      <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-brand-primary animate-spin"></div>
     </div>
-    <p className="text-sm text-gray-600">{message}</p>
+    <p className="text-sm text-text-muted">{message}</p>
   </div>
 )
 
@@ -55,16 +55,16 @@ export const ErrorState = ({
   code?: string
 }) => (
   <div className="flex flex-col items-center justify-center py-12 px-4">
-    <div className="rounded-full bg-red-100 p-3 mb-4">
-      <AlertCircle className="h-6 w-6 text-red-600" />
+    <div className="rounded-full bg-danger-bg p-3 mb-4">
+      <AlertCircle className="h-6 w-6 text-danger" />
     </div>
-    <h3 className="text-lg font-semibold text-gray-900 mb-2">Erro ao carregar</h3>
-    <p className="text-sm text-gray-600 text-center mb-4 max-w-sm">{error}</p>
-    {code && <p className="text-xs text-gray-500 mb-4">Código: {code}</p>}
+    <h3 className="text-lg font-semibold text-text mb-2">Erro ao carregar</h3>
+    <p className="text-sm text-text-muted text-center mb-4 max-w-sm">{error}</p>
+    {code && <p className="text-xs text-text-subtle mb-4">Código: {code}</p>}
     {onRetry && (
       <button
         onClick={onRetry}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary-dark transition"
       >
         <RefreshCw className="h-4 w-4" />
         Tentar novamente
@@ -80,7 +80,7 @@ export const EmptyState = ({ message = 'Nenhum dado disponível' }: { message?: 
   <div className="flex flex-col items-center justify-center py-12">
     <div className="rounded-full bg-gray-100 p-3 mb-4">
       <svg
-        className="h-6 w-6 text-gray-400"
+        className="h-6 w-6 text-text-subtle"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -93,8 +93,8 @@ export const EmptyState = ({ message = 'Nenhum dado disponível' }: { message?: 
         />
       </svg>
     </div>
-    <h3 className="text-lg font-semibold text-gray-900 mb-2">Sem dados</h3>
-    <p className="text-sm text-gray-600">{message}</p>
+    <h3 className="text-lg font-semibold text-text mb-2">Sem dados</h3>
+    <p className="text-sm text-text-muted">{message}</p>
   </div>
 )
 

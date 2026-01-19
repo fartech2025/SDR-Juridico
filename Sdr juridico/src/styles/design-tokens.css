@@ -1,111 +1,111 @@
 /**
  * Design Tokens - Sistema de Design Centralizado
- * Data: 2026-01-14
+ * Data: 2026-01-18
  * 
- * Este arquivo contém todos os tokens de design do sistema.
+ * Paleta Clara e Moderna para Aplicação SaaS Jurídica
  * Use sempre os tokens CSS variables em vez de valores hardcoded.
  */
 
 :root {
   /* ========================================
-     CORES PRINCIPAIS
+     CORES PRINCIPAIS - PALETA CLARA
      ======================================== */
   
-  /* Brand Colors - Emerald Green */
-  --brand-primary: #10b981;
-  --brand-primary-dark: #059669;
-  --brand-primary-light: #34d399;
-  --brand-primary-subtle: #d1fae5;
+  /* Brand Primary - Azul Profissional */
+  --brand-primary: #0066cc;
+  --brand-primary-dark: #004a99;
+  --brand-primary-light: #3385ff;
+  --brand-primary-subtle: #e6f2ff;
   
-  /* Brand Secondary - Indigo */
-  --brand-secondary: #6366f1;
-  --brand-secondary-dark: #4f46e5;
-  --brand-secondary-light: #818cf8;
-  --brand-secondary-subtle: #e0e7ff;
+  /* Brand Secondary - Teal Moderno */
+  --brand-secondary: #00a085;
+  --brand-secondary-dark: #008070;
+  --brand-secondary-light: #1abc9c;
+  --brand-secondary-subtle: #e0faf7;
   
-  /* Brand Accent - Purple */
-  --brand-accent: #8b5cf6;
-  --brand-accent-dark: #7c3aed;
-  --brand-accent-light: #a78bfa;
+  /* Brand Accent - Laranja Vivo */
+  --brand-accent: #ff9500;
+  --brand-accent-dark: #e68000;
+  --brand-accent-light: #ffb84d;
   
   /* ========================================
-     CORES SEMANTICAS
+     CORES SEMANTICAS - TONS CLAROS
      ======================================== */
   
-  /* Success */
+  /* Success - Verde Menta */
   --color-success: #10b981;
   --color-success-dark: #059669;
-  --color-success-light: #34d399;
-  --color-success-bg: #d1fae5;
-  --color-success-border: #a7f3d0;
+  --color-success-light: #6ee7b7;
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #c6f6d5;
   
-  /* Warning */
+  /* Warning - Amarelo Quente */
   --color-warning: #f59e0b;
   --color-warning-dark: #d97706;
-  --color-warning-light: #fbbf24;
-  --color-warning-bg: #fef3c7;
-  --color-warning-border: #fde68a;
+  --color-warning-light: #fcd34d;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fef08a;
   
-  /* Danger */
-  --color-danger: #ef4444;
-  --color-danger-dark: #dc2626;
-  --color-danger-light: #f87171;
-  --color-danger-bg: #fee2e2;
-  --color-danger-border: #fecaca;
+  /* Danger - Rosa Suave */
+  --color-danger: #f43f5e;
+  --color-danger-dark: #e11d48;
+  --color-danger-light: #fb7185;
+  --color-danger-bg: #ffe4e6;
+  --color-danger-border: #fbcfe8;
   
-  /* Info */
-  --color-info: #3b82f6;
-  --color-info-dark: #2563eb;
-  --color-info-light: #60a5fa;
-  --color-info-bg: #dbeafe;
-  --color-info-border: #bfdbfe;
-  
-  /* ========================================
-     CORES NEUTRAS - LIGHT MODE
-     ======================================== */
-  
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
+  /* Info - Azul Claro */
+  --color-info: #06b6d4;
+  --color-info-dark: #0891b2;
+  --color-info-light: #22d3ee;
+  --color-info-bg: #ecf9ff;
+  --color-info-border: #cffafe;
   
   /* ========================================
-     CORES DE SUPERFÍCIE - LIGHT MODE
+     CORES NEUTRAS - PALETA CLARA LIMPA
      ======================================== */
   
-  --color-base: #f7f8fc;
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+  
+  /* ========================================
+     CORES DE SUPERFÍCIE - TONS CLAROS
+     ======================================== */
+  
+  --color-base: #f9fbfd;
   --color-base-secondary: #ffffff;
   --color-base-tertiary: #f1f5f9;
   
   --color-surface: #ffffff;
-  --color-surface-2: #f8f9fb;
+  --color-surface-2: #f8fafc;
   --color-surface-alt: #f1f5f9;
   --color-surface-raised: #ffffff;
-  --color-surface-hover: #f1f5f9;
+  --color-surface-hover: #f8fafc;
   
   /* ========================================
-     CORES DE TEXTO - LIGHT MODE
+     CORES DE TEXTO - TONS CLAROS
      ======================================== */
   
-  --color-text: #23263b;
-  --color-text-muted: #4b5563;
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
   --color-text-subtle: #64748b;
-  --color-text-disabled: #9ca3af;
+  --color-text-disabled: #cbd5e1;
   --color-text-inverse: #ffffff;
   
   /* ========================================
-     BORDAS - LIGHT MODE
+     BORDAS - TONS CLAROS
      ======================================== */
   
-  --color-border: #cbd5e1;
-  --color-border-soft: #e2e8f0;
-  --color-border-strong: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-soft: #f1f5f9;
+  --color-border-strong: #cbd5e1;
   --color-border-focus: var(--brand-primary);
   
   /* ========================================
@@ -215,48 +215,11 @@
 }
 
 /* ========================================
-   DARK MODE
+   LIGHT MODE ONLY
+   ======================================== 
+   Esta aplicação usa APENAS tema claro.
+   Dark mode foi removido para manter consistência visual.
    ======================================== */
-
-html.dark {
-  color-scheme: dark;
-  
-  /* Cores de Superfície - Dark Mode */
-  --color-base: #0f172a;
-  --color-base-secondary: #1e293b;
-  --color-base-tertiary: #334155;
-  
-  --color-surface: #1e293b;
-  --color-surface-2: #293548;
-  --color-surface-alt: #334155;
-  --color-surface-raised: #475569;
-  --color-surface-hover: #334155;
-  
-  /* Cores de Texto - Dark Mode */
-  --color-text: #f1f5f9;
-  --color-text-muted: #cbd5e1;
-  --color-text-subtle: #94a3b8;
-  --color-text-disabled: #64748b;
-  --color-text-inverse: #0f172a;
-  
-  /* Bordas - Dark Mode */
-  --color-border: #334155;
-  --color-border-soft: #475569;
-  --color-border-strong: #64748b;
-  
-  /* Sombras - Dark Mode (mais sutis) */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-  
-  --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.7);
-}
 
 /* ========================================
    ACESSIBILIDADE
@@ -276,10 +239,5 @@ html.dark {
   :root {
     --color-border: #000000;
     --color-text: #000000;
-  }
-  
-  html.dark {
-    --color-border: #ffffff;
-    --color-text: #ffffff;
   }
 }

@@ -22,7 +22,6 @@ import { cn } from '@/utils/cn'
 import { useLeads } from '@/hooks/useLeads'
 import { useCasos } from '@/hooks/useCasos'
 import type { FunnelStage, Goal, Insight, MonthlyMetric } from '@/types/domain'
-import { useTheme } from '@/contexts/ThemeContext'
 
 const resolveStatus = (
   value: string | null,
@@ -72,8 +71,6 @@ const buildMonthlyMetrics = (dates: string[]): MonthlyMetric[] => {
 
 export const IndicadoresPage = () => {
   const [params] = useSearchParams()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
   const state = resolveStatus(params.get('state'))
   const { leads, loading: leadsLoading, error: leadsError } = useLeads()
   const { casos, loading: casosLoading, error: casosError } = useCasos()
@@ -172,22 +169,19 @@ export const IndicadoresPage = () => {
     <div
       className={cn(
         'min-h-screen pb-12',
-        isDark ? 'bg-[#0e1116] text-slate-100' : 'bg-[#fff6e9] text-[#1d1d1f]',
+        'bg-base text-text',
       )}
     >
       <div className="space-y-5">
         <header
           className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(199,98,0,0.8)]',
-            isDark
-              ? 'border-slate-800 bg-gradient-to-br from-[#141820] via-[#10141b] to-[#0b0f14]'
-              : 'border-[#f3c988] bg-gradient-to-br from-[#ffedd5] via-[#fff3e0] to-[#f7caaa]',
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
               'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              isDark ? 'opacity-20' : 'opacity-80',
+              'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
           />
@@ -195,18 +189,18 @@ export const IndicadoresPage = () => {
             <p
               className={cn(
                 'text-[11px] uppercase tracking-[0.32em]',
-                isDark ? 'text-emerald-200' : 'text-[#9a5b1e]',
+                'text-text-muted',
               )}
             >
               Indicadores
             </p>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-accent" />
-              <h2 className={cn('font-display text-2xl', isDark ? 'text-slate-100' : 'text-[#2a1400]')}>
+              <h2 className={cn('font-display text-2xl', 'text-text')}>
                 Gestao central
               </h2>
             </div>
-            <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-[#7a4a1a]')}>
+            <p className={cn('text-sm', 'text-text-muted')}>
               Leitura consolidada do funil juridico e metas.
             </p>
           </div>
@@ -217,7 +211,7 @@ export const IndicadoresPage = () => {
           <Card
             className={cn(
               'border',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              'border-border bg-surface/90',
             )}
           >
             <CardHeader>
@@ -264,7 +258,7 @@ export const IndicadoresPage = () => {
           <Card
             className={cn(
               'border',
-              isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+              'border-border bg-surface/90',
             )}
           >
             <CardHeader>
@@ -311,7 +305,7 @@ export const IndicadoresPage = () => {
               key={insight.id}
               className={cn(
                 'border',
-                isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+                'border-border bg-surface/90',
               )}
             >
               <CardHeader className="flex items-center justify-between gap-3">
@@ -328,7 +322,7 @@ export const IndicadoresPage = () => {
         <Card
           className={cn(
             'border',
-            isDark ? 'border-slate-800 bg-slate-900/70' : 'border-[#f0d9b8] bg-white/95',
+            'border-border bg-surface/90',
           )}
         >
           <CardHeader>
