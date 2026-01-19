@@ -20,6 +20,7 @@ import {
   X,
   Building2,
   Shield,
+  ShieldCheck,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -48,7 +49,7 @@ const navItems = [
 const adminNavItems = [
   { label: 'Organizacoes', to: '/admin/organizations', icon: Building2 },
   { label: 'Usuarios', to: '/admin/users', icon: Shield },
-  { label: 'Seguranca', to: '/admin/security', icon: Shield },
+  { label: 'Seguranca', to: '/admin/security', icon: ShieldCheck }, // Monitoramento de segurança
 ]
 
 const orgAdminNavItems = [
@@ -128,8 +129,8 @@ export const AppShell = () => {
         </div>
 
         <nav className="flex-1 space-y-2 px-4">
-          {/* Admin Menu for Fartech */}
-          {isFartechAdmin && adminNavItems.map((item) => (
+          {/* Admin Menu for Fartech - apenas em /admin/* */}
+          {isFartechAdmin && location.pathname.startsWith('/admin') && adminNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -158,8 +159,8 @@ export const AppShell = () => {
             </NavLink>
           ))}
 
-          {/* Regular Menu */}
-          {!isFartechAdmin && navItems.map((item) => (
+          {/* Regular Menu - apenas em /app/* ou quando não for rota admin */}
+          {!location.pathname.startsWith('/admin') && navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
