@@ -41,7 +41,10 @@ export const permissionsService = {
         .eq('id', user.id)
         .single()
 
+      console.log('[PermissionsService] Dados do usuario:', { data, error })
+
       if (error) {
+        console.log('[PermissionsService] Erro ao buscar usuario, usando fallback')
         const fallbackName =
           (user.user_metadata && (user.user_metadata as { nome_completo?: string }).nome_completo) ||
           user.email ||
@@ -60,7 +63,11 @@ export const permissionsService = {
       
       // Map to UserWithRole interface
       const permissoes = data?.permissoes || []
+      console.log('[PermissionsService] Permissoes do usuario:', permissoes)
+      
       const isFartechAdmin = resolveRoleFromPermissoes(permissoes) === 'fartech_admin'
+      console.log('[PermissionsService] isFartechAdmin:', isFartechAdmin)
+      
       const { data: memberData } = await supabase
         .from('org_members')
         .select('org_id, role')
@@ -72,6 +79,8 @@ export const permissionsService = {
 
       const membershipRole = memberData?.role || null
       const role = membershipRole || resolveRoleFromPermissoes(permissoes)
+      
+      console.log('[PermissionsService] Role final:', role, 'membershipRole:', membershipRole)
 
       return {
         id: data.id,

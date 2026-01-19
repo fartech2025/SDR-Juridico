@@ -45,9 +45,7 @@ export const userSchema = z.object({
     .regex(/^\d{10,11}$/, 'Telefone deve ter 10 ou 11 dígitos')
     .optional(),
   
-  role: z.enum(['fartech_admin', 'org_admin', 'user'], {
-    errorMap: () => ({ message: 'Role inválido' })
-  })
+  role: z.enum(['fartech_admin', 'org_admin', 'user'])
 })
 
 // Lead Schema
@@ -70,9 +68,7 @@ export const leadSchema = z.object({
     .max(50, 'Origem muito longa')
     .optional(),
   
-  status: z.enum(['novo', 'em_atendimento', 'qualificado', 'convertido', 'descartado'], {
-    errorMap: () => ({ message: 'Status inválido' })
-  }).optional(),
+  status: z.enum(['novo', 'em_atendimento', 'qualificado', 'convertido', 'descartado']).optional(),
 })
 
 // Case Schema
@@ -93,9 +89,7 @@ export const caseSchema = z.object({
     .min(0, 'Valor da causa deve ser positivo')
     .optional(),
   
-  status: z.enum(['ativo', 'suspenso', 'encerrado', 'arquivado'], {
-    errorMap: () => ({ message: 'Status inválido' })
-  }).optional(),
+  status: z.enum(['ativo', 'suspenso', 'encerrado', 'arquivado']).optional(),
   
   tipo: z.string()
     .max(50, 'Tipo muito longo')
@@ -112,9 +106,7 @@ export const documentSchema = z.object({
     .max(1000, 'Descrição muito longa')
     .optional(),
   
-  tipo: z.enum(['contrato', 'peticao', 'sentenca', 'acordo', 'procuracao', 'outro'], {
-    errorMap: () => ({ message: 'Tipo inválido' })
-  }).optional(),
+  tipo: z.enum(['contrato', 'peticao', 'sentenca', 'acordo', 'procuracao', 'outro']).optional(),
   
   mime_type: z.string()
     .regex(/^[a-z]+\/[a-z0-9\-\+\.]+$/, 'MIME type inválido')
@@ -150,9 +142,7 @@ export const clientSchema = z.object({
     .regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos')
     .optional(),
   
-  tipo: z.enum(['fisica', 'juridica'], {
-    errorMap: () => ({ message: 'Tipo inválido' })
-  }).optional(),
+  tipo: z.enum(['fisica', 'juridica']).optional(),
 })
 
 // Sanitization helpers
@@ -224,7 +214,7 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, data: unknown): { succe
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        errors: error.issues.map(e => `${e.path.join('.')}: ${e.message}`)
       }
     }
     return { success: false, errors: ['Erro de validação desconhecido'] }

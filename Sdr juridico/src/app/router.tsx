@@ -24,7 +24,7 @@ import OrganizationsList from '@/pages/fartech/OrganizationsList'
 import OrganizationForm from '@/pages/fartech/OrganizationForm'
 import OrganizationDetails from '@/pages/fartech/OrganizationDetails'
 import OrganizationSettingsPage from '@/pages/fartech/OrganizationSettingsPage'
-import SecurityMonitoring from '@/pages/fartech/SecurityMonitoring'
+import SecurityMonitoringSimple from '@/pages/fartech/SecurityMonitoringSimple'
 import UserManagement from '@/pages/UserManagement'
 import OrgSettings from '@/pages/OrgSettings'
 import OrgSuspendedPage from '@/pages/OrgSuspendedPage'
@@ -155,7 +155,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'security',
-        element: <SecurityMonitoring />,
+        element: <SecurityMonitoringSimple />,
       },
     ],
   },

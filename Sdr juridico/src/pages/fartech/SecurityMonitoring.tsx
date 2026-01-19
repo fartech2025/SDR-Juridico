@@ -1,5 +1,6 @@
 // SecurityMonitoring - Painel de Monitoramento de Segurança Nível Bancário
 // Date: 2026-01-19
+// Updated: Force HMR reload
 
 import { useState, useEffect } from 'react'
 import { 

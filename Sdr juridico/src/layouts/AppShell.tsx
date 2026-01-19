@@ -67,18 +67,6 @@ export const AppShell = () => {
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
-  // Função de teste - usa função global do HTML (funciona em mobile e desktop)
-  const handleZoomTest = (direction: 'up' | 'down') => {
-    // @ts-ignore
-    if (direction === 'up' && window.zoomIn) {
-      // @ts-ignore
-      window.zoomIn()
-    } else if (direction === 'down' && window.zoomOut) {
-      // @ts-ignore
-      window.zoomOut()
-    }
-  }
-
   // Track page views automaticamente
   usePageTracking()
 
@@ -95,7 +83,12 @@ export const AppShell = () => {
   // Redirect Fartech Admin to /admin if accessing /app
   React.useEffect(() => {
     // Only redirect if we're sure about the admin status (not loading)
-    // Wait a bit to ensure OrganizationProvider has loaded
+    if (isFartechAdmin && location.pathname.startsWith('/app')) {
+      navigate('/admin/organizations', { replace: true })
+    }
+  }, [isFartechAdmin, location.pathname, navigate])
+
+  const handleLogout = async () => {
     setLogoutOpen(false)
     // Log de logout e encerrar sessão
     await auditService.logLogout()
@@ -385,23 +378,6 @@ export const AppShell = () => {
             <span className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-primary shadow-soft">
               3
             </span>
-          </div>
-
-          {/* Controle de Tamanho de Fonte - TESTE DIRETO */}
-          <div className="flex items-center gap-1 bg-yellow-200 px-2 py-1 rounded">
-            <button
-              onClick={() => handleZoomTest('down')}
-              className="bg-red-500 text-white px-3 py-1 rounded font-bold text-lg"
-            >
-              A-
-            </button>
-            <span className="font-bold text-black mx-2">{scale.toFixed(2)}</span>
-            <button
-              onClick={() => handleZoomTest('up')}
-              className="bg-green-500 text-white px-3 py-1 rounded font-bold text-lg"
-            >
-              A+
-            </button>
           </div>
 
           {/* FontSizeButton original */}
