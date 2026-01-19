@@ -48,6 +48,7 @@ const navItems = [
 const adminNavItems = [
   { label: 'Organizacoes', to: '/admin/organizations', icon: Building2 },
   { label: 'Usuarios', to: '/admin/users', icon: Shield },
+  { label: 'Seguranca', to: '/admin/security', icon: Shield },
 ]
 
 const orgAdminNavItems = [

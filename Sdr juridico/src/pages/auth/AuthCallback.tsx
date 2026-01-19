@@ -14,8 +14,11 @@ export default function AuthCallback() {
         const refreshToken = hashParams.get('refresh_token')
         const type = hashParams.get('type')
 
-        console.log('🔐 AuthCallback - Type:', type)
-        console.log('🔐 AuthCallback - Has tokens:', !!accessToken, !!refreshToken)
+        // Logs apenas em desenvolvimento - NUNCA em produção
+        if (import.meta.env.DEV) {
+          console.log('🔐 AuthCallback - Type:', type)
+          console.log('🔐 AuthCallback - Has tokens:', !!accessToken, !!refreshToken)
+        }
 
         if (accessToken && refreshToken) {
           // Definir a sessão com os tokens recebidos
@@ -30,7 +33,9 @@ export default function AuthCallback() {
             return
           }
 
-          console.log('✅ Sessão definida com sucesso!', data.user?.email)
+          if (import.meta.env.DEV) {
+            console.log('✅ Sessão definida com sucesso!', data.user?.email)
+          }
 
           // Verificar se é confirmação de email ou signup
           if (type === 'signup' || type === 'email_confirmation') {
