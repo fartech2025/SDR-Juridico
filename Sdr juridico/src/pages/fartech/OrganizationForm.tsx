@@ -118,6 +118,13 @@ export default function OrganizationForm() {
       ...limits[plan],
     }))
   }
+
+  const planOptions: Array<{ value: OrganizationPlan; label: string }> = [
+    { value: 'trial', label: 'Trial' },
+    { value: 'basic', label: 'Basico' },
+    { value: 'professional', label: 'Professional' },
+    { value: 'enterprise', label: 'Enterprise' },
+  ]
   
   const generateSlug = (name: string) => {
     return name
@@ -353,19 +360,19 @@ export default function OrganizationForm() {
                     Plano *
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {(['starter', 'professional', 'enterprise'] as OrganizationPlan[]).map((plan) => (
+                    {planOptions.map((plan) => (
                       <button
-                        key={plan}
+                        key={plan.value}
                         type="button"
-                        onClick={() => handlePlanChange(plan)}
+                        onClick={() => handlePlanChange(plan.value)}
                         className={`p-4 border-2 rounded-lg text-left transition-all ${
-                          formData.plan === plan
+                          formData.plan === plan.value
                             ? 'border-emerald-600 bg-emerald-50'
                             : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
                         <p className="font-semibold text-gray-900 capitalize">
-                          {plan}
+                          {plan.label}
                         </p>
                       </button>
                     ))}

@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { UsuarioRow, UserRole } from '@/lib/supabaseClient'
 import { useAuth } from '@/contexts/AuthContext'
+import { ensureUsuario } from '@/services/usuariosService'
 
 const roleLabels: Record<UserRole, string> = {
   fartech_admin: 'Admin',
@@ -52,15 +53,6 @@ export function useCurrentUser() {
   const [error, setError] = useState<Error | null>(null)
   const missingTableRef = useRef(false)
 
-  const isMissingUsuariosTable = (err?: { code?: string; message?: string } | null) => {
-    const message = err?.message || ''
-    return (
-      err?.code === '42P01' ||
-      message.includes('schema cache') ||
-      message.includes("Could not find the table 'public.usuarios'")
-    )
-  }
-
   useEffect(() => {
     if (authLoading) {
       setLoading(true)
@@ -91,26 +83,23 @@ export function useCurrentUser() {
         return
       }
 
-      const { data, error: profileError } = await supabase
-        .from('usuarios')
-        .select('id, nome_completo, email, permissoes, created_at, updated_at')
-        .eq('id', user.id)
-        .single()
+      const { usuario, missingUsuariosTable, seed } = await ensureUsuario(user)
 
       if (!active) return
 
-      if (profileError) {
-        if (isMissingUsuariosTable(profileError)) {
-          missingTableRef.current = true
-        } else {
-          const message = profileError?.message || 'Erro ao carregar dados do usuario'
-          setError(new Error(message))
-        }
+      if (missingUsuariosTable) {
+        missingTableRef.current = true
+        setProfile(null)
+        setRole('user')
+        setOrgId(null)
+        setOrgName(null)
+        setLoading(false)
+        return
       }
 
-      const nextProfile = (data as UsuarioRow) || null
+      const nextProfile = usuario || null
       setProfile(nextProfile)
-      const permissoes = nextProfile?.permissoes || []
+      const permissoes = nextProfile?.permissoes || seed?.permissoes || []
 
       const { data: memberData } = await supabase
         .from('org_members')
@@ -121,15 +110,16 @@ export function useCurrentUser() {
         .limit(1)
         .maybeSingle()
 
-      const membershipRole = memberData?.role || null
+      const membershipRole = memberData?.role || seed?.role || null
       setRole(resolveRoleFromPermissoes(permissoes, membershipRole))
-      setOrgId(memberData?.org_id || null)
+      const resolvedOrgId = memberData?.org_id || seed?.org_id || null
+      setOrgId(resolvedOrgId)
 
-      if (memberData?.org_id) {
+      if (resolvedOrgId) {
         const { data: orgData } = await supabase
           .from('orgs')
           .select('id, nome, name, slug')
-          .eq('id', memberData.org_id)
+          .eq('id', resolvedOrgId)
           .maybeSingle()
 
         const resolvedOrgName =

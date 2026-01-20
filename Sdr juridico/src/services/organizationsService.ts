@@ -21,9 +21,10 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-const normalizePlan = (value?: string): Organization['plan'] => {
+const normalizePlan = (value?: string | null): Organization['plan'] => {
   if (!value) return 'trial'
   const lowered = value.toLowerCase()
+  if (lowered === 'starter') return 'basic'
   if (lowered === 'pro') return 'professional'
   if (lowered === 'enterprise') return 'enterprise'
   if (lowered === 'basic') return 'basic'
@@ -31,16 +32,43 @@ const normalizePlan = (value?: string): Organization['plan'] => {
   return 'trial'
 }
 
-const resolveStatus = (ativo?: boolean | null, settings?: Record<string, any>) => {
-  if (settings?.status) return settings.status as Organization['status']
-  if (ativo === null || ativo === undefined) return 'pending'
-  return ativo ? 'active' : 'suspended'
+const normalizeStatus = (
+  value?: string | null,
+  ativo?: boolean | null
+): Organization['status'] => {
+  if (!value) {
+    if (ativo === null || ativo === undefined) return 'pending'
+    return ativo ? 'active' : 'suspended'
+  }
+  const lowered = value.toLowerCase()
+  if (lowered === 'active' || lowered === 'ativo') return 'active'
+  if (lowered === 'suspended' || lowered === 'suspenso') return 'suspended'
+  if (lowered === 'cancelled' || lowered === 'cancelado' || lowered === 'canceled') return 'cancelled'
+  if (lowered === 'pending' || lowered === 'pendente') return 'pending'
+  if (lowered === 'trial') return 'active'
+  return 'pending'
+}
+
+const resolveStatus = (
+  ativo?: boolean | null,
+  settings?: Record<string, any>,
+  rawStatus?: string | null
+) => {
+  const statusValue = rawStatus || (settings?.status as string | undefined)
+  return normalizeStatus(statusValue, ativo)
 }
 
 const buildAddressFromSettings = (settings?: Record<string, any>) => {
   const address = settings?.address
   if (!address || typeof address !== 'object') return null
   return address as Organization['address']
+}
+
+const resolveAddress = (dbAddress?: Record<string, any> | null, settings?: Record<string, any>) => {
+  if (dbAddress && typeof dbAddress === 'object') {
+    return dbAddress as Organization['address']
+  }
+  return buildAddressFromSettings(settings)
 }
 
 const buildSettingsFromInput = (
@@ -51,6 +79,7 @@ const buildSettingsFromInput = (
     input.settings && typeof input.settings === 'object' ? input.settings : {}
   const next: Record<string, any> = { ...existing, ...incomingSettings }
 
+  if ((input as any).plan) next.plan = (input as any).plan
   if (input.slug) next.slug = input.slug
   if (input.email) next.email = input.email
   if (input.phone) next.phone = input.phone
@@ -95,18 +124,29 @@ const buildSettingsFromInput = (
 function mapDbToOrg(dbOrg: any): Organization {
   const settings = dbOrg.settings || {}
   const name = dbOrg.nome || dbOrg.name || 'Sem nome'
-  const slug = settings.slug || slugify(name) || 'sem-slug'
-  const plan = normalizePlan(dbOrg.plano || settings.plan)
-  const status = resolveStatus(dbOrg.ativo, settings)
-  const address = buildAddressFromSettings(settings)
+  const slug = dbOrg.slug || settings.slug || slugify(name) || 'sem-slug'
+  const rawStatus =
+    (typeof dbOrg.status === 'string' && dbOrg.status) ||
+    (typeof settings.status === 'string' && settings.status) ||
+    null
+  const rawPlan =
+    (typeof dbOrg.plano === 'string' && dbOrg.plano) ||
+    (typeof dbOrg.plan === 'string' && dbOrg.plan) ||
+    (typeof settings.plan === 'string' && settings.plan) ||
+    (rawStatus === 'trial' ? 'trial' : undefined)
+  const plan = normalizePlan(rawPlan)
+  const status = resolveStatus(dbOrg.ativo ?? dbOrg.active ?? null, settings, rawStatus)
+  const address = resolveAddress(dbOrg.address, settings)
+  const email = dbOrg.email || settings.email || settings.billing_email || ''
+  const phone = dbOrg.phone || settings.phone || null
 
   return {
     id: dbOrg.id,
     name,
     slug,
     cnpj: dbOrg.cnpj || null,
-    email: settings.email || settings.billing_email || '',
-    phone: settings.phone || null,
+    email,
+    phone,
     address,
     address_street: address?.street || '',
     address_number: address?.number || '',
@@ -190,16 +230,22 @@ export const organizationsService = {
    */
   async getBySlug(slug: string): Promise<Organization | null> {
     try {
+      const { data: byColumn, error: columnError } = await supabase
+        .from('orgs')
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle()
+
+      if (columnError) throw new AppError(columnError.message, 'database_error')
+      if (byColumn) return mapDbToOrg(byColumn)
+
       const { data, error } = await supabase
         .from('orgs')
         .select('*')
         .filter('settings->>slug', 'eq', slug)
-        .single()
+        .maybeSingle()
 
-      if (error) {
-        if (error.code === 'PGRST116') return null
-        throw new AppError(error.message, 'database_error')
-      }
+      if (error) throw new AppError(error.message, 'database_error')
       return data ? mapDbToOrg(data) : null
     } catch (error) {
       throw new AppError(
@@ -223,13 +269,31 @@ export const organizationsService = {
         provisioned_by: user.id,
       })
 
+      const orgName = input.name
+      const orgSlug = input.slug || settings.slug || slugify(orgName)
+      const orgPlan = (input as Record<string, any>).plan || settings.plan || 'trial'
+      const orgStatus = (settings.status as Organization['status']) || 'active'
+      const orgAddress = input.address || settings.address || null
+
       const { data, error } = await supabase
         .from('orgs')
         .insert({
-          nome: input.name,
+          nome: orgName,
+          name: orgName,
           cnpj: input.cnpj || null,
-          plano: input.plan,
+          slug: orgSlug,
+          email: input.email,
+          phone: input.phone || null,
+          address: orgAddress,
+          plano: orgPlan,
+          plan: orgPlan,
           ativo: true,
+          status: orgStatus,
+          max_users: input.max_users ?? (settings.max_users as number | undefined),
+          max_storage_gb: input.max_storage_gb ?? (settings.max_storage_gb as number | undefined),
+          max_cases: (input as Record<string, any>).max_cases ?? settings.max_cases ?? null,
+          billing_email: input.billing_email ?? settings.billing_email ?? null,
+          billing_cycle: input.billing_cycle ?? settings.billing_cycle ?? 'monthly',
           settings,
         })
         .select()
@@ -252,13 +316,27 @@ export const organizationsService = {
     try {
       const existing = await this.getById(id)
       const settings = buildSettingsFromInput(input as Record<string, any>, existing?.settings || {})
+      const nextName = input.name ?? existing?.name
+      const nextSlug = input.slug ?? existing?.slug
+      const nextEmail = input.email ?? existing?.email
+      const nextPhone = input.phone ?? existing?.phone
+      const nextAddress = input.address || settings.address || existing?.address || null
+      const nextPlan = (input as Record<string, any>).plan ?? existing?.plan
+      const nextStatus = settings.status || existing?.status || 'active'
 
       const { data, error } = await supabase
         .from('orgs')
         .update({
-          nome: input.name ?? existing?.name,
+          nome: nextName,
+          name: nextName,
+          slug: nextSlug,
+          email: nextEmail,
+          phone: nextPhone,
+          address: nextAddress,
           cnpj: input.cnpj ?? existing?.cnpj,
-          plano: (input as any).plan ?? existing?.plan,
+          plano: nextPlan,
+          plan: nextPlan,
+          status: nextStatus,
           settings,
         })
         .eq('id', id)
@@ -287,11 +365,13 @@ export const organizationsService = {
         .from('orgs')
         .update({
           plano: input.plan,
+          plan: input.plan,
           settings: {
             ...settings,
             max_users: input.max_users ?? settings.max_users,
             max_storage_gb: input.max_storage_gb ?? settings.max_storage_gb,
             max_cases: input.max_cases ?? settings.max_cases,
+            plan: input.plan,
             status: settings.status || (existing?.status ?? 'active'),
           },
         })
@@ -332,6 +412,7 @@ export const organizationsService = {
         .from('orgs')
         .update({
           ativo: input.status === 'active',
+          status: input.status,
           settings: nextSettings,
         })
         .eq('id', id)
@@ -358,6 +439,7 @@ export const organizationsService = {
         .from('orgs')
         .update({
           ativo: false,
+          status: 'cancelled',
           settings: {
             ...(existing?.settings || {}),
             status: 'cancelled',

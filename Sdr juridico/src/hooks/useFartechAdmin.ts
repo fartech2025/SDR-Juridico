@@ -98,7 +98,7 @@ export function useFartechAdmin() {
    * Get organizations by plan
    */
   const getOrgsByPlan = useCallback(() => {
-    if (!allOrgs) return { starter: [], professional: [], enterprise: [] }
+    if (!allOrgs) return { trial: [], basic: [], professional: [], enterprise: [] }
     
     return {
       trial: allOrgs.filter(o => o.plan === 'trial'),
@@ -112,11 +112,11 @@ export function useFartechAdmin() {
    * Get organizations by status
    */
   const getOrgsByStatus = useCallback(() => {
-    if (!allOrgs) return { active: [], trial: [], suspended: [], cancelled: [] }
+    if (!allOrgs) return { active: [], pending: [], suspended: [], cancelled: [] }
     
     return {
       active: allOrgs.filter(o => o.status === 'active'),
-      trial: allOrgs.filter(o => o.plan === 'trial'),
+      pending: allOrgs.filter(o => o.status === 'pending'),
       suspended: allOrgs.filter(o => o.status === 'suspended'),
       cancelled: allOrgs.filter(o => o.status === 'cancelled'),
     }

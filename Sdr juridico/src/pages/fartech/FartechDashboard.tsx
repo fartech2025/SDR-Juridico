@@ -320,9 +320,9 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: StatCardProps) 
 function StatusBadge({ status }: { status: string }) {
   const statusConfig = {
     active: { label: 'Ativo', class: 'bg-green-100 text-green-800' },
-    trial: { label: 'Trial', class: 'bg-blue-100 text-blue-800' },
     suspended: { label: 'Suspenso', class: 'bg-yellow-100 text-yellow-800' },
     cancelled: { label: 'Cancelado', class: 'bg-red-100 text-red-800' },
+    pending: { label: 'Pendente', class: 'bg-gray-100 text-gray-700' },
   }
   
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active

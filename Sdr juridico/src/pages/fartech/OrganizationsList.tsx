@@ -274,7 +274,7 @@ export default function OrganizationsList() {
                 >
                   <option value="all">Todos</option>
                   <option value="active">Ativo</option>
-                  <option value="trial">Trial</option>
+                  <option value="pending">Pendente</option>
                   <option value="suspended">Suspenso</option>
                   <option value="cancelled">Cancelado</option>
                 </select>
@@ -291,7 +291,8 @@ export default function OrganizationsList() {
                   className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15"
                 >
                   <option value="all">Todos</option>
-                  <option value="starter">Starter</option>
+                  <option value="trial">Trial</option>
+                  <option value="basic">Basico</option>
                   <option value="professional">Professional</option>
                   <option value="enterprise">Enterprise</option>
                 </select>
@@ -446,7 +447,6 @@ function OrgCard({ org }: { org: OrgWithStats }) {
 function StatusBadge({ status }: { status: OrganizationStatus }) {
   const statusConfig = {
     active: { label: 'Ativo', class: 'border-success-border bg-success-bg text-success' },
-    trial: { label: 'Trial', class: 'border-info-border bg-info-bg text-info' },
     suspended: { label: 'Suspenso', class: 'border-warning-border bg-warning-bg text-warning' },
     cancelled: { label: 'Cancelado', class: 'border-danger-border bg-danger-bg text-danger' },
     pending: { label: 'Pendente', class: 'border-border bg-surface-2 text-text-muted' },

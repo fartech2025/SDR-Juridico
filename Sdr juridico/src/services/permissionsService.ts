@@ -15,6 +15,7 @@ import {
   getPermissionsByRole,
   FARTECH_ADMIN_PERMISSIONS,
 } from '@/types/permissions'
+import { ensureUsuario } from '@/services/usuariosService'
 
 const resolveRoleFromPermissoes = (permissoes: string[]) => {
   if (permissoes.includes('fartech_admin')) {
@@ -35,59 +36,54 @@ export const permissionsService = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
 
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('id, email, nome_completo, permissoes')
-        .eq('id', user.id)
-        .single()
+      const { usuario, missingUsuariosTable, seed } = await ensureUsuario(user)
 
-      console.log('[PermissionsService] Dados do usuario:', { data, error })
+      const fallbackName =
+        (user.user_metadata && (user.user_metadata as { nome_completo?: string }).nome_completo) ||
+        user.email ||
+        'Usuario'
+      const baseName = usuario?.nome_completo || seed?.nome_completo || fallbackName
+      const baseEmail = usuario?.email || seed?.email || user.email || ''
+      const permissoes = usuario?.permissoes || seed?.permissoes || []
+      const resolvedRole = resolveRoleFromPermissoes(permissoes)
+      const isFartechAdmin = resolvedRole === 'fartech_admin' || seed?.is_fartech_admin === true
 
-      if (error) {
-        console.log('[PermissionsService] Erro ao buscar usuario, usando fallback')
-        const fallbackName =
-          (user.user_metadata && (user.user_metadata as { nome_completo?: string }).nome_completo) ||
-          user.email ||
-          'Usuario'
+      console.log('[PermissionsService] Dados do usuario:', { usuario, seed })
+      console.log('[PermissionsService] Permissoes do usuario:', permissoes)
+      console.log('[PermissionsService] isFartechAdmin:', isFartechAdmin)
+
+      if (missingUsuariosTable) {
+        console.log('[PermissionsService] usuarios table missing, using fallback')
         return {
           id: user.id,
-          email: user.email || '',
-          name: fallbackName,
-          role: 'user',
-          org_id: null,
-          is_fartech_admin: false,
+          email: baseEmail,
+          name: baseName,
+          role: resolvedRole,
+          org_id: seed?.org_id || null,
+          is_fartech_admin: isFartechAdmin,
         } as UserWithRole
       }
-      
-      if (!data) return null
-      
-      // Map to UserWithRole interface
-      const permissoes = data?.permissoes || []
-      console.log('[PermissionsService] Permissoes do usuario:', permissoes)
-      
-      const isFartechAdmin = resolveRoleFromPermissoes(permissoes) === 'fartech_admin'
-      console.log('[PermissionsService] isFartechAdmin:', isFartechAdmin)
       
       const { data: memberData } = await supabase
         .from('org_members')
         .select('org_id, role')
-        .eq('user_id', data.id)
+        .eq('user_id', user.id)
         .eq('ativo', true)
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle()
 
-      const membershipRole = memberData?.role || null
-      const role = membershipRole || resolveRoleFromPermissoes(permissoes)
+      const membershipRole = memberData?.role || seed?.role || null
+      const role = membershipRole || resolvedRole
       
       console.log('[PermissionsService] Role final:', role, 'membershipRole:', membershipRole)
 
       return {
-        id: data.id,
-        email: data.email,
-        name: data.nome_completo,
+        id: user.id,
+        email: baseEmail,
+        name: baseName,
         role,
-        org_id: memberData?.org_id || null,
+        org_id: memberData?.org_id || seed?.org_id || null,
         is_fartech_admin: isFartechAdmin,
       } as UserWithRole
     } catch (error) {
