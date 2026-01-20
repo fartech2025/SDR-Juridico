@@ -22,8 +22,7 @@ import {
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
-import { useIsFartechAdmin } from '@/hooks/useIsFartechAdmin'
-import { useIsOrgAdmin } from '@/hooks/useIsOrgAdmin'
+import { useIsFartechAdmin, useIsOrgAdmin } from '@/hooks/usePermissions'
 import { usePageTracking } from '@/hooks/usePageTracking'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
