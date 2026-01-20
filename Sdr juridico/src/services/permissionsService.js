@@ -5,6 +5,7 @@ import {
   FARTECH_ADMIN_PERMISSIONS
 } from "@/types/permissions";
 import { ensureUsuario } from "@/services/usuariosService";
+import { telemetryService } from "@/services/telemetryService";
 const resolveRoleFromPermissoes = (permissoes) => {
   if (permissoes.includes("fartech_admin")) {
     return "fartech_admin";
@@ -233,7 +234,7 @@ const permissionsService = {
       if (!user.org_id) return;
       const sensitiveResources = ["organizations", "users", "billing"];
       if (!sensitiveResources.includes(check.resource)) return;
-      await supabase.from("audit_log").insert({
+      await telemetryService.logAuditEvent({
         org_id: user.org_id,
         actor_user_id: user.id,
         action: check.action,
@@ -244,7 +245,6 @@ const permissionsService = {
           success: result.allowed,
           reason: result.reason
         }
-        // ip_address and user_agent would come from request headers
       });
     } catch (error) {
       console.error("Error logging permission check:", error);

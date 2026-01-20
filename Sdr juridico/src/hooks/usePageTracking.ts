@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient'
-
-let analyticsAvailable = true
+import { telemetryService } from '@/services/telemetryService'
 
 export function usePageTracking() {
   const location = useLocation()
@@ -13,7 +12,6 @@ export function usePageTracking() {
     let active = true
     const track = async () => {
       try {
-        if (!analyticsAvailable) return
         const { data: { user } } = await supabase.auth.getUser()
         if (!active || !user) return
         const { data: member } = await supabase
@@ -25,19 +23,28 @@ export function usePageTracking() {
           .maybeSingle()
 
         if (!member?.org_id) return
-        const { error } = await supabase.from('audit_log').insert({
+        const tracked = await telemetryService.logAnalyticsEvent({
           org_id: member.org_id,
-          actor_user_id: user.id,
-          action: 'page_view',
-          entity: 'navigation',
-          entity_id: null,
-          details: {
+          user_id: user.id,
+          event_name: 'page_view',
+          event_type: 'navigation',
+          properties: {
             path: location.pathname,
             search: location.search,
           },
         })
-        if ((error as any)?.code === '42P01' || (error as any)?.status === 404) {
-          analyticsAvailable = false
+        if (!tracked) {
+          await telemetryService.logAuditEvent({
+            org_id: member.org_id,
+            actor_user_id: user.id,
+            action: 'page_view',
+            entity: 'navigation',
+            entity_id: null,
+            details: {
+              path: location.pathname,
+              search: location.search,
+            },
+          })
         }
       } catch {
         // Silently ignore tracking errors

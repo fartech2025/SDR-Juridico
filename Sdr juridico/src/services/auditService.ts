@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient'
+import { telemetryService } from '@/services/telemetryService'
 
 export const auditService = {
   async logLogout(): Promise<void> {
@@ -15,7 +16,7 @@ export const auditService = {
         .maybeSingle()
 
       if (!member?.org_id) return
-      await supabase.from('audit_log').insert({
+      await telemetryService.logAuditEvent({
         org_id: member.org_id,
         actor_user_id: user.id,
         action: 'logout',
