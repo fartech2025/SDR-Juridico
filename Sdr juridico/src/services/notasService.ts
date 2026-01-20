@@ -1,5 +1,6 @@
 import { supabase, type TimelineEventRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
+import { resolveOrgScope } from '@/services/orgScope'
 
 type DbNotaRow = {
   id: string
@@ -32,11 +33,15 @@ const mapNotaToTimeline = (row: DbNotaRow): TimelineEventRow => {
 export const notasService = {
   async getNotas(): Promise<TimelineEventRow[]> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('notas')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(200)
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbNotaRow) => mapNotaToTimeline(row))
@@ -54,12 +59,16 @@ export const notasService = {
         return []
       }
 
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('notas')
         .select('*')
         .eq('entidade', entidade)
         .eq('entidade_id', entidadeId)
         .order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbNotaRow) => mapNotaToTimeline(row))

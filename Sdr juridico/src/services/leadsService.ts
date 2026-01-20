@@ -5,6 +5,7 @@
 
 import { supabase, type LeadRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
+import { resolveOrgScope } from '@/services/orgScope'
 
 type DbLeadRow = {
   id: string
@@ -105,11 +106,18 @@ const buildLeadPayload = (lead: Partial<LeadRow>, applyDefaults: boolean) => {
 export const leadsService = {
   async assignLeadAdvogado(leadId: string, advogadoId: string, advogadoNome: string) {
     try {
-      const { data: current, error: currentError } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const currentQuery = supabase
         .from('leads')
         .select('qualificacao')
         .eq('id', leadId)
-        .single()
+      const { data: current, error: currentError } = isFartechAdmin
+        ? await currentQuery.single()
+        : await currentQuery.eq('org_id', orgId).single()
 
       if (currentError) throw new AppError(currentError.message, 'database_error')
 
@@ -119,14 +127,16 @@ export const leadsService = {
         responsavel_id: advogadoId,
       }
 
-      const { data, error } = await supabase
+      const updateQuery = supabase
         .from('leads')
         .update({ assigned_user_id: advogadoId, qualificacao })
         .eq('id', leadId)
         .select(
           'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
         )
-        .single()
+      const { data, error } = isFartechAdmin
+        ? await updateQuery.single()
+        : await updateQuery.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       return mapDbLeadToLeadRow(data as DbLeadRow)
@@ -140,12 +150,16 @@ export const leadsService = {
   // Buscar todos os leads
   async getLeads() {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('leads')
         .select(
           'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
         )
         .order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbLeadRow) => mapDbLeadToLeadRow(row))
@@ -160,13 +174,18 @@ export const leadsService = {
   // Buscar lead por ID
   async getLead(id: string) {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
         .from('leads')
         .select(
           'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
         )
         .eq('id', id)
-        .single()
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       return mapDbLeadToLeadRow(data as DbLeadRow)
@@ -182,13 +201,17 @@ export const leadsService = {
   async getLeadsByStatus(status: LeadRow['status']) {
     try {
       const statusFilter = mapUiStatusToDbFilter(status)
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('leads')
         .select(
           'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
         )
         .in('status', statusFilter)
         .order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbLeadRow) => mapDbLeadToLeadRow(row))
@@ -222,7 +245,15 @@ export const leadsService = {
   // Criar novo lead
   async createLead(lead: Omit<LeadRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>) {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
       const payload = buildLeadPayload(lead, true)
+      if (!isFartechAdmin) {
+        payload.org_id = orgId
+      }
       const { data, error } = await supabase
         .from('leads')
         .insert(payload)
@@ -247,15 +278,22 @@ export const leadsService = {
     updates: Partial<Omit<LeadRow, 'id' | 'created_at' | 'updated_at'>>
   ) {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
       const payload = buildLeadPayload(updates, false)
-      const { data, error } = await supabase
+      const query = supabase
         .from('leads')
         .update(payload)
         .eq('id', id)
         .select(
           'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
         )
-        .single()
+      const { data, error } = isFartechAdmin
+        ? await query.single()
+        : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       return mapDbLeadToLeadRow(data as DbLeadRow)
@@ -270,7 +308,13 @@ export const leadsService = {
   // Deletar lead
   async deleteLead(id: string) {
     try {
-      const { error } = await supabase.from('leads').delete().eq('id', id)
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase.from('leads').delete().eq('id', id)
+      const { error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {

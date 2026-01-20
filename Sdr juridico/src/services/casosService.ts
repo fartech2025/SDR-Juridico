@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { CasoRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
+import { resolveOrgScope } from '@/services/orgScope'
 
 type DbCasoRow = {
   id: string
@@ -150,12 +151,17 @@ const buildCasoPayload = (caso: Partial<CasoRow>, applyDefaults: boolean) => {
 export const casosService = {
   async assignCasoAdvogado(casoId: string, advogadoId: string): Promise<CasoRow> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
         .from('casos')
         .update({ responsavel_user_id: advogadoId })
         .eq('id', casoId)
         .select('*, cliente:clientes(nome)')
-        .single()
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Caso nao encontrado', 'not_found')
@@ -170,10 +176,14 @@ export const casosService = {
    */
   async getCasos(): Promise<CasoRow[]> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('casos')
         .select('*, cliente:clientes(nome)')
         .order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbCasoRow) => mapDbCasoToCasoRow(row))
@@ -187,11 +197,16 @@ export const casosService = {
    */
   async getCaso(id: string): Promise<CasoRow> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
         .from('casos')
         .select('*, cliente:clientes(nome)')
         .eq('id', id)
-        .single()
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Caso nao encontrado', 'not_found')
@@ -208,11 +223,15 @@ export const casosService = {
   async getCasosByStatus(status: CasoRow['status']): Promise<CasoRow[]> {
     try {
       const statusFilter = mapUiStatusToDbFilter(status)
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('casos')
         .select('*, cliente:clientes(nome)')
         .in('status', statusFilter)
         .order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbCasoRow) => mapDbCasoToCasoRow(row))
@@ -226,11 +245,15 @@ export const casosService = {
    */
   async getCasosCriticos(): Promise<CasoRow[]> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('casos')
         .select('*, cliente:clientes(nome)')
         .in('prioridade', [3, 4])
         .order('created_at', { ascending: true })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbCasoRow) => mapDbCasoToCasoRow(row))
@@ -244,11 +267,16 @@ export const casosService = {
    */
   async getCasosByCliente(clienteId: string): Promise<CasoRow[]> {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
       const query = supabase
         .from('casos')
         .select('*, cliente:clientes(nome)')
         .eq('cliente_id', clienteId)
-      const { data, error } = await query.order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin
+        ? await query.order('created_at', { ascending: false })
+        : await query.eq('org_id', orgId).order('created_at', { ascending: false })
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbCasoRow) => mapDbCasoToCasoRow(row))
@@ -264,7 +292,15 @@ export const casosService = {
     caso: Omit<CasoRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>
   ): Promise<CasoRow> {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
       const payload = buildCasoPayload(caso, true)
+      if (!isFartechAdmin) {
+        payload.org_id = orgId
+      }
       const { data, error } = await supabase
         .from('casos')
         .insert([payload])
@@ -288,13 +324,18 @@ export const casosService = {
     updates: Partial<Omit<CasoRow, 'id' | 'created_at' | 'org_id' | 'updated_at'>>
   ): Promise<CasoRow> {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
       const payload = buildCasoPayload(updates, false)
-      const { data, error } = await supabase
+      const query = supabase
         .from('casos')
         .update(payload)
         .eq('id', id)
         .select()
-        .single()
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Caso nao encontrado', 'not_found')
@@ -310,10 +351,16 @@ export const casosService = {
    */
   async deleteCaso(id: string): Promise<void> {
     try {
-      const { error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
         .from('casos')
         .delete()
         .eq('id', id)
+      const { error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
@@ -348,9 +395,23 @@ export const casosService = {
     criticos: number
   }> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        return {
+          total: 0,
+          abertos: 0,
+          andamento: 0,
+          resolvidos: 0,
+          fechados: 0,
+          encerrados: 0,
+          criticos: 0,
+        }
+      }
+
+      const query = supabase
         .from('casos')
         .select('status, prioridade')
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
 

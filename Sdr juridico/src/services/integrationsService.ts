@@ -1,4 +1,5 @@
 import { AppError } from '@/utils/errors'
+import { resolveOrgScope } from '@/services/orgScope'
 
 const defaultIntegrations = [
   { provider: 'whatsapp', name: 'WhatsApp', enabled: false },
@@ -23,9 +24,21 @@ export interface IntegrationRow {
 
 const STORAGE_KEY = 'sdr_integrations'
 
-const loadIntegrations = (): IntegrationRow[] => {
+type StoredIntegrations = {
+  key: string
+  rows: IntegrationRow[]
+}
+
+const resolveStorageKey = async () => {
+  const { orgId, isFartechAdmin } = await resolveOrgScope()
+  if (isFartechAdmin) return `${STORAGE_KEY}:fartech`
+  if (!orgId) return `${STORAGE_KEY}:unknown`
+  return `${STORAGE_KEY}:${orgId}`
+}
+
+const readIntegrations = (key: string): IntegrationRow[] => {
   if (typeof window === 'undefined') return []
-  const raw = window.localStorage.getItem(STORAGE_KEY)
+  const raw = window.localStorage.getItem(key)
   if (!raw) return []
   try {
     const parsed = JSON.parse(raw)
@@ -35,14 +48,32 @@ const loadIntegrations = (): IntegrationRow[] => {
   }
 }
 
-const saveIntegrations = (rows: IntegrationRow[]) => {
+const saveIntegrations = (key: string, rows: IntegrationRow[]) => {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
+  window.localStorage.setItem(key, JSON.stringify(rows))
 }
 
-const seedDefaults = (): IntegrationRow[] => {
-  const existing = loadIntegrations()
-  if (existing.length > 0) return existing
+const loadIntegrations = async (): Promise<StoredIntegrations> => {
+  const key = await resolveStorageKey()
+  const rows = readIntegrations(key)
+  if (rows.length > 0) {
+    return { key, rows }
+  }
+
+  if (key !== STORAGE_KEY) {
+    const legacy = readIntegrations(STORAGE_KEY)
+    if (legacy.length > 0) {
+      saveIntegrations(key, legacy)
+      return { key, rows: legacy }
+    }
+  }
+
+  return { key, rows: [] }
+}
+
+const seedDefaults = async (): Promise<StoredIntegrations> => {
+  const stored = await loadIntegrations()
+  if (stored.rows.length > 0) return stored
   const now = new Date().toISOString()
   const seeded = defaultIntegrations.map((item) => ({
     id: `${item.provider}-${now}`,
@@ -53,14 +84,15 @@ const seedDefaults = (): IntegrationRow[] => {
     settings: {},
     created_at: now,
   }))
-  saveIntegrations(seeded)
-  return seeded
+  saveIntegrations(stored.key, seeded)
+  return { key: stored.key, rows: seeded }
 }
 
 export const integrationsService = {
   async getIntegrations(): Promise<IntegrationRow[]> {
     try {
-      return seedDefaults()
+      const stored = await seedDefaults()
+      return stored.rows
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao buscar integracoes',
@@ -70,7 +102,8 @@ export const integrationsService = {
   },
 
   async cleanupDuplicates(): Promise<number> {
-    const rows = seedDefaults()
+    const stored = await seedDefaults()
+    const rows = stored.rows
     const idsToDelete: string[] = []
     const grouped = new Map<string, typeof rows>()
 
@@ -96,7 +129,7 @@ export const integrationsService = {
 
     if (idsToDelete.length === 0) return 0
     const filtered = rows.filter((row) => !idsToDelete.includes(row.id))
-    saveIntegrations(filtered)
+    saveIntegrations(stored.key, filtered)
     return idsToDelete.length
   },
 
@@ -105,13 +138,14 @@ export const integrationsService = {
     updates: Partial<Pick<IntegrationRow, 'enabled' | 'settings' | 'secrets' | 'name'>>
   ): Promise<IntegrationRow> {
     try {
-      const rows = seedDefaults()
+      const stored = await seedDefaults()
+      const rows = stored.rows
       const idx = rows.findIndex((row) => row.id === id)
       if (idx === -1) throw new AppError('Integracao nao encontrada', 'not_found')
       const updated = { ...rows[idx], ...updates }
       const next = [...rows]
       next[idx] = updated
-      saveIntegrations(next)
+      saveIntegrations(stored.key, next)
       return updated
     } catch (error) {
       throw new AppError(
@@ -123,7 +157,7 @@ export const integrationsService = {
 
   async ensureDefaultIntegrations(): Promise<void> {
     try {
-      seedDefaults()
+      await seedDefaults()
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao criar integracoes padrao',

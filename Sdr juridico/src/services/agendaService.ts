@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { AgendaRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
+import { resolveOrgScope } from '@/services/orgScope'
 
 type DbAgendamentoRow = {
   id: string
@@ -81,10 +82,14 @@ export const agendaService = {
    */
   async getEventos(): Promise<AgendaRow[]> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
         .from('agendamentos')
         .select('*')
         .order('start_at', { ascending: true })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbAgendamentoRow) => mapDbAgendamentoToAgenda(row))
@@ -98,11 +103,16 @@ export const agendaService = {
    */
   async getEvento(id: string): Promise<AgendaRow> {
     try {
-      const { data, error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
         .from('agendamentos')
         .select('*')
         .eq('id', id)
-        .single()
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Evento nao encontrado', 'not_found')
@@ -118,12 +128,16 @@ export const agendaService = {
    */
   async getEventosPorPeriodo(dataInicio: Date, dataFim: Date): Promise<AgendaRow[]> {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
       const query = supabase
         .from('agendamentos')
         .select('*')
         .gte('start_at', dataInicio.toISOString())
         .lte('start_at', dataFim.toISOString())
-      const { data, error } = await query.order('start_at', { ascending: true })
+      const scopedQuery = isFartechAdmin ? query : query.eq('org_id', orgId)
+      const { data, error } = await scopedQuery.order('start_at', { ascending: true })
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbAgendamentoRow) => mapDbAgendamentoToAgenda(row))
@@ -181,7 +195,15 @@ export const agendaService = {
     evento: Omit<AgendaRow, 'id' | 'created_at' | 'updated_at'>
   ): Promise<AgendaRow> {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
       const payload = buildAgendamentoPayload(evento)
+      if (!isFartechAdmin) {
+        payload.org_id = orgId
+      }
       const { data, error } = await supabase
         .from('agendamentos')
         .insert([payload])
@@ -205,13 +227,18 @@ export const agendaService = {
     updates: Partial<Omit<AgendaRow, 'id' | 'created_at' | 'updated_at'>>
   ): Promise<AgendaRow> {
     try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
       const payload = buildAgendamentoPayload(updates)
-      const { data, error } = await supabase
+      const query = supabase
         .from('agendamentos')
         .update(payload)
         .eq('id', id)
         .select()
-        .single()
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Evento nao encontrado', 'not_found')
@@ -227,10 +254,16 @@ export const agendaService = {
    */
   async deleteEvento(id: string): Promise<void> {
     try {
-      const { error } = await supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
         .from('agendamentos')
         .delete()
         .eq('id', id)
+      const { error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
