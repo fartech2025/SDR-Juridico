@@ -146,21 +146,60 @@ export const DashboardPage = () => {
   const [params] = useSearchParams()
   // Light-only app - no dark mode
   const status = resolveStatus(params.get('state'))
-  const { leads, loading: leadsLoading, error: leadsError } = useLeads()
-  const { casos, loading: casosLoading, error: casosError } = useCasos()
-  const { documentos, loading: docsLoading, error: docsError } = useDocumentos()
-  const { eventos: agendaItems, loading: agendaLoading, error: agendaError } = useAgenda()
-  const { notas, loading: notasLoading, error: notasError } = useNotas()
+  const { leads, loading: leadsLoading, error: leadsError, fetchLeads } = useLeads()
+  const { casos, loading: casosLoading, error: casosError, fetchCasos } = useCasos()
+  const { documentos, loading: docsLoading, error: docsError, fetchDocumentos } = useDocumentos()
+  const {
+    eventos: agendaItems,
+    loading: agendaLoading,
+    error: agendaError,
+    fetchEventos,
+  } = useAgenda()
+  const { notas, loading: notasLoading, error: notasError, fetchNotas } = useNotas()
+  const [loadTimeoutReached, setLoadTimeoutReached] = React.useState(false)
 
-  const baseState =
+  const anyLoading =
     leadsLoading || casosLoading || docsLoading || agendaLoading || notasLoading
+  const anyError = leadsError || casosError || docsError || agendaError || notasError
+
+  React.useEffect(() => {
+    if (!anyLoading) {
+      setLoadTimeoutReached(false)
+      return
+    }
+    const timeoutId = window.setTimeout(() => {
+      setLoadTimeoutReached(true)
+    }, 10000)
+    return () => window.clearTimeout(timeoutId)
+  }, [anyLoading])
+
+  const handleRetry = React.useCallback(() => {
+    setLoadTimeoutReached(false)
+    void Promise.allSettled([
+      fetchLeads(),
+      fetchCasos(),
+      fetchDocumentos(),
+      fetchEventos(),
+      fetchNotas(),
+    ])
+  }, [fetchCasos, fetchDocumentos, fetchEventos, fetchLeads, fetchNotas])
+
+  const hasData = Boolean(
+    leads.length || casos.length || documentos.length || agendaItems.length || notas.length
+  )
+  const baseState =
+    anyLoading && !loadTimeoutReached
       ? 'loading'
-      : leadsError || casosError || docsError || agendaError || notasError
+      : anyError || loadTimeoutReached
         ? 'error'
-        : leads.length || casos.length || documentos.length || agendaItems.length
+        : hasData
           ? 'ready'
           : 'empty'
   const pageState = status !== 'ready' ? status : baseState
+  const errorMessage = loadTimeoutReached
+    ? 'Tempo limite ao carregar o painel. Tente novamente.'
+    : anyError?.message
+  const showRetry = Boolean(anyError || loadTimeoutReached)
 
   const leadHot =
     leads.find((lead) => lead.heat === 'quente' && lead.status !== 'ganho') ??
@@ -265,7 +304,11 @@ export const DashboardPage = () => {
           </div>
         </header>
 
-      <PageState status={pageState}>
+      <PageState
+        status={pageState}
+        errorDescription={errorMessage}
+        onRetry={showRetry ? handleRetry : undefined}
+      >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {kpis.slice(0, 4).map((item) => (
             <StatCard
