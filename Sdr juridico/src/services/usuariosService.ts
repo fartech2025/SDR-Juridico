@@ -70,43 +70,19 @@ const deriveSeedFromUser = async (user: User): Promise<UsuarioSeed> => {
   const metadataFartechAdmin =
     getBoolean(metadata.is_fartech_admin) ?? getBoolean(metadata.fartech_admin) ?? false
 
-  let profileName: string | null = null
-  let profileEmail: string | null = null
-  let profileOrgId: string | null = null
-  let profileRole: string | null = null
-  let profileFartechAdmin = false
-
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('user_id, nome, email, org_id, role, is_fartech_admin')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (profileError && !isMissingTable(profileError, 'profiles')) {
-    console.warn('[usuariosService] Failed to load profiles seed:', profileError)
-  }
-
-  if (profile) {
-    profileName = getString(profile.nome)
-    profileEmail = getString(profile.email)
-    profileOrgId = getString(profile.org_id)
-    profileRole = normalizeRole(getString(profile.role))
-    profileFartechAdmin = Boolean(profile.is_fartech_admin)
-  }
-
-  const roleCandidates = [profileRole, metadataRole].filter(Boolean) as string[]
-  const isFartechAdmin = profileFartechAdmin || metadataFartechAdmin || roleCandidates.includes('fartech_admin')
+  const roleCandidates = [metadataRole].filter(Boolean) as string[]
+  const isFartechAdmin = metadataFartechAdmin || roleCandidates.includes('fartech_admin')
   const permissoes = buildPermissoes(roleCandidates, isFartechAdmin)
 
   const fallbackEmail = user.email || ''
   const fallbackName = fallbackEmail ? fallbackEmail.split('@')[0] : 'Usuario'
 
   return {
-    nome_completo: (profileName || metadataName || fallbackName || 'Usuario').trim(),
-    email: profileEmail || user.email || fallbackEmail,
+    nome_completo: (metadataName || fallbackName || 'Usuario').trim(),
+    email: user.email || fallbackEmail,
     permissoes,
-    org_id: profileOrgId || metadataOrgId || null,
-    role: profileRole || metadataRole || null,
+    org_id: metadataOrgId || null,
+    role: metadataRole || null,
     is_fartech_admin: isFartechAdmin,
   }
 }

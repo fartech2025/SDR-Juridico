@@ -18,29 +18,17 @@ import { supabase } from '@/lib/supabaseClient'
 type ProfileFormState = {
   nome_completo: string
   email: string
-  telefone: string
-  cargo: string
-  departamento: string
-  foto_url: string
 }
 
 const buildFormState = (
   profile: {
     nome_completo?: string | null
     email?: string | null
-    telefone?: string | null
-    cargo?: string | null
-    departamento?: string | null
-    foto_url?: string | null
   } | null,
   fallbackEmail: string,
 ): ProfileFormState => ({
   nome_completo: profile?.nome_completo || '',
   email: profile?.email || fallbackEmail,
-  telefone: profile?.telefone || '',
-  cargo: profile?.cargo || '',
-  departamento: profile?.departamento || '',
-  foto_url: profile?.foto_url || '',
 })
 
 export const UserProfilePage = () => {
@@ -86,10 +74,6 @@ export const UserProfilePage = () => {
       const updates = {
         nome_completo: form.nome_completo.trim(),
         email,
-        telefone: form.telefone.trim() || null,
-        cargo: form.cargo.trim() || null,
-        departamento: form.departamento.trim() || null,
-        foto_url: form.foto_url.trim() || null,
       }
       const { error: updateError } = await supabase
         .from('usuarios')
@@ -119,24 +103,13 @@ export const UserProfilePage = () => {
         ? 'ready'
         : 'empty'
 
-  const fotoUrl = form.foto_url.trim()
-
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-border bg-gradient-to-br from-white via-white to-[#f3f6ff] p-6 shadow-soft">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
-              {fotoUrl ? (
-                <img
-                  src={fotoUrl}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <span>{initials}</span>
-              )}
+              <span>{initials}</span>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-text-subtle">
@@ -183,44 +156,6 @@ export const UserProfilePage = () => {
                   value={form.email}
                   readOnly
                   className="bg-surface-2 text-text-subtle"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-text">
-                  Telefone
-                </label>
-                <Input
-                  value={form.telefone}
-                  onChange={handleChange('telefone')}
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-text">Cargo</label>
-                <Input
-                  value={form.cargo}
-                  onChange={handleChange('cargo')}
-                  placeholder="Ex: Admin, Gestor"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-text">
-                  Departamento
-                </label>
-                <Input
-                  value={form.departamento}
-                  onChange={handleChange('departamento')}
-                  placeholder="Ex: Operacoes"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold text-text">
-                  Foto (URL)
-                </label>
-                <Input
-                  value={form.foto_url}
-                  onChange={handleChange('foto_url')}
-                  placeholder="https://..."
                 />
               </div>
             </CardContent>

@@ -47,14 +47,7 @@ export interface UsuarioRow {
   id: string
   nome_completo: string
   email: string
-  telefone?: string | null
-  cargo?: string | null
-  departamento?: string | null
-  foto_url?: string | null
   permissoes: string[]
-  status?: UsuarioStatus
-  ultimo_acesso?: string | null
-  preferencias?: Record<string, unknown> | null
   created_at: string
   updated_at?: string
 }
