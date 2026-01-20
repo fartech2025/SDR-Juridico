@@ -18,9 +18,6 @@ import {
   Users,
   Menu,
   X,
-  Building2,
-  Shield,
-  ShieldCheck,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -47,9 +44,7 @@ const navItems = [
 ]
 
 const adminNavItems = [
-  { label: 'Organizacoes', to: '/admin/organizations', icon: Building2 },
-  { label: 'Usuarios', to: '/admin/users', icon: Shield },
-  { label: 'Seguranca', to: '/admin/security', icon: ShieldCheck }, // Monitoramento de segurança
+  { label: 'Painel de gestao', to: '/admin/organizations', icon: LayoutDashboard },
 ]
 
 const orgAdminNavItems = [
@@ -66,6 +61,14 @@ export const AppShell = () => {
   const isOrgAdmin = useIsOrgAdmin()
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = React.useState(false)
+  const profileMenuRef = React.useRef<HTMLDivElement | null>(null)
+
+  const profilePath = React.useMemo(() => {
+    if (location.pathname.startsWith('/admin')) return '/admin/perfil'
+    if (location.pathname.startsWith('/org')) return '/org/perfil'
+    return '/app/perfil'
+  }, [location.pathname])
 
   // Track page views automaticamente
   usePageTracking()
@@ -88,9 +91,46 @@ export const AppShell = () => {
     }
   }, [isFartechAdmin, location.pathname, navigate])
 
+  React.useEffect(() => {
+    if (!profileMenuOpen) return
+    const handlePointer = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (target && profileMenuRef.current?.contains(target)) return
+      setProfileMenuOpen(false)
+    }
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setProfileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handlePointer)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handlePointer)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [profileMenuOpen])
+
+  React.useEffect(() => {
+    setProfileMenuOpen(false)
+  }, [location.pathname])
+
   const handleLogout = async () => {
     setLogoutOpen(false)
     // Log de logout e encerrar sessão
+    await auditService.logLogout()
+    sessionService.end()
+    await signOut()
+    navigate('/login', { replace: true })
+  }
+
+  const handleProfileNavigate = () => {
+    setProfileMenuOpen(false)
+    navigate(profilePath)
+  }
+
+  const handleSwitchUser = async () => {
+    setProfileMenuOpen(false)
     await auditService.logLogout()
     sessionService.end()
     await signOut()
@@ -220,7 +260,11 @@ export const AppShell = () => {
 
         {/* User Profile Section */}
         <div className="border-t border-border/50 p-4">
-          <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleProfileNavigate}
+            className="flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-2"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-white">
               {initials}
             </div>
@@ -230,7 +274,7 @@ export const AppShell = () => {
               </p>
               <p className="text-xs text-text-subtle">{roleLabel}</p>
             </div>
-          </div>
+          </button>
         </div>
       </aside>
 
@@ -401,22 +445,57 @@ export const AppShell = () => {
             <span className="hidden md:inline ml-1">Preferencias</span>
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="rounded-full hidden sm:inline-flex"
-            onClick={() => setLogoutOpen(true)}
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden md:inline ml-1">Sair</span>
-          </Button>
+          <div className="relative hidden sm:flex" ref={profileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((open) => !open)}
+              className="flex items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs text-text shadow-soft transition hover:bg-surface-2"
+              aria-haspopup="menu"
+              aria-expanded={profileMenuOpen}
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+                {initials}
+              </div>
+              <span>{shortName}</span>
+              <ChevronDown
+                className={`h-3 w-3 text-text-subtle transition ${profileMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-          <div className="hidden items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs text-text shadow-soft sm:flex">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-              {initials}
-            </div>
-            <span>{shortName}</span>
-            <ChevronDown className="h-3 w-3 text-text-subtle" />
+            {profileMenuOpen && (
+              <div
+                className="absolute right-0 top-full z-30 mt-2 w-52 rounded-2xl border border-border bg-white p-2 text-xs text-text shadow-soft"
+                role="menu"
+              >
+                <button
+                  type="button"
+                  onClick={handleProfileNavigate}
+                  className="w-full rounded-xl px-3 py-2 text-left font-medium text-text transition hover:bg-surface-2"
+                  role="menuitem"
+                >
+                  Acessar perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSwitchUser}
+                  className="w-full rounded-xl px-3 py-2 text-left font-medium text-text transition hover:bg-surface-2"
+                  role="menuitem"
+                >
+                  Trocar usuario
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileMenuOpen(false)
+                    setLogoutOpen(true)
+                  }}
+                  className="w-full rounded-xl px-3 py-2 text-left font-medium text-danger transition hover:bg-danger/10"
+                  role="menuitem"
+                >
+                  Sair
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>

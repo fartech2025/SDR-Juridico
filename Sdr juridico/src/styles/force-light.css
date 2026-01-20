@@ -395,7 +395,7 @@ tr:hover td {
    ===================================================== */
 
 /* Botões secundários/outline */
-button[class*="border"]:not([class*="bg-primary"]):not([class*="bg-emerald"]):not([class*="bg-blue"]):not([class*="bg-red"]) {
+button[class*="border"]:not([class*="bg-primary"]):not([class*="bg-emerald"]):not([class*="bg-blue"]):not([class*="bg-red"]):not([class*="bg-danger"]) {
   color: #374151 !important;
   border-color: #d1d5db !important;
 }

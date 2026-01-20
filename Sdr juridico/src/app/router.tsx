@@ -17,6 +17,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
+import { UserProfilePage } from '@/pages/UserProfilePage'
 import AuthCallback from '@/pages/auth/AuthCallback'
 
 // Admin Pages
@@ -106,6 +107,10 @@ export const router = createBrowserRouter([
         element: <ConfigPage />,
       },
       {
+        path: 'perfil',
+        element: <UserProfilePage />,
+      },
+      {
         path: 'datajud',
         element: <DataJudPage />,
       },
@@ -157,6 +162,10 @@ export const router = createBrowserRouter([
         path: 'security',
         element: <SecurityMonitoringSimple />,
       },
+      {
+        path: 'perfil',
+        element: <UserProfilePage />,
+      },
     ],
   },
   {
@@ -178,6 +187,10 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         element: <UserManagement />,
+      },
+      {
+        path: 'perfil',
+        element: <UserProfilePage />,
       },
     ],
   },
