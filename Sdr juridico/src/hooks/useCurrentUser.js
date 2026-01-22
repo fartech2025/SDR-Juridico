@@ -57,24 +57,10 @@ function useCurrentUser() {
     setLoading(true);
     setError(null);
     const load = async () => {
-      if (missingTableRef.current) {
-        setProfile(null);
-        setRole("user");
-        setOrgId(null);
-        setOrgName(null);
-        setLoading(false);
-        return;
-      }
       const { usuario, missingUsuariosTable, seed } = await ensureUsuario(user);
       if (!active) return;
       if (missingUsuariosTable) {
         missingTableRef.current = true;
-        setProfile(null);
-        setRole("user");
-        setOrgId(null);
-        setOrgName(null);
-        setLoading(false);
-        return;
       }
       const nextProfile = usuario || null;
       setProfile(nextProfile);

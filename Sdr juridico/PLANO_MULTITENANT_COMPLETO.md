@@ -23,7 +23,7 @@
   - Pages: `UserManagement`, `OrgSettings`, `OrgSuspendedPage`, `OrganizationsList`, etc.
 
 - **Estrutura do banco existente:**
-  - Tabelas: `profiles`, `orgs`, `leads`, `clientes`, `casos`, `documentos`, etc. (20 tabelas)
+  - Tabelas: `USUARIOS`, `orgs`, `leads`, `clientes`, `casos`, `documentos`, etc. (20 tabelas)
   - Algumas tabelas JÁ têm coluna `org_id` parcialmente implementada
 
 ### ❌ O que foi DESABILITADO temporariamente:
@@ -74,7 +74,7 @@ Implementar sistema multi-tenant completo com **3 níveis de acesso**:
 ### Modelo de Dados
 
 ```
-profiles (usuários)
+USUARIOS (usuários)
 ├── id (PK)
 ├── email
 ├── nome
@@ -93,7 +93,7 @@ orgs (organizações)
 org_members (membros das organizações) ⚠️ CRIAR
 ├── id (PK)
 ├── org_id (FK → orgs)
-├── user_id (FK → profiles)
+├── user_id (FK → USUARIOS)
 ├── role (admin, gestor, advogado, etc.)
 └── ativo (boolean)
 
@@ -127,10 +127,10 @@ Cada tabela terá políticas RLS:
 **O que o SQL faz:**
 
 ```sql
--- Parte 1: Adiciona colunas em profiles
-ALTER TABLE profiles ADD COLUMN org_id UUID;
-ALTER TABLE profiles ADD COLUMN role VARCHAR(50);
-ALTER TABLE profiles ADD COLUMN is_fartech_admin BOOLEAN;
+-- Parte 1: Adiciona colunas em USUARIOS
+ALTER TABLE USUARIOS ADD COLUMN org_id UUID;
+ALTER TABLE USUARIOS ADD COLUMN role VARCHAR(50);
+ALTER TABLE USUARIOS ADD COLUMN is_fartech_admin BOOLEAN;
 
 -- Parte 2: Adiciona org_id em outras tabelas
 ALTER TABLE leads ADD COLUMN org_id UUID;
@@ -151,14 +151,14 @@ VALUES ('c1e7b3a0-0000-0000-0000-000000000001', 'Demo Organization', 'demo');
 -- Verificar colunas adicionadas
 SELECT column_name, data_type 
 FROM information_schema.columns 
-WHERE table_name = 'profiles' 
+WHERE table_name = 'USUARIOS' 
   AND column_name IN ('org_id', 'role', 'is_fartech_admin');
 
 -- Verificar RLS habilitado
 SELECT tablename, rowsecurity 
 FROM pg_tables 
 WHERE schemaname = 'public' 
-  AND tablename IN ('profiles', 'orgs', 'leads', 'clientes', 'casos', 'documentos');
+  AND tablename IN ('USUARIOS', 'orgs', 'leads', 'clientes', 'casos', 'documentos');
 ```
 
 ### 1.2 Criar Tabela org_members
@@ -171,7 +171,7 @@ WHERE schemaname = 'public'
 CREATE TABLE IF NOT EXISTS org_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id UUID NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES USUARIOS(id) ON DELETE CASCADE,
   role VARCHAR(50) NOT NULL DEFAULT 'user',
   ativo BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -192,7 +192,7 @@ CREATE POLICY "fartech_admin_all_members"
   ON org_members FOR ALL
   USING (
     EXISTS (
-      SELECT 1 FROM profiles
+      SELECT 1 FROM USUARIOS
       WHERE id = auth.uid() AND is_fartech_admin = true
     )
   );
@@ -202,7 +202,7 @@ CREATE POLICY "org_admin_own_org_members"
   ON org_members FOR ALL
   USING (
     org_id IN (
-      SELECT org_id FROM profiles
+      SELECT org_id FROM USUARIOS
       WHERE id = auth.uid() AND role = 'admin'
     )
   );
@@ -212,7 +212,7 @@ CREATE POLICY "users_same_org_members"
   ON org_members FOR SELECT
   USING (
     org_id IN (
-      SELECT org_id FROM profiles
+      SELECT org_id FROM USUARIOS
       WHERE id = auth.uid()
     )
   );
@@ -234,7 +234,7 @@ Password: Fartech@2024
 
 Depois executar:
 ```sql
-UPDATE profiles 
+UPDATE USUARIOS 
 SET is_fartech_admin = true, role = 'admin'
 WHERE email = 'admin@fartech.com.br';
 ```
@@ -247,7 +247,7 @@ Password: Demo@2024
 
 Depois executar:
 ```sql
-UPDATE profiles 
+UPDATE USUARIOS 
 SET 
   org_id = 'c1e7b3a0-0000-0000-0000-000000000001',
   role = 'admin',
@@ -261,7 +261,7 @@ SELECT
   id,
   'admin',
   true
-FROM profiles
+FROM USUARIOS
 WHERE email = 'gestor@demo.local';
 ```
 
@@ -273,7 +273,7 @@ Password: Demo@2024
 
 Depois executar:
 ```sql
-UPDATE profiles 
+UPDATE USUARIOS 
 SET 
   org_id = 'c1e7b3a0-0000-0000-0000-000000000001',
   role = 'advogado',
@@ -286,7 +286,7 @@ SELECT
   id,
   'advogado',
   true
-FROM profiles
+FROM USUARIOS
 WHERE email = 'user@demo.local';
 ```
 
@@ -317,7 +317,7 @@ export async function getActiveOrgId(): Promise<string | null> {
 
   // Verificar se é Fartech Admin (não tem org específica)
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('USUARIOS')
     .select('is_fartech_admin, org_id')
     .eq('id', user.id)
     .single()
@@ -419,7 +419,7 @@ async createLead(input: CreateLeadInput): Promise<Lead> {
 ```typescript
 const load = async () => {
   const profileResult = await supabase
-    .from('profiles')
+    .from('USUARIOS')
     .select('user_id, created_at, nome, email, telefone, avatar_url, metadata')
     .eq('user_id', user.id)
     .limit(1)
@@ -435,7 +435,7 @@ const load = async () => {
 const load = async () => {
   const [profileResult, memberResult] = await Promise.all([
     supabase
-      .from('profiles')
+      .from('USUARIOS')
       .select('id, user_id, nome, email, telefone, avatar_url, metadata, org_id, role, is_fartech_admin')
       .eq('user_id', user.id)
       .limit(1),

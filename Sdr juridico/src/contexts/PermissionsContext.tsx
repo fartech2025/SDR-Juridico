@@ -10,6 +10,7 @@ import type {
   PermissionAction,
   PermissionResult,
 } from '@/types/permissions'
+import { FARTECH_ADMIN_PERMISSIONS, getPermissionsByRole } from '@/types/permissions'
 
 interface PermissionsContextValue {
   // Current user
@@ -46,18 +47,24 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const loadPermissions = useCallback(async () => {
     try {
       setLoading(true)
-
-      const [currentUser, userPermissions, isFartech, isAdmin] = await Promise.all([
-        permissionsService.getCurrentUser(),
-        permissionsService.getUserPermissions(),
-        permissionsService.isFartechAdmin(),
-        permissionsService.isOrgAdmin(),
-      ])
-
+      const currentUser = await permissionsService.getCurrentUser()
       setUser(currentUser)
-      setPermissions(userPermissions)
+
+      if (!currentUser) {
+        setPermissions([])
+        setIsFartechAdmin(false)
+        setIsOrgAdmin(false)
+        return
+      }
+
+      const isFartech = currentUser.is_fartech_admin
+      const isAdmin = isFartech || currentUser.role === 'org_admin'
+
       setIsFartechAdmin(isFartech)
       setIsOrgAdmin(isAdmin)
+      setPermissions(
+        isFartech ? FARTECH_ADMIN_PERMISSIONS : getPermissionsByRole(currentUser.role)
+      )
     } catch (error) {
       console.error('Error loading permissions:', error)
     } finally {

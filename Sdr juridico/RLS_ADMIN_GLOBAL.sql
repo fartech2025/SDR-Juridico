@@ -146,7 +146,7 @@ begin
   end if;
 end $$;
 
--- Ensure org members can read/write core data without relying on profiles
+-- Ensure org members can read/write core data without relying on USUARIOS
 do $$
 begin
   if to_regclass('public.leads') is not null then

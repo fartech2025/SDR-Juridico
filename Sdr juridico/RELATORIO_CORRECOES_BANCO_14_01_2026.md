@@ -27,7 +27,7 @@ Avaliar a estrutura completa do banco de dados após implementação do sistema 
 5. Avaliação de policies e isolamento de dados
 
 ### Escopo Analisado
-- **Tabelas:** 7 principais (profiles, orgs, org_members, leads, clientes, casos, documentos)
+- **Tabelas:** 7 principais (USUARIOS, orgs, org_members, leads, clientes, casos, documentos)
 - **RLS Policies:** 22+ policies em múltiplos arquivos
 - **Foreign Keys:** 15+ constraints de integridade referencial
 - **Funções:** Análise de triggers e funções auxiliares
@@ -40,14 +40,14 @@ Avaliar a estrutura completa do banco de dados após implementação do sistema 
 ### 🔴 **CRÍTICO 1: Recursão Infinita em RLS Policies**
 
 **Descrição:**  
-As policies de Row Level Security da tabela `profiles` estavam consultando a própria tabela `profiles` dentro da condição USING, causando recursão infinita.
+As policies de Row Level Security da tabela `USUARIOS` estavam consultando a própria tabela `USUARIOS` dentro da condição USING, causando recursão infinita.
 
 **Código Problemático:**
 ```sql
-CREATE POLICY "fartech_admin_all_profiles" ON profiles
+CREATE POLICY "fartech_admin_all_USUARIOS" ON USUARIOS
   USING (
     EXISTS (
-      SELECT 1 FROM profiles AS admin_profile  -- ❌ Recursão!
+      SELECT 1 FROM USUARIOS AS admin_profile  -- ❌ Recursão!
       WHERE admin_profile.user_id = auth.uid()
       AND admin_profile.is_fartech_admin = true
     )
@@ -72,8 +72,8 @@ Colunas `org_id` adicionadas sem regras de deleção (`ON DELETE`), causando vio
 
 **Código Problemático:**
 ```sql
-ALTER TABLE profiles ADD COLUMN org_id UUID REFERENCES orgs(id);
--- ❌ E se deletar uma org? profiles fica órfão!
+ALTER TABLE USUARIOS ADD COLUMN org_id UUID REFERENCES orgs(id);
+-- ❌ E se deletar uma org? USUARIOS fica órfão!
 ```
 
 **Impacto:**
@@ -83,7 +83,7 @@ ALTER TABLE profiles ADD COLUMN org_id UUID REFERENCES orgs(id);
 - ❌ Erros em cascata no sistema
 
 **Tabelas Afetadas:**
-- `profiles.org_id` → orgs(id)
+- `USUARIOS.org_id` → orgs(id)
 - `leads.org_id` → orgs(id)
 - `clientes.org_id` → orgs(id)
 - `casos.org_id` → orgs(id)
@@ -94,12 +94,12 @@ ALTER TABLE profiles ADD COLUMN org_id UUID REFERENCES orgs(id);
 
 ---
 
-### 🔴 **CRÍTICO 3: Conflito de Nomenclatura (profiles vs users)**
+### 🔴 **CRÍTICO 3: Conflito de Nomenclatura (USUARIOS vs users)**
 
 **Descrição:**  
 Confusão entre 3 tabelas diferentes com nomenclaturas inconsistentes:
 1. `auth.users` (Supabase Auth - sistema)
-2. `public.profiles` (tabela atual - implementada)
+2. `public.USUARIOS` (tabela atual - implementada)
 3. `public.users` (referência em migrations antigas - não existe)
 
 **Código Conflitante:**
@@ -113,7 +113,7 @@ CREATE TABLE users (  -- ❌ Tabela "users" não implementada
 );
 
 -- FASE_1_COMPLETA.sql
-ALTER TABLE profiles ADD COLUMN org_id UUID;  -- ✅ Mas usa "profiles"
+ALTER TABLE USUARIOS ADD COLUMN org_id UUID;  -- ✅ Mas usa "USUARIOS"
 ```
 
 **Impacto:**
@@ -157,21 +157,21 @@ CREATE POLICY "fartech_admin_all_leads" ON leads ...
 
 ---
 
-### 🟡 **MÉDIO 5: Missing UNIQUE Constraint em profiles.user_id**
+### 🟡 **MÉDIO 5: Missing UNIQUE Constraint em USUARIOS.user_id**
 
 **Descrição:**  
-Tabela `org_members` possui FK para `profiles.user_id`, mas `user_id` não tinha constraint UNIQUE, permitindo duplicatas.
+Tabela `org_members` possui FK para `USUARIOS.user_id`, mas `user_id` não tinha constraint UNIQUE, permitindo duplicatas.
 
 **Código Problemático:**
 ```sql
 CREATE TABLE org_members (
   id UUID PRIMARY KEY,
-  user_id UUID REFERENCES profiles(user_id)  -- ❌ E se user_id duplicar?
+  user_id UUID REFERENCES USUARIOS(user_id)  -- ❌ E se user_id duplicar?
 );
 ```
 
 **Impacto:**
-- ⚠️ Possibilidade de duplicatas em profiles
+- ⚠️ Possibilidade de duplicatas em USUARIOS
 - ⚠️ Violação de integridade lógica
 - ⚠️ FK sem garantia de unicidade
 
@@ -223,7 +223,7 @@ CREATE OR REPLACE FUNCTION is_fartech_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM profiles
+    SELECT 1 FROM USUARIOS
     WHERE user_id = auth.uid() 
     AND is_fartech_admin = true
   );
@@ -235,7 +235,7 @@ CREATE OR REPLACE FUNCTION get_user_org_id()
 RETURNS UUID AS $$
 BEGIN
   RETURN (
-    SELECT org_id FROM profiles
+    SELECT org_id FROM USUARIOS
     WHERE user_id = auth.uid()
     LIMIT 1
   );
@@ -247,7 +247,7 @@ CREATE OR REPLACE FUNCTION is_org_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM profiles
+    SELECT 1 FROM USUARIOS
     WHERE user_id = auth.uid() 
     AND role IN ('admin', 'org_admin')
   );
@@ -257,13 +257,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 **Novas Policies (sem recursão):**
 ```sql
--- Policy 1: Fartech Admin vê todos os profiles
-CREATE POLICY "fartech_admin_all_profiles" ON profiles
+-- Policy 1: Fartech Admin vê todos os USUARIOS
+CREATE POLICY "fartech_admin_all_USUARIOS" ON USUARIOS
   FOR ALL
   USING (is_fartech_admin());  -- ✅ Usa função, não subquery!
 
--- Policy 2: Org Admin vê profiles da própria org
-CREATE POLICY "org_admin_own_org_profiles" ON profiles
+-- Policy 2: Org Admin vê USUARIOS da própria org
+CREATE POLICY "org_admin_own_org_USUARIOS" ON USUARIOS
   FOR ALL
   USING (
     is_org_admin() 
@@ -271,7 +271,7 @@ CREATE POLICY "org_admin_own_org_profiles" ON profiles
   );
 
 -- Policy 3: Usuários veem apenas seu próprio profile
-CREATE POLICY "users_own_profile" ON profiles
+CREATE POLICY "users_own_profile" ON USUARIOS
   FOR ALL
   USING (user_id = auth.uid());  -- ✅ Sem recursão!
 ```
@@ -291,9 +291,9 @@ Recriar todas as FKs de `org_id` com regras apropriadas de deleção.
 
 **Código Implementado:**
 ```sql
--- profiles: Se org deletada, setar NULL
-ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_org_id_fkey;
-ALTER TABLE profiles ADD CONSTRAINT profiles_org_id_fkey
+-- USUARIOS: Se org deletada, setar NULL
+ALTER TABLE USUARIOS DROP CONSTRAINT IF EXISTS USUARIOS_org_id_fkey;
+ALTER TABLE USUARIOS ADD CONSTRAINT USUARIOS_org_id_fkey
   FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE SET NULL;
 
 -- leads: Se org deletada, deletar leads em cascata
@@ -318,7 +318,7 @@ ALTER TABLE documentos ADD CONSTRAINT documentos_org_id_fkey
 ```
 
 **Lógica Aplicada:**
-- `profiles.org_id` → **SET NULL** (usuário pode existir sem org temporariamente)
+- `USUARIOS.org_id` → **SET NULL** (usuário pode existir sem org temporariamente)
 - `leads/clientes/casos/documentos.org_id` → **CASCADE** (dados da org devem ser deletados junto)
 
 **Resultado:**
@@ -329,7 +329,7 @@ ALTER TABLE documentos ADD CONSTRAINT documentos_org_id_fkey
 
 ---
 
-### 🔧 **CORREÇÃO 3: UNIQUE Constraint em profiles.user_id**
+### 🔧 **CORREÇÃO 3: UNIQUE Constraint em USUARIOS.user_id**
 
 **Solução:**  
 Adicionar constraint UNIQUE para garantir que cada `user_id` apareça apenas uma vez.
@@ -340,39 +340,39 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint 
-    WHERE conname = 'profiles_user_id_unique'
+    WHERE conname = 'USUARIOS_user_id_unique'
   ) THEN
-    ALTER TABLE profiles 
-    ADD CONSTRAINT profiles_user_id_unique UNIQUE (user_id);
+    ALTER TABLE USUARIOS 
+    ADD CONSTRAINT USUARIOS_user_id_unique UNIQUE (user_id);
   END IF;
 END $$;
 ```
 
 **Resultado:**
 - ✅ FK de `org_members` agora é segura
-- ✅ Impossível criar profiles duplicados
+- ✅ Impossível criar USUARIOS duplicados
 - ✅ Integridade lógica garantida
 
 ---
 
-### 🔧 **CORREÇÃO 4: RLS Re-habilitado em profiles**
+### 🔧 **CORREÇÃO 4: RLS Re-habilitado em USUARIOS**
 
 **Solução:**  
-Após resolver recursão, re-habilitar RLS na tabela `profiles`.
+Após resolver recursão, re-habilitar RLS na tabela `USUARIOS`.
 
 **Código Implementado:**
 ```sql
 -- Remover policies antigas (evitar duplicatas)
-DROP POLICY IF EXISTS "fartech_admin_all_profiles" ON profiles;
-DROP POLICY IF EXISTS "org_admin_own_org_profiles" ON profiles;
-DROP POLICY IF EXISTS "users_own_profile" ON profiles;
-DROP POLICY IF EXISTS "users_view_own_org" ON profiles;
+DROP POLICY IF EXISTS "fartech_admin_all_USUARIOS" ON USUARIOS;
+DROP POLICY IF EXISTS "org_admin_own_org_USUARIOS" ON USUARIOS;
+DROP POLICY IF EXISTS "users_own_profile" ON USUARIOS;
+DROP POLICY IF EXISTS "users_view_own_org" ON USUARIOS;
 
 -- Criar novas policies (já mostradas acima)
 -- ...
 
 -- Habilitar RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE USUARIOS ENABLE ROW LEVEL SECURITY;
 ```
 
 **Resultado:**
@@ -405,19 +405,19 @@ WHERE proname IN ('is_fartech_admin', 'get_user_org_id', 'is_org_admin');
 ```sql
 SELECT policyname, cmd
 FROM pg_policies
-WHERE schemaname = 'public' AND tablename = 'profiles'
+WHERE schemaname = 'public' AND tablename = 'USUARIOS'
 ORDER BY policyname;
 ```
 
 **Retorno:**
 | policyname | cmd |
 |------------|-----|
-| fartech_admin_all_profiles | ALL ✅ |
-| org_admin_own_org_profiles | ALL ✅ |
-| profiles_select_self | SELECT |
-| profiles_update_self | UPDATE |
+| fartech_admin_all_USUARIOS | ALL ✅ |
+| org_admin_own_org_USUARIOS | ALL ✅ |
+| USUARIOS_select_self | SELECT |
+| USUARIOS_update_self | UPDATE |
 | users_own_profile | ALL ✅ |
-| users_same_org_profiles | SELECT |
+| users_same_org_USUARIOS | SELECT |
 
 **Total:** 6 policies (3 novas sem recursão + 3 antigas mantidas)
 
@@ -428,7 +428,7 @@ ORDER BY policyname;
 SELECT tablename, rowsecurity as rls_enabled
 FROM pg_tables
 WHERE schemaname = 'public' 
-  AND tablename IN ('profiles', 'orgs', 'leads', 'clientes', 'casos', 'documentos')
+  AND tablename IN ('USUARIOS', 'orgs', 'leads', 'clientes', 'casos', 'documentos')
 ORDER BY tablename;
 ```
 
@@ -440,7 +440,7 @@ ORDER BY tablename;
 | documentos | **true** ✅ |
 | leads | **true** ✅ |
 | orgs | **true** ✅ |
-| profiles | **true** ✅ |
+| USUARIOS | **true** ✅ |
 
 **100% das tabelas com RLS ativo!**
 
@@ -455,7 +455,7 @@ ORDER BY tablename;
 | clientes | org_id | orgs | **CASCADE** | ✅ |
 | documentos | org_id | orgs | **CASCADE** | ✅ |
 | leads | org_id | orgs | **CASCADE** | ✅ |
-| profiles | org_id | orgs | **SET NULL** | ✅ |
+| USUARIOS | org_id | orgs | **SET NULL** | ✅ |
 
 **100% das FKs com regras corretas!**
 
@@ -465,7 +465,7 @@ ORDER BY tablename;
 
 | Métrica | Antes | Depois | Melhoria |
 |---------|-------|--------|----------|
-| **RLS em profiles** | ❌ DESABILITADO | ✅ HABILITADO | +100% |
+| **RLS em USUARIOS** | ❌ DESABILITADO | ✅ HABILITADO | +100% |
 | **Recursão RLS** | 🔴 INFINITA | ✅ ZERO | +100% |
 | **CASCADE Rules** | ❌ 0/5 | ✅ 5/5 | +100% |
 | **UNIQUE Constraints** | ❌ 0/1 | ✅ 1/1 | +100% |
@@ -482,7 +482,7 @@ ORDER BY tablename;
 
 | Tabela | RLS | Policies | CASCADE | UNIQUE | Status |
 |--------|-----|----------|---------|--------|--------|
-| **profiles** | ✅ Ativo | 6 | ✅ SET NULL | ✅ user_id | 🟢 OK |
+| **USUARIOS** | ✅ Ativo | 6 | ✅ SET NULL | ✅ user_id | 🟢 OK |
 | **orgs** | ✅ Ativo | 3 | N/A | ✅ id (PK) | 🟢 OK |
 | **org_members** | ✅ Ativo | 4 | ✅ CASCADE | ✅ (org_id, user_id) | 🟢 OK |
 | **leads** | ✅ Ativo | 2 | ✅ CASCADE | ✅ id (PK) | 🟢 OK |
@@ -511,7 +511,7 @@ ORDER BY tablename;
 **Usuário Normal:**
 - ✅ Vê apenas dados da PRÓPRIA organização (compartilhados)
 - ✅ Pode ver/editar apenas seus próprios registros
-- ✅ Função: `org_id IN (SELECT org_id FROM profiles WHERE user_id = auth.uid())`
+- ✅ Função: `org_id IN (SELECT org_id FROM USUARIOS WHERE user_id = auth.uid())`
 
 **Usuário sem Org:**
 - ✅ Vê apenas seu próprio profile
@@ -532,7 +532,7 @@ ORDER BY tablename;
 
 2. **CORRECOES_CRITICAS.sql** (14/01/2026 - 267 linhas)
    - 3 funções helper SECURITY DEFINER
-   - UNIQUE constraint em profiles.user_id
+   - UNIQUE constraint em USUARIOS.user_id
    - CASCADE rules em 5 tabelas
    - 3 policies RLS sem recursão
    - Verificações automáticas de integridade
@@ -571,13 +571,13 @@ feat: análise completa do banco + correções críticas de RLS
 ### 🟡 Baixa Prioridade (Não Críticos)
 
 1. **Policies Antigas Mantidas**
-   - 3 policies antigas ainda ativas em `profiles`
+   - 3 policies antigas ainda ativas em `USUARIOS`
    - Não causam problemas, mas podem ser removidas para limpeza
    - Recomendação: Manter por compatibilidade
 
 2. **Nomenclatura Inconsistente**
    - Migrations antigas referenciam tabela `users` inexistente
-   - Documentação usa `profiles` e `users` intercambiavelmente
+   - Documentação usa `USUARIOS` e `users` intercambiavelmente
    - Recomendação: Padronizar em futuras atualizações
 
 3. **Índices Duplicados**
@@ -609,7 +609,7 @@ feat: análise completa do banco + correções críticas de RLS
 2. Criar leads/clientes/casos associados
 3. Deletar org
 4. Verificar que dados foram deletados em CASCADE
-5. Verificar que profiles ficaram com org_id = NULL
+5. Verificar que USUARIOS ficaram com org_id = NULL
 
 ### Teste 4: CRUD Completo
 1. Create: Criar novo lead
@@ -655,7 +655,7 @@ feat: análise completa do banco + correções críticas de RLS
 ### Médio Prazo (Este Mês)
 5. ⏳ Consolidar policies em arquivo único
 6. ⏳ Remover migrations conflitantes
-7. ⏳ Padronizar nomenclatura (profiles vs users)
+7. ⏳ Padronizar nomenclatura (USUARIOS vs users)
 8. ⏳ Documentar padrão de RLS para novas tabelas
 
 ### Longo Prazo (Próximo Trimestre)
@@ -713,8 +713,8 @@ As correções críticas foram implementadas com sucesso, resolvendo 4 problemas
 
 1. ✅ **Recursão RLS eliminada** com funções SECURITY DEFINER
 2. ✅ **CASCADE rules configuradas** em todas as FKs
-3. ✅ **UNIQUE constraint adicionado** em profiles.user_id
-4. ✅ **RLS re-habilitado** em profiles com 6 policies funcionais
+3. ✅ **UNIQUE constraint adicionado** em USUARIOS.user_id
+4. ✅ **RLS re-habilitado** em USUARIOS com 6 policies funcionais
 
 **Status Final:** 🟢 **SISTEMA 100% FUNCIONAL E SEGURO**
 
@@ -762,7 +762,7 @@ SELECT
   qual IS NOT NULL as tem_using,
   with_check IS NOT NULL as tem_check
 FROM pg_policies
-WHERE schemaname = 'public' AND tablename = 'profiles'
+WHERE schemaname = 'public' AND tablename = 'USUARIOS'
 ORDER BY policyname;
 
 -- Validação 3: RLS Status
@@ -773,7 +773,7 @@ SELECT
   (SELECT COUNT(*) FROM pg_policies p WHERE p.tablename = t.tablename) as policy_count
 FROM pg_tables t
 WHERE schemaname = 'public'
-  AND tablename IN ('profiles', 'orgs', 'org_members', 'leads', 'clientes', 'casos', 'documentos')
+  AND tablename IN ('USUARIOS', 'orgs', 'org_members', 'leads', 'clientes', 'casos', 'documentos')
 ORDER BY tablename;
 
 -- Validação 4: Foreign Keys com CASCADE
@@ -812,7 +812,7 @@ JOIN information_schema.key_column_usage AS kcu
   AND tc.table_schema = kcu.table_schema
 WHERE tc.constraint_type = 'UNIQUE'
   AND tc.table_schema = 'public'
-  AND tc.table_name IN ('profiles', 'orgs', 'org_members')
+  AND tc.table_name IN ('USUARIOS', 'orgs', 'org_members')
 ORDER BY tc.table_name, kcu.column_name;
 ```
 
@@ -828,15 +828,15 @@ DROP FUNCTION IF EXISTS get_user_org_id() CASCADE;
 DROP FUNCTION IF EXISTS is_org_admin() CASCADE;
 
 -- 2. Remover UNIQUE constraint
-ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_user_id_unique;
+ALTER TABLE USUARIOS DROP CONSTRAINT IF EXISTS USUARIOS_user_id_unique;
 
 -- 3. Restaurar FKs antigas (sem CASCADE)
-ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_org_id_fkey;
-ALTER TABLE profiles ADD CONSTRAINT profiles_org_id_fkey
+ALTER TABLE USUARIOS DROP CONSTRAINT IF EXISTS USUARIOS_org_id_fkey;
+ALTER TABLE USUARIOS ADD CONSTRAINT USUARIOS_org_id_fkey
   FOREIGN KEY (org_id) REFERENCES orgs(id);
 
--- 4. Desabilitar RLS em profiles
-ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+-- 4. Desabilitar RLS em USUARIOS
+ALTER TABLE USUARIOS DISABLE ROW LEVEL SECURITY;
 ```
 
 ---

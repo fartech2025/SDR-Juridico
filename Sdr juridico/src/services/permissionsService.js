@@ -6,59 +6,64 @@ import {
 } from "@/types/permissions";
 import { ensureUsuario } from "@/services/usuariosService";
 import { telemetryService } from "@/services/telemetryService";
-const resolveRoleFromPermissoes = (permissoes) => {
+const resolveRoleFromPermissoes = (permissoes, memberRole) => {
   if (permissoes.includes("fartech_admin")) {
     return "fartech_admin";
+  }
+  if (memberRole && ["admin", "gestor", "org_admin"].includes(memberRole)) {
+    return "org_admin";
   }
   if (permissoes.includes("gestor") || permissoes.includes("org_admin")) {
     return "org_admin";
   }
   return "user";
 };
+let currentUserPromise = null;
 const permissionsService = {
   /**
    * Get current user with role information
    */
   async getCurrentUser() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { usuario, missingUsuariosTable, seed } = await ensureUsuario(user);
-      const fallbackName = user.user_metadata && user.user_metadata.nome_completo || user.email || "Usuario";
-      const baseName = usuario?.nome_completo || seed?.nome_completo || fallbackName;
-      const baseEmail = usuario?.email || seed?.email || user.email || "";
-      const permissoes = usuario?.permissoes || seed?.permissoes || [];
-      const resolvedRole = resolveRoleFromPermissoes(permissoes);
-      const isFartechAdmin = resolvedRole === "fartech_admin" || seed?.is_fartech_admin === true;
-      console.log("[PermissionsService] Dados do usuario:", { usuario, seed });
-      console.log("[PermissionsService] Permissoes do usuario:", permissoes);
-      console.log("[PermissionsService] isFartechAdmin:", isFartechAdmin);
-      if (missingUsuariosTable) {
-        console.log("[PermissionsService] usuarios table missing, using fallback");
+    if (currentUserPromise) {
+      return currentUserPromise;
+    }
+    currentUserPromise = (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+        const { usuario, missingUsuariosTable, seed } = await ensureUsuario(user);
+        const fallbackName = user.user_metadata && user.user_metadata.nome_completo || user.email || "Usuario";
+        const baseName = usuario?.nome_completo || seed?.nome_completo || fallbackName;
+        const baseEmail = usuario?.email || seed?.email || user.email || "";
+        const permissoes = usuario?.permissoes || seed?.permissoes || [];
+        const isFartechAdmin = permissoes.includes("fartech_admin") || seed?.is_fartech_admin === true;
+        console.log("[PermissionsService] Dados do usuario:", { usuario, seed });
+        console.log("[PermissionsService] Permissoes do usuario:", permissoes);
+        console.log("[PermissionsService] isFartechAdmin:", isFartechAdmin);
+        if (missingUsuariosTable) {
+          console.log("[PermissionsService] usuarios table missing, using fallback");
+        }
+        const { data: memberData } = await supabase.from("org_members").select("org_id, role").eq("user_id", user.id).eq("ativo", true).order("created_at", { ascending: true }).limit(1).maybeSingle();
+        const membershipRole = memberData?.role || seed?.role || null;
+        const role = resolveRoleFromPermissoes(permissoes, membershipRole);
+        console.log("[PermissionsService] Role final:", role, "membershipRole:", membershipRole);
         return {
           id: user.id,
           email: baseEmail,
           name: baseName,
-          role: resolvedRole,
-          org_id: seed?.org_id || null,
+          role,
+          org_id: memberData?.org_id || seed?.org_id || null,
           is_fartech_admin: isFartechAdmin
         };
+      } catch (error) {
+        console.error("Error getting current user:", error);
+        return null;
       }
-      const { data: memberData } = await supabase.from("org_members").select("org_id, role").eq("user_id", user.id).eq("ativo", true).order("created_at", { ascending: true }).limit(1).maybeSingle();
-      const membershipRole = memberData?.role || seed?.role || null;
-      const role = membershipRole || resolvedRole;
-      console.log("[PermissionsService] Role final:", role, "membershipRole:", membershipRole);
-      return {
-        id: user.id,
-        email: baseEmail,
-        name: baseName,
-        role,
-        org_id: memberData?.org_id || seed?.org_id || null,
-        is_fartech_admin: isFartechAdmin
-      };
-    } catch (error) {
-      console.error("Error getting current user:", error);
-      return null;
+    })();
+    try {
+      return await currentUserPromise;
+    } finally {
+      currentUserPromise = null;
     }
   },
   /**

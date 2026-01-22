@@ -214,7 +214,7 @@
 # No Supabase Dashboard → SQL Editor
 # Executar: SETUP_MULTITENANT_INCREMENTAL.sql
 ```
-- [ ] Adiciona colunas em `profiles`: org_id, role, is_fartech_admin
+- [ ] Adiciona colunas em `USUARIOS`: org_id, role, is_fartech_admin
 - [ ] Adiciona org_id em: leads, clientes, casos, documentos
 - [ ] Cria 18 políticas RLS
 - [ ] Cria organização de teste
@@ -224,7 +224,7 @@
 CREATE TABLE org_members (
   id UUID PRIMARY KEY,
   org_id UUID REFERENCES orgs(id),
-  user_id UUID REFERENCES profiles(id),
+  user_id UUID REFERENCES USUARIOS(id),
   role VARCHAR(50),
   ativo BOOLEAN,
   created_at TIMESTAMP
@@ -255,7 +255,7 @@ CREATE TABLE org_members (
 // Descomentar query org_members
 // Adicionar lógica role, is_fartech_admin
 ```
-- [ ] Query profiles completa
+- [ ] Query USUARIOS completa
 - [ ] Query org_members completa
 - [ ] Retornar orgId, orgName, role, is_fartech_admin
 

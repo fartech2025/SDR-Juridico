@@ -63,8 +63,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
         return
       }
       
-      // Check if user is Fartech Admin
-      const isFartech = await permissionsService.isFartechAdmin()
+      const isFartech = user.is_fartech_admin
       setIsFartechAdmin(isFartech)
       
       setCurrentRole(user.role || null)
@@ -123,8 +122,8 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   // Switch organization (Fartech admin only)
   const switchOrg = useCallback(async (orgId: string) => {
     try {
-      const isFartech = await permissionsService.isFartechAdmin()
-      if (!isFartech) {
+      const canSwitch = isFartechAdmin || await permissionsService.isFartechAdmin()
+      if (!canSwitch) {
         throw new Error('Only Fartech admins can switch organizations')
       }
 
@@ -141,20 +140,20 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [isFartechAdmin])
 
   // Load all organizations (Fartech admin only)
   const loadAllOrgs = useCallback(async () => {
     try {
-      const isFartech = await permissionsService.isFartechAdmin()
-      if (!isFartech) return
+      const canLoad = isFartechAdmin || await permissionsService.isFartechAdmin()
+      if (!canLoad) return
 
       const orgs = await organizationsService.getAll()
       setAllOrgs(orgs)
     } catch (err) {
       console.error('Error loading all organizations:', err)
     }
-  }, [])
+  }, [isFartechAdmin])
 
   // Load on mount
   useEffect(() => {

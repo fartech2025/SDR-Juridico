@@ -24,7 +24,7 @@ Tables observed in the current DB:
 - notas
 - org_members
 - orgs
-- profiles
+- USUARIOS
 - tarefas
 - templates
 - usuarios

@@ -1,5 +1,5 @@
 ﻿ID;Area;Titulo;Prioridade;Estimativa;Dependencias;Dev;Status;Notas
-B-01;Core Multi-tenant;Unificar modelo de usuario (usuarios vs profiles) e padronizar auth/profile;P0;L;;Dev A;todo;
+B-01;Core Multi-tenant;Unificar modelo de usuario (somente usuarios) e padronizar auth/profile;P0;L;;Dev A;todo;
 B-02;Core Multi-tenant;Alinhar schema de orgs e mapeamentos (nome/plano/ativo vs name/plan/status);P0;L;B-01;Dev A;todo;
 B-03;Core Multi-tenant;Implementar getActiveOrgId e useCurrentUser com org_members;P0;M;B-01;Dev A;todo;
 B-04;Core Multi-tenant;Reativar filtro org_id em services (leads/clientes/casos/documentos/agenda/integrations/notas);P0;M;B-03;Dev A;todo;

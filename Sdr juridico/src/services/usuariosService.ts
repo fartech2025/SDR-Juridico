@@ -43,6 +43,29 @@ const buildPermissoes = (roles: string[], isFartechAdmin: boolean) => {
   return Array.from(perms)
 }
 
+const upsertUsuarioFromSeed = async (userId: string, seed: UsuarioSeed) => {
+  const { data, error } = await supabase
+    .from('usuarios')
+    .upsert(
+      {
+        id: userId,
+        nome_completo: seed.nome_completo,
+        email: seed.email,
+        permissoes: seed.permissoes,
+      },
+      { onConflict: 'id' },
+    )
+    .select('id, nome_completo, email, permissoes, created_at, updated_at')
+    .maybeSingle()
+
+  if (error) {
+    console.warn('[usuariosService] Failed to upsert usuarios from seed:', error)
+    return null
+  }
+
+  return (data as UsuarioRow) || null
+}
+
 const isMissingTable = (err: { code?: string; message?: string } | null | undefined, table: string) => {
   const message = err?.message || ''
   return (
@@ -88,6 +111,8 @@ const deriveSeedFromUser = async (user: User): Promise<UsuarioSeed> => {
 }
 
 export async function ensureUsuario(user: User): Promise<EnsureUsuarioResult> {
+  const seed = await deriveSeedFromUser(user)
+
   const { data, error } = await supabase
     .from('usuarios')
     .select('id, nome_completo, email, permissoes, created_at, updated_at')
@@ -95,40 +120,25 @@ export async function ensureUsuario(user: User): Promise<EnsureUsuarioResult> {
     .maybeSingle()
 
   if (error) {
-    const seed = await deriveSeedFromUser(user)
-    if (isMissingTable(error, 'usuarios')) {
-      return { usuario: null, missingUsuariosTable: true, seed }
+    const missingUsuariosTable = isMissingTable(error, 'usuarios')
+    if (!missingUsuariosTable) {
+      console.warn('[usuariosService] Failed to load usuarios:', error)
     }
-    console.warn('[usuariosService] Failed to load usuarios:', error)
-    return { usuario: null, missingUsuariosTable: false, seed }
+    return { usuario: null, missingUsuariosTable, seed }
   }
 
   if (data) {
     return { usuario: data as UsuarioRow, missingUsuariosTable: false, seed: null }
   }
 
-  const seed = await deriveSeedFromUser(user)
-  const { data: created, error: insertError } = await supabase
-    .from('usuarios')
-    .upsert(
-      {
-        id: user.id,
-        nome_completo: seed.nome_completo,
-        email: seed.email,
-        permissoes: seed.permissoes,
-      },
-      { onConflict: 'id' },
-    )
-    .select('id, nome_completo, email, permissoes, created_at, updated_at')
-    .maybeSingle()
-
-  if (insertError) {
-    if (isMissingTable(insertError, 'usuarios')) {
-      return { usuario: null, missingUsuariosTable: true, seed }
-    }
-    console.warn('[usuariosService] Failed to upsert usuarios:', insertError)
+  const created = await upsertUsuarioFromSeed(user.id, seed)
+  if (!created) {
     return { usuario: null, missingUsuariosTable: false, seed }
   }
 
-  return { usuario: (created as UsuarioRow) || null, missingUsuariosTable: false, seed }
+  return {
+    usuario: created,
+    missingUsuariosTable: false,
+    seed: null,
+  }
 }

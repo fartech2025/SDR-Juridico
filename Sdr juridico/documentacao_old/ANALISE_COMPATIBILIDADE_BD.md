@@ -35,27 +35,27 @@ A aplicação espera tabelas multi-tenant que o banco atual NÃO TEM:
 - **No banco:** ❌ NÃO EXISTE
 - **Impacto:** 🔴 **CRÍTICO** - Sistema multi-tenant não funciona
 
-#### ❌ **profiles** - Perfis de Usuários
+#### ❌ **USUARIOS** - Perfis de Usuários
 - **Usado em:** Relacionamentos em leads, casos, documentos, agenda
-- **No banco:** Existe `usuarios` (não `profiles`)
-- **Impacto:** 🔴 **CRÍTICO** - Todas as queries com JOIN em profiles vão falhar
+- **No banco:** Existe `usuarios` (não `USUARIOS`)
+- **Impacto:** 🔴 **CRÍTICO** - Todas as queries com JOIN em USUARIOS vão falhar
 
 **Exemplos de JOINs quebrados:**
 ```typescript
 // src/services/leadsService.ts
-.select('*, assigned_user:profiles!assigned_user_id(nome)')  // ❌ FALHA
+.select('*, assigned_user:USUARIOS!assigned_user_id(nome)')  // ❌ FALHA
 
 // src/services/clientesService.ts
-.select('*, owner_user:profiles!owner_user_id(nome)')  // ❌ FALHA
+.select('*, owner_user:USUARIOS!owner_user_id(nome)')  // ❌ FALHA
 
 // src/services/casosService.ts
-.select('*, responsavel:profiles!responsavel_user_id(nome)')  // ❌ FALHA
+.select('*, responsavel:USUARIOS!responsavel_user_id(nome)')  // ❌ FALHA
 
 // src/services/documentosService.ts
-.select('*, uploader:profiles!uploaded_by(nome)')  // ❌ FALHA
+.select('*, uploader:USUARIOS!uploaded_by(nome)')  // ❌ FALHA
 
 // src/services/agendaService.ts
-.select('*, owner:profiles!owner_user_id(nome)')  // ❌ FALHA
+.select('*, owner:USUARIOS!owner_user_id(nome)')  // ❌ FALHA
 ```
 
 #### ❌ **org_members** - Membros das Organizações
@@ -302,8 +302,8 @@ Essas tabelas existem no banco mas não têm services na aplicação:
 
 | Tabela | No Banco | No Código | Compatibilidade | Status |
 |--------|----------|-----------|-----------------|--------|
-| **usuarios** | ✅ | ❌ (usa profiles) | 0% | 🔴 CRÍTICO |
-| **profiles** | ❌ | ✅ | 0% | 🔴 CRÍTICO |
+| **usuarios** | ✅ | ❌ (usa USUARIOS) | 0% | 🔴 CRÍTICO |
+| **USUARIOS** | ❌ | ✅ | 0% | 🔴 CRÍTICO |
 | **orgs** | ❌ | ✅ | 0% | 🔴 CRÍTICO |
 | **org_members** | ❌ | ✅ | 0% | 🔴 CRÍTICO |
 | **leads** | ✅ | ✅ | 30% | 🔴 CRÍTICO |
@@ -336,9 +336,9 @@ Essas tabelas existem no banco mas não têm services na aplicação:
 Criar migration para adequar o banco ao código da aplicação:
 
 ```sql
--- 1. Renomear usuarios para profiles
-ALTER TABLE usuarios RENAME TO profiles;
-ALTER TABLE profiles RENAME COLUMN nome_completo TO nome;
+-- 1. Renomear usuarios para USUARIOS
+ALTER TABLE usuarios RENAME TO USUARIOS;
+ALTER TABLE USUARIOS RENAME COLUMN nome_completo TO nome;
 
 -- 2. Criar tabela orgs
 CREATE TABLE orgs (
@@ -374,7 +374,7 @@ ALTER TABLE leads ADD COLUMN canal TEXT;
 ALTER TABLE leads ADD COLUMN assunto TEXT;
 ALTER TABLE leads ADD COLUMN resumo TEXT;
 ALTER TABLE leads ADD COLUMN qualificacao JSONB;
-ALTER TABLE leads ADD COLUMN assigned_user_id UUID REFERENCES profiles(user_id);
+ALTER TABLE leads ADD COLUMN assigned_user_id UUID REFERENCES USUARIOS(user_id);
 ALTER TABLE leads ADD COLUMN cliente_id UUID REFERENCES clientes(id);
 ALTER TABLE leads ADD COLUMN remote_id TEXT;
 ALTER TABLE leads ADD COLUMN last_contact_at TIMESTAMPTZ;
@@ -384,7 +384,7 @@ ALTER TABLE leads RENAME COLUMN ultimo_contato TO ultimo_contato_old;
 ALTER TABLE clientes ADD COLUMN tipo TEXT;
 ALTER TABLE clientes ADD COLUMN documento TEXT;
 ALTER TABLE clientes ADD COLUMN tags TEXT[];
-ALTER TABLE clientes ADD COLUMN owner_user_id UUID REFERENCES profiles(user_id);
+ALTER TABLE clientes ADD COLUMN owner_user_id UUID REFERENCES USUARIOS(user_id);
 ALTER TABLE clientes ALTER COLUMN endereco TYPE JSONB USING endereco::jsonb;
 
 -- 7. Renomear agenda para agendamentos
@@ -393,13 +393,13 @@ ALTER TABLE agendamentos RENAME COLUMN titulo TO title;
 ALTER TABLE agendamentos RENAME COLUMN data_inicio TO start_at;
 ALTER TABLE agendamentos RENAME COLUMN data_fim TO end_at;
 ALTER TABLE agendamentos RENAME COLUMN responsavel TO responsavel_old;
-ALTER TABLE agendamentos ADD COLUMN owner_user_id UUID REFERENCES profiles(user_id);
+ALTER TABLE agendamentos ADD COLUMN owner_user_id UUID REFERENCES USUARIOS(user_id);
 
 -- 8. Atualizar tabela casos
 ALTER TABLE casos RENAME COLUMN titulo TO title;
 ALTER TABLE casos ADD COLUMN subarea TEXT;
 ALTER TABLE casos RENAME COLUMN responsavel TO responsavel_old;
-ALTER TABLE casos ADD COLUMN responsavel_user_id UUID REFERENCES profiles(user_id);
+ALTER TABLE casos ADD COLUMN responsavel_user_id UUID REFERENCES USUARIOS(user_id);
 ALTER TABLE casos RENAME COLUMN data_encerramento TO encerrado_em;
 
 -- 9. Atualizar tabela documentos
@@ -408,7 +408,7 @@ ALTER TABLE documentos RENAME COLUMN descricao TO description;
 ALTER TABLE documentos ADD COLUMN visibility TEXT;
 ALTER TABLE documentos ADD COLUMN bucket TEXT;
 ALTER TABLE documentos ADD COLUMN lead_id UUID REFERENCES leads(id);
-ALTER TABLE documentos ADD COLUMN uploaded_by UUID REFERENCES profiles(user_id);
+ALTER TABLE documentos ADD COLUMN uploaded_by UUID REFERENCES USUARIOS(user_id);
 ALTER TABLE documentos RENAME COLUMN metadata TO meta;
 ```
 
@@ -433,9 +433,9 @@ Seria necessário reescrever:
 
 ### **FASE 1: Correções Críticas (OBRIGATÓRIAS)**
 
-1. **Renomear `usuarios` → `profiles`**
+1. **Renomear `usuarios` → `USUARIOS`**
    ```sql
-   ALTER TABLE usuarios RENAME TO profiles;
+   ALTER TABLE usuarios RENAME TO USUARIOS;
    ```
 
 2. **Renomear `agenda` → `agendamentos`**
@@ -477,7 +477,7 @@ Seria necessário reescrever:
 **Status Atual:** ⚠️ **APLICAÇÃO NÃO FUNCIONAL COM BANCO ATUAL**
 
 **Principais Bloqueadores:**
-1. 🔴 Tabela `profiles` não existe (código espera, banco tem `usuarios`)
+1. 🔴 Tabela `USUARIOS` não existe (código espera, banco tem `usuarios`)
 2. 🔴 Tabela `agendamentos` não existe (código espera, banco tem `agenda`)
 3. 🔴 Falta sistema multi-tenant (`orgs`, `org_members`, `org_id`)
 4. 🔴 Campos críticos faltando em `leads`, `clientes`, `casos`, `documentos`

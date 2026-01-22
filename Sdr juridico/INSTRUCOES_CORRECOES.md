@@ -11,7 +11,7 @@ Este script resolve **4 problemas críticos** identificados na análise:
 
 1. ✅ **Recursão Infinita em RLS** → Criar funções helper `SECURITY DEFINER`
 2. ✅ **Missing CASCADE Rules** → Adicionar `ON DELETE CASCADE/SET NULL` nas FKs
-3. ✅ **Missing UNIQUE Constraint** → Garantir `profiles.user_id` seja único
+3. ✅ **Missing UNIQUE Constraint** → Garantir `USUARIOS.user_id` seja único
 4. ✅ **RLS Desabilitado** → Re-habilitar com policies sem recursão
 
 ---
@@ -31,8 +31,8 @@ Este script resolve **4 problemas críticos** identificados na análise:
 ✅ **Resultado Esperado:**
 ```
 ✅ Todas as funções foram criadas com sucesso!
-✅ RLS habilitado em profiles!
-✅ 3 policies criadas em profiles!
+✅ RLS habilitado em USUARIOS!
+✅ 3 policies criadas em USUARIOS!
 
 +---------------------+
 | 🎯 CORREÇÕES APLICADAS |
@@ -88,7 +88,7 @@ WHERE proname IN ('is_fartech_admin', 'get_user_org_id', 'is_org_admin');
 ```sql
 SELECT tablename, rowsecurity
 FROM pg_tables
-WHERE schemaname = 'public' AND tablename = 'profiles';
+WHERE schemaname = 'public' AND tablename = 'USUARIOS';
 ```
 
 **Esperado:** `rowsecurity = true`
@@ -99,12 +99,12 @@ WHERE schemaname = 'public' AND tablename = 'profiles';
 ```sql
 SELECT policyname, cmd
 FROM pg_policies
-WHERE schemaname = 'public' AND tablename = 'profiles';
+WHERE schemaname = 'public' AND tablename = 'USUARIOS';
 ```
 
 **Esperado:** 3 policies
-- `fartech_admin_all_profiles`
-- `org_admin_own_org_profiles`
+- `fartech_admin_all_USUARIOS`
+- `org_admin_own_org_USUARIOS`
 - `users_own_profile`
 
 ---
@@ -125,7 +125,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 ```
 
 **Esperado:**
-- `profiles.org_id` → `SET NULL`
+- `USUARIOS.org_id` → `SET NULL`
 - `leads.org_id` → `CASCADE`
 - `clientes.org_id` → `CASCADE`
 - `casos.org_id` → `CASCADE`
@@ -140,7 +140,7 @@ Após executar, teste o sistema:
 ### Teste 1: Login como Fartech Admin
 ```sql
 -- Criar usuário Fartech Admin de teste (se não existir)
-INSERT INTO profiles (user_id, email, nome, is_fartech_admin, role)
+INSERT INTO USUARIOS (user_id, email, nome, is_fartech_admin, role)
 VALUES (
   gen_random_uuid(),
   'admin@fartech.com.br',
@@ -150,14 +150,14 @@ VALUES (
 );
 ```
 
-Faça login e verifique se consegue ver **todos os profiles**.
+Faça login e verifique se consegue ver **todos os USUARIOS**.
 
 ---
 
 ### Teste 2: Login como Org Admin
 ```sql
 -- Criar usuário Org Admin de teste
-INSERT INTO profiles (user_id, email, nome, org_id, role)
+INSERT INTO USUARIOS (user_id, email, nome, org_id, role)
 VALUES (
   gen_random_uuid(),
   'admin@escritorio1.com',
@@ -167,14 +167,14 @@ VALUES (
 );
 ```
 
-Faça login e verifique se consegue ver **apenas profiles da sua org**.
+Faça login e verifique se consegue ver **apenas USUARIOS da sua org**.
 
 ---
 
 ### Teste 3: Login como Usuário Normal
 ```sql
 -- Criar usuário normal de teste
-INSERT INTO profiles (user_id, email, nome, org_id, role)
+INSERT INTO USUARIOS (user_id, email, nome, org_id, role)
 VALUES (
   gen_random_uuid(),
   'user@escritorio1.com',
@@ -195,7 +195,7 @@ INSERT INTO orgs (id, nome, cnpj)
 VALUES (gen_random_uuid(), 'Org Teste Delete', '12345678000199');
 
 -- Associar profile
-INSERT INTO profiles (user_id, email, nome, org_id, role)
+INSERT INTO USUARIOS (user_id, email, nome, org_id, role)
 VALUES (
   gen_random_uuid(),
   'test@delete.com',
@@ -207,8 +207,8 @@ VALUES (
 -- DELETAR A ORG
 DELETE FROM orgs WHERE nome = 'Org Teste Delete';
 
--- VERIFICAR: profiles.org_id deve ser NULL (não erro!)
-SELECT * FROM profiles WHERE email = 'test@delete.com';
+-- VERIFICAR: USUARIOS.org_id deve ser NULL (não erro!)
+SELECT * FROM USUARIOS WHERE email = 'test@delete.com';
 ```
 
 **Esperado:** `org_id = NULL` (não deve dar erro de FK violation)
@@ -231,7 +231,7 @@ DROP FUNCTION IF EXISTS is_org_admin() CASCADE;
 ### Erro: "Constraint já existe"
 ```sql
 -- Solução: Remover constraints antigas
-ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_org_id_fkey;
+ALTER TABLE USUARIOS DROP CONSTRAINT IF EXISTS USUARIOS_org_id_fkey;
 ALTER TABLE leads DROP CONSTRAINT IF EXISTS leads_org_id_fkey;
 -- Continue para cada tabela...
 -- Depois execute o script novamente
@@ -247,7 +247,7 @@ Isso é esperado! O script usa `ENABLE ROW LEVEL SECURITY` que é idempotente.
 ### Erro: "Policy já existe"
 ```sql
 -- Solução: Remover policies antigas
-DROP POLICY IF EXISTS "fartech_admin_all_profiles" ON profiles;
+DROP POLICY IF EXISTS "fartech_admin_all_USUARIOS" ON USUARIOS;
 -- Depois execute o script novamente
 ```
 
@@ -260,7 +260,7 @@ Após aplicar as correções, monitore:
 1. **Performance de Queries**:
    ```sql
    EXPLAIN ANALYZE
-   SELECT * FROM profiles WHERE org_id = 'xxx';
+   SELECT * FROM USUARIOS WHERE org_id = 'xxx';
    ```
 
 2. **Uso de Funções**:

@@ -1,5 +1,5 @@
 ﻿-- =====================================================
--- DEPRECATED: Este script usa profiles. Padrao atual: usuarios + org_members.
+-- DEPRECATED: Este script usa USUARIOS. Padrao atual: usuarios + org_members.
 -- Use SETUP_MULTITENANT_INCREMENTAL.sql para o fluxo atualizado.
 -- =====================================================
 
@@ -13,32 +13,32 @@
 -- PARTE 1: REMOVER TODAS AS POLICIES PROBLEMÃTICAS
 -- ================================================
 
-DROP POLICY IF EXISTS "fartech_admin_all_profiles" ON profiles;
-DROP POLICY IF EXISTS "org_admin_own_org_profiles" ON profiles;
-DROP POLICY IF EXISTS "users_own_profile" ON profiles;
-DROP POLICY IF EXISTS "users_view_own_org" ON profiles;
-DROP POLICY IF EXISTS "profiles_select_self" ON profiles;
-DROP POLICY IF EXISTS "profiles_update_self" ON profiles;
-DROP POLICY IF EXISTS "users_same_org_profiles" ON profiles;
-DROP POLICY IF EXISTS "fartech_admin_view_all" ON profiles;
-DROP POLICY IF EXISTS "org_members_view" ON profiles;
+DROP POLICY IF EXISTS "fartech_admin_all_USUARIOS" ON USUARIOS;
+DROP POLICY IF EXISTS "org_admin_own_org_USUARIOS" ON USUARIOS;
+DROP POLICY IF EXISTS "users_own_profile" ON USUARIOS;
+DROP POLICY IF EXISTS "users_view_own_org" ON USUARIOS;
+DROP POLICY IF EXISTS "USUARIOS_select_self" ON USUARIOS;
+DROP POLICY IF EXISTS "USUARIOS_update_self" ON USUARIOS;
+DROP POLICY IF EXISTS "users_same_org_USUARIOS" ON USUARIOS;
+DROP POLICY IF EXISTS "fartech_admin_view_all" ON USUARIOS;
+DROP POLICY IF EXISTS "org_members_view" ON USUARIOS;
 
 -- PARTE 2: CRIAR POLICIES SIMPLES SEM RECURSÃƒO
 -- ================================================
 
 -- Policy 1: SELECT - UsuÃ¡rio vÃª SEU PRÃ“PRIO profile
-CREATE POLICY "select_own_profile" ON profiles
+CREATE POLICY "select_own_profile" ON USUARIOS
   FOR SELECT
   USING (user_id = auth.uid());
 
 -- Policy 2: UPDATE - UsuÃ¡rio atualiza SEU PRÃ“PRIO profile
-CREATE POLICY "update_own_profile" ON profiles
+CREATE POLICY "update_own_profile" ON USUARIOS
   FOR UPDATE
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
 -- Policy 3: INSERT - Criar profile durante cadastro
-CREATE POLICY "insert_own_profile" ON profiles
+CREATE POLICY "insert_own_profile" ON USUARIOS
   FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
@@ -49,7 +49,7 @@ CREATE POLICY "insert_own_profile" ON profiles
 -- PARTE 3: GARANTIR QUE RLS ESTÃ HABILITADO
 -- ================================================
 
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE USUARIOS ENABLE ROW LEVEL SECURITY;
 
 -- ================================================
 -- PARTE 4: VERIFICAÃ‡Ã•ES
@@ -62,9 +62,9 @@ DECLARE
 BEGIN
   SELECT COUNT(*) INTO policy_count
   FROM pg_policies
-  WHERE schemaname = 'public' AND tablename = 'profiles';
+  WHERE schemaname = 'public' AND tablename = 'USUARIOS';
 
-  RAISE NOTICE 'âœ… % policies criadas em profiles', policy_count;
+  RAISE NOTICE 'âœ… % policies criadas em USUARIOS', policy_count;
   
   IF policy_count < 3 THEN
     RAISE WARNING 'Esperado 3 policies, encontrado %', policy_count;
@@ -78,12 +78,12 @@ DECLARE
 BEGIN
   SELECT rowsecurity INTO rls_enabled
   FROM pg_tables
-  WHERE schemaname = 'public' AND tablename = 'profiles';
+  WHERE schemaname = 'public' AND tablename = 'USUARIOS';
 
   IF rls_enabled THEN
-    RAISE NOTICE 'âœ… RLS habilitado em profiles';
+    RAISE NOTICE 'âœ… RLS habilitado em USUARIOS';
   ELSE
-    RAISE EXCEPTION 'RLS NÃƒO estÃ¡ habilitado em profiles!';
+    RAISE EXCEPTION 'RLS NÃƒO estÃ¡ habilitado em USUARIOS!';
   END IF;
 END $$;
 
@@ -99,7 +99,7 @@ SELECT
 
 -- Listar policies ativas
 SELECT 
-  'Policies em profiles:' AS info,
+  'Policies em USUARIOS:' AS info,
   policyname,
   cmd AS comando,
   CASE 
@@ -110,14 +110,14 @@ SELECT
     ELSE cmd
   END AS tipo
 FROM pg_policies
-WHERE schemaname = 'public' AND tablename = 'profiles'
+WHERE schemaname = 'public' AND tablename = 'USUARIOS'
 ORDER BY cmd, policyname;
 
 -- ================================================
 -- IMPORTANTE: LIMITAÃ‡Ã•ES DESTA SOLUÃ‡ÃƒO
 -- ================================================
 
--- âš ï¸ FARTECH ADMIN NÃƒO VERÃ TODOS OS PROFILES VIA RLS
+-- âš ï¸ FARTECH ADMIN NÃƒO VERÃ TODOS OS USUARIOS VIA RLS
 -- Para Fartech Admin acessar todos os dados, deve-se:
 -- 1. Usar Service Role Key no backend
 -- 2. OU criar endpoint API especÃ­fico
@@ -132,7 +132,7 @@ ORDER BY cmd, policyname;
 -- ================================================
 
 -- Executar como usuÃ¡rio autenticado:
--- SELECT * FROM profiles WHERE user_id = auth.uid();
+-- SELECT * FROM USUARIOS WHERE user_id = auth.uid();
 -- Deve retornar APENAS o profile do usuÃ¡rio logado
 
 -- ================================================
@@ -140,5 +140,5 @@ ORDER BY cmd, policyname;
 -- ================================================
 
 -- Para voltar atrÃ¡s:
--- ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE USUARIOS DISABLE ROW LEVEL SECURITY;
 -- Depois executar CORRECOES_CRITICAS.sql novamente

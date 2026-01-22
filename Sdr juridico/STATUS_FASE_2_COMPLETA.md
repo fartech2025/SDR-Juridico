@@ -17,7 +17,7 @@ Sistema multi-tenant totalmente funcional com 3 níveis de acesso:
 ## 📋 FASE 1 - BANCO DE DADOS (COMPLETA)
 
 ### ✅ Estrutura Criada:
-- **3 colunas adicionadas em `profiles`:**
+- **3 colunas adicionadas em `USUARIOS`:**
   - `org_id` - Link para organização
   - `role` - Papel do usuário (admin, advogado, etc)
   - `is_fartech_admin` - Flag de super admin
@@ -34,7 +34,7 @@ Sistema multi-tenant totalmente funcional com 3 níveis de acesso:
   - Unique constraint (org_id, user_id)
 
 - **22 RLS Policies criadas:**
-  - 4 em `profiles`
+  - 4 em `USUARIOS`
   - 3 em `orgs`
   - 2 em cada tabela de dados (leads, clientes, casos, documentos)
   - 4 em `org_members`
@@ -60,7 +60,7 @@ return null
 
 // DEPOIS: Busca org_id do profile
 const { data: profile } = await supabase
-  .from('profiles')
+  .from('USUARIOS')
   .select('org_id, is_fartech_admin')
   .eq('user_id', user.id)
   .single()
@@ -79,15 +79,15 @@ return profile?.org_id || null
 #### 2. **src/hooks/useCurrentUser.ts** ✅
 **Função:** Buscar dados do usuário logado
 
-**Mudança:** Adicionou query em `org_members` em paralelo com `profiles`
+**Mudança:** Adicionou query em `org_members` em paralelo com `USUARIOS`
 ```typescript
-// ANTES: Só buscava profiles
-const profileResult = await supabase.from('profiles')...
+// ANTES: Só buscava USUARIOS
+const profileResult = await supabase.from('USUARIOS')...
 setMember(null) // não tinha org_members
 
-// DEPOIS: Busca profiles E org_members
+// DEPOIS: Busca USUARIOS E org_members
 const [profileResult, memberResult] = await Promise.all([
-  supabase.from('profiles').select('..., org_id, role, is_fartech_admin')...,
+  supabase.from('USUARIOS').select('..., org_id, role, is_fartech_admin')...,
   supabase.from('org_members').select('*, org:orgs(nome)')...
 ])
 setMember(memberResult.data?.[0])
@@ -164,7 +164,7 @@ async getSomething() {
 CREATE POLICY "fartech_admin_all_leads" ON leads
   USING (
     EXISTS (
-      SELECT 1 FROM profiles
+      SELECT 1 FROM USUARIOS
       WHERE user_id = auth.uid() AND is_fartech_admin = true
     )
   );
@@ -173,7 +173,7 @@ CREATE POLICY "fartech_admin_all_leads" ON leads
 CREATE POLICY "users_own_org_leads" ON leads
   USING (
     org_id IN (
-      SELECT org_id FROM profiles
+      SELECT org_id FROM USUARIOS
       WHERE user_id = auth.uid()
     )
   );

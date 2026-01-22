@@ -3,6 +3,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
 // Date: 2026-01-13
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { permissionsService } from '@/services/permissionsService';
+import { FARTECH_ADMIN_PERMISSIONS, getPermissionsByRole } from '@/types/permissions';
 const PermissionsContext = createContext(undefined);
 export function PermissionsProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -14,16 +15,19 @@ export function PermissionsProvider({ children }) {
     const loadPermissions = useCallback(async () => {
         try {
             setLoading(true);
-            const [currentUser, userPermissions, isFartech, isAdmin] = await Promise.all([
-                permissionsService.getCurrentUser(),
-                permissionsService.getUserPermissions(),
-                permissionsService.isFartechAdmin(),
-                permissionsService.isOrgAdmin(),
-            ]);
+            const currentUser = await permissionsService.getCurrentUser();
             setUser(currentUser);
-            setPermissions(userPermissions);
+            if (!currentUser) {
+                setPermissions([]);
+                setIsFartechAdmin(false);
+                setIsOrgAdmin(false);
+                return;
+            }
+            const isFartech = currentUser.is_fartech_admin;
+            const isAdmin = isFartech || currentUser.role === 'org_admin';
             setIsFartechAdmin(isFartech);
             setIsOrgAdmin(isAdmin);
+            setPermissions(isFartech ? FARTECH_ADMIN_PERMISSIONS : getPermissionsByRole(currentUser.role));
         }
         catch (error) {
             console.error('Error loading permissions:', error);

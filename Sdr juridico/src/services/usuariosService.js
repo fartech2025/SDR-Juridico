@@ -21,6 +21,22 @@ const buildPermissoes = (roles, isFartechAdmin) => {
   }
   return Array.from(perms);
 };
+const upsertUsuarioFromSeed = async (userId, seed) => {
+  const { data, error } = await supabase.from("usuarios").upsert(
+    {
+      id: userId,
+      nome_completo: seed.nome_completo,
+      email: seed.email,
+      permissoes: seed.permissoes
+    },
+    { onConflict: "id" }
+  ).select("id, nome_completo, email, permissoes, created_at, updated_at").maybeSingle();
+  if (error) {
+    console.warn("[usuariosService] Failed to upsert usuarios from seed:", error);
+    return null;
+  }
+  return data || null;
+};
 const isMissingTable = (err, table) => {
   const message = err?.message || "";
   return err?.code === "42P01" || message.includes("schema cache") || message.includes(`public.${table}`) || message.includes(`table "${table}"`) || message.includes(`relation "public.${table}"`);
@@ -46,36 +62,27 @@ const deriveSeedFromUser = async (user) => {
   };
 };
 async function ensureUsuario(user) {
+  const seed = await deriveSeedFromUser(user);
   const { data, error } = await supabase.from("usuarios").select("id, nome_completo, email, permissoes, created_at, updated_at").eq("id", user.id).maybeSingle();
   if (error) {
-    const seed2 = await deriveSeedFromUser(user);
-    if (isMissingTable(error, "usuarios")) {
-      return { usuario: null, missingUsuariosTable: true, seed: seed2 };
+    const missingUsuariosTable = isMissingTable(error, "usuarios");
+    if (!missingUsuariosTable) {
+      console.warn("[usuariosService] Failed to load usuarios:", error);
     }
-    console.warn("[usuariosService] Failed to load usuarios:", error);
-    return { usuario: null, missingUsuariosTable: false, seed: seed2 };
+    return { usuario: null, missingUsuariosTable, seed };
   }
   if (data) {
     return { usuario: data, missingUsuariosTable: false, seed: null };
   }
-  const seed = await deriveSeedFromUser(user);
-  const { data: created, error: insertError } = await supabase.from("usuarios").upsert(
-    {
-      id: user.id,
-      nome_completo: seed.nome_completo,
-      email: seed.email,
-      permissoes: seed.permissoes
-    },
-    { onConflict: "id" }
-  ).select("id, nome_completo, email, permissoes, created_at, updated_at").maybeSingle();
-  if (insertError) {
-    if (isMissingTable(insertError, "usuarios")) {
-      return { usuario: null, missingUsuariosTable: true, seed };
-    }
-    console.warn("[usuariosService] Failed to upsert usuarios:", insertError);
+  const created = await upsertUsuarioFromSeed(user.id, seed);
+  if (!created) {
     return { usuario: null, missingUsuariosTable: false, seed };
   }
-  return { usuario: created || null, missingUsuariosTable: false, seed };
+  return {
+    usuario: created,
+    missingUsuariosTable: false,
+    seed: null
+  };
 }
 export {
   ensureUsuario

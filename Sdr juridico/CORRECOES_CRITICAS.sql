@@ -1,5 +1,5 @@
 ﻿-- =====================================================
--- DEPRECATED: Este script usa profiles. Padrao atual: usuarios + org_members.
+-- DEPRECATED: Este script usa USUARIOS. Padrao atual: usuarios + org_members.
 -- Use SETUP_MULTITENANT_INCREMENTAL.sql para o fluxo atualizado.
 -- =====================================================
 
@@ -12,8 +12,8 @@
 -- Este script resolve os problemas crÃ­ticos identificados na anÃ¡lise:
 -- 1. RecursÃ£o infinita em RLS policies
 -- 2. Missing CASCADE rules em Foreign Keys
--- 3. Missing UNIQUE constraint em profiles.user_id
--- 4. Re-habilitaÃ§Ã£o segura de RLS em profiles
+-- 3. Missing UNIQUE constraint em USUARIOS.user_id
+-- 4. Re-habilitaÃ§Ã£o segura de RLS em USUARIOS
 
 -- ========================================
 -- PARTE 1: CRIAR FUNÃ‡Ã•ES HELPER (Resolver RecursÃ£o)
@@ -25,7 +25,7 @@ CREATE OR REPLACE FUNCTION is_fartech_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM profiles
+    SELECT 1 FROM USUARIOS
     WHERE user_id = auth.uid() 
     AND is_fartech_admin = true
   );
@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION get_user_org_id()
 RETURNS UUID AS $$
 BEGIN
   RETURN (
-    SELECT org_id FROM profiles
+    SELECT org_id FROM USUARIOS
     WHERE user_id = auth.uid()
     LIMIT 1
   );
@@ -49,7 +49,7 @@ CREATE OR REPLACE FUNCTION is_org_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM profiles
+    SELECT 1 FROM USUARIOS
     WHERE user_id = auth.uid() 
     AND role IN ('admin', 'org_admin')
   );
@@ -60,15 +60,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- PARTE 2: ADICIONAR UNIQUE CONSTRAINT
 -- ========================================
 
--- Garantir que user_id seja Ãºnico em profiles
+-- Garantir que user_id seja Ãºnico em USUARIOS
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint 
-    WHERE conname = 'profiles_user_id_unique'
+    WHERE conname = 'USUARIOS_user_id_unique'
   ) THEN
-    ALTER TABLE profiles 
-    ADD CONSTRAINT profiles_user_id_unique UNIQUE (user_id);
+    ALTER TABLE USUARIOS 
+    ADD CONSTRAINT USUARIOS_user_id_unique UNIQUE (user_id);
   END IF;
 END $$;
 
@@ -76,13 +76,13 @@ END $$;
 -- PARTE 3: CORRIGIR CASCADE RULES EM FOREIGN KEYS
 -- ========================================
 
--- Corrigir FK de profiles.org_id -> orgs(id)
+-- Corrigir FK de USUARIOS.org_id -> orgs(id)
 -- Se uma org for deletada, setar org_id como NULL
-ALTER TABLE profiles 
-  DROP CONSTRAINT IF EXISTS profiles_org_id_fkey;
+ALTER TABLE USUARIOS 
+  DROP CONSTRAINT IF EXISTS USUARIOS_org_id_fkey;
 
-ALTER TABLE profiles 
-  ADD CONSTRAINT profiles_org_id_fkey
+ALTER TABLE USUARIOS 
+  ADD CONSTRAINT USUARIOS_org_id_fkey
   FOREIGN KEY (org_id) 
   REFERENCES orgs(id) 
   ON DELETE SET NULL;
@@ -131,23 +131,23 @@ ALTER TABLE documentos
 -- PARTE 4: REMOVER POLICIES ANTIGAS (Evitar Duplicatas)
 -- ========================================
 
--- Remover todas as policies antigas de profiles
-DROP POLICY IF EXISTS "fartech_admin_all_profiles" ON profiles;
-DROP POLICY IF EXISTS "org_admin_own_org_profiles" ON profiles;
-DROP POLICY IF EXISTS "users_own_profile" ON profiles;
-DROP POLICY IF EXISTS "users_view_own_org" ON profiles;
+-- Remover todas as policies antigas de USUARIOS
+DROP POLICY IF EXISTS "fartech_admin_all_USUARIOS" ON USUARIOS;
+DROP POLICY IF EXISTS "org_admin_own_org_USUARIOS" ON USUARIOS;
+DROP POLICY IF EXISTS "users_own_profile" ON USUARIOS;
+DROP POLICY IF EXISTS "users_view_own_org" ON USUARIOS;
 
 -- ========================================
 -- PARTE 5: CRIAR NOVAS POLICIES SEM RECURSÃƒO
 -- ========================================
 
--- Policy 1: Fartech Admin vÃª todos os profiles
-CREATE POLICY "fartech_admin_all_profiles" ON profiles
+-- Policy 1: Fartech Admin vÃª todos os USUARIOS
+CREATE POLICY "fartech_admin_all_USUARIOS" ON USUARIOS
   FOR ALL
   USING (is_fartech_admin());
 
--- Policy 2: Org Admin vÃª profiles da prÃ³pria org
-CREATE POLICY "org_admin_own_org_profiles" ON profiles
+-- Policy 2: Org Admin vÃª USUARIOS da prÃ³pria org
+CREATE POLICY "org_admin_own_org_USUARIOS" ON USUARIOS
   FOR ALL
   USING (
     is_org_admin() 
@@ -155,16 +155,16 @@ CREATE POLICY "org_admin_own_org_profiles" ON profiles
   );
 
 -- Policy 3: UsuÃ¡rios veem apenas seu prÃ³prio profile
-CREATE POLICY "users_own_profile" ON profiles
+CREATE POLICY "users_own_profile" ON USUARIOS
   FOR ALL
   USING (user_id = auth.uid());
 
 -- ========================================
--- PARTE 6: RE-HABILITAR RLS EM PROFILES
+-- PARTE 6: RE-HABILITAR RLS EM USUARIOS
 -- ========================================
 
--- Habilitar RLS em profiles (agora sem recursÃ£o!)
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+-- Habilitar RLS em USUARIOS (agora sem recursÃ£o!)
+ALTER TABLE USUARIOS ENABLE ROW LEVEL SECURITY;
 
 -- ========================================
 -- PARTE 7: VERIFICAÃ‡Ã•ES DE INTEGRIDADE
@@ -201,13 +201,13 @@ DECLARE
 BEGIN
   SELECT rowsecurity INTO rls_enabled
   FROM pg_tables
-  WHERE schemaname = 'public' AND tablename = 'profiles';
+  WHERE schemaname = 'public' AND tablename = 'USUARIOS';
 
   IF NOT rls_enabled THEN
-    RAISE EXCEPTION 'RLS nÃ£o estÃ¡ habilitado em profiles!';
+    RAISE EXCEPTION 'RLS nÃ£o estÃ¡ habilitado em USUARIOS!';
   END IF;
 
-  RAISE NOTICE 'âœ… RLS habilitado em profiles!';
+  RAISE NOTICE 'âœ… RLS habilitado em USUARIOS!';
 END $$;
 
 -- Verificar se policies foram criadas
@@ -217,13 +217,13 @@ DECLARE
 BEGIN
   SELECT COUNT(*) INTO policy_count
   FROM pg_policies
-  WHERE schemaname = 'public' AND tablename = 'profiles';
+  WHERE schemaname = 'public' AND tablename = 'USUARIOS';
 
   IF policy_count < 3 THEN
-    RAISE EXCEPTION 'Policies de profiles nÃ£o foram criadas corretamente!';
+    RAISE EXCEPTION 'Policies de USUARIOS nÃ£o foram criadas corretamente!';
   END IF;
 
-  RAISE NOTICE 'âœ… % policies criadas em profiles!', policy_count;
+  RAISE NOTICE 'âœ… % policies criadas em USUARIOS!', policy_count;
 END $$;
 
 -- ========================================
@@ -235,12 +235,12 @@ SELECT
   'ðŸŽ¯ CORREÃ‡Ã•ES APLICADAS' AS status,
   'FunÃ§Ãµes helper criadas (sem recursÃ£o)' AS correcao_1,
   'CASCADE rules adicionadas em FKs' AS correcao_2,
-  'UNIQUE constraint em profiles.user_id' AS correcao_3,
-  'RLS re-habilitado em profiles' AS correcao_4;
+  'UNIQUE constraint em USUARIOS.user_id' AS correcao_3,
+  'RLS re-habilitado em USUARIOS' AS correcao_4;
 
 -- Exibir policies ativas
 SELECT 
-  'Policies Ativas em profiles:' AS info,
+  'Policies Ativas em USUARIOS:' AS info,
   policyname,
   cmd,
   CASE 
@@ -248,7 +248,7 @@ SELECT
     ELSE 'âš ï¸ Sem USING'
   END AS status
 FROM pg_policies
-WHERE schemaname = 'public' AND tablename = 'profiles'
+WHERE schemaname = 'public' AND tablename = 'USUARIOS'
 ORDER BY policyname;
 
 -- Exibir Foreign Keys com CASCADE
@@ -270,5 +270,5 @@ JOIN information_schema.referential_constraints AS rc
   ON rc.constraint_name = tc.constraint_name
 WHERE tc.constraint_type = 'FOREIGN KEY'
   AND kcu.column_name = 'org_id'
-  AND tc.table_name IN ('profiles', 'leads', 'clientes', 'casos', 'documentos')
+  AND tc.table_name IN ('USUARIOS', 'leads', 'clientes', 'casos', 'documentos')
 ORDER BY tc.table_name;

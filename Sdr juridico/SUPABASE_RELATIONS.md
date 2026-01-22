@@ -8,27 +8,27 @@
 - `id` (PK)
 - `nome`, `cnpj`, `plano`, `ativo`
 
-#### 2. **profiles** (Perfis de Usuários)
+#### 2. **USUARIOS** (Perfis de Usuários)
 - `user_id` (PK) → Referência para auth.users
 - `nome`, `email`, `telefone`, `avatar_url`
 
 #### 3. **org_members** (Membros da Organização)
 - `id` (PK)
 - `org_id` → orgs.id
-- `user_id` → profiles.user_id
+- `user_id` → USUARIOS.user_id
 - `role`: admin | gestor | advogado | secretaria | leitura
 
 #### 4. **clientes**
 - `id` (PK)
 - `org_id` → orgs.id
-- `owner_user_id` → profiles.user_id (responsável)
+- `owner_user_id` → USUARIOS.user_id (responsável)
 - `tipo`, `nome`, `documento`, `email`, `telefone`
 
 #### 5. **leads**
 - `id` (PK)
 - `org_id` → orgs.id
 - `cliente_id` → clientes.id (nullable)
-- `assigned_user_id` → profiles.user_id (responsável)
+- `assigned_user_id` → USUARIOS.user_id (responsável)
 - `status`: novo | em_triagem | qualificado | nao_qualificado | convertido | perdido
 
 #### 6. **casos**
@@ -36,7 +36,7 @@
 - `org_id` → orgs.id
 - `cliente_id` → clientes.id
 - `lead_id` → leads.id (nullable)
-- `responsavel_user_id` → profiles.user_id
+- `responsavel_user_id` → USUARIOS.user_id
 - `status`: aberto | triagem | negociacao | contrato | andamento | encerrado | arquivado
 
 #### 7. **documentos**
@@ -45,7 +45,7 @@
 - `cliente_id` → clientes.id (nullable)
 - `caso_id` → casos.id (nullable)
 - `lead_id` → leads.id (nullable)
-- `uploaded_by` → profiles.user_id
+- `uploaded_by` → USUARIOS.user_id
 
 #### 8. **agendamentos**
 - `id` (PK)
@@ -53,14 +53,14 @@
 - `cliente_id` → clientes.id (nullable)
 - `caso_id` → casos.id (nullable)
 - `lead_id` → leads.id (nullable)
-- `owner_user_id` → profiles.user_id
+- `owner_user_id` → USUARIOS.user_id
 
 #### 9. **notas**
 - `id` (PK)
 - `org_id` → orgs.id
 - `entidade`: cliente | caso | lead | documento
 - `entidade_id`: ID da entidade relacionada
-- `created_by` → profiles.user_id
+- `created_by` → USUARIOS.user_id
 
 #### 10. **conversas**
 - `id` (PK)
@@ -87,27 +87,27 @@
 
 ### **Leads**
 ```typescript
-.select('*, cliente:clientes(nome), assigned_user:profiles!assigned_user_id(nome)')
+.select('*, cliente:clientes(nome), assigned_user:USUARIOS!assigned_user_id(nome)')
 ```
 
 ### **Clientes**
 ```typescript
-.select('*, owner_user:profiles!owner_user_id(nome)')
+.select('*, owner_user:USUARIOS!owner_user_id(nome)')
 ```
 
 ### **Casos**
 ```typescript
-.select('*, cliente:clientes(nome), lead:leads(nome), responsavel:profiles!responsavel_user_id(nome)')
+.select('*, cliente:clientes(nome), lead:leads(nome), responsavel:USUARIOS!responsavel_user_id(nome)')
 ```
 
 ### **Documentos**
 ```typescript
-.select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:profiles!uploaded_by(nome)')
+.select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), uploader:USUARIOS!uploaded_by(nome)')
 ```
 
 ### **Agendamentos**
 ```typescript
-.select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), owner:profiles!owner_user_id(nome)')
+.select('*, cliente:clientes(nome), caso:casos(titulo), lead:leads(nome), owner:USUARIOS!owner_user_id(nome)')
 ```
 
 ---

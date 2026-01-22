@@ -1,5 +1,5 @@
 ﻿-- =====================================================
--- DEPRECATED: Este script usa profiles. Padrao atual: usuarios + org_members.
+-- DEPRECATED: Este script usa USUARIOS. Padrao atual: usuarios + org_members.
 -- Use SETUP_MULTITENANT_INCREMENTAL.sql para o fluxo atualizado.
 -- =====================================================
 
@@ -7,7 +7,7 @@
 -- SETUP MULTI-TENANT - Execute no SQL Editor do Supabase
 -- ============================================
 -- Este script cria toda a estrutura multi-tenant:
--- 0. Criar tabela users (profiles)
+-- 0. Criar tabela users (USUARIOS)
 -- 1. Tabela organizations
 -- 2. Adiciona colunas org_id nas tabelas existentes
 -- 3. Configura RLS (Row Level Security)
