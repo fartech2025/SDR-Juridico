@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ClienteDrawer } from '@/components/ClienteDrawer'
 import heroLight from '@/assets/hero-light.svg'
 import type { Cliente } from '@/types/domain'
 import { cn } from '@/utils/cn'
@@ -73,6 +74,7 @@ export const ClientesPage = () => {
   const [saving, setSaving] = React.useState(false)
   const [assigningClienteId, setAssigningClienteId] = React.useState<string | null>(null)
   const [selectedClienteAdvogadoId, setSelectedClienteAdvogadoId] = React.useState('')
+  const [selectedCliente, setSelectedCliente] = React.useState<Cliente | null>(null)
 
   const initialFormData = React.useMemo(() => ({
     nome: '',
@@ -714,13 +716,15 @@ export const ClientesPage = () => {
                       <React.Fragment key={cliente.id}>
                         <tr
                           className={cn(
-                            'border-t','border-border hover:bg-surface-2/60',
+                            'cursor-pointer border-t','border-border hover:bg-surface-2/60',
                           )}
+                          onClick={() => setSelectedCliente(cliente)}
                         >
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
                             className="h-4 w-4 rounded border border-border bg-white text-primary"
+                            onClick={(event) => event.stopPropagation()}
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -776,7 +780,8 @@ export const ClientesPage = () => {
                                 className={cn(
                                   'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-brand-secondary',
                                 )}
-                                onClick={() => {
+                                onClick={(event) => {
+                                  event.stopPropagation()
                                   setAssigningClienteId((current) => (current === cliente.id ? null : cliente.id))
                                   setSelectedClienteAdvogadoId('')
                                 }}
@@ -788,7 +793,10 @@ export const ClientesPage = () => {
                                 className={cn(
                                   'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-brand-secondary',
                                 )}
-                                onClick={() => handleEditCliente(cliente.id)}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleEditCliente(cliente.id)
+                                }}
                               >
                                 <Pencil className="h-4 w-4" />
                               </button>
@@ -797,7 +805,10 @@ export const ClientesPage = () => {
                                 className={cn(
                                   'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-red-600',
                                 )}
-                                onClick={() => handleDeleteCliente(cliente.id, cliente.name)}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleDeleteCliente(cliente.id, cliente.name)
+                                }}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -874,6 +885,11 @@ export const ClientesPage = () => {
         </CardContent>
       </Card>
     </div>
+    <ClienteDrawer
+      open={Boolean(selectedCliente)}
+      cliente={selectedCliente}
+      onClose={() => setSelectedCliente(null)}
+    />
     </div>
   )
 }

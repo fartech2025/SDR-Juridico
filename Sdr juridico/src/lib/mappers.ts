@@ -4,6 +4,7 @@ import type {
   ClienteRow,
   DocumentoRow,
   LeadRow,
+  TarefaRow,
   TimelineEventRow,
 } from '@/lib/supabaseClient'
 import type {
@@ -13,6 +14,7 @@ import type {
   Documento,
   Lead,
   LeadHeat,
+  Tarefa,
   TimelineCategory,
   TimelineEvent,
 } from '@/types/domain'
@@ -145,6 +147,22 @@ export const mapAgendamentoRowToAgendaItem = (row: AgendaRow): AgendaItem => {
     status: row.status || 'pendente',
   }
 }
+
+export const mapTarefaRowToTarefa = (row: TarefaRow): Tarefa => ({
+  id: row.id,
+  title: row.titulo,
+  description: row.descricao || null,
+  priority: row.prioridade || 'normal',
+  status: row.status || 'pendente',
+  dueDate: row.data_vencimento || null,
+  createdAt: row.created_at,
+  completedAt: row.concluido_em || null,
+  ownerId: row.usuario_id,
+  responsavelIds: row.responsavel_ids || [],
+  leadId: row.lead_id || null,
+  clienteId: row.cliente_id || null,
+  casoId: row.caso_id || null,
+})
 
 export const mapTimelineRowToTimelineEvent = (row: TimelineEventRow): TimelineEvent => {
   const title = row.titulo || row.descricao || 'Evento'

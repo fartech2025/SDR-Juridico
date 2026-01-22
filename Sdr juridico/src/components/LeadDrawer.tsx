@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom'
 import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
 import type { Caso, Lead } from '@/types/domain'
-import { formatDateTime, formatPhone } from '@/utils/format'
+import { formatDate, formatDateTime, formatPhone } from '@/utils/format'
 import { useMensagens } from '@/hooks/useMensagens'
+import { useTarefas } from '@/hooks/useTarefas'
 
 export interface LeadDrawerProps {
   open: boolean
@@ -19,6 +20,7 @@ export interface LeadDrawerProps {
 export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps) => {
   const navigate = useNavigate()
   const { mensagens, loading } = useMensagens(lead?.id)
+  const { tarefas, loading: tarefasLoading, fetchTarefasByEntidade } = useTarefas()
 
   React.useEffect(() => {
     if (!open) return
@@ -30,6 +32,11 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [open, onClose])
+
+  React.useEffect(() => {
+    if (!open || !lead?.id) return
+    fetchTarefasByEntidade('lead', lead.id).catch(() => null)
+  }, [open, lead?.id, fetchTarefasByEntidade])
 
   if (!open || !lead) return null
 
@@ -109,6 +116,38 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
                 <UserRound className="h-4 w-4 text-text-subtle" />
                 <span>{lead.owner}</span>
               </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">
+              Tarefas
+            </p>
+            <div className="space-y-2">
+              {tarefasLoading && (
+                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
+                  Carregando tarefas...
+                </div>
+              )}
+              {!tarefasLoading && tarefas.length === 0 && (
+                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
+                  Nenhuma tarefa vinculada a este lead.
+                </div>
+              )}
+              {tarefas.map((tarefa) => (
+                <div
+                  key={tarefa.id}
+                  className="rounded-2xl border border-border bg-white px-4 py-3 shadow-soft transition hover:bg-surface-2"
+                >
+                  <div className="flex items-center justify-between text-xs text-text-subtle">
+                    <span className="inline-flex rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-[11px] font-semibold uppercase text-text-muted">
+                      {tarefa.status.replace('_', ' ')}
+                    </span>
+                    {tarefa.dueDate && <span>Vence em {formatDate(tarefa.dueDate)}</span>}
+                  </div>
+                  <p className="mt-2 text-sm text-text">{tarefa.title}</p>
+                </div>
+              ))}
             </div>
           </section>
 

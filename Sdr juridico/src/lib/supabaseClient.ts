@@ -42,6 +42,8 @@ export type CaseStage = 'triagem' | 'negociacao' | 'em_andamento' | 'conclusao'
 export type SlaRisk = 'ok' | 'atencao' | 'critico'
 export type UsuarioStatus = 'ativo' | 'inativo' | 'suspenso'
 export type UserRole = 'fartech_admin' | 'org_admin' | 'user'
+export type TaskPriority = 'baixa' | 'normal' | 'alta'
+export type TaskStatus = 'pendente' | 'em_progresso' | 'concluida'
 
 export interface UsuarioRow {
   id: string
@@ -153,6 +155,24 @@ export interface AgendaRow {
   local: string | null
   status: 'confirmado' | 'pendente' | 'cancelado' | 'concluido'
   observacoes: string | null
+}
+
+export interface TarefaRow {
+  id: string
+  created_at: string
+  updated_at: string
+  org_id?: string | null
+  usuario_id: string
+  lead_id?: string | null
+  cliente_id?: string | null
+  caso_id?: string | null
+  titulo: string
+  descricao: string | null
+  prioridade: TaskPriority
+  status: TaskStatus
+  data_vencimento: string | null
+  responsavel_ids: string[] | null
+  concluido_em: string | null
 }
 
 export interface TimelineEventRow {

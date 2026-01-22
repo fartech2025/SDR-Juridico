@@ -73,6 +73,25 @@ export interface AgendaItem {
   status: AgendaStatus
 }
 
+export type TaskPriority = 'baixa' | 'normal' | 'alta'
+export type TaskStatus = 'pendente' | 'em_progresso' | 'concluida'
+
+export interface Tarefa {
+  id: string
+  title: string
+  description?: string | null
+  priority: TaskPriority
+  status: TaskStatus
+  dueDate?: string | null
+  createdAt: string
+  completedAt?: string | null
+  ownerId: string
+  responsavelIds: string[]
+  leadId?: string | null
+  clienteId?: string | null
+  casoId?: string | null
+}
+
 export type TimelineCategory =
   | 'docs'
   | 'agenda'

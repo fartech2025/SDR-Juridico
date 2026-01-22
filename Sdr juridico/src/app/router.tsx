@@ -13,6 +13,7 @@ import { DocumentosPage } from '@/pages/DocumentosPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { IndicadoresPage } from '@/pages/IndicadoresPage'
 import { LeadsPage } from '@/pages/LeadsPage'
+import { TarefasPage } from '@/pages/TarefasPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -93,6 +94,10 @@ export const router = createBrowserRouter([
       {
         path: 'agenda',
         element: <AgendaPage />,
+      },
+      {
+        path: 'tarefas',
+        element: <TarefasPage />,
       },
       {
         path: 'documentos',

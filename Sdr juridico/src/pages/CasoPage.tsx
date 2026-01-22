@@ -20,13 +20,14 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import type { Caso, TimelineCategory, TimelineEvent } from '@/types/domain'
 import { cn } from '@/utils/cn'
-import { formatDateTime } from '@/utils/format'
+import { formatDate, formatDateTime } from '@/utils/format'
 import { useCasos } from '@/hooks/useCasos'
 import { useLeads } from '@/hooks/useLeads'
 import { useDocumentos } from '@/hooks/useDocumentos'
 import { useNotas } from '@/hooks/useNotas'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useTarefas } from '@/hooks/useTarefas'
 
 const resolveStatus = (
   value: string | null,
@@ -41,6 +42,7 @@ const tabs = [
   'Tudo',
   'Documentos',
   'Agenda',
+  'Tarefas',
   'Comercial',
   'Juridico',
   'Automacao',
@@ -52,6 +54,7 @@ const categoryMap: Record<TabKey, string | null> = {
   Tudo: null,
   Documentos: 'docs',
   Agenda: 'agenda',
+  Tarefas: null,
   Comercial: 'comercial',
   Juridico: 'juridico',
   Automacao: 'automacao',
@@ -87,6 +90,12 @@ export const CasoPage = () => {
     fetchNotasByEntidade,
     createNota,
   } = useNotas()
+  const {
+    tarefas,
+    loading: tarefasLoading,
+    error: tarefasError,
+    fetchTarefasByEntidade,
+  } = useTarefas()
   const { displayName, user } = useCurrentUser()
   const status = resolveStatus(params.get('state'))
   const [activeTab, setActiveTab] = React.useState<TabKey>('Tudo')
@@ -136,6 +145,10 @@ export const CasoPage = () => {
   const caseNotas = React.useMemo(
     () => notas.filter((event) => event.casoId === caso?.id),
     [notas, caso?.id],
+  )
+  const caseTasks = React.useMemo(
+    () => tarefas.filter((task) => task.casoId === caso?.id),
+    [tarefas, caso?.id],
   )
   const docEvents = React.useMemo<TimelineEvent[]>(
     () =>
@@ -234,10 +247,16 @@ export const CasoPage = () => {
     fetchByCaso(targetCaseId).catch(() => null)
   }, [id, caso.id, fetchByCaso])
 
+  React.useEffect(() => {
+    const targetCaseId = id || caso.id
+    if (!targetCaseId) return
+    fetchTarefasByEntidade('caso', targetCaseId).catch(() => null)
+  }, [id, caso.id, fetchTarefasByEntidade])
+
   const baseState =
-    casosLoading || leadsLoading || docsLoading || agendaLoading || notasLoading
+    casosLoading || leadsLoading || docsLoading || agendaLoading || notasLoading || tarefasLoading
       ? 'loading'
-      : casosError || leadsError || docsError || agendaError || notasError
+      : casosError || leadsError || docsError || agendaError || notasError || tarefasError
         ? 'error'
         : casos.length
           ? 'ready'
@@ -491,7 +510,51 @@ export const CasoPage = () => {
               </div>
             )}
 
-            {activeTab !== 'Tudo' && (
+            {activeTab === 'Tarefas' && (
+              <Card className="border-border bg-white/85">
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle>Tarefas do caso</CardTitle>
+                    <p className="text-xs text-text-subtle">
+                      Atividades vinculadas a este dossie.
+                    </p>
+                  </div>
+                  <Link
+                    to={`/app/tarefas?casoId=${caso.id}`}
+                    className="inline-flex h-9 items-center justify-center rounded-full border border-border bg-white px-4 text-xs font-semibold text-text shadow-soft hover:bg-surface-2"
+                  >
+                    Abrir tarefas
+                  </Link>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-text-muted">
+                  {caseTasks.length ? (
+                    caseTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="rounded-2xl border border-border bg-white p-3 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+                      >
+                        <div className="flex items-center justify-between gap-3 text-xs text-text-subtle">
+                          <span className="inline-flex rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-text-muted">
+                            {task.status.replace('_', ' ')}
+                          </span>
+                          {task.dueDate && <span>Vence em {formatDate(task.dueDate)}</span>}
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-text">{task.title}</p>
+                        {task.description && (
+                          <p className="mt-1 text-xs text-text-subtle">{task.description}</p>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-border bg-white p-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
+                      Nenhuma tarefa vinculada a este caso.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab !== 'Tudo' && activeTab !== 'Tarefas' && (
               <Card className="border-border bg-white/85">
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <CardTitle>{activeTab}</CardTitle>

@@ -6,6 +6,7 @@ import {
   CalendarClock,
   FileText,
   LayoutDashboard,
+  ListTodo,
   Power,
   Scale,
   Settings,
@@ -34,6 +35,7 @@ const navItems = [
   { label: "Clientes", to: "/app/clientes", icon: UserRound },
   { label: "Casos", to: "/app/casos", icon: Briefcase },
   { label: "Agenda", to: "/app/agenda", icon: CalendarClock },
+  { label: "Tarefas", to: "/app/tarefas", icon: ListTodo },
   { label: "Documentos", to: "/app/documentos", icon: FileText },
   { label: "Indicadores", to: "/app/indicadores", icon: BarChart3 },
   { label: "Configuracoes", to: "/app/config", icon: Settings }
