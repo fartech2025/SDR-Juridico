@@ -15,12 +15,11 @@ export interface UseAsyncState<T> {
   isRetryable: boolean
 }
 
-interface UseAsyncOptions {
+interface UseAsyncOptions<T> {
   retryConfig?: Partial<RetryConfig>
   onError?: (error: AppError) => void
-  onSuccess?: (data: any) => void
+  onSuccess?: (data: T) => void
   immediate?: boolean
-  dependencies?: any[]
 }
 
 /**
@@ -28,11 +27,17 @@ interface UseAsyncOptions {
  */
 export function useAsync<T>(
   asyncFn: () => Promise<T>,
-  options: UseAsyncOptions = {}
+  options: UseAsyncOptions<T> = {}
 ) {
+  const {
+    retryConfig,
+    onError,
+    onSuccess,
+    immediate = true,
+  } = options
   const [state, setState] = useState<UseAsyncState<T>>({
     data: null,
-    loading: options.immediate !== false,
+    loading: immediate,
     error: null,
     isRetryable: false,
   })
@@ -49,12 +54,12 @@ export function useAsync<T>(
           const appError = normalizeError(error)
           return appError.isRetryable
         },
-        options.retryConfig
+        retryConfig
       )
 
       if (isMountedRef.current) {
         setState({ data: result, loading: false, error: null, isRetryable: false })
-        options.onSuccess?.(result)
+        onSuccess?.(result)
       }
     } catch (error) {
       const appError = normalizeError(error)
@@ -66,20 +71,26 @@ export function useAsync<T>(
           error: appError,
           isRetryable: appError.isRetryable,
         })
-        options.onError?.(appError)
+        onError?.(appError)
       }
     }
-  }, [asyncFn, options.retryConfig])
+  }, [asyncFn, retryConfig, onError, onSuccess])
 
   useEffect(() => {
-    if (options.immediate !== false) {
-      execute()
+    if (immediate) {
+      const timeoutId = setTimeout(() => {
+        void execute()
+      }, 0)
+      return () => {
+        clearTimeout(timeoutId)
+        isMountedRef.current = false
+      }
     }
 
     return () => {
       isMountedRef.current = false
     }
-  }, options.dependencies || [])
+  }, [execute, immediate])
 
   return { ...state, execute }
 }
@@ -96,10 +107,11 @@ export interface UseCrudState<T> extends UseAsyncState<T[]> {
 
 export function useCrud<T extends { id: string }>(
   fetchFn: () => Promise<T[]>,
-  options: UseAsyncOptions = {}
+  options: UseAsyncOptions<T[]> = {}
 ): UseCrudState<T> {
+  const { onSuccess, onError, immediate = true } = options
   const [data, setData] = useState<T[] | null>(null)
-  const [loading, setLoading] = useState(options.immediate !== false)
+  const [loading, setLoading] = useState(immediate)
   const [error, setError] = useState<AppError | null>(null)
 
   const refresh = useCallback(async () => {
@@ -108,24 +120,29 @@ export function useCrud<T extends { id: string }>(
       const result = await fetchFn()
       setData(result)
       setError(null)
-      options.onSuccess?.(result)
+      onSuccess?.(result)
     } catch (err) {
       const appError = normalizeError(err)
       setError(appError)
-      options.onError?.(appError)
+      onError?.(appError)
     } finally {
       setLoading(false)
     }
-  }, [fetchFn])
+  }, [fetchFn, onError, onSuccess])
 
   useEffect(() => {
-    if (options.immediate !== false) {
-      refresh()
+    if (immediate) {
+      const timeoutId = setTimeout(() => {
+        void refresh()
+      }, 0)
+      return () => clearTimeout(timeoutId)
     }
-  }, [])
+    return undefined
+  }, [refresh, immediate])
 
   const create = useCallback(
     async (_item: Omit<T, 'id'>) => {
+      void _item
       // Implementar no serviço específico
       throw new Error('Create não implementado')
     },
@@ -134,6 +151,8 @@ export function useCrud<T extends { id: string }>(
 
   const update = useCallback(
     async (_id: string, _item: Partial<T>) => {
+      void _id
+      void _item
       // Implementar no serviço específico
       throw new Error('Update não implementado')
     },
@@ -142,6 +161,7 @@ export function useCrud<T extends { id: string }>(
 
   const deleteItem = useCallback(
     async (_id: string) => {
+      void _id
       // Implementar no serviço específico
       throw new Error('Delete não implementado')
     },
@@ -176,7 +196,7 @@ export interface UseFormState<T> {
   reset: () => void
 }
 
-export function useForm<T extends Record<string, any>>(
+export function useForm<T extends Record<string, unknown>>(
   initialValues: T,
   _onSubmit?: (values: T) => Promise<void>
 ): UseFormState<T> {
@@ -184,6 +204,7 @@ export function useForm<T extends Record<string, any>>(
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  void _onSubmit
 
   const setValue = useCallback(<K extends keyof T>(field: K, value: T[K]) => {
     setValues((prev) => ({ ...prev, [field]: value }))
@@ -305,3 +326,4 @@ export function useOnlineStatus(): boolean {
 
   return isOnline
 }
+

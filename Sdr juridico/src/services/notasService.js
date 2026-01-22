@@ -50,6 +50,35 @@ const notasService = {
         "database_error"
       );
     }
+  },
+  async createNota(payload) {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope();
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError("Organizacao nao encontrada para o usuario atual", "auth_error");
+      }
+      const insertPayload = {
+        entidade: payload.entidade,
+        entidade_id: payload.entidade_id,
+        texto: payload.texto,
+        created_by: payload.created_by || null,
+        tags: payload.tags || []
+      };
+      if (!isFartechAdmin) {
+        insertPayload.org_id = orgId;
+      }
+      const { data, error } = await supabase.from("notas").insert([insertPayload]).select("*").single();
+      if (error)
+        throw new AppError(error.message, "database_error");
+      if (!data)
+        throw new AppError("Erro ao criar nota", "database_error");
+      return mapNotaToTimeline(data);
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : "Erro ao criar nota",
+        "database_error"
+      );
+    }
   }
 };
 export {

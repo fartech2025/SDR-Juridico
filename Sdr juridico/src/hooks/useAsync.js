@@ -9,9 +9,10 @@ import { retryWithBackoff } from '@/lib/retry';
  * Hook para operações assíncronas com suporte a retry
  */
 export function useAsync(asyncFn, options = {}) {
+    const { retryConfig, onError, onSuccess, immediate = true } = options;
     const [state, setState] = useState({
         data: null,
-        loading: options.immediate !== false,
+        loading: immediate,
         error: null,
         isRetryable: false,
     });
@@ -22,10 +23,10 @@ export function useAsync(asyncFn, options = {}) {
             const result = await retryWithBackoff(asyncFn, (error) => {
                 const appError = normalizeError(error);
                 return appError.isRetryable;
-            }, options.retryConfig);
+            }, retryConfig);
             if (isMountedRef.current) {
                 setState({ data: result, loading: false, error: null, isRetryable: false });
-                options.onSuccess?.(result);
+                onSuccess?.(result);
             }
         }
         catch (error) {
@@ -37,23 +38,30 @@ export function useAsync(asyncFn, options = {}) {
                     error: appError,
                     isRetryable: appError.isRetryable,
                 });
-                options.onError?.(appError);
+                onError?.(appError);
             }
         }
-    }, [asyncFn, options.retryConfig]);
+    }, [asyncFn, retryConfig, onError, onSuccess]);
     useEffect(() => {
-        if (options.immediate !== false) {
-            execute();
+        if (immediate) {
+            const timeoutId = setTimeout(() => {
+                void execute();
+            }, 0);
+            return () => {
+                clearTimeout(timeoutId);
+                isMountedRef.current = false;
+            };
         }
         return () => {
             isMountedRef.current = false;
         };
-    }, options.dependencies || []);
+    }, [execute, immediate]);
     return { ...state, execute };
 }
 export function useCrud(fetchFn, options = {}) {
+    const { onSuccess, onError, immediate = true } = options;
     const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(options.immediate !== false);
+    const [loading, setLoading] = useState(immediate);
     const [error, setError] = useState(null);
     const refresh = useCallback(async () => {
         setLoading(true);
@@ -61,31 +69,39 @@ export function useCrud(fetchFn, options = {}) {
             const result = await fetchFn();
             setData(result);
             setError(null);
-            options.onSuccess?.(result);
+            onSuccess?.(result);
         }
         catch (err) {
             const appError = normalizeError(err);
             setError(appError);
-            options.onError?.(appError);
+            onError?.(appError);
         }
         finally {
             setLoading(false);
         }
-    }, [fetchFn]);
+    }, [fetchFn, onError, onSuccess]);
     useEffect(() => {
-        if (options.immediate !== false) {
-            refresh();
+        if (immediate) {
+            const timeoutId = setTimeout(() => {
+                void refresh();
+            }, 0);
+            return () => clearTimeout(timeoutId);
         }
-    }, []);
+        return undefined;
+    }, [refresh, immediate]);
     const create = useCallback(async (_item) => {
+        void _item;
         // Implementar no serviço específico
         throw new Error('Create não implementado');
     }, []);
     const update = useCallback(async (_id, _item) => {
+        void _id;
+        void _item;
         // Implementar no serviço específico
         throw new Error('Update não implementado');
     }, []);
     const deleteItem = useCallback(async (_id) => {
+        void _id;
         // Implementar no serviço específico
         throw new Error('Delete não implementado');
     }, []);
@@ -105,6 +121,7 @@ export function useForm(initialValues, _onSubmit) {
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    void _onSubmit;
     const setValue = useCallback((field, value) => {
         setValues((prev) => ({ ...prev, [field]: value }));
         // Limpar erro quando usuário mudar valor
@@ -206,3 +223,6 @@ export function useOnlineStatus() {
     }, []);
     return isOnline;
 }
+
+
+
