@@ -29,6 +29,7 @@ import { useNotas } from '@/hooks/useNotas'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTarefas } from '@/hooks/useTarefas'
+import { useDatajudTimeline } from '@/hooks/useDatajudTimeline'
 
 const resolveStatus = (
   value: string | null,
@@ -131,6 +132,12 @@ export const CasoPage = () => {
     updateTarefa,
     deleteTarefa,
   } = useTarefas()
+  const {
+    eventos: datajudEvents,
+    loading: datajudLoading,
+    error: datajudError,
+    fetchByCaso: fetchDatajudByCaso,
+  } = useDatajudTimeline()
   const { displayName, user } = useCurrentUser()
   const status = resolveStatus(params.get('state'))
   const [activeTab, setActiveTab] = React.useState<TabKey>('Tudo')
@@ -243,14 +250,14 @@ export const CasoPage = () => {
     [caseAgenda, caso.id],
   )
   const caseEvents = React.useMemo(() => {
-    const combined = [...caseNotas, ...docEvents, ...agendaEvents]
+    const combined = [...caseNotas, ...docEvents, ...agendaEvents, ...datajudEvents]
     if (user?.id && displayName) {
       return combined.map((event) =>
         event.author === user.id ? { ...event, author: displayName } : event,
       )
     }
     return combined
-  }, [caseNotas, docEvents, agendaEvents, user?.id, displayName])
+  }, [caseNotas, docEvents, agendaEvents, datajudEvents, user?.id, displayName])
   const normalizedSearch = searchTerm.trim().toLowerCase()
   const timelineEvents = React.useMemo(() => {
     let events = caseEvents
@@ -315,11 +322,29 @@ export const CasoPage = () => {
     fetchTarefasByEntidade('caso', targetCaseId).catch(() => null)
   }, [id, caso.id, fetchTarefasByEntidade])
 
+  React.useEffect(() => {
+    const targetCaseId = id || caso.id
+    if (!targetCaseId) return
+    fetchDatajudByCaso(targetCaseId).catch(() => null)
+  }, [id, caso.id, fetchDatajudByCaso])
+
 
   const baseState =
-    casosLoading || leadsLoading || docsLoading || agendaLoading || notasLoading || tarefasLoading
+    casosLoading ||
+    leadsLoading ||
+    docsLoading ||
+    agendaLoading ||
+    notasLoading ||
+    tarefasLoading ||
+    datajudLoading
       ? 'loading'
-      : casosError || leadsError || docsError || agendaError || notasError || tarefasError
+      : casosError ||
+          leadsError ||
+          docsError ||
+          agendaError ||
+          notasError ||
+          tarefasError ||
+          datajudError
         ? 'error'
         : casos.length
           ? 'ready'

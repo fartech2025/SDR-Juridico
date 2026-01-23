@@ -16,6 +16,7 @@ import {
   ChevronDown,
   UserRound,
   Users,
+  Database,
   Menu,
   X
 } from "lucide-react";
@@ -37,6 +38,7 @@ const navItems = [
   { label: "Agenda", to: "/app/agenda", icon: CalendarClock },
   { label: "Tarefas", to: "/app/tarefas", icon: ListTodo },
   { label: "Documentos", to: "/app/documentos", icon: FileText },
+  { label: "DataJud", to: "/app/datajud", icon: Database },
   { label: "Indicadores", to: "/app/indicadores", icon: BarChart3 },
   { label: "Configuracoes", to: "/app/config", icon: Settings }
 ];

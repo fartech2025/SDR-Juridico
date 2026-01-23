@@ -28,6 +28,7 @@ import { useNotas } from "@/hooks/useNotas";
 import { useAgenda } from "@/hooks/useAgenda";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTarefas } from "@/hooks/useTarefas";
+import { useDatajudTimeline } from "@/hooks/useDatajudTimeline";
 const resolveStatus = (value) => {
   if (value === "loading" || value === "empty" || value === "error") {
     return value;
@@ -115,6 +116,12 @@ const CasoPage = () => {
     updateTarefa,
     deleteTarefa
   } = useTarefas();
+  const {
+    eventos: datajudEvents,
+    loading: datajudLoading,
+    error: datajudError,
+    fetchByCaso: fetchDatajudByCaso
+  } = useDatajudTimeline();
   const { displayName, user } = useCurrentUser();
   const status = resolveStatus(params.get("state"));
   const [activeTab, setActiveTab] = React.useState("Tudo");
@@ -216,14 +223,14 @@ const CasoPage = () => {
     [caseAgenda, caso.id]
   );
   const caseEvents = React.useMemo(() => {
-    const combined = [...caseNotas, ...docEvents, ...agendaEvents];
+    const combined = [...caseNotas, ...docEvents, ...agendaEvents, ...datajudEvents];
     if (user?.id && displayName) {
       return combined.map(
         (event) => event.author === user.id ? { ...event, author: displayName } : event
       );
     }
     return combined;
-  }, [caseNotas, docEvents, agendaEvents, user?.id, displayName]);
+  }, [caseNotas, docEvents, agendaEvents, datajudEvents, user?.id, displayName]);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const timelineEvents = React.useMemo(() => {
     let events = caseEvents;
@@ -280,7 +287,12 @@ const CasoPage = () => {
     if (!targetCaseId) return;
     fetchTarefasByEntidade("caso", targetCaseId).catch(() => null);
   }, [id, caso.id, fetchTarefasByEntidade]);
-  const baseState = casosLoading || leadsLoading || docsLoading || agendaLoading || notasLoading || tarefasLoading ? "loading" : casosError || leadsError || docsError || agendaError || notasError || tarefasError ? "error" : casos.length ? "ready" : "empty";
+  React.useEffect(() => {
+    const targetCaseId = id || caso.id;
+    if (!targetCaseId) return;
+    fetchDatajudByCaso(targetCaseId).catch(() => null);
+  }, [id, caso.id, fetchDatajudByCaso]);
+  const baseState = casosLoading || leadsLoading || docsLoading || agendaLoading || notasLoading || tarefasLoading || datajudLoading ? "loading" : casosError || leadsError || docsError || agendaError || notasError || tarefasError || datajudError ? "error" : casos.length ? "ready" : "empty";
   const pageState = status !== "ready" ? status : baseState;
   const highlights = [
     {

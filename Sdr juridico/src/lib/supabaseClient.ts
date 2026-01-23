@@ -185,3 +185,28 @@ export interface TimelineEventRow {
   created_at: string
   org_id?: string | null
 }
+
+export interface DatajudProcessoRow {
+  id: string
+  created_at: string
+  org_id?: string | null
+  numero_processo: string
+  tribunal: string | null
+  classe: string | null
+  area: string | null
+  caso_id: string | null
+  cliente_id: string | null
+  last_sync_at: string | null
+  payload: Record<string, unknown> | null
+}
+
+export interface DatajudMovimentacaoRow {
+  id: string
+  created_at: string
+  org_id?: string | null
+  processo_id: string
+  data_movimentacao: string | null
+  descricao: string | null
+  codigo: string | null
+  payload: Record<string, unknown> | null
+}
