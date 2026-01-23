@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 import {
   ChevronDown,
   ChevronLeft,
@@ -18,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import type { Caso, TimelineCategory, TimelineEvent } from '@/types/domain'
+import type { Caso, Tarefa, TimelineCategory, TimelineEvent } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDate, formatDateTime } from '@/utils/format'
 import { useCasos } from '@/hooks/useCasos'
@@ -50,6 +51,8 @@ const tabs = [
 ] as const
 type TabKey = (typeof tabs)[number]
 
+const CHECKLIST_PREFIX = '[Checklist] '
+
 const categoryMap: Record<TabKey, string | null> = {
   Tudo: null,
   Documentos: 'docs',
@@ -76,6 +79,35 @@ const statusBadge = (status: Caso['status']) => {
   return 'success'
 }
 
+const normalizeChecklistTitle = (title: string) => {
+  const trimmed = title.trim()
+  if (trimmed.startsWith(CHECKLIST_PREFIX)) {
+    return trimmed.slice(CHECKLIST_PREFIX.length).trim()
+  }
+  return trimmed
+}
+
+const buildChecklistTitle = (title: string) => {
+  const trimmed = title.trim()
+  if (!trimmed) return ''
+  if (trimmed.startsWith(CHECKLIST_PREFIX)) return trimmed
+  return `${CHECKLIST_PREFIX}${trimmed}`
+}
+
+const toDateInput = (value?: string | null) => (value ? value.slice(0, 10) : '')
+
+const taskStatusPill = (status: Tarefa['status']) => {
+  if (status === 'concluida') return 'border-success-border bg-success-bg text-success'
+  if (status === 'em_progresso') return 'border-warning-border bg-warning-bg text-warning'
+  return 'border-border bg-surface-2 text-text-muted'
+}
+
+const taskPriorityPill = (priority: Tarefa['priority']) => {
+  if (priority === 'alta') return 'border-danger-border bg-danger-bg text-danger'
+  if (priority === 'normal') return 'border-info-border bg-info-bg text-info'
+  return 'border-border bg-surface-2 text-text-muted'
+}
+
 export const CasoPage = () => {
   const { id } = useParams()
   const [params] = useSearchParams()
@@ -95,6 +127,9 @@ export const CasoPage = () => {
     loading: tarefasLoading,
     error: tarefasError,
     fetchTarefasByEntidade,
+    createTarefa,
+    updateTarefa,
+    deleteTarefa,
   } = useTarefas()
   const { displayName, user } = useCurrentUser()
   const status = resolveStatus(params.get('state'))
@@ -104,6 +139,18 @@ export const CasoPage = () => {
   const [filtersOpen, setFiltersOpen] = React.useState(false)
   const [dateRange, setDateRange] = React.useState<'all' | '7d' | '30d' | '90d'>('all')
   const [sortOrder, setSortOrder] = React.useState<'recent' | 'oldest'>('recent')
+  const [taskDrawerOpen, setTaskDrawerOpen] = React.useState(false)
+  const [taskDrawerMode, setTaskDrawerMode] = React.useState<'create' | 'edit'>('create')
+  const [taskDrawerTask, setTaskDrawerTask] = React.useState<Tarefa | null>(null)
+  const [taskDrawerForm, setTaskDrawerForm] = React.useState({
+    title: '',
+    description: '',
+    status: 'pendente' as Tarefa['status'],
+    priority: 'normal' as Tarefa['priority'],
+    dueDate: '',
+  })
+  const [taskDrawerError, setTaskDrawerError] = React.useState<string | null>(null)
+  const [taskDrawerSaving, setTaskDrawerSaving] = React.useState(false)
   const [eventForm, setEventForm] = React.useState<{
     title: string
     category: TimelineCategory
@@ -149,6 +196,21 @@ export const CasoPage = () => {
   const caseTasks = React.useMemo(
     () => tarefas.filter((task) => task.casoId === caso?.id),
     [tarefas, caso?.id],
+  )
+  const checklistItems = React.useMemo(
+    () =>
+      caseTasks
+        .filter((task) => {
+          const hasPrefix = task.title.trim().startsWith(CHECKLIST_PREFIX)
+          return hasPrefix
+        })
+        .map((task) => ({
+          id: task.id,
+          label: normalizeChecklistTitle(task.title),
+          status: task.status === 'concluida' ? 'ok' : 'pendente',
+          task,
+        })),
+    [caseTasks],
   )
   const docEvents = React.useMemo<TimelineEvent[]>(
     () =>
@@ -253,6 +315,7 @@ export const CasoPage = () => {
     fetchTarefasByEntidade('caso', targetCaseId).catch(() => null)
   }, [id, caso.id, fetchTarefasByEntidade])
 
+
   const baseState =
     casosLoading || leadsLoading || docsLoading || agendaLoading || notasLoading || tarefasLoading
       ? 'loading'
@@ -278,16 +341,6 @@ export const CasoPage = () => {
     },
   ]
 
-  const checklistItems = React.useMemo(
-    () =>
-      caseTasks.map((task) => ({
-        id: task.id,
-        label: task.title,
-        status: task.status === 'concluida' ? 'ok' : 'pendente',
-      })),
-    [caseTasks],
-  )
-
   const resetFilters = () => {
     setDateRange('all')
     setSortOrder('recent')
@@ -302,6 +355,47 @@ export const CasoPage = () => {
     setEventError(null)
   }
 
+  const resetTaskDrawerForm = () => {
+    setTaskDrawerTask(null)
+    setTaskDrawerMode('create')
+    setTaskDrawerForm({
+      title: '',
+      description: '',
+      status: 'pendente',
+      priority: 'normal',
+      dueDate: '',
+    })
+    setTaskDrawerError(null)
+  }
+
+  const openChecklistDrawer = (task: Tarefa) => {
+    setTaskDrawerTask(task)
+    setTaskDrawerMode('edit')
+    setTaskDrawerForm({
+      title: normalizeChecklistTitle(task.title),
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      dueDate: toDateInput(task.dueDate),
+    })
+    setTaskDrawerError(null)
+    setTaskDrawerOpen(true)
+  }
+
+  const openChecklistDrawerForCreate = () => {
+    setTaskDrawerTask(null)
+    setTaskDrawerMode('create')
+    setTaskDrawerForm({
+      title: '',
+      description: '',
+      status: 'pendente',
+      priority: 'normal',
+      dueDate: '',
+    })
+    setTaskDrawerError(null)
+    setTaskDrawerOpen(true)
+  }
+
   const openModal = () => {
     resetEventForm()
     setModalOpen(true)
@@ -312,6 +406,23 @@ export const CasoPage = () => {
     setModalOpen(false)
     resetEventForm()
   }
+
+  const closeTaskDrawer = () => {
+    if (taskDrawerSaving) return
+    setTaskDrawerOpen(false)
+    resetTaskDrawerForm()
+  }
+
+  React.useEffect(() => {
+    if (!taskDrawerOpen) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeTaskDrawer()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [taskDrawerOpen, closeTaskDrawer])
 
   const handleScrollToTimeline = () => {
     timelineRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -345,6 +456,61 @@ export const CasoPage = () => {
       setEventError(error instanceof Error ? error.message : 'Erro ao salvar evento')
     } finally {
       setEventSaving(false)
+    }
+  }
+
+  const handleSaveTaskDrawer = async () => {
+    const title = buildChecklistTitle(taskDrawerForm.title)
+    if (!title) {
+      setTaskDrawerError('Informe o titulo da tarefa.')
+      return
+    }
+    setTaskDrawerSaving(true)
+    setTaskDrawerError(null)
+    try {
+      if (taskDrawerMode === 'create') {
+        if (!caso?.id) {
+          setTaskDrawerError('Caso nao encontrado.')
+          return
+        }
+        await createTarefa({
+          title,
+          description: taskDrawerForm.description.trim() || null,
+          priority: taskDrawerForm.priority,
+          status: taskDrawerForm.status,
+          dueDate: taskDrawerForm.dueDate || null,
+          casoId: caso.id,
+        })
+      } else if (taskDrawerTask) {
+        const completedAt =
+          taskDrawerForm.status === 'concluida'
+            ? taskDrawerTask.completedAt || new Date().toISOString()
+            : null
+        await updateTarefa(taskDrawerTask.id, {
+          title,
+          description: taskDrawerForm.description.trim() || null,
+          priority: taskDrawerForm.priority,
+          status: taskDrawerForm.status,
+          dueDate: taskDrawerForm.dueDate || null,
+          completedAt,
+        })
+      }
+      setTaskDrawerOpen(false)
+      resetTaskDrawerForm()
+    } catch (error) {
+      setTaskDrawerError(error instanceof Error ? error.message : 'Erro ao salvar tarefa')
+    } finally {
+      setTaskDrawerSaving(false)
+    }
+  }
+
+  const handleDeleteChecklist = async (id: string) => {
+    const confirmed = window.confirm('Excluir este item do checklist?')
+    if (!confirmed) return
+    try {
+      await deleteTarefa(id)
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Erro ao excluir tarefa')
     }
   }
 
@@ -542,7 +708,9 @@ export const CasoPage = () => {
                           </span>
                           {task.dueDate && <span>Vence em {formatDate(task.dueDate)}</span>}
                         </div>
-                        <p className="mt-2 text-sm font-semibold text-text">{task.title}</p>
+                        <p className="mt-2 text-sm font-semibold text-text">
+                          {normalizeChecklistTitle(task.title)}
+                        </p>
                         {task.description && (
                           <p className="mt-1 text-xs text-text-subtle">{task.description}</p>
                         )}
@@ -615,7 +783,17 @@ export const CasoPage = () => {
 
             <Card className="border-border bg-white/85">
               <CardHeader>
-                <CardTitle>Checklist Processual</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Checklist Processual</CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 rounded-full px-3"
+                    onClick={openChecklistDrawerForCreate}
+                  >
+                    Adicionar item
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-text-muted">
                 {checklistItems.length === 0 && (
@@ -626,19 +804,50 @@ export const CasoPage = () => {
                 {checklistItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openChecklistDrawer(item.task)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        openChecklistDrawer(item.task)
+                      }
+                    }}
+                    className="flex items-center justify-between rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)] transition hover:bg-surface-2"
                   >
                     <span>{item.label}</span>
-                    <span
-                      className={cn(
-                        'rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase',
-                        item.status === 'ok'
-                          ? 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
-                          : 'border-[#F1D28A] bg-[#FFF1CC] text-[#8A5A00]',
-                      )}
-                    >
-                      {item.status === 'ok' ? 'ok' : 'pendente'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="text-[11px] font-semibold text-text-subtle hover:text-text"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          openChecklistDrawer(item.task)
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="text-[11px] font-semibold text-text-subtle hover:text-danger"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          handleDeleteChecklist(item.id)
+                        }}
+                      >
+                        Excluir
+                      </button>
+                      <span
+                        className={cn(
+                          'rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase',
+                          item.status === 'ok'
+                            ? 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
+                            : 'border-[#F1D28A] bg-[#FFF1CC] text-[#8A5A00]',
+                        )}
+                      >
+                        {item.status === 'ok' ? 'ok' : 'pendente'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -737,6 +946,190 @@ export const CasoPage = () => {
           </div>
         </div>
       </Modal>
+      {taskDrawerOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-50">
+            <div
+              className="absolute inset-0 bg-[rgba(17,24,39,0.35)]"
+              style={{ backdropFilter: 'blur(6px)' }}
+              onClick={closeTaskDrawer}
+            />
+            <aside className="absolute right-0 top-0 flex h-full w-full max-w-[480px] flex-col rounded-l-2xl border-l border-border bg-white shadow-[0_18px_50px_rgba(18,38,63,0.18)]">
+              <div
+                className="relative overflow-hidden border-b border-border px-6 py-6"
+                style={{
+                  backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.96) 70%, rgba(215,236,255,0.3) 100%), url(${heroLight})`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right top',
+                  backgroundSize: '320px',
+                }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
+                      Tarefa
+                    </p>
+                    <h3 className="font-display text-2xl text-text">
+                      {taskDrawerMode === 'create'
+                        ? 'Novo item do checklist'
+                        : taskDrawerForm.title || 'Item do checklist'}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="inline-flex rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-text-muted">
+                        Checklist
+                      </span>
+                      <span
+                        className={cn(
+                          'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase',
+                          taskStatusPill(taskDrawerForm.status),
+                        )}
+                      >
+                        {taskDrawerForm.status.replace('_', ' ')}
+                      </span>
+                      <span
+                        className={cn(
+                          'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase',
+                          taskPriorityPill(taskDrawerForm.priority),
+                        )}
+                      >
+                        {taskDrawerForm.priority}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-sm text-text-subtle hover:text-text"
+                    onClick={closeTaskDrawer}
+                    aria-label="Fechar"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 text-sm text-text-muted">
+                {taskDrawerError && (
+                  <div className="rounded-2xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
+                    {taskDrawerError}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-wide text-text-subtle">
+                    Titulo
+                  </label>
+                  <Input
+                    placeholder="Descreva a tarefa"
+                    value={taskDrawerForm.title}
+                    onChange={(event) =>
+                      setTaskDrawerForm((prev) => ({ ...prev, title: event.target.value }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase tracking-wide text-text-subtle">
+                      Status
+                    </label>
+                    <select
+                      className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                      value={taskDrawerForm.status}
+                      onChange={(event) =>
+                        setTaskDrawerForm((prev) => ({
+                          ...prev,
+                          status: event.target.value as Tarefa['status'],
+                        }))
+                      }
+                    >
+                      <option value="pendente">Pendente</option>
+                      <option value="em_progresso">Em progresso</option>
+                      <option value="concluida">Concluida</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase tracking-wide text-text-subtle">
+                      Prioridade
+                    </label>
+                    <select
+                      className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                      value={taskDrawerForm.priority}
+                      onChange={(event) =>
+                        setTaskDrawerForm((prev) => ({
+                          ...prev,
+                          priority: event.target.value as Tarefa['priority'],
+                        }))
+                      }
+                    >
+                      <option value="baixa">Baixa</option>
+                      <option value="normal">Normal</option>
+                      <option value="alta">Alta</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-wide text-text-subtle">
+                    Prazo
+                  </label>
+                  <Input
+                    type="date"
+                    value={taskDrawerForm.dueDate}
+                    onChange={(event) =>
+                      setTaskDrawerForm((prev) => ({ ...prev, dueDate: event.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-wide text-text-subtle">
+                    Descricao
+                  </label>
+                  <textarea
+                    className="min-h-[120px] w-full rounded-2xl border border-border bg-white px-3 py-2 text-sm text-text"
+                    placeholder="Detalhes da tarefa"
+                    value={taskDrawerForm.description}
+                    onChange={(event) =>
+                      setTaskDrawerForm((prev) => ({
+                        ...prev,
+                        description: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-text-subtle">
+                    Vinculo
+                  </p>
+                  <p className="mt-2 text-sm text-text">
+                    Caso: {caso.title} - {caso.cliente}
+                  </p>
+                  {taskDrawerTask ? (
+                    <p className="mt-1 text-[11px] text-text-subtle">
+                      Criada em {formatDateTime(taskDrawerTask.createdAt)}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-text-subtle">
+                      O item sera criado para este caso.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-border bg-white/95 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" onClick={closeTaskDrawer} disabled={taskDrawerSaving}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveTaskDrawer}
+                    disabled={taskDrawerSaving}
+                  >
+                    {taskDrawerSaving ? 'Salvando...' : 'Salvar tarefa'}
+                  </Button>
+                </div>
+              </div>
+            </aside>
+          </div>,
+          document.body,
+        )}
       </div>
     </div>
   )

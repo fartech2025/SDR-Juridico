@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import type { Tarefa } from '@/types/domain'
 import { cn } from '@/utils/cn'
+import { ensureChecklistPrefix, hasChecklistPrefix, stripChecklistPrefix } from '@/utils/checklist'
 import { formatDate } from '@/utils/format'
 import { useTarefas } from '@/hooks/useTarefas'
 import { useLeads } from '@/hooks/useLeads'
@@ -152,6 +153,7 @@ export const TarefasPage = () => {
   }
 
   const openEditModal = (task: Tarefa) => {
+    const displayTitle = stripChecklistPrefix(task.title)
     const linkType: LinkType = task.casoId
       ? 'caso'
       : task.clienteId
@@ -169,7 +171,7 @@ export const TarefasPage = () => {
             : ''
     setEditingTask(task)
     setFormState({
-      title: task.title,
+      title: displayTitle,
       description: task.description || '',
       priority: task.priority,
       status: task.status,
@@ -203,8 +205,11 @@ export const TarefasPage = () => {
         casoId: formState.linkType === 'caso' ? formState.linkId || null : null,
       }
       if (editingTask) {
+        const savedTitle = hasChecklistPrefix(editingTask.title)
+          ? ensureChecklistPrefix(formState.title)
+          : formState.title
         await updateTarefa(editingTask.id, {
-          title: formState.title.trim(),
+          title: savedTitle.trim(),
           description: formState.description.trim() || null,
           priority: formState.priority,
           status: formState.status,
@@ -238,7 +243,8 @@ export const TarefasPage = () => {
   }
 
   const handleDelete = async (task: Tarefa) => {
-    const confirmed = window.confirm(`Excluir a tarefa "${task.title}"?`)
+    const displayTitle = stripChecklistPrefix(task.title)
+    const confirmed = window.confirm(`Excluir a tarefa "${displayTitle}"?`)
     if (!confirmed) return
     await deleteTarefa(task.id)
   }
@@ -365,6 +371,7 @@ export const TarefasPage = () => {
             <PageState status={pageState} emptyTitle="Nenhuma tarefa encontrada">
               <div className="space-y-3">
                 {sortedTarefas.map((task) => {
+                  const displayTitle = stripChecklistPrefix(task.title)
                   const isOverdue =
                     task.dueDate && task.status !== 'concluida' && task.dueDate < todayIso
                   return (
@@ -380,7 +387,7 @@ export const TarefasPage = () => {
                       </div>
                       <div className="flex-1 min-w-[200px]">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold text-text">{task.title}</p>
+                          <p className="text-sm font-semibold text-text">{displayTitle}</p>
                           <span
                             className={cn(
                               'inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase',

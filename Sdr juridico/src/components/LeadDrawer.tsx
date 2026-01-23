@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
 import type { Caso, Lead } from '@/types/domain'
+import { stripChecklistPrefix } from '@/utils/checklist'
 import { formatDate, formatDateTime, formatPhone } from '@/utils/format'
 import { useMensagens } from '@/hooks/useMensagens'
 import { useTarefas } from '@/hooks/useTarefas'
@@ -145,7 +146,9 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
                     </span>
                     {tarefa.dueDate && <span>Vence em {formatDate(tarefa.dueDate)}</span>}
                   </div>
-                  <p className="mt-2 text-sm text-text">{tarefa.title}</p>
+                  <p className="mt-2 text-sm text-text">
+                    {stripChecklistPrefix(tarefa.title)}
+                  </p>
                 </div>
               ))}
             </div>

@@ -6,6 +6,7 @@ import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
 import type { Cliente } from '@/types/domain'
 import { formatDate, formatDateTime } from '@/utils/format'
+import { stripChecklistPrefix } from '@/utils/checklist'
 import { useTarefas } from '@/hooks/useTarefas'
 
 export interface ClienteDrawerProps {
@@ -138,7 +139,7 @@ export const ClienteDrawer = ({ open, cliente, onClose }: ClienteDrawerProps) =>
                     </span>
                     {tarefa.dueDate && <span>Vence em {formatDate(tarefa.dueDate)}</span>}
                   </div>
-                  <p className="mt-2 text-sm text-text">{tarefa.title}</p>
+                  <p className="mt-2 text-sm text-text">{stripChecklistPrefix(tarefa.title)}</p>
                 </div>
               ))}
             </div>
