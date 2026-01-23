@@ -200,6 +200,11 @@ export const CasoPage = () => {
     () => notas.filter((event) => event.casoId === caso?.id),
     [notas, caso?.id],
   )
+  const recentNotas = React.useMemo(() => {
+    return [...caseNotas]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 3)
+  }, [caseNotas])
   const caseTasks = React.useMemo(
     () => tarefas.filter((task) => task.casoId === caso?.id),
     [tarefas, caso?.id],
@@ -530,7 +535,7 @@ export const CasoPage = () => {
   }
 
   const handleDeleteChecklist = async (id: string) => {
-    const confirmed = window.confirm('Excluir este item do checklist?')
+    const confirmed = window.confirm('Excluir esta tarefa?')
     if (!confirmed) return
     try {
       await deleteTarefa(id)
@@ -809,21 +814,21 @@ export const CasoPage = () => {
             <Card className="border-border bg-white/85">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Checklist Processual</CardTitle>
+                  <CardTitle>Tarefas</CardTitle>
                   <Button
                     variant="outline"
                     size="sm"
                     className="h-9 rounded-full px-3"
                     onClick={openChecklistDrawerForCreate}
                   >
-                    Adicionar item
+                    Adicionar tarefa
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-text-muted">
                 {checklistItems.length === 0 && (
                   <div className="rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft">
-                    Nenhum item de checklist para este caso.
+                    Nenhuma tarefa cadastrada para este caso.
                   </div>
                 )}
                 {checklistItems.map((item) => (
@@ -875,6 +880,53 @@ export const CasoPage = () => {
                     </div>
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-white/85">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle>Notas do caso</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="text-xs text-text-subtle hover:text-text"
+                      onClick={handleScrollToTimeline}
+                    >
+                      Ver linha do tempo
+                    </button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-full px-3"
+                      onClick={openModal}
+                    >
+                      Adicionar nota
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm text-text-muted">
+                {recentNotas.length ? (
+                  recentNotas.map((nota) => (
+                    <div
+                      key={nota.id}
+                      className="rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+                    >
+                      <div className="text-sm font-semibold text-text">{nota.title}</div>
+                      {nota.description && (
+                        <div className="mt-1 text-xs text-text-subtle">{nota.description}</div>
+                      )}
+                      <div className="mt-2 text-[11px] text-text-subtle">
+                        {formatDateTime(nota.date)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft">
+                    Nenhuma nota registrada para este caso.
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -996,12 +1048,12 @@ export const CasoPage = () => {
                     </p>
                     <h3 className="font-display text-2xl text-text">
                       {taskDrawerMode === 'create'
-                        ? 'Novo item do checklist'
-                        : taskDrawerForm.title || 'Item do checklist'}
+                        ? 'Nova tarefa'
+                        : taskDrawerForm.title || 'Tarefa'}
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       <span className="inline-flex rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-text-muted">
-                        Checklist
+                        Tarefa do caso
                       </span>
                       <span
                         className={cn(

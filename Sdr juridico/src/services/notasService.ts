@@ -65,10 +65,6 @@ export const notasService = {
 
   async getNotasByEntidade(entidade: string, entidadeId: string): Promise<TimelineEventRow[]> {
     try {
-      if (entidade !== 'caso') {
-        return []
-      }
-
       const { orgId, isFartechAdmin } = await resolveOrgScope()
       if (!isFartechAdmin && !orgId) return []
 

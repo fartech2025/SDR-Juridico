@@ -77,6 +77,12 @@ export const AuditoriaPage = () => {
     fetchLogs().catch(() => null)
   }, [fetchLogs])
 
+  const handleClearFilters = () => {
+    setSearchTerm('')
+    setActionFilter('todos')
+    setEntityFilter('todos')
+  }
+
   const pageState = loading ? 'loading' : error ? 'error' : logs.length ? 'ready' : 'empty'
 
   return (
@@ -91,9 +97,24 @@ export const AuditoriaPage = () => {
             <p className="text-sm text-text-subtle">Acompanhe mudancas e acessos.</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchLogs} className="h-9 rounded-full px-4">
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearFilters}
+            className="h-9 rounded-full px-4"
+          >
+            Limpar filtros
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchLogs}
+            className="h-9 rounded-full px-4"
+          >
+            Atualizar
+          </Button>
+        </div>
       </header>
 
       <Card className="border-border bg-white/85">
@@ -135,7 +156,7 @@ export const AuditoriaPage = () => {
         </CardContent>
       </Card>
 
-      <PageState status={pageState}>
+      <PageState status={pageState} onRetry={fetchLogs}>
         <div className="space-y-3">
           {logs.map((log) => (
             <div

@@ -178,6 +178,9 @@ const CasoPage = () => {
     () => notas.filter((event) => event.casoId === caso?.id),
     [notas, caso?.id]
   );
+  const recentNotas = React.useMemo(() => {
+    return [...caseNotas].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3);
+  }, [caseNotas]);
   const caseTasks = React.useMemo(
     () => tarefas.filter((task) => task.casoId === caso?.id),
     [tarefas, caso?.id]
@@ -457,7 +460,7 @@ ${description}` : title;
     }
   };
   const handleDeleteChecklist = async (id2) => {
-    const confirmed = window.confirm("Excluir este item do checklist?");
+    const confirmed = window.confirm("Excluir esta tarefa?");
     if (!confirmed) return;
     try {
       await deleteTarefa(id2);
@@ -693,7 +696,7 @@ ${description}` : title;
         ] }) }),
         /* @__PURE__ */ jsxs(Card, { className: "border-border bg-white/85", children: [
           /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
-            /* @__PURE__ */ jsx(CardTitle, { children: "Checklist Processual" }),
+            /* @__PURE__ */ jsx(CardTitle, { children: "Tarefas" }),
             /* @__PURE__ */ jsx(
               Button,
               {
@@ -701,12 +704,12 @@ ${description}` : title;
                 size: "sm",
                 className: "h-9 rounded-full px-3",
                 onClick: openChecklistDrawerForCreate,
-                children: "Adicionar item"
+                children: "Adicionar tarefa"
               }
             )
           ] }) }),
           /* @__PURE__ */ jsxs(CardContent, { className: "space-y-2 text-sm text-text-muted", children: [
-            checklistItems.length === 0 && /* @__PURE__ */ jsx("div", { className: "rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft", children: "Nenhum item de checklist para este caso." }),
+            checklistItems.length === 0 && /* @__PURE__ */ jsx("div", { className: "rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft", children: "Nenhuma tarefa cadastrada para este caso." }),
             checklistItems.map((item) => /* @__PURE__ */ jsxs(
               "div",
               {
@@ -763,6 +766,44 @@ ${description}` : title;
               item.id
             ))
           ] })
+        ] }),
+        /* @__PURE__ */ jsxs(Card, { className: "border-border bg-white/85", children: [
+          /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2", children: [
+            /* @__PURE__ */ jsx(CardTitle, { children: "Notas do caso" }),
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  className: "text-xs text-text-subtle hover:text-text",
+                  onClick: handleScrollToTimeline,
+                  children: "Ver linha do tempo"
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                Button,
+                {
+                  variant: "outline",
+                  size: "sm",
+                  className: "h-9 rounded-full px-3",
+                  onClick: openModal,
+                  children: "Adicionar nota"
+                }
+              )
+            ] })
+          ] }) }),
+          /* @__PURE__ */ jsx(CardContent, { className: "space-y-2 text-sm text-text-muted", children: recentNotas.length ? recentNotas.map((nota) => /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: "rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]",
+              children: [
+                /* @__PURE__ */ jsx("div", { className: "text-sm font-semibold text-text", children: nota.title }),
+                nota.description && /* @__PURE__ */ jsx("div", { className: "mt-1 text-xs text-text-subtle", children: nota.description }),
+                /* @__PURE__ */ jsx("div", { className: "mt-2 text-[11px] text-text-subtle", children: formatDateTime(nota.date) })
+              ]
+            },
+            nota.id
+          )) : /* @__PURE__ */ jsx("div", { className: "rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft", children: "Nenhuma nota registrada para este caso." }) })
         ] }),
         /* @__PURE__ */ jsxs(Card, { className: "border-border bg-white/85", children: [
           /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsx(CardTitle, { children: "Documentos recentes" }) }),
@@ -861,9 +902,9 @@ ${description}` : title;
               children: /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between gap-4", children: [
                 /* @__PURE__ */ jsxs("div", { className: "space-y-2", children: [
                   /* @__PURE__ */ jsx("p", { className: "text-[11px] uppercase tracking-[0.32em] text-text-subtle", children: "Tarefa" }),
-                  /* @__PURE__ */ jsx("h3", { className: "font-display text-2xl text-text", children: taskDrawerMode === "create" ? "Novo item do checklist" : taskDrawerForm.title || "Item do checklist" }),
+                  /* @__PURE__ */ jsx("h3", { className: "font-display text-2xl text-text", children: taskDrawerMode === "create" ? "Nova tarefa" : taskDrawerForm.title || "Tarefa" }),
                   /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-2", children: [
-                    /* @__PURE__ */ jsx("span", { className: "inline-flex rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-text-muted", children: "Checklist" }),
+                    /* @__PURE__ */ jsx("span", { className: "inline-flex rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-text-muted", children: "Tarefa do caso" }),
                     /* @__PURE__ */ jsx(
                       "span",
                       {

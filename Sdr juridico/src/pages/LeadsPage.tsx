@@ -43,7 +43,7 @@ const heatPill = (heat: Lead['heat']) => {
 }
 
 export const LeadsPage = () => {
-  const { leads, loading, error, createLead, updateLead, deleteLead, assignLeadAdvogado } = useLeads()
+  const { leads, loading, error, fetchLeads, createLead, updateLead, deleteLead, assignLeadAdvogado } = useLeads()
   const { casos } = useCasos()
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
   const canManageLeads = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
@@ -76,7 +76,7 @@ export const LeadsPage = () => {
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingLeadId)
 
-  const tabs = ['Todos', 'Quentes 🔥', 'Em Negociação 💰', 'Fechados ✅']
+  const tabs = ['Todos', 'Quentes', 'Em negociacao', 'Fechados']
 
   // Métricas do pipeline de vendas
   const metrics = React.useMemo(() => {
@@ -109,9 +109,13 @@ export const LeadsPage = () => {
       const matchesHeat = heatFilter === 'todos' || lead.heat === heatFilter
       
       // Filtro por aba
-      if (activeTab === 'Quentes 🔥') return matchesQuery && matchesStatus && lead.heat === 'quente'
-      if (activeTab === 'Em Negociação 💰') return matchesQuery && matchesHeat && ['proposta', 'qualificado'].includes(lead.status)
-      if (activeTab === 'Fechados ✅') return matchesQuery && matchesHeat && ['ganho', 'perdido'].includes(lead.status)
+      if (activeTab === 'Quentes') return matchesQuery && matchesStatus && lead.heat === 'quente'
+      if (activeTab === 'Em negociacao') {
+        return matchesQuery && matchesHeat && ['proposta', 'qualificado'].includes(lead.status)
+      }
+      if (activeTab === 'Fechados') {
+        return matchesQuery && matchesHeat && ['ganho', 'perdido'].includes(lead.status)
+      }
       
       return matchesQuery && matchesStatus && matchesHeat
     })
@@ -126,6 +130,19 @@ export const LeadsPage = () => {
         ? 'empty'
         : 'ready'
   const pageState = forcedState !== 'ready' ? forcedState : baseState
+  const emptyAction = canManageLeads ? (
+    <Button
+      variant="primary"
+      size="sm"
+      className="h-9 rounded-full px-4"
+      onClick={() => {
+        resetLeadForm()
+        setShowNewLeadForm(true)
+      }}
+    >
+      Novo lead
+    </Button>
+  ) : null
 
   const relatedCase = selectedLead
     ? casos.find((caso) => caso.leadId === selectedLead.id)
@@ -590,24 +607,37 @@ export const LeadsPage = () => {
                   Acompanhe oportunidades e impulsione suas vendas
                 </p>
               </div>
-              <Button 
-                onClick={() => {
-                  if (!canManageLeads) {
-                    toast.error('Apenas gestores podem adicionar leads.')
-                    return
-                  }
-                  resetLeadForm()
-                  setShowNewLeadForm(true)
-                }}
-                className={cn(
-                  'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl','bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
-                )}
-                disabled={!canManageLeads}
-              >
-                <Zap className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
-                Novo Lead
-                <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </Button>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  variant="outline"
+                  className="h-14 rounded-full px-6 font-semibold"
+                  onClick={() => {
+                    void fetchLeads()
+                  }}
+                  disabled={loading}
+                >
+                  Atualizar
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!canManageLeads) {
+                      toast.error('Apenas gestores podem adicionar leads.')
+                      return
+                    }
+                    resetLeadForm()
+                    setShowNewLeadForm(true)
+                  }}
+                  className={cn(
+                    'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl',
+                    'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600',
+                  )}
+                  disabled={!canManageLeads}
+                >
+                  <Zap className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
+                  Novo Lead
+                  <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -651,7 +681,7 @@ export const LeadsPage = () => {
                   </p>
                   <p className="text-4xl font-bold tracking-tight text-red-500">{metrics.quentes}</p>
                   <p className={cn('text-xs font-medium uppercase', 'text-red-600')}>
-                    🔥 Ação Imediata
+                    Acao imediata
                   </p>
                 </div>
                 <div className="rounded-2xl bg-gradient-to-br from-red-500/10 to-orange-500/10 p-4 group-hover:from-red-500/20 group-hover:to-orange-500/20">
@@ -669,11 +699,11 @@ export const LeadsPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <p className={cn('text-sm font-semibold', 'text-slate-600')}>
-                    Em Negociação
+                    Em negociacao
                   </p>
                   <p className="text-4xl font-bold tracking-tight text-amber-500">{metrics.emNegociacao}</p>
                   <p className={cn('text-xs font-medium', 'text-amber-600')}>
-                    💰 propostas ativas
+                    Propostas ativas
                   </p>
                 </div>
                 <div className={cn(
@@ -694,11 +724,11 @@ export const LeadsPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <p className={cn('text-sm font-semibold', 'text-slate-600')}>
-                    Taxa de Conversão
+                    Taxa de conversao
                   </p>
                   <p className="text-4xl font-bold tracking-tight text-emerald-500">{metrics.taxaConversao}%</p>
                   <p className={cn('text-xs font-medium', 'text-emerald-600')}>
-                    ✅ {metrics.ganhos} fechamentos
+                    {metrics.ganhos} fechamentos
                   </p>
                 </div>
                 <div className={cn(
@@ -765,7 +795,7 @@ export const LeadsPage = () => {
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
-                  <option value="todos">📊 Todos Status</option>
+                  <option value="todos">Todos status</option>
                   {filters.status.map((status) => (
                     <option key={status} value={status}>
                       {status}
@@ -780,7 +810,7 @@ export const LeadsPage = () => {
                   value={heatFilter}
                   onChange={(event) => setHeatFilter(event.target.value)}
                 >
-                  <option value="todos">🌡️ Temperatura</option>
+                  <option value="todos">Temperatura</option>
                   {filters.heat.map((heat) => (
                     <option key={heat} value={heat}>
                       {heat}
@@ -806,6 +836,8 @@ export const LeadsPage = () => {
               status={pageState}
               emptyTitle="Nenhum lead encontrado"
               emptyDescription="Ajuste os filtros ou adicione novos leads ao pipeline."
+              emptyAction={emptyAction}
+              onRetry={error ? fetchLeads : undefined}
             >
               <div className="space-y-3">
                 {filteredLeads.map((lead) => {
@@ -846,7 +878,7 @@ export const LeadsPage = () => {
                                 heatPill(lead.heat)
                               )}
                             >
-                              {lead.heat === 'quente' ? '🔥' : lead.heat === 'morno' ? '⚡' : '❄️'}
+                              {lead.heat === 'quente' ? 'Quente' : lead.heat === 'morno' ? 'Morno' : 'Frio'}
                               {lead.heat}
                             </span>
                           </div>

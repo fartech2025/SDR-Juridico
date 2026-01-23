@@ -34,18 +34,47 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/utils/cn'
 import { auditService, sessionService } from '@/services/auditService'
 
-const navItems = [
-  { label: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
-  { label: 'Leads', to: '/app/leads', icon: Users },
-  { label: 'Clientes', to: '/app/clientes', icon: UserRound },
-  { label: 'Casos', to: '/app/casos', icon: Briefcase },
-  { label: 'Agenda', to: '/app/agenda', icon: CalendarClock },
-  { label: 'Tarefas', to: '/app/tarefas', icon: ListTodo },
-  { label: 'Documentos', to: '/app/documentos', icon: FileText },
-  { label: 'DataJud', to: '/app/datajud', icon: Database },
-  { label: 'Auditoria', to: '/app/auditoria', icon: ShieldCheck },
-  { label: 'Indicadores', to: '/app/indicadores', icon: BarChart3 },
-  { label: 'Configuracoes', to: '/app/config', icon: Settings },
+type NavItem = {
+  label: string
+  to: string
+  icon: React.ComponentType<{ className?: string }>
+}
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Operacao',
+    items: [
+      { label: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
+      { label: 'Agenda', to: '/app/agenda', icon: CalendarClock },
+      { label: 'Tarefas', to: '/app/tarefas', icon: ListTodo },
+    ],
+  },
+  {
+    label: 'Relacionamento',
+    items: [
+      { label: 'Leads', to: '/app/leads', icon: Users },
+      { label: 'Clientes', to: '/app/clientes', icon: UserRound },
+      { label: 'Casos', to: '/app/casos', icon: Briefcase },
+    ],
+  },
+  {
+    label: 'Conteudo',
+    items: [
+      { label: 'Documentos', to: '/app/documentos', icon: FileText },
+      { label: 'DataJud', to: '/app/datajud', icon: Database },
+    ],
+  },
+  {
+    label: 'Governanca',
+    items: [
+      { label: 'Auditoria', to: '/app/auditoria', icon: ShieldCheck },
+      { label: 'Indicadores', to: '/app/indicadores', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Administracao',
+    items: [{ label: 'Configuracoes', to: '/app/config', icon: Settings }],
+  },
 ]
 
 const adminNavItems = [
@@ -198,34 +227,43 @@ export const AppShell = () => {
           ))}
 
           {/* Regular Menu - apenas em /app/* ou quando não for rota admin */}
-          {!location.pathname.startsWith('/admin') && navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
-                  isActive
-                    ? 'bg-[#E9EEFF] text-primary'
-                    : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon
-                    className={cn(
-                      'h-4 w-4',
-                      isActive
-                        ? 'text-primary'
-                        : 'text-text-subtle group-hover:text-primary',
+          {!location.pathname.startsWith('/admin') &&
+            navGroups.map((group, index) => (
+              <div key={group.label} className="space-y-1">
+                {index > 0 && <div className="my-2 border-t border-border/50" />}
+                <p className="px-3 pt-2 text-[10px] uppercase tracking-[0.28em] text-text-subtle">
+                  {group.label}
+                </p>
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cn(
+                        'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
+                        isActive
+                          ? 'bg-[#E9EEFF] text-primary'
+                          : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <item.icon
+                          className={cn(
+                            'h-4 w-4',
+                            isActive
+                              ? 'text-primary'
+                              : 'text-text-subtle group-hover:text-primary',
+                          )}
+                        />
+                        <span>{item.label}</span>
+                      </>
                     )}
-                  />
-                  <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
+                  </NavLink>
+                ))}
+              </div>
+            ))}
 
           {/* Org Admin Menu */}
           {!isFartechAdmin && isOrgAdmin && (
@@ -321,35 +359,44 @@ export const AppShell = () => {
               ))}
 
               {/* Regular Menu (Mobile) */}
-              {!isFartechAdmin && navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
-                      isActive
-                        ? 'bg-[#E9EEFF] text-primary'
-                        : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon
-                        className={cn(
-                          'h-4 w-4',
-                          isActive
-                            ? 'text-primary'
-                            : 'text-text-subtle group-hover:text-primary',
+              {!isFartechAdmin &&
+                navGroups.map((group, index) => (
+                  <div key={group.label} className="space-y-1">
+                    {index > 0 && <div className="my-2 border-t border-border/50" />}
+                    <p className="px-3 pt-2 text-[10px] uppercase tracking-[0.28em] text-text-subtle">
+                      {group.label}
+                    </p>
+                    {group.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={({ isActive }) =>
+                          cn(
+                            'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
+                            isActive
+                              ? 'bg-[#E9EEFF] text-primary'
+                              : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
+                          )
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <item.icon
+                              className={cn(
+                                'h-4 w-4',
+                                isActive
+                                  ? 'text-primary'
+                                  : 'text-text-subtle group-hover:text-primary',
+                              )}
+                            />
+                            <span>{item.label}</span>
+                          </>
                         )}
-                      />
-                      <span>{item.label}</span>
-                    </>
-                  )}
-                </NavLink>
-              ))}
+                      </NavLink>
+                    ))}
+                  </div>
+                ))}
 
               {/* Org Admin Menu (Mobile) */}
               {!isFartechAdmin && isOrgAdmin && (

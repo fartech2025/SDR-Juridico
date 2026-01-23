@@ -48,6 +48,7 @@ export const DocumentosPage = () => {
     documentos,
     loading,
     error,
+    fetchDocumentos,
     updateDocumento,
     deleteDocumento,
     marcarCompleto,
@@ -97,6 +98,19 @@ export const DocumentosPage = () => {
         ? 'empty'
         : 'ready'
   const pageState = forcedState !== 'ready' ? forcedState : baseState
+  const emptyAction = canManageDocs ? (
+    <Button
+      variant="primary"
+      size="sm"
+      className="h-9 rounded-full px-4"
+      onClick={() => {
+        setMostrarUpload(true)
+      }}
+    >
+      <UploadIcon className="mr-2 h-4 w-4" />
+      Upload documento
+    </Button>
+  ) : null
 
   const selectedCase =
     clienteFilter !== 'todos'
@@ -115,6 +129,7 @@ export const DocumentosPage = () => {
 
   const handleUploadComplete = () => {
     toast.success('Documento enviado com sucesso!')
+    void fetchDocumentos()
     // Aqui você pode recarregar a lista de documentos
     // Por enquanto, apenas fechamos o modal
     setTimeout(() => {
@@ -176,6 +191,7 @@ export const DocumentosPage = () => {
         tipo: docForm.type || editingDoc.type,
       })
       toast.success(`Documento atualizado: ${editingDoc.title}`)
+      void fetchDocumentos()
       resetEditForm()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao atualizar documento'
@@ -195,6 +211,7 @@ export const DocumentosPage = () => {
     try {
       await deleteDocumento(docId)
       toast.success(`Documento excluído: ${titulo}`)
+      void fetchDocumentos()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao excluir documento'
       toast.error(message)
@@ -243,6 +260,8 @@ export const DocumentosPage = () => {
         status={pageState}
         emptyTitle="Nenhum documento encontrado"
         emptyDescription="Ajuste os filtros para localizar os documentos."
+        emptyAction={emptyAction}
+        onRetry={error ? fetchDocumentos : undefined}
       >
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           {/* Seção de Upload */}
@@ -353,6 +372,17 @@ export const DocumentosPage = () => {
                 </div>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-10 rounded-full px-4"
+                  onClick={() => {
+                    void fetchDocumentos()
+                  }}
+                  disabled={loading}
+                >
+                  Atualizar
+                </Button>
                 <Button
                   variant="primary"
                   size="sm"

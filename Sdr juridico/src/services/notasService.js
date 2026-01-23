@@ -36,9 +36,6 @@ const notasService = {
   },
   async getNotasByEntidade(entidade, entidadeId) {
     try {
-      if (entidade !== "caso") {
-        return [];
-      }
       const { orgId, isFartechAdmin } = await resolveOrgScope();
       if (!isFartechAdmin && !orgId) return [];
       const query = supabase.from("notas").select("*").eq("entidade", entidade).eq("entidade_id", entidadeId).order("created_at", { ascending: false });

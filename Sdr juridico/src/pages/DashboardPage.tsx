@@ -509,6 +509,54 @@ export const DashboardPage = () => {
               </CardContent>
             </Card>
 
+            <Card className="border border-border bg-surface/90">
+              <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
+                <CardTitle className="text-sm">Acoes rapidas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 px-6 pb-6">
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => navigate('/app/leads')}
+                >
+                  Novo lead
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => navigate('/app/casos')}
+                >
+                  Novo caso
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => navigate('/app/tarefas')}
+                >
+                  Nova tarefa
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => navigate('/app/agenda')}
+                >
+                  Novo compromisso
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => navigate('/app/documentos')}
+                >
+                  Upload documento
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
             <NotificationCenter
               notifications={notifications.slice(0, 6)}
               className="border border-border bg-surface/95 text-text"

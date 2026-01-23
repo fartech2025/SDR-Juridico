@@ -58,7 +58,7 @@ const filterControlClass =
   'h-11 rounded-full border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
 
 export const ClientesPage = () => {
-  const { clientes, loading, error, createCliente, updateCliente, deleteCliente, assignClienteAdvogado } = useClientes()
+  const { clientes, loading, error, fetchClientes, createCliente, updateCliente, deleteCliente, assignClienteAdvogado } = useClientes()
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
   const canManageClientes = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const { advogados } = useAdvogados(currentOrg?.id || null, canManageClientes)
@@ -140,6 +140,20 @@ export const ClientesPage = () => {
         ? 'empty'
         : 'ready'
   const pageState = forcedState !== 'ready' ? forcedState : baseState
+  const emptyAction = canManageClientes ? (
+    <Button
+      variant="primary"
+      size="sm"
+      className="h-9 rounded-full px-4"
+      onClick={() => {
+        resetClienteForm()
+        setShowForm(true)
+      }}
+    >
+      <Plus className="mr-2 h-4 w-4" />
+      Novo cliente
+    </Button>
+  ) : null
 
   const resetFilters = () => {
     setQuery('')
@@ -568,23 +582,36 @@ export const ClientesPage = () => {
                 <span>Exibindo: {filteredClientes.length}</span>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 rounded-full px-4"
-              onClick={() => {
-                if (!canManageClientes) {
-                  toast.error('Apenas gestores podem adicionar clientes.')
-                  return
-                }
-                resetClienteForm()
-                setShowForm(true)
-              }}
-              disabled={!canManageClientes}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo cliente
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-full px-4"
+                onClick={() => {
+                  void fetchClientes()
+                }}
+                disabled={loading}
+              >
+                Atualizar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-full px-4"
+                onClick={() => {
+                  if (!canManageClientes) {
+                    toast.error('Apenas gestores podem adicionar clientes.')
+                    return
+                  }
+                  resetClienteForm()
+                  setShowForm(true)
+                }}
+                disabled={!canManageClientes}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Novo cliente
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -680,6 +707,8 @@ export const ClientesPage = () => {
             status={pageState}
             emptyTitle="Nenhum cliente encontrado"
             emptyDescription="Ajuste os filtros para localizar a carteira."
+            emptyAction={emptyAction}
+            onRetry={error ? fetchClientes : undefined}
           >
             <div
               className={cn(

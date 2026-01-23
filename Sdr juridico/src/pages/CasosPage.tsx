@@ -77,7 +77,7 @@ const textareaControlClass =
 const labelClass = 'text-sm font-semibold text-text'
 
 export const CasosPage = () => {
-  const { casos, loading, error, createCaso, updateCaso, deleteCaso, assignCasoAdvogado } = useCasos()
+  const { casos, loading, error, fetchCasos, createCaso, updateCaso, deleteCaso, assignCasoAdvogado } = useCasos()
   const { clientes } = useClientes()
   const { displayName } = useCurrentUser()
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
@@ -254,6 +254,20 @@ export const CasosPage = () => {
         ? 'ready'
         : 'empty'
   const pageState = status !== 'ready' ? status : baseState
+  const emptyAction = canManageCasos ? (
+    <Button
+      variant="primary"
+      size="sm"
+      className="h-9 rounded-full px-4"
+      onClick={() => {
+        resetCasoForm()
+        setShowForm(true)
+      }}
+    >
+      <Plus className="mr-2 h-4 w-4" />
+      Novo caso
+    </Button>
+  ) : null
 
   if (showForm) {
     return (
@@ -550,23 +564,36 @@ export const CasosPage = () => {
                 Limpar filtros
               </button>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              className="h-11 rounded-full bg-brand-secondary px-5 text-sm font-semibold text-white shadow-[0_12px_20px_-12px_rgba(6,182,212,0.5)] hover:brightness-95"
-              onClick={() => {
-                if (!canManageCasos) {
-                  toast.error('Apenas gestores podem adicionar casos.')
-                  return
-                }
-                resetCasoForm()
-                setShowForm(true)
-              }}
-              disabled={!canManageCasos}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Caso
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-11 rounded-full px-4 text-sm"
+                onClick={() => {
+                  void fetchCasos()
+                }}
+                disabled={loading}
+              >
+                Atualizar
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                className="h-11 rounded-full bg-brand-secondary px-5 text-sm font-semibold text-white shadow-[0_12px_20px_-12px_rgba(6,182,212,0.5)] hover:brightness-95"
+                onClick={() => {
+                  if (!canManageCasos) {
+                    toast.error('Apenas gestores podem adicionar casos.')
+                    return
+                  }
+                  resetCasoForm()
+                  setShowForm(true)
+                }}
+                disabled={!canManageCasos}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Caso
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -608,6 +635,8 @@ export const CasosPage = () => {
             status={pageState}
             emptyTitle="Nenhum caso encontrado"
             emptyDescription="Ajuste os filtros para localizar um caso."
+            emptyAction={emptyAction}
+            onRetry={error ? fetchCasos : undefined}
           >
             <div
               className={cn(

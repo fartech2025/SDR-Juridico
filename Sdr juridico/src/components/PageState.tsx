@@ -12,6 +12,7 @@ export interface PageStateProps {
   children: React.ReactNode
   emptyTitle?: string
   emptyDescription?: string
+  emptyAction?: React.ReactNode
   errorTitle?: string
   errorDescription?: string
   onRetry?: () => void
@@ -22,6 +23,7 @@ export const PageState = ({
   children,
   emptyTitle = 'Nada por aqui...',
   emptyDescription = 'Conteudos serao exibidos assim que estiverem disponiveis.',
+  emptyAction,
   errorTitle = 'Nao foi possivel carregar',
   errorDescription = 'Tente novamente em alguns segundos.',
   onRetry,
@@ -55,6 +57,7 @@ export const PageState = ({
           {emptyTitle}
         </div>
         <p className="text-sm text-text-muted">{emptyDescription}</p>
+        {emptyAction && <div>{emptyAction}</div>}
       </div>
     )
   }

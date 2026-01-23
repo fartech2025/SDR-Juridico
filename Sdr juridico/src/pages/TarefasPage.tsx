@@ -41,7 +41,7 @@ const buildInitialForm = () => ({
 })
 
 export const TarefasPage = () => {
-  const { tarefas, loading, error, createTarefa, updateTarefa, deleteTarefa } = useTarefas()
+  const { tarefas, loading, error, fetchTarefas, createTarefa, updateTarefa, deleteTarefa } = useTarefas()
   const { leads } = useLeads()
   const { clientes } = useClientes()
   const { casos } = useCasos()
@@ -256,6 +256,17 @@ export const TarefasPage = () => {
       : sortedTarefas.length
         ? 'ready'
         : 'empty'
+  const emptyAction = (
+    <Button
+      variant="primary"
+      size="sm"
+      className="h-9 rounded-full px-4"
+      onClick={openCreateModal}
+    >
+      <Plus className="mr-2 h-4 w-4" />
+      Nova tarefa
+    </Button>
+  )
 
   return (
     <div className="min-h-screen bg-base pb-12 text-text">
@@ -312,10 +323,23 @@ export const TarefasPage = () => {
               <CardTitle>Lista de tarefas</CardTitle>
               <p className="text-xs text-text-subtle">Organize por prioridade e vencimento.</p>
             </div>
-            <Button onClick={openCreateModal} className="h-10 rounded-full px-4">
-              <Plus className="mr-2 h-4 w-4" />
-              Nova tarefa
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-full px-4"
+                onClick={() => {
+                  void fetchTarefas()
+                }}
+                disabled={loading}
+              >
+                Atualizar
+              </Button>
+              <Button onClick={openCreateModal} className="h-10 rounded-full px-4">
+                <Plus className="mr-2 h-4 w-4" />
+                Nova tarefa
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -368,7 +392,12 @@ export const TarefasPage = () => {
               )}
             </div>
 
-            <PageState status={pageState} emptyTitle="Nenhuma tarefa encontrada">
+            <PageState
+              status={pageState}
+              emptyTitle="Nenhuma tarefa encontrada"
+              emptyAction={emptyAction}
+              onRetry={error ? fetchTarefas : undefined}
+            >
               <div className="space-y-3">
                 {sortedTarefas.map((task) => {
                   const displayTitle = stripChecklistPrefix(task.title)
