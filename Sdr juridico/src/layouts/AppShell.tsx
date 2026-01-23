@@ -18,6 +18,7 @@ import {
   UserRound,
   Users,
   Database,
+  ShieldCheck,
   Menu,
   X,
 } from 'lucide-react'
@@ -42,6 +43,7 @@ const navItems = [
   { label: 'Tarefas', to: '/app/tarefas', icon: ListTodo },
   { label: 'Documentos', to: '/app/documentos', icon: FileText },
   { label: 'DataJud', to: '/app/datajud', icon: Database },
+  { label: 'Auditoria', to: '/app/auditoria', icon: ShieldCheck },
   { label: 'Indicadores', to: '/app/indicadores', icon: BarChart3 },
   { label: 'Configuracoes', to: '/app/config', icon: Settings },
 ]

@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { AppError } from "@/utils/errors";
 import { resolveOrgScope } from "@/services/orgScope";
+import { logAuditChange } from "@/services/auditLogService";
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "image/jpeg",
@@ -158,6 +159,14 @@ const documentosService = {
       const { data, error } = await supabase.from("documentos").insert([payload]).select("*").single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Erro ao criar documento", "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "create",
+        entity: "documentos",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbDocumentoToDocumentoRow(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao criar documento", "database_error");
@@ -177,6 +186,14 @@ const documentosService = {
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq("org_id", orgId).single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Documento nao encontrado", "not_found");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "update",
+        entity: "documentos",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbDocumentoToDocumentoRow(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao atualizar documento", "database_error");
@@ -194,6 +211,13 @@ const documentosService = {
       const query = supabase.from("documentos").delete().eq("id", id);
       const { error } = isFartechAdmin ? await query : await query.eq("org_id", orgId);
       if (error) throw new AppError(error.message, "database_error");
+      void logAuditChange({
+        orgId,
+        action: "delete",
+        entity: "documentos",
+        entityId: id,
+        details: {}
+      });
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao deletar documento", "database_error");
     }

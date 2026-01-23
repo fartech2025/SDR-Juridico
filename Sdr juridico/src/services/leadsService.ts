@@ -6,6 +6,7 @@
 import { supabase, type LeadRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 import { resolveOrgScope } from '@/services/orgScope'
+import { logAuditChange } from '@/services/auditLogService'
 
 type DbLeadRow = {
   id: string
@@ -139,6 +140,14 @@ export const leadsService = {
         : await updateQuery.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
+      const auditOrgId = orgId || (data as DbLeadRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'update',
+        entity: 'leads',
+        entityId: leadId,
+        details: { fields: ['assigned_user_id', 'qualificacao'] },
+      })
       return mapDbLeadToLeadRow(data as DbLeadRow)
     } catch (error) {
       throw new AppError(
@@ -263,6 +272,14 @@ export const leadsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
+      const auditOrgId = orgId || (data as DbLeadRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'create',
+        entity: 'leads',
+        entityId: data.id,
+        details: { fields: Object.keys(payload) },
+      })
       return mapDbLeadToLeadRow(data as DbLeadRow)
     } catch (error) {
       throw new AppError(
@@ -296,6 +313,14 @@ export const leadsService = {
         : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
+      const auditOrgId = orgId || (data as DbLeadRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'update',
+        entity: 'leads',
+        entityId: data.id,
+        details: { fields: Object.keys(payload) },
+      })
       return mapDbLeadToLeadRow(data as DbLeadRow)
     } catch (error) {
       throw new AppError(
@@ -317,6 +342,13 @@ export const leadsService = {
       const { error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
+      void logAuditChange({
+        orgId,
+        action: 'delete',
+        entity: 'leads',
+        entityId: id,
+        details: {},
+      })
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao deletar lead',

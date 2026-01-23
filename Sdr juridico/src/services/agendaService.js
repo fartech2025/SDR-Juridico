@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { AppError } from "@/utils/errors";
 import { resolveOrgScope } from "@/services/orgScope";
+import { logAuditChange } from "@/services/auditLogService";
 const mapDbAgendamentoToAgenda = (row) => {
   const meta = row.meta || {};
   const durationMinutes = typeof meta.duracao_minutos === "number" ? meta.duracao_minutos : Math.max(
@@ -150,6 +151,14 @@ const agendaService = {
       const { data, error } = await supabase.from("agendamentos").insert([payload]).select().single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Erro ao criar evento", "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "create",
+        entity: "agendamentos",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbAgendamentoToAgenda(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao criar evento", "database_error");
@@ -169,6 +178,14 @@ const agendaService = {
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq("org_id", orgId).single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Evento nao encontrado", "not_found");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "update",
+        entity: "agendamentos",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbAgendamentoToAgenda(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao atualizar evento", "database_error");
@@ -186,6 +203,13 @@ const agendaService = {
       const query = supabase.from("agendamentos").delete().eq("id", id);
       const { error } = isFartechAdmin ? await query : await query.eq("org_id", orgId);
       if (error) throw new AppError(error.message, "database_error");
+      void logAuditChange({
+        orgId,
+        action: "delete",
+        entity: "agendamentos",
+        entityId: id,
+        details: {}
+      });
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao deletar evento", "database_error");
     }

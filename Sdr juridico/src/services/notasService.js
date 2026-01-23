@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { AppError } from "@/utils/errors";
 import { resolveOrgScope } from "@/services/orgScope";
+import { logAuditChange } from "@/services/auditLogService";
 const mapNotaToTimeline = (row) => {
   const title = row.texto ? row.texto.split("\n")[0].trim() : "";
   return {
@@ -72,6 +73,14 @@ const notasService = {
         throw new AppError(error.message, "database_error");
       if (!data)
         throw new AppError("Erro ao criar nota", "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "create",
+        entity: "notas",
+        entityId: data.id,
+        details: { fields: Object.keys(insertPayload) }
+      });
       return mapNotaToTimeline(data);
     } catch (error) {
       throw new AppError(

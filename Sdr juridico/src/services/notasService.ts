@@ -1,6 +1,7 @@
 import { supabase, type TimelineEventRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 import { resolveOrgScope } from '@/services/orgScope'
+import { logAuditChange } from '@/services/auditLogService'
 
 type DbNotaRow = {
   id: string
@@ -116,6 +117,15 @@ export const notasService = {
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Erro ao criar nota', 'database_error')
+
+      const auditOrgId = orgId || (data as DbNotaRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'create',
+        entity: 'notas',
+        entityId: data.id,
+        details: { fields: Object.keys(insertPayload) },
+      })
 
       return mapNotaToTimeline(data as DbNotaRow)
     } catch (error) {

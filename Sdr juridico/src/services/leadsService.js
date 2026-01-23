@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { AppError } from "@/utils/errors";
 import { resolveOrgScope } from "@/services/orgScope";
+import { logAuditChange } from "@/services/auditLogService";
 const mapDbLeadStatusToUiStatus = (status) => {
   if (status === "novo") return "novo";
   if (status === "em_triagem") return "em_contato";
@@ -89,6 +90,14 @@ const leadsService = {
       );
       const { data, error } = isFartechAdmin ? await updateQuery.single() : await updateQuery.eq("org_id", orgId).single();
       if (error) throw new AppError(error.message, "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "update",
+        entity: "leads",
+        entityId: leadId,
+        details: { fields: ["assigned_user_id", "qualificacao"] }
+      });
       return mapDbLeadToLeadRow(data);
     } catch (error) {
       throw new AppError(
@@ -187,6 +196,14 @@ const leadsService = {
         "id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at"
       ).single();
       if (error) throw new AppError(error.message, "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "create",
+        entity: "leads",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbLeadToLeadRow(data);
     } catch (error) {
       throw new AppError(
@@ -208,6 +225,14 @@ const leadsService = {
       );
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq("org_id", orgId).single();
       if (error) throw new AppError(error.message, "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "update",
+        entity: "leads",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbLeadToLeadRow(data);
     } catch (error) {
       throw new AppError(
@@ -226,6 +251,13 @@ const leadsService = {
       const query = supabase.from("leads").delete().eq("id", id);
       const { error } = isFartechAdmin ? await query : await query.eq("org_id", orgId);
       if (error) throw new AppError(error.message, "database_error");
+      void logAuditChange({
+        orgId,
+        action: "delete",
+        entity: "leads",
+        entityId: id,
+        details: {}
+      });
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : "Erro ao deletar lead",

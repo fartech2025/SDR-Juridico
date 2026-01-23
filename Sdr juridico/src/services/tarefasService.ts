@@ -1,6 +1,7 @@
 import { supabase, type TarefaRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 import { resolveOrgScope } from '@/services/orgScope'
+import { logAuditChange } from '@/services/auditLogService'
 
 type DbTarefaRow = {
   id: string
@@ -171,6 +172,14 @@ export const tarefasService = {
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Erro ao criar tarefa', 'database_error')
 
+      void logAuditChange({
+        orgId,
+        action: 'create',
+        entity: 'tarefas',
+        entityId: data.id,
+        details: { fields: Object.keys(payload) },
+      })
+
       return mapDbTarefaToRow(data as DbTarefaRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao criar tarefa', 'database_error')
@@ -207,6 +216,14 @@ export const tarefasService = {
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Tarefa nao encontrada', 'not_found')
 
+      void logAuditChange({
+        orgId,
+        action: 'update',
+        entity: 'tarefas',
+        entityId: data.id,
+        details: { fields: Object.keys(payload) },
+      })
+
       return mapDbTarefaToRow(data as DbTarefaRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao atualizar tarefa', 'database_error')
@@ -228,6 +245,14 @@ export const tarefasService = {
       const { error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
+
+      void logAuditChange({
+        orgId,
+        action: 'delete',
+        entity: 'tarefas',
+        entityId: id,
+        details: {},
+      })
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao deletar tarefa', 'database_error')
     }

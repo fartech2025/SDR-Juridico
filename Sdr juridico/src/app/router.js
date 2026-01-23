@@ -2,6 +2,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 import { AppShell } from '@/layouts/AppShell';
 import { AgendaPage } from '@/pages/AgendaPage';
+import { AuditoriaPage } from '@/pages/AuditoriaPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import { CasoPage } from '@/pages/CasoPage';
 import { CasosPage } from '@/pages/CasosPage';
@@ -92,6 +93,10 @@ export const router = createBrowserRouter([
             {
                 path: 'documentos',
                 element: _jsx(DocumentosPage, {}),
+            },
+            {
+                path: 'auditoria',
+                element: _jsx(AuditoriaPage, {}),
             },
             {
                 path: 'indicadores',

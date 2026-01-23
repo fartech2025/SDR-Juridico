@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { AppError } from "@/utils/errors";
 import { resolveOrgScope } from "@/services/orgScope";
+import { logAuditChange } from "@/services/auditLogService";
 const prioridadeToNumber = (prioridade) => {
   if (!prioridade) return null;
   if (prioridade === "baixa") return 1;
@@ -222,6 +223,14 @@ const casosService = {
       const { data, error } = await supabase.from("casos").insert([payload]).select().single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Erro ao criar caso", "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "create",
+        entity: "casos",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbCasoToCasoRow(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao criar caso", "database_error");
@@ -241,6 +250,14 @@ const casosService = {
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq("org_id", orgId).single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Caso nao encontrado", "not_found");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "update",
+        entity: "casos",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbCasoToCasoRow(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao atualizar caso", "database_error");
@@ -258,6 +275,13 @@ const casosService = {
       const query = supabase.from("casos").delete().eq("id", id);
       const { error } = isFartechAdmin ? await query : await query.eq("org_id", orgId);
       if (error) throw new AppError(error.message, "database_error");
+      void logAuditChange({
+        orgId,
+        action: "delete",
+        entity: "casos",
+        entityId: id,
+        details: {}
+      });
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao deletar caso", "database_error");
     }

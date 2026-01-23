@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { AppError } from "@/utils/errors";
 import { resolveOrgScope } from "@/services/orgScope";
+import { logAuditChange } from "@/services/auditLogService";
 const extractTagValue = (tags, prefix) => {
   if (!tags) return null;
   const tag = tags.find((value) => value.startsWith(`${prefix}:`));
@@ -147,6 +148,14 @@ const clientesService = {
       const { data, error } = await supabase.from("clientes").insert([payload]).select("*").single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Erro ao criar cliente", "database_error");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "create",
+        entity: "clientes",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbClienteToClienteRow(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao criar cliente", "database_error");
@@ -166,6 +175,14 @@ const clientesService = {
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq("org_id", orgId).single();
       if (error) throw new AppError(error.message, "database_error");
       if (!data) throw new AppError("Cliente nao encontrado", "not_found");
+      const auditOrgId = orgId || data.org_id || null;
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: "update",
+        entity: "clientes",
+        entityId: data.id,
+        details: { fields: Object.keys(payload) }
+      });
       return mapDbClienteToClienteRow(data);
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao atualizar cliente", "database_error");
@@ -183,6 +200,13 @@ const clientesService = {
       const query = supabase.from("clientes").delete().eq("id", id);
       const { error } = isFartechAdmin ? await query : await query.eq("org_id", orgId);
       if (error) throw new AppError(error.message, "database_error");
+      void logAuditChange({
+        orgId,
+        action: "delete",
+        entity: "clientes",
+        entityId: id,
+        details: {}
+      });
     } catch (error) {
       throw error instanceof AppError ? error : new AppError("Erro ao deletar cliente", "database_error");
     }

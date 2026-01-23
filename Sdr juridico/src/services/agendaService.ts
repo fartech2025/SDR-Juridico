@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabaseClient'
 import type { AgendaRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 import { resolveOrgScope } from '@/services/orgScope'
+import { logAuditChange } from '@/services/auditLogService'
 
 type DbAgendamentoRow = {
   id: string
@@ -213,6 +214,15 @@ export const agendaService = {
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Erro ao criar evento', 'database_error')
 
+      const auditOrgId = orgId || (data as DbAgendamentoRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'create',
+        entity: 'agendamentos',
+        entityId: data.id,
+        details: { fields: Object.keys(payload) },
+      })
+
       return mapDbAgendamentoToAgenda(data as DbAgendamentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao criar evento', 'database_error')
@@ -243,6 +253,15 @@ export const agendaService = {
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Evento nao encontrado', 'not_found')
 
+      const auditOrgId = orgId || (data as DbAgendamentoRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'update',
+        entity: 'agendamentos',
+        entityId: data.id,
+        details: { fields: Object.keys(payload) },
+      })
+
       return mapDbAgendamentoToAgenda(data as DbAgendamentoRow)
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao atualizar evento', 'database_error')
@@ -266,6 +285,14 @@ export const agendaService = {
       const { error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
+
+      void logAuditChange({
+        orgId,
+        action: 'delete',
+        entity: 'agendamentos',
+        entityId: id,
+        details: {},
+      })
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao deletar evento', 'database_error')
     }
