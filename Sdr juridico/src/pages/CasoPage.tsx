@@ -278,12 +278,15 @@ export const CasoPage = () => {
     },
   ]
 
-  const checklist = [
-    { id: 'ck-1', label: 'Contagem de horas extras', status: 'ok' },
-    { id: 'ck-2', label: 'Contrato de trabalho', status: 'pendente' },
-    { id: 'ck-3', label: 'Comprovacoes de jornada', status: 'pendente' },
-    { id: 'ck-4', label: 'Holerites do periodo', status: 'ok' },
-  ]
+  const checklistItems = React.useMemo(
+    () =>
+      caseTasks.map((task) => ({
+        id: task.id,
+        label: task.title,
+        status: task.status === 'concluida' ? 'ok' : 'pendente',
+      })),
+    [caseTasks],
+  )
 
   const resetFilters = () => {
     setDateRange('all')
@@ -615,7 +618,12 @@ export const CasoPage = () => {
                 <CardTitle>Checklist Processual</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-text-muted">
-                {checklist.map((item) => (
+                {checklistItems.length === 0 && (
+                  <div className="rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft">
+                    Nenhum item de checklist para este caso.
+                  </div>
+                )}
+                {checklistItems.map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
