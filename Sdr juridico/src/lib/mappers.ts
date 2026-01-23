@@ -62,6 +62,26 @@ const resolveTimelineCategory = (event: TimelineEventRow): TimelineCategory => {
   return 'juridico'
 }
 
+const resolveTaskPriority = (priority: TarefaRow['priority']): Tarefa['priority'] => {
+  if (priority === 1) return 'baixa'
+  if (priority === 3) return 'alta'
+  return 'normal'
+}
+
+const resolveTaskLinks = (row: TarefaRow) => {
+  const entidadeId = row.entidade_id || null
+  if (row.entidade === 'lead') {
+    return { leadId: entidadeId, clienteId: null, casoId: null }
+  }
+  if (row.entidade === 'cliente') {
+    return { leadId: null, clienteId: entidadeId, casoId: null }
+  }
+  if (row.entidade === 'caso') {
+    return { leadId: null, clienteId: null, casoId: entidadeId }
+  }
+  return { leadId: null, clienteId: null, casoId: null }
+}
+
 export const mapLeadRowToLead = (row: LeadRow): Lead => ({
   id: row.id,
   name: row.nome,
@@ -152,16 +172,13 @@ export const mapTarefaRowToTarefa = (row: TarefaRow): Tarefa => ({
   id: row.id,
   title: row.titulo,
   description: row.descricao || null,
-  priority: row.prioridade || 'normal',
+  priority: resolveTaskPriority(row.priority),
   status: row.status || 'pendente',
-  dueDate: row.data_vencimento || null,
+  dueDate: row.due_at || null,
   createdAt: row.created_at,
-  completedAt: row.concluido_em || null,
-  ownerId: row.usuario_id,
-  responsavelIds: row.responsavel_ids || [],
-  leadId: row.lead_id || null,
-  clienteId: row.cliente_id || null,
-  casoId: row.caso_id || null,
+  completedAt: row.completed_at || null,
+  ownerId: row.assigned_user_id,
+  ...resolveTaskLinks(row),
 })
 
 export const mapTimelineRowToTimelineEvent = (row: TimelineEventRow): TimelineEvent => {

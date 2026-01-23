@@ -160,19 +160,16 @@ export interface AgendaRow {
 export interface TarefaRow {
   id: string
   created_at: string
-  updated_at: string
   org_id?: string | null
-  usuario_id: string
-  lead_id?: string | null
-  cliente_id?: string | null
-  caso_id?: string | null
+  assigned_user_id: string
+  entidade?: 'lead' | 'cliente' | 'caso' | null
+  entidade_id?: string | null
   titulo: string
   descricao: string | null
-  prioridade: TaskPriority
+  priority: number | null
   status: TaskStatus
-  data_vencimento: string | null
-  responsavel_ids: string[] | null
-  concluido_em: string | null
+  due_at: string | null
+  completed_at: string | null
 }
 
 export interface TimelineEventRow {

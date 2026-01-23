@@ -108,7 +108,6 @@ begin
     'datajud_movimentacoes',
     'datajud_sync_jobs',
     'templates',
-    'tarefas',
     'conversas',
     'mensagens',
     'message_buffer',

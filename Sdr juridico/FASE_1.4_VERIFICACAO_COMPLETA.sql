@@ -2,6 +2,61 @@
 -- FASE 1.4: VERIFICACAO COMPLETA (usuarios + org_members)
 -- ============================================
 
+-- 0) Remover policies permissivas legadas (USING true / WITH CHECK true)
+DO $$
+DECLARE
+  policy_record RECORD;
+BEGIN
+  FOR policy_record IN
+    SELECT schemaname, tablename, policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename IN (
+        'usuarios',
+        'leads',
+        'clientes',
+        'casos',
+        'documentos',
+        'agenda',
+        'timeline_events',
+        'notificacoes'
+      )
+      AND (qual = 'true' OR with_check = 'true')
+  LOOP
+    EXECUTE format(
+      'DROP POLICY IF EXISTS %I ON %I.%I',
+      policy_record.policyname,
+      policy_record.schemaname,
+      policy_record.tablename
+    );
+    RAISE NOTICE 'Dropped policy %.%: %',
+      policy_record.schemaname,
+      policy_record.tablename,
+      policy_record.policyname;
+  END LOOP;
+END $$;
+
+-- 0.1) Listar policies restantes nas tabelas legadas
+SELECT
+  schemaname,
+  tablename,
+  policyname,
+  cmd,
+  roles
+FROM pg_policies
+WHERE schemaname = 'public'
+  AND tablename IN (
+    'usuarios',
+    'leads',
+    'clientes',
+    'casos',
+    'documentos',
+    'agenda',
+    'timeline_events',
+    'notificacoes'
+  )
+ORDER BY tablename, policyname;
+
 -- 1) Verificar tabelas essenciais
 SELECT
   'tabelas essenciais' AS verificacao,

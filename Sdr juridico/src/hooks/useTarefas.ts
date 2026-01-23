@@ -20,7 +20,17 @@ type CreateTarefaPayload = {
   clienteId?: string | null
   casoId?: string | null
   ownerId?: string
-  responsavelIds?: string[]
+}
+
+const resolveEntidadePayload = (link: {
+  leadId?: string | null
+  clienteId?: string | null
+  casoId?: string | null
+}) => {
+  if (link.casoId) return { entidade: 'caso' as const, entidade_id: link.casoId }
+  if (link.clienteId) return { entidade: 'cliente' as const, entidade_id: link.clienteId }
+  if (link.leadId) return { entidade: 'lead' as const, entidade_id: link.leadId }
+  return { entidade: null, entidade_id: null }
 }
 
 export function useTarefas() {
@@ -69,19 +79,21 @@ export function useTarefas() {
       if (!ownerId) {
         throw new Error('Usuario nao autenticado')
       }
+      const entidadePayload = resolveEntidadePayload({
+        leadId: payload.leadId ?? null,
+        clienteId: payload.clienteId ?? null,
+        casoId: payload.casoId ?? null,
+      })
       setState((prev) => ({ ...prev, error: null }))
       const tarefa = await tarefasService.createTarefa({
-        usuario_id: ownerId,
+        assigned_user_id: ownerId,
         titulo: payload.title,
         descricao: payload.description || null,
-        prioridade: payload.priority || 'normal',
+        priority: payload.priority || 'normal',
         status: payload.status || 'pendente',
-        data_vencimento: payload.dueDate || null,
-        lead_id: payload.leadId || null,
-        cliente_id: payload.clienteId || null,
-        caso_id: payload.casoId || null,
-        responsavel_ids: payload.responsavelIds || [ownerId],
-        concluido_em: null,
+        due_at: payload.dueDate || null,
+        completed_at: null,
+        ...entidadePayload,
       })
       const mapped = mapTarefaRowToTarefa(tarefa)
       setState((prev) => ({ ...prev, tarefas: [mapped, ...prev.tarefas] }))
@@ -95,19 +107,25 @@ export function useTarefas() {
 
   const updateTarefa = useCallback(async (id: string, updates: Partial<Tarefa>) => {
     try {
+      const linkUpdates =
+        'leadId' in updates || 'clienteId' in updates || 'casoId' in updates
+      const entidadePayload = linkUpdates
+        ? resolveEntidadePayload({
+            leadId: updates.leadId ?? null,
+            clienteId: updates.clienteId ?? null,
+            casoId: updates.casoId ?? null,
+          })
+        : {}
       setState((prev) => ({ ...prev, error: null }))
       const tarefa = await tarefasService.updateTarefa(id, {
         titulo: updates.title,
         descricao: updates.description,
-        prioridade: updates.priority,
+        priority: updates.priority,
         status: updates.status,
-        data_vencimento: updates.dueDate ?? null,
-        lead_id: updates.leadId ?? null,
-        cliente_id: updates.clienteId ?? null,
-        caso_id: updates.casoId ?? null,
-        responsavel_ids: updates.responsavelIds ?? undefined,
-        usuario_id: updates.ownerId ?? undefined,
-        concluido_em: updates.completedAt ?? undefined,
+        due_at: updates.dueDate,
+        assigned_user_id: updates.ownerId ?? undefined,
+        completed_at: updates.completedAt ?? undefined,
+        ...entidadePayload,
       })
       const mapped = mapTarefaRowToTarefa(tarefa)
       setState((prev) => ({

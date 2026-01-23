@@ -86,7 +86,6 @@ export interface Tarefa {
   createdAt: string
   completedAt?: string | null
   ownerId: string
-  responsavelIds: string[]
   leadId?: string | null
   clienteId?: string | null
   casoId?: string | null

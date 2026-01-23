@@ -6,76 +6,87 @@ type DbTarefaRow = {
   id: string
   created_at?: string | null
   criado_em?: string | null
-  updated_at?: string | null
   org_id?: string | null
-  usuario_id: string
-  lead_id?: string | null
-  cliente_id?: string | null
-  caso_id?: string | null
+  assigned_user_id: string
+  entidade?: 'lead' | 'cliente' | 'caso' | null
+  entidade_id?: string | null
   titulo: string
   descricao?: string | null
-  prioridade?: string | null
   status?: string | null
-  data_vencimento?: string | null
-  responsavel_ids?: string[] | null
-  concluido_em?: string | null
+  priority?: number | null
+  due_at?: string | null
+  completed_at?: string | null
 }
 
 type TarefaInsert = {
   org_id?: string | null
-  usuario_id: string
-  lead_id?: string | null
-  cliente_id?: string | null
-  caso_id?: string | null
+  assigned_user_id: string
+  entidade?: 'lead' | 'cliente' | 'caso' | null
+  entidade_id?: string | null
   titulo: string
   descricao?: string | null
-  prioridade?: string | null
   status?: string | null
-  data_vencimento?: string | null
-  responsavel_ids?: string[] | null
-  concluido_em?: string | null
+  priority?: number | null
+  due_at?: string | null
+  completed_at?: string | null
+}
+
+type TaskPriorityInput = 'baixa' | 'normal' | 'alta'
+
+type TarefaInput = {
+  assigned_user_id?: string
+  entidade?: 'lead' | 'cliente' | 'caso' | null
+  entidade_id?: string | null
+  titulo?: string
+  descricao?: string | null
+  priority?: TaskPriorityInput | number | null
+  status?: string | null
+  due_at?: string | null
+  completed_at?: string | null
 }
 
 const resolveCreatedAt = (row: DbTarefaRow) =>
   row.created_at || row.criado_em || new Date().toISOString()
+
+const resolvePriorityValue = (priority: TarefaInput['priority']) => {
+  if (priority === undefined) return undefined
+  if (priority === null) return null
+  if (typeof priority === 'number') return priority
+  if (priority === 'baixa') return 1
+  if (priority === 'alta') return 3
+  return 2
+}
 
 const mapDbTarefaToRow = (row: DbTarefaRow): TarefaRow => {
   const createdAt = resolveCreatedAt(row)
   return {
     id: row.id,
     created_at: createdAt,
-    updated_at: row.updated_at || createdAt,
     org_id: row.org_id ?? null,
-    usuario_id: row.usuario_id,
-    lead_id: row.lead_id ?? null,
-    cliente_id: row.cliente_id ?? null,
-    caso_id: row.caso_id ?? null,
+    assigned_user_id: row.assigned_user_id,
+    entidade: row.entidade ?? null,
+    entidade_id: row.entidade_id ?? null,
     titulo: row.titulo,
     descricao: row.descricao || null,
-    prioridade: (row.prioridade as TarefaRow['prioridade']) || 'normal',
     status: (row.status as TarefaRow['status']) || 'pendente',
-    data_vencimento: row.data_vencimento || null,
-    responsavel_ids: row.responsavel_ids || [],
-    concluido_em: row.concluido_em || null,
+    priority: row.priority ?? 2,
+    due_at: row.due_at || null,
+    completed_at: row.completed_at || null,
   }
 }
 
-const buildTarefaPayload = (
-  updates: Partial<Omit<TarefaRow, 'id' | 'created_at' | 'updated_at'>>
-): Partial<TarefaInsert> => {
+const buildTarefaPayload = (updates: Partial<TarefaInput>): Partial<TarefaInsert> => {
   const payload: Partial<TarefaInsert> = {}
 
-  if (updates.usuario_id !== undefined) payload.usuario_id = updates.usuario_id
-  if (updates.lead_id !== undefined) payload.lead_id = updates.lead_id
-  if (updates.cliente_id !== undefined) payload.cliente_id = updates.cliente_id
-  if (updates.caso_id !== undefined) payload.caso_id = updates.caso_id
+  if (updates.assigned_user_id !== undefined) payload.assigned_user_id = updates.assigned_user_id
+  if (updates.entidade !== undefined) payload.entidade = updates.entidade
+  if (updates.entidade_id !== undefined) payload.entidade_id = updates.entidade_id
   if (updates.titulo !== undefined) payload.titulo = updates.titulo
   if (updates.descricao !== undefined) payload.descricao = updates.descricao
-  if (updates.prioridade !== undefined) payload.prioridade = updates.prioridade
   if (updates.status !== undefined) payload.status = updates.status
-  if (updates.data_vencimento !== undefined) payload.data_vencimento = updates.data_vencimento
-  if (updates.responsavel_ids !== undefined) payload.responsavel_ids = updates.responsavel_ids
-  if (updates.concluido_em !== undefined) payload.concluido_em = updates.concluido_em
+  if (updates.priority !== undefined) payload.priority = resolvePriorityValue(updates.priority)
+  if (updates.due_at !== undefined) payload.due_at = updates.due_at
+  if (updates.completed_at !== undefined) payload.completed_at = updates.completed_at
 
   return payload
 }
@@ -92,15 +103,15 @@ const resolveCurrentUserId = async (fallback?: string | null) => {
 export const tarefasService = {
   async getTarefas(): Promise<TarefaRow[]> {
     try {
-      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      const { orgId } = await resolveOrgScope()
+      if (!orgId) return []
       const query = supabase
         .from('tarefas')
         .select('*')
-        .order('data_vencimento', { ascending: true })
+        .eq('org_id', orgId)
+        .order('due_at', { ascending: true })
 
-      const { data, error } = isFartechAdmin || !orgId
-        ? await query
-        : await query.eq('org_id', orgId)
+      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbTarefaRow) => mapDbTarefaToRow(row))
@@ -111,18 +122,17 @@ export const tarefasService = {
 
   async getTarefasByEntidade(entidade: 'lead' | 'cliente' | 'caso', entidadeId: string): Promise<TarefaRow[]> {
     try {
-      const { orgId, isFartechAdmin } = await resolveOrgScope()
-      const coluna =
-        entidade === 'lead' ? 'lead_id' : entidade === 'cliente' ? 'cliente_id' : 'caso_id'
+      const { orgId } = await resolveOrgScope()
+      if (!orgId) return []
       const query = supabase
         .from('tarefas')
         .select('*')
-        .eq(coluna, entidadeId)
-        .order('data_vencimento', { ascending: true })
+        .eq('entidade', entidade)
+        .eq('entidade_id', entidadeId)
+        .eq('org_id', orgId)
+        .order('due_at', { ascending: true })
 
-      const { data, error } = isFartechAdmin || !orgId
-        ? await query
-        : await query.eq('org_id', orgId)
+      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbTarefaRow) => mapDbTarefaToRow(row))
@@ -132,24 +142,25 @@ export const tarefasService = {
   },
 
   async createTarefa(
-    tarefa: Omit<TarefaRow, 'id' | 'created_at' | 'updated_at'>
+    tarefa: TarefaInput & { assigned_user_id: string; titulo: string }
   ): Promise<TarefaRow> {
     try {
-      const { orgId, isFartechAdmin } = await resolveOrgScope()
-      const usuarioId = await resolveCurrentUserId(tarefa.usuario_id)
+      const { orgId } = await resolveOrgScope()
+      if (!orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+      const assignedUserId = await resolveCurrentUserId(tarefa.assigned_user_id)
 
       const payload = buildTarefaPayload({
         ...tarefa,
-        usuario_id: usuarioId,
+        assigned_user_id: assignedUserId,
       })
 
-      if (tarefa.status === 'concluida' && !payload.concluido_em) {
-        payload.concluido_em = new Date().toISOString()
+      if (tarefa.status === 'concluida' && !payload.completed_at) {
+        payload.completed_at = new Date().toISOString()
       }
 
-      if (!isFartechAdmin && orgId) {
-        payload.org_id = orgId
-      }
+      payload.org_id = orgId
 
       const { data, error } = await supabase
         .from('tarefas')
@@ -168,28 +179,30 @@ export const tarefasService = {
 
   async updateTarefa(
     id: string,
-    updates: Partial<Omit<TarefaRow, 'id' | 'created_at' | 'updated_at'>>
+    updates: Partial<TarefaInput>
   ): Promise<TarefaRow> {
     try {
-      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      const { orgId } = await resolveOrgScope()
+      if (!orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
       const payload = buildTarefaPayload(updates)
 
-      if (updates.status === 'concluida' && !payload.concluido_em) {
-        payload.concluido_em = new Date().toISOString()
+      if (updates.status === 'concluida' && !payload.completed_at) {
+        payload.completed_at = new Date().toISOString()
       }
-      if (updates.status && updates.status !== 'concluida' && updates.concluido_em === undefined) {
-        payload.concluido_em = null
+      if (updates.status && updates.status !== 'concluida' && updates.completed_at === undefined) {
+        payload.completed_at = null
       }
 
       const query = supabase
         .from('tarefas')
         .update(payload)
         .eq('id', id)
+        .eq('org_id', orgId)
         .select('*')
 
-      const { data, error } = isFartechAdmin || !orgId
-        ? await query.single()
-        : await query.eq('org_id', orgId).single()
+      const { data, error } = await query.single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Tarefa nao encontrada', 'not_found')
@@ -202,13 +215,17 @@ export const tarefasService = {
 
   async deleteTarefa(id: string): Promise<void> {
     try {
-      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      const { orgId } = await resolveOrgScope()
+      if (!orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
       const query = supabase
         .from('tarefas')
         .delete()
         .eq('id', id)
+        .eq('org_id', orgId)
 
-      const { error } = isFartechAdmin || !orgId ? await query : await query.eq('org_id', orgId)
+      const { error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
     } catch (error) {
