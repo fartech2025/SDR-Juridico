@@ -6,7 +6,6 @@ import {
   CalendarClock,
   FileText,
   LayoutDashboard,
-  LogOut,
   ListTodo,
   Power,
   Scale,
@@ -40,7 +39,7 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>
 }
 
-const navGroups: { label: string; items: NavItem[] }[] = [
+const appNavGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Operacao',
     items: [
@@ -71,10 +70,6 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { label: 'Indicadores', to: '/app/indicadores', icon: BarChart3 },
     ],
   },
-  {
-    label: 'Administracao',
-    items: [{ label: 'Configuracoes', to: '/app/config', icon: Settings }],
-  },
 ]
 
 const adminNavItems = [
@@ -86,16 +81,30 @@ const orgAdminNavItems = [
   { label: 'Usuarios da Org', to: '/org/users', icon: Users },
 ]
 
+const findActiveGroupLabel = (
+  groups: { label: string; items: NavItem[] }[],
+  pathname: string,
+) => {
+  const normalizedPath = pathname.startsWith('/app/caso/')
+    ? '/app/casos'
+    : pathname
+  const group = groups.find((item) =>
+    item.items.some((navItem) => normalizedPath.startsWith(navItem.to)),
+  )
+  return group?.label ?? null
+}
+
 export const AppShell = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { signOut } = useAuth()
-  const { displayName, shortName, initials, roleLabel } = useCurrentUser()
+  const { displayName, shortName, initials } = useCurrentUser()
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin = useIsOrgAdmin()
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false)
+  const [sidebarGroupOpen, setSidebarGroupOpen] = React.useState<string | null>(null)
   const profileMenuRef = React.useRef<HTMLDivElement | null>(null)
 
   const profilePath = React.useMemo(() => {
@@ -103,6 +112,31 @@ export const AppShell = () => {
     if (location.pathname.startsWith('/org')) return '/org/perfil'
     return '/app/perfil'
   }, [location.pathname])
+
+  const administrationItems = React.useMemo(() => {
+    const items: NavItem[] = [
+      { label: 'Configuracoes', to: '/app/config', icon: Settings },
+    ]
+    if (isOrgAdmin) {
+      items.push(...orgAdminNavItems)
+    }
+    return items
+  }, [isOrgAdmin])
+
+  const sidebarGroups = React.useMemo(() => {
+    if (location.pathname.startsWith('/admin')) {
+      return [{ label: 'Administracao', items: adminNavItems }]
+    }
+    return [
+      ...appNavGroups,
+      { label: 'Administracao', items: administrationItems },
+    ]
+  }, [administrationItems, location.pathname])
+
+  const activeGroupLabel = React.useMemo(
+    () => findActiveGroupLabel(sidebarGroups, location.pathname),
+    [sidebarGroups, location.pathname],
+  )
 
   // Track page views automaticamente
   usePageTracking()
@@ -149,6 +183,12 @@ export const AppShell = () => {
     setProfileMenuOpen(false)
   }, [location.pathname])
 
+  React.useEffect(() => {
+    if (activeGroupLabel) {
+      setSidebarGroupOpen(activeGroupLabel)
+    }
+  }, [activeGroupLabel])
+
   const handleLogout = async () => {
     setLogoutOpen(false)
     // Log de logout e encerrar sessão
@@ -174,13 +214,13 @@ export const AppShell = () => {
   return (
     <div className="min-h-screen bg-[#f7f8fc] text-text" style={{ backgroundColor: '#f7f8fc', color: '#0f172a' }}>
       {/* Sidebar - Responsivo */}
-      <aside 
-        className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col border-r border-border shadow-soft lg:flex" 
-        style={{ 
-          backgroundColor: '#f7f8fc', 
+      <aside
+        className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col border-r border-border shadow-soft lg:flex"
+        style={{
+          backgroundColor: '#f7f8fc',
           borderColor: '#e2e8f0',
           background: '#f7f8fc',
-          backgroundImage: 'none'
+          backgroundImage: 'none',
         }}
       >
         <div className="flex items-center gap-3 px-6 py-6">
@@ -196,217 +236,49 @@ export const AppShell = () => {
         </div>
 
         <nav className="flex-1 space-y-2 px-4">
-          {/* Admin Menu for Fartech - apenas em /admin/* */}
-          {isFartechAdmin && location.pathname.startsWith('/admin') && adminNavItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
-                  isActive
-                    ? 'bg-[#E9EEFF] text-primary'
-                    : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon
+          {sidebarGroups.map((group, index) => {
+            const normalizedPath = location.pathname.startsWith('/app/caso/')
+              ? '/app/casos'
+              : location.pathname
+            const hasActiveItem = group.items.some((item) =>
+              normalizedPath.startsWith(item.to),
+            )
+            const isOpen = sidebarGroupOpen === group.label
+            return (
+              <div key={group.label} className="space-y-2">
+                {index > 0 && <div className="my-2 border-t border-border/50" />}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSidebarGroupOpen((current) =>
+                      current === group.label ? null : group.label,
+                    )
+                  }
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-xl px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] transition',
+                    isOpen || hasActiveItem
+                      ? 'bg-surface-2 text-text'
+                      : 'text-text-subtle hover:bg-surface-2 hover:text-text',
+                  )}
+                  aria-expanded={isOpen}
+                  aria-controls={`sidebar-group-${group.label}`}
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown
                     className={cn(
-                      'h-4 w-4',
-                      isActive
-                        ? 'text-primary'
-                        : 'text-text-subtle group-hover:text-primary',
+                      'h-3 w-3 transition',
+                      isOpen ? 'rotate-180 text-primary' : 'text-text-subtle',
                     )}
                   />
-                  <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
-
-          {/* Regular Menu - apenas em /app/* ou quando não for rota admin */}
-          {!location.pathname.startsWith('/admin') &&
-            navGroups.map((group, index) => (
-              <div key={group.label} className="space-y-1">
-                {index > 0 && <div className="my-2 border-t border-border/50" />}
-                <p className="px-3 pt-2 text-[10px] uppercase tracking-[0.28em] text-text-subtle">
-                  {group.label}
-                </p>
-                {group.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className={({ isActive }) =>
-                      cn(
-                        'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
-                        isActive
-                          ? 'bg-[#E9EEFF] text-primary'
-                          : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                      )
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <item.icon
-                          className={cn(
-                            'h-4 w-4',
-                            isActive
-                              ? 'text-primary'
-                              : 'text-text-subtle group-hover:text-primary',
-                          )}
-                        />
-                        <span>{item.label}</span>
-                      </>
-                    )}
-                  </NavLink>
-                ))}
-              </div>
-            ))}
-
-          {/* Org Admin Menu */}
-          {!isFartechAdmin && isOrgAdmin && (
-            <>
-              <div className="my-4 border-t border-border/50" />
-              {orgAdminNavItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    cn(
-                      'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
-                      isActive
-                        ? 'bg-[#E9EEFF] text-primary'
-                        : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                    )
-                  }
+                </button>
+                <div
+                  id={`sidebar-group-${group.label}`}
+                  className={cn('space-y-1', isOpen ? 'block' : 'hidden')}
                 >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon
-                        className={cn(
-                          'h-4 w-4',
-                          isActive
-                            ? 'text-primary'
-                            : 'text-text-subtle group-hover:text-primary',
-                        )}
-                      />
-                      <span>{item.label}</span>
-                    </>
-                  )}
-                </NavLink>
-              ))}
-            </>
-          )}
-        </nav>
-
-        {/* User Profile Section */}
-        <div className="border-t border-border/50 p-4">
-          <button
-            type="button"
-            onClick={handleProfileNavigate}
-            className="flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-2"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-white">
-              {initials}
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium text-text">
-                {shortName}
-              </p>
-              <p className="text-xs text-text-subtle">{roleLabel}</p>
-            </div>
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-20 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
-          <div className="absolute left-0 top-16 w-64 max-h-[calc(100vh-64px)] flex-col overflow-y-auto border-r border-border bg-white shadow-soft">
-            <nav className="space-y-2 p-4">
-              {/* Admin Menu for Fartech (Mobile) */}
-              {isFartechAdmin && adminNavItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
-                      isActive
-                        ? 'bg-[#E9EEFF] text-primary'
-                        : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon
-                        className={cn(
-                          'h-4 w-4',
-                          isActive
-                            ? 'text-primary'
-                            : 'text-text-subtle group-hover:text-primary',
-                        )}
-                      />
-                      <span>{item.label}</span>
-                    </>
-                  )}
-                </NavLink>
-              ))}
-
-              {/* Regular Menu (Mobile) */}
-              {!isFartechAdmin &&
-                navGroups.map((group, index) => (
-                  <div key={group.label} className="space-y-1">
-                    {index > 0 && <div className="my-2 border-t border-border/50" />}
-                    <p className="px-3 pt-2 text-[10px] uppercase tracking-[0.28em] text-text-subtle">
-                      {group.label}
-                    </p>
-                    {group.items.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={({ isActive }) =>
-                          cn(
-                            'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
-                            isActive
-                              ? 'bg-[#E9EEFF] text-primary'
-                              : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                          )
-                        }
-                      >
-                        {({ isActive }) => (
-                          <>
-                            <item.icon
-                              className={cn(
-                                'h-4 w-4',
-                                isActive
-                                  ? 'text-primary'
-                                  : 'text-text-subtle group-hover:text-primary',
-                              )}
-                            />
-                            <span>{item.label}</span>
-                          </>
-                        )}
-                      </NavLink>
-                    ))}
-                  </div>
-                ))}
-
-              {/* Org Admin Menu (Mobile) */}
-              {!isFartechAdmin && isOrgAdmin && (
-                <>
-                  <div className="my-4 border-t border-border/50" />
-                  {orgAdminNavItems.map((item) => (
+                  {group.items.map((item) => (
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      onClick={() => setMobileMenuOpen(false)}
                       className={({ isActive }) =>
                         cn(
                           'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
@@ -431,8 +303,110 @@ export const AppShell = () => {
                       )}
                     </NavLink>
                   ))}
-                </>
-              )}
+                </div>
+              </div>
+            )
+          })}
+        </nav>
+
+        {/* User Profile Section */}
+        <div className="border-t border-border/50 p-4">
+          <button
+            type="button"
+            onClick={handleProfileNavigate}
+            className="flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-2"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-white">
+              {initials}
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="truncate text-sm font-medium text-text">
+                {shortName}
+              </p>
+              <p className="text-xs text-text-subtle">Perfil</p>
+            </div>
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-20 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute left-0 top-16 w-64 max-h-[calc(100vh-64px)] flex-col overflow-y-auto border-r border-border bg-white shadow-soft">
+            <nav className="space-y-2 p-4">
+              {sidebarGroups.map((group, index) => {
+                const normalizedPath = location.pathname.startsWith('/app/caso/')
+                  ? '/app/casos'
+                  : location.pathname
+                const hasActiveItem = group.items.some((item) =>
+                  normalizedPath.startsWith(item.to),
+                )
+                const isOpen = sidebarGroupOpen === group.label
+                return (
+                  <div key={group.label} className="space-y-2">
+                    {index > 0 && <div className="my-2 border-t border-border/50" />}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSidebarGroupOpen((current) =>
+                          current === group.label ? null : group.label,
+                        )
+                      }
+                      className={cn(
+                        'flex w-full items-center justify-between rounded-xl px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] transition',
+                        isOpen || hasActiveItem
+                          ? 'bg-surface-2 text-text'
+                          : 'text-text-subtle hover:bg-surface-2 hover:text-text',
+                      )}
+                      aria-expanded={isOpen}
+                      aria-controls={`mobile-sidebar-group-${group.label}`}
+                    >
+                      <span>{group.label}</span>
+                      <ChevronDown
+                        className={cn(
+                          'h-3 w-3 transition',
+                          isOpen ? 'rotate-180 text-primary' : 'text-text-subtle',
+                        )}
+                      />
+                    </button>
+                    <div
+                      id={`mobile-sidebar-group-${group.label}`}
+                      className={cn('space-y-1', isOpen ? 'block' : 'hidden')}
+                    >
+                      {group.items.map((item) => (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={({ isActive }) =>
+                            cn(
+                              'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
+                              isActive
+                                ? 'bg-[#E9EEFF] text-primary'
+                                : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
+                            )
+                          }
+                        >
+                          {({ isActive }) => (
+                            <>
+                              <item.icon
+                                className={cn(
+                                  'h-4 w-4',
+                                  isActive
+                                    ? 'text-primary'
+                                    : 'text-text-subtle group-hover:text-primary',
+                                )}
+                              />
+                              <span>{item.label}</span>
+                            </>
+                          )}
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
             </nav>
           </div>
         </div>

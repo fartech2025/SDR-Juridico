@@ -59,7 +59,7 @@ export const Timeline = ({ events, onAddEvent }: TimelineProps) => {
             className="h-10 rounded-full px-4"
           >
             <Plus className="h-4 w-4" />
-            Adicionar evento
+            Adicionar nota
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">

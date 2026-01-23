@@ -465,7 +465,7 @@ export const CasoPage = () => {
     }
     const title = eventForm.title.trim()
     if (!title) {
-      setEventError('Informe um titulo para o evento.')
+      setEventError('Informe um titulo para a nota.')
       return
     }
     setEventSaving(true)
@@ -483,7 +483,7 @@ export const CasoPage = () => {
       setModalOpen(false)
       resetEventForm()
     } catch (error) {
-      setEventError(error instanceof Error ? error.message : 'Erro ao salvar evento')
+      setEventError(error instanceof Error ? error.message : 'Erro ao salvar nota')
     } finally {
       setEventSaving(false)
     }
@@ -759,9 +759,9 @@ export const CasoPage = () => {
               <Card className="border-border bg-white/85">
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <CardTitle>{activeTab}</CardTitle>
-                  <Button variant="outline" size="sm" onClick={openModal}>
-                    Adicionar evento
-                  </Button>
+                    <Button variant="outline" size="sm" onClick={openModal}>
+                      Adicionar nota
+                    </Button>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-text-muted">
                   {filteredEvents.length ? (
@@ -895,14 +895,14 @@ export const CasoPage = () => {
                     >
                       Ver linha do tempo
                     </button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 rounded-full px-3"
-                      onClick={openModal}
-                    >
-                      Adicionar nota
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 rounded-full px-3"
+                        onClick={openModal}
+                      >
+                        Adicionar nota
+                      </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -956,16 +956,16 @@ export const CasoPage = () => {
       <Modal
         open={modalOpen}
         onClose={closeModal}
-        title="Adicionar evento"
-        description="Registre um novo evento juridico."
+        title="Adicionar nota"
+        description="Registre uma nova nota do caso."
         footer={
           <>
             <Button variant="ghost" onClick={closeModal} disabled={eventSaving}>
               Cancelar
             </Button>
-            <Button variant="primary" onClick={handleSaveEvent} disabled={eventSaving}>
-              {eventSaving ? 'Salvando...' : 'Salvar evento'}
-            </Button>
+              <Button variant="primary" onClick={handleSaveEvent} disabled={eventSaving}>
+                {eventSaving ? 'Salvando...' : 'Salvar nota'}
+              </Button>
           </>
         }
       >
@@ -980,7 +980,7 @@ export const CasoPage = () => {
               Titulo
             </label>
             <Input
-              placeholder="Descreva o evento"
+              placeholder="Descreva a nota"
               value={eventForm.title}
               onChange={(event) =>
                 setEventForm((prev) => ({ ...prev, title: event.target.value }))
@@ -1014,7 +1014,7 @@ export const CasoPage = () => {
             </label>
             <textarea
               className="min-h-[120px] w-full rounded-2xl border border-border bg-white px-3 py-2 text-sm text-text"
-              placeholder="Detalhes do evento"
+              placeholder="Detalhes da nota"
               value={eventForm.description}
               onChange={(event) =>
                 setEventForm((prev) => ({ ...prev, description: event.target.value }))
