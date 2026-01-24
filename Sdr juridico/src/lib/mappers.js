@@ -131,18 +131,26 @@ export const mapAgendamentoRowToAgendaItem = (row) => {
         status: row.status || 'pendente',
     };
 };
-export const mapTarefaRowToTarefa = (row) => ({
-    id: row.id,
-    title: row.titulo,
-    description: row.descricao || null,
-    priority: resolveTaskPriority(row.priority),
-    status: row.status || 'pendente',
-    dueDate: row.due_at || null,
-    createdAt: row.created_at,
-    completedAt: row.completed_at || null,
-    ownerId: row.assigned_user_id,
-    ...resolveTaskLinks(row),
-});
+export const mapTarefaRowToTarefa = (row: any) => ({
+  id: row.id,
+  createdAt: row.created_at,
+  title: row.titulo,
+  description: row.descricao ?? null,
+  status: row.status,
+  priority: row.priority ?? 2,
+  dueDate: row.due_at ?? null,
+  completedAt: row.completed_at ?? null,
+  ownerId: row.assigned_user_id ?? null,
+
+  // novos campos (apenas 1 vez)
+  submittedAt: row.submitted_at ?? null,
+  confirmedAt: row.confirmed_at ?? null,
+  confirmedBy: row.confirmed_by ?? null,
+  rejectedReason: row.rejected_reason ?? null,
+
+  ...resolveTaskLinks(row),
+})
+
 export const mapTimelineRowToTimelineEvent = (row) => {
     const title = row.titulo || row.descricao || 'Evento';
     return {

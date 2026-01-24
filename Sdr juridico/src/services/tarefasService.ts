@@ -257,4 +257,89 @@ export const tarefasService = {
       throw error instanceof AppError ? error : new AppError('Erro ao deletar tarefa', 'database_error')
     }
   },
+async submitForValidation(id: string): Promise<TarefaRow> {
+  try {
+    const { orgId } = await resolveOrgScope()
+    if (!orgId) throw new AppError('Org não encontrada', 'validation_error')
+
+    const now = new Date().toISOString()
+    const { data, error } = await supabase
+      .from('tarefas')
+      .update({ status: 'aguardando_validacao', submitted_at: now })
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw new AppError(error.message, 'database_error')
+
+    void logAuditChange({
+      orgId,
+      action: 'submit_for_validation',
+      entity: 'tarefas',
+      entityId: id,
+      details: { status: 'aguardando_validacao' },
+    })
+
+    return mapDbTarefaToRow(data as DbTarefaRow)
+  } catch (error) {
+    throw error instanceof AppError ? error : new AppError('Erro ao enviar tarefa para confirmação', 'database_error')
+  }
+},
+
+async approveTask(id: string): Promise<TarefaRow> {
+  try {
+    const { orgId } = await resolveOrgScope()
+    if (!orgId) throw new AppError('Org não encontrada', 'validation_error')
+
+    const now = new Date().toISOString()
+    const { data, error } = await supabase
+      .from('tarefas')
+      .update({ status: 'concluida', confirmed_at: now, confirmed_by: (await supabase.auth.getUser()).data.user?.id ?? null, completed_at: now })
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw new AppError(error.message, 'database_error')
+
+    void logAuditChange({
+      orgId,
+      action: 'approve',
+      entity: 'tarefas',
+      entityId: id,
+      details: { status: 'concluida' },
+    })
+
+    return mapDbTarefaToRow(data as DbTarefaRow)
+  } catch (error) {
+    throw error instanceof AppError ? error : new AppError('Erro ao aprovar tarefa', 'database_error')
+  }
+},
+
+async rejectTask(id: string, reason: string): Promise<TarefaRow> {
+  try {
+    const { orgId } = await resolveOrgScope()
+    if (!orgId) throw new AppError('Org não encontrada', 'validation_error')
+
+    const { data, error } = await supabase
+      .from('tarefas')
+      .update({ status: 'devolvida', rejected_reason: reason })
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw new AppError(error.message, 'database_error')
+
+    void logAuditChange({
+      orgId,
+      action: 'reject',
+      entity: 'tarefas',
+      entityId: id,
+      details: { status: 'devolvida', reason },
+    })
+
+    return mapDbTarefaToRow(data as DbTarefaRow)
+  } catch (error) {
+    throw error instanceof AppError ? error : new AppError('Erro ao devolver tarefa', 'database_error')
+  }
+},
 }

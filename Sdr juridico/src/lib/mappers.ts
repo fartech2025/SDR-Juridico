@@ -178,6 +178,14 @@ export const mapTarefaRowToTarefa = (row: TarefaRow): Tarefa => ({
   createdAt: row.created_at,
   completedAt: row.completed_at || null,
   ownerId: row.assigned_user_id,
+  submittedAt: (row as any).submitted_at || null,
+  confirmedAt: (row as any).confirmed_at || null,
+  confirmedBy: (row as any).confirmed_by || null,
+  rejectedReason: (row as any).rejected_reason || null,
+  submittedAt: (row as any).submitted_at || null,
+  confirmedAt: (row as any).confirmed_at || null,
+  confirmedBy: (row as any).confirmed_by || null,
+  rejectedReason: (row as any).rejected_reason || null,
   ...resolveTaskLinks(row),
 })
 

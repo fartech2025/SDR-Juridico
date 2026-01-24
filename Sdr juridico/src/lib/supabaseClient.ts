@@ -43,7 +43,8 @@ export type SlaRisk = 'ok' | 'atencao' | 'critico'
 export type UsuarioStatus = 'ativo' | 'inativo' | 'suspenso'
 export type UserRole = 'fartech_admin' | 'org_admin' | 'user'
 export type TaskPriority = 'baixa' | 'normal' | 'alta'
-export type TaskStatus = 'pendente' | 'em_progresso' | 'concluida'
+export type TaskDifficulty = 'baixa' | 'media' | 'alta'
+export type TaskStatus = 'pendente' | 'em_progresso' | 'aguardando_validacao' | 'concluida' | 'devolvida' | 'devolvida'
 
 export interface UsuarioRow {
   id: string
@@ -170,6 +171,26 @@ export interface TarefaRow {
   status: TaskStatus
   due_at: string | null
   completed_at: string | null
+  submitted_at?: string | null
+  confirmed_at?: string | null
+  confirmed_by?: string | null
+  rejected_reason?: string | null
+  submitted_at?: string | null
+  confirmed_at?: string | null
+  confirmed_by?: string | null
+  rejected_reason?: string | null
+  dificuldade?: TaskDifficulty | null
+  assignee_ids?: string[] | null
+  tarefas_assignees?: Array<{ user_id: string }> | null
+}
+
+export interface TarefaAssigneeRow {
+  id: string
+  created_at: string
+  org_id?: string | null
+  tarefa_id: string
+  user_id: string
+  created_by?: string | null
 }
 
 export interface TimelineEventRow {

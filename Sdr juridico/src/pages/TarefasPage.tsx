@@ -20,6 +20,8 @@ type LinkType = 'none' | 'lead' | 'cliente' | 'caso'
 
 const statusBadge = (status: Tarefa['status']) => {
   if (status === 'concluida') return 'border-success-border bg-success-bg text-success'
+  if (status === 'aguardando_validacao') return 'border-info-border bg-info-bg text-info'
+  if (status === 'devolvida') return 'border-danger-border bg-danger-bg text-danger'
   if (status === 'em_progresso') return 'border-warning-border bg-warning-bg text-warning'
   return 'border-border bg-surface-2 text-text-muted'
 }

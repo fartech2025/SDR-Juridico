@@ -159,12 +159,36 @@ export function useTarefas() {
     fetchTarefas()
   }, [fetchTarefas])
 
-  return {
+  const submitForConfirmation = useCallback(async (id: string) => {
+  const row = await tarefasService.submitForValidation(id)
+  const updated = mapTarefaRowToTarefa(row)
+  setState((prev) => ({ ...prev, tarefas: prev.tarefas.map((t) => (t.id === id ? updated : t)) }))
+  return updated
+}, [])
+
+const approveTarefa = useCallback(async (id: string) => {
+  const row = await tarefasService.approveTask(id)
+  const updated = mapTarefaRowToTarefa(row)
+  setState((prev) => ({ ...prev, tarefas: prev.tarefas.map((t) => (t.id === id ? updated : t)) }))
+  return updated
+}, [])
+
+const rejectTarefa = useCallback(async (id: string, reason: string) => {
+  const row = await tarefasService.rejectTask(id, reason)
+  const updated = mapTarefaRowToTarefa(row)
+  setState((prev) => ({ ...prev, tarefas: prev.tarefas.map((t) => (t.id === id ? updated : t)) }))
+  return updated
+}, [])
+
+return {
     ...state,
     fetchTarefas,
     fetchTarefasByEntidade,
     createTarefa,
     updateTarefa,
     deleteTarefa,
+    submitForConfirmation,
+    approveTarefa,
+    rejectTarefa,
   }
 }

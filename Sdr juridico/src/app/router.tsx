@@ -14,7 +14,7 @@ import { DocumentosPage } from '@/pages/DocumentosPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { IndicadoresPage } from '@/pages/IndicadoresPage'
 import { LeadsPage } from '@/pages/LeadsPage'
-import { TarefasPage } from '@/pages/TarefasPage'
+import { TarefasRootPage } from '@/pages/TarefasRootPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -98,7 +98,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'tarefas',
-        element: <TarefasPage />,
+        element: <TarefasRootPage />,
       },
       {
         path: 'documentos',
