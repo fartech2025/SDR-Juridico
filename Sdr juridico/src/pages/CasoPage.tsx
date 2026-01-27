@@ -8,16 +8,18 @@ import {
   KeyRound,
   Search,
   ShieldCheck,
+  Plus,
+  Folder,
+  Clock,
+  Lightbulb,
+  Phone,
+  Pencil,
+  Copy,
 } from 'lucide-react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 
-import heroLight from '@/assets/hero-light.svg'
 import { PageState } from '@/components/PageState'
 import { Timeline } from '@/components/Timeline'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import type { Caso, Tarefa, TimelineCategory, TimelineEvent } from '@/types/domain'
 import { cn } from '@/utils/cn'
@@ -74,7 +76,7 @@ const eventCategoryOptions: { label: string; value: TimelineCategory }[] = [
   { label: 'Humano', value: 'humano' },
 ]
 
-const statusBadge = (status: Caso['status']) => {
+const statusBadgeVariant = (status: Caso['status']) => {
   if (status === 'encerrado') return 'danger'
   if (status === 'suspenso') return 'warning'
   return 'success'
@@ -98,19 +100,142 @@ const buildChecklistTitle = (title: string) => {
 const toDateInput = (value?: string | null) => (value ? value.slice(0, 10) : '')
 
 const taskStatusPill = (status: Tarefa['status']) => {
-  if (status === 'concluida') return 'border-success-border bg-success-bg text-success'
-  if (status === 'em_progresso') return 'border-warning-border bg-warning-bg text-warning'
-  return 'border-border bg-surface-2 text-text-muted'
+  if (status === 'concluida') return 'border-green-200 bg-green-50 text-green-700'
+  if (status === 'em_progresso') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-gray-200 bg-gray-50 text-gray-600'
 }
 
 const taskPriorityPill = (priority: Tarefa['priority']) => {
-  if (priority === 'alta') return 'border-danger-border bg-danger-bg text-danger'
-  if (priority === 'normal') return 'border-info-border bg-info-bg text-info'
-  return 'border-border bg-surface-2 text-text-muted'
+  if (priority === 'alta') return 'border-red-200 bg-red-50 text-red-700'
+  if (priority === 'normal') return 'border-blue-200 bg-blue-50 text-blue-700'
+  return 'border-gray-200 bg-gray-50 text-gray-600'
 }
+
+// Badge Component
+const Badge = ({
+  children,
+  variant = 'default',
+}: {
+  children: React.ReactNode
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'primary' | 'accent'
+}) => {
+  const variants = {
+    default: 'bg-gray-100 text-gray-700',
+    primary: 'bg-red-50 text-red-800',
+    accent: 'bg-amber-50 text-amber-700',
+    success: 'bg-green-50 text-green-700',
+    warning: 'bg-orange-50 text-orange-700',
+    danger: 'bg-red-50 text-red-700',
+  }
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+        variants[variant]
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
+// Tab Button Component
+const TabButton = ({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean
+  children: React.ReactNode
+  onClick: () => void
+}) => (
+  <button
+    onClick={onClick}
+    type="button"
+    className={cn(
+      'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+      active
+        ? 'bg-white text-gray-900 shadow-sm'
+        : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+    )}
+  >
+    {children}
+  </button>
+)
+
+// Filter Chip Component
+const FilterChip = ({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean
+  children: React.ReactNode
+  onClick: () => void
+}) => (
+  <button
+    onClick={onClick}
+    type="button"
+    className={cn(
+      'px-3 py-1.5 text-sm font-medium rounded-full border transition-all duration-200',
+      active
+        ? 'border-red-200 bg-red-50 text-red-800'
+        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+    )}
+    style={
+      active
+        ? {
+            borderColor: 'rgba(114, 16, 17, 0.2)',
+            backgroundColor: 'rgba(114, 16, 17, 0.05)',
+            color: '#721011',
+          }
+        : {}
+    }
+  >
+    {children}
+  </button>
+)
+
+// Task Item Component
+const TaskItem = ({
+  title,
+  status,
+  onEdit,
+  onDelete,
+}: {
+  title: string
+  status: string
+  onEdit: () => void
+  onDelete: () => void
+}) => (
+  <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+    <span className="text-sm text-gray-700">{title}</span>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        onClick={onEdit}
+      >
+        Editar
+      </button>
+      <button
+        type="button"
+        className="text-xs text-red-600 hover:text-red-700 transition-colors"
+        onClick={onDelete}
+      >
+        Excluir
+      </button>
+      <Badge variant={status === 'PENDENTE' || status === 'pendente' ? 'warning' : 'success'}>
+        {status.toUpperCase()}
+      </Badge>
+    </div>
+  </div>
+)
 
 export const CasoPage = () => {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [params] = useSearchParams()
   const { casos, loading: casosLoading, error: casosError } = useCasos()
   const { leads, loading: leadsLoading, error: leadsError } = useLeads()
@@ -190,15 +315,15 @@ export const CasoPage = () => {
   const lead = leads.find((item) => item.id === caso?.leadId)
   const caseDocs = React.useMemo(
     () => documentos.filter((doc) => doc.casoId === caso?.id),
-    [documentos, caso?.id],
+    [documentos, caso?.id]
   )
   const caseAgenda = React.useMemo(
     () => agendaItems.filter((event) => event.casoId === caso?.id),
-    [agendaItems, caso?.id],
+    [agendaItems, caso?.id]
   )
   const caseNotas = React.useMemo(
     () => notas.filter((event) => event.casoId === caso?.id),
-    [notas, caso?.id],
+    [notas, caso?.id]
   )
   const recentNotas = React.useMemo(() => {
     return [...caseNotas]
@@ -207,7 +332,7 @@ export const CasoPage = () => {
   }, [caseNotas])
   const caseTasks = React.useMemo(
     () => tarefas.filter((task) => task.casoId === caso?.id),
-    [tarefas, caso?.id],
+    [tarefas, caso?.id]
   )
   const checklistItems = React.useMemo(
     () =>
@@ -222,7 +347,7 @@ export const CasoPage = () => {
           status: task.status === 'concluida' ? 'ok' : 'pendente',
           task,
         })),
-    [caseTasks],
+    [caseTasks]
   )
   const docEvents = React.useMemo<TimelineEvent[]>(
     () =>
@@ -237,7 +362,7 @@ export const CasoPage = () => {
         tags: doc.tags || [],
         author: doc.requestedBy || 'Sistema',
       })),
-    [caseDocs, caso.id],
+    [caseDocs, caso.id]
   )
   const agendaEvents = React.useMemo<TimelineEvent[]>(
     () =>
@@ -252,13 +377,13 @@ export const CasoPage = () => {
         tags: [],
         author: event.owner || 'Sistema',
       })),
-    [caseAgenda, caso.id],
+    [caseAgenda, caso.id]
   )
   const caseEvents = React.useMemo(() => {
     const combined = [...caseNotas, ...docEvents, ...agendaEvents, ...datajudEvents]
     if (user?.id && displayName) {
       return combined.map((event) =>
-        event.author === user.id ? { ...event, author: displayName } : event,
+        event.author === user.id ? { ...event, author: displayName } : event
       )
     }
     return combined
@@ -332,7 +457,6 @@ export const CasoPage = () => {
     if (!targetCaseId) return
     fetchDatajudByCaso(targetCaseId).catch(() => null)
   }, [id, caso.id, fetchDatajudByCaso])
-
 
   const baseState =
     casosLoading ||
@@ -534,425 +658,559 @@ export const CasoPage = () => {
     }
   }
 
-  const handleDeleteChecklist = async (id: string) => {
+  const handleDeleteChecklist = async (taskId: string) => {
     const confirmed = window.confirm('Excluir esta tarefa?')
     if (!confirmed) return
     try {
-      await deleteTarefa(id)
+      await deleteTarefa(taskId)
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Erro ao excluir tarefa')
     }
   }
 
+  const clientInitials = caso.cliente
+    .split(' ')
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+
   return (
-    <div className="min-h-screen bg-base pb-12 text-text">
-      <div className="space-y-6">
-        <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt p-6 shadow-card">
-          <div
-            className="absolute inset-0 bg-no-repeat bg-right bg-[length:520px] opacity-80"
-            style={{ backgroundImage: `url(${heroLight})` }}
-          />
-          <div className="relative z-10 space-y-3">
+    <div
+      className="min-h-screen bg-gray-50 pb-12"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <div className="p-6">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1 text-xs text-text-muted shadow-soft"
+              className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+              onClick={() => navigate('/app/casos')}
             >
-              <ChevronLeft className="h-4 w-4" />
-              #{caso.id.replace('caso-', '')}
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Voltar</span>
             </button>
-            <h2 className="font-display text-2xl text-text">
-              {caso.id.replace('caso-', '#')} - {caso.cliente}
-            </h2>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
-              <Badge variant={statusBadge(caso.status)} className="capitalize">
-                {caso.status}
-              </Badge>
-              <Badge variant="info">{caso.area}</Badge>
-              <Badge variant="default">{caso.stage}</Badge>
+            <div className="h-6 w-px bg-gray-200" />
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+              <span className="text-xs text-gray-500 font-mono">
+                #{caso.id.slice(0, 20)}
+              </span>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => navigator.clipboard.writeText(caso.id)}
+              >
+                <Copy className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        </header>
+        </div>
 
-      <PageState status={pageState}>
-        <div className="grid gap-6 xl:grid-cols-[2.4fr_1fr]">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    'rounded-full border px-4 py-1.5 text-xs font-medium transition',
-                    activeTab === tab
-                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600'
-                      : 'border-border bg-white text-text-muted hover:bg-surface-2 hover:text-text',
-                  )}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative w-full max-w-md">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
-                <Input
-                  placeholder="Buscar eventos..."
-                  className="h-11 rounded-full border border-border bg-surface-2 pl-11 text-text placeholder:text-text-subtle focus:border-emerald-400 focus:ring-emerald-200"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                />
+        {/* Case Header */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 mb-3">{caso.cliente}</h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant={statusBadgeVariant(caso.status)}>
+                  {caso.status.charAt(0).toUpperCase() + caso.status.slice(1)}
+                </Badge>
+                <Badge variant="primary">{caso.area}</Badge>
+                <Badge variant="accent">{caso.stage}</Badge>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-11 rounded-full px-4"
-                onClick={() => setFiltersOpen((prev) => !prev)}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <Filter className="h-4 w-4" />
-                Filtros
-              </Button>
+                <Pencil className="w-4 h-4" />
+                Editar Caso
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                style={{ backgroundColor: '#721011' }}
+                onClick={openModal}
+              >
+                <Plus className="w-5 h-5" />
+                Nova Acao
+              </button>
             </div>
-            {filtersOpen && (
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text shadow-soft">
-                <div className="flex items-center gap-2">
-                  <span className="text-text-subtle">Periodo</span>
-                  <select
-                    className="h-9 rounded-full border border-border bg-surface px-3 text-xs text-text shadow-soft focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                    value={dateRange}
-                    onChange={(event) =>
-                      setDateRange(event.target.value as 'all' | '7d' | '30d' | '90d')
-                    }
+          </div>
+        </div>
+
+        <PageState status={pageState}>
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Left Column - Main Content */}
+            <div className="xl:col-span-2 space-y-6">
+              {/* Main Tabs */}
+              <div className="bg-gray-100/50 rounded-xl p-1.5 inline-flex gap-1 flex-wrap">
+                {tabs.map((tab) => (
+                  <TabButton
+                    key={tab}
+                    active={activeTab === tab}
+                    onClick={() => setActiveTab(tab)}
                   >
-                    <option value="all">Todos</option>
-                    <option value="7d">Ultimos 7 dias</option>
-                    <option value="30d">Ultimos 30 dias</option>
-                    <option value="90d">Ultimos 90 dias</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-text-subtle">Ordenacao</span>
-                  <select
-                    className="h-9 rounded-full border border-border bg-surface px-3 text-xs text-text shadow-soft focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                    value={sortOrder}
-                    onChange={(event) =>
-                      setSortOrder(event.target.value as 'recent' | 'oldest')
+                    {tab}
+                  </TabButton>
+                ))}
+              </div>
+
+              {/* Search and Filter */}
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar eventos..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    style={
+                      {
+                        '--tw-ring-color': 'rgba(114, 16, 17, 0.2)',
+                      } as React.CSSProperties
                     }
-                  >
-                    <option value="recent">Mais recentes</option>
-                    <option value="oldest">Mais antigos</option>
-                  </select>
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
                 <button
                   type="button"
-                  className="ml-auto text-xs text-text-muted hover:text-text"
-                  onClick={resetFilters}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors bg-white"
+                  onClick={() => setFiltersOpen((prev) => !prev)}
                 >
-                  Limpar filtros
+                  <Filter className="w-5 h-5" />
+                  Filtros
                 </button>
               </div>
-            )}
 
-            {activeTab === 'Tudo' && (
-              <div className="space-y-4">
-                <Card className="border-border bg-white/90 shadow-soft">
-                  <CardHeader className="flex-row items-center justify-between space-y-0 border-b border-border/60 pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <ShieldCheck className="h-5 w-5" />
+              {/* Filters Panel */}
+              {filtersOpen && (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs text-gray-700 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Periodo</span>
+                    <select
+                      className="h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                      value={dateRange}
+                      onChange={(e) =>
+                        setDateRange(e.target.value as 'all' | '7d' | '30d' | '90d')
+                      }
+                    >
+                      <option value="all">Todos</option>
+                      <option value="7d">Ultimos 7 dias</option>
+                      <option value="30d">Ultimos 30 dias</option>
+                      <option value="90d">Ultimos 90 dias</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Ordenacao</span>
+                    <select
+                      className="h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as 'recent' | 'oldest')}
+                    >
+                      <option value="recent">Mais recentes</option>
+                      <option value="oldest">Mais antigos</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    className="ml-auto text-xs text-gray-500 hover:text-gray-700"
+                    onClick={resetFilters}
+                  >
+                    Limpar filtros
+                  </button>
+                </div>
+              )}
+
+              {/* AI Summary Section */}
+              {activeTab === 'Tudo' && (
+                <>
+                  <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                    <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                      >
+                        <FileText className="w-5 h-5" />
                       </div>
                       <div>
-                        <CardTitle>Dossie Juridico</CardTitle>
-                        <p className="text-xs text-text-subtle">
-                          Resumo gerado e pontos relevantes.
-                        </p>
+                        <h3 className="font-semibold text-gray-900">Dossie Juridico</h3>
+                        <p className="text-xs text-gray-500">Resumo gerado e pontos relevantes</p>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4 pt-4 text-sm text-text">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 shadow-soft">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-text">
-                          <FileText className="h-4 w-4 text-[#D36D8C]" />
-                          Resumo gerado por IA
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
+                      {/* AI Summary */}
+                      <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-5 border border-gray-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div
+                            className="w-6 h-6 rounded-md flex items-center justify-center"
+                            style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                          >
+                            <Lightbulb className="w-4 h-4" />
+                          </div>
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            Resumo gerado por IA
+                          </h4>
                         </div>
-                        <p className="mt-2 text-sm leading-relaxed text-text">
+                        <p className="text-sm text-gray-600 leading-relaxed">
                           {highlights[0]?.content}
                         </p>
                       </div>
-                      <div className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 shadow-soft">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-text">
-                          <KeyRound className="h-4 w-4 text-[#6BB9A8]" />
-                          Pontos relevantes
+
+                      {/* Key Points */}
+                      <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 rounded-xl p-5 border border-amber-100/50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div
+                            className="w-6 h-6 rounded-md flex items-center justify-center"
+                            style={{ backgroundColor: 'rgba(191, 111, 50, 0.15)', color: '#BF6F32' }}
+                          >
+                            <KeyRound className="w-4 h-4" />
+                          </div>
+                          <h4 className="text-sm font-semibold text-gray-900">Pontos relevantes</h4>
                         </div>
-                        <p className="mt-2 text-sm leading-relaxed text-text">
+                        <p className="text-sm text-gray-600 leading-relaxed">
                           {highlights[1]?.content}
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-center gap-2 rounded-full border-border bg-white text-text hover:bg-surface-2"
+
+                    <button
+                      type="button"
+                      className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1 border-t border-gray-100"
                       onClick={handleScrollToTimeline}
                     >
                       Ver linha do tempo completa
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <div ref={timelineRef}>
-                  <Timeline events={timelineEvents} onAddEvent={openModal} />
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'Tarefas' && (
-              <Card className="border-border bg-white/85">
-                <CardHeader className="flex-row items-center justify-between space-y-0">
-                  <div>
-                    <CardTitle>Tarefas do caso</CardTitle>
-                    <p className="text-xs text-text-subtle">
-                      Atividades vinculadas a este dossie.
-                    </p>
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
                   </div>
-                  <Link
-                    to={`/app/tarefas?casoId=${caso.id}`}
-                    className="inline-flex h-9 items-center justify-center rounded-full border border-border bg-white px-4 text-xs font-semibold text-text shadow-soft hover:bg-surface-2"
+
+                  {/* Timeline Section */}
+                  <div
+                    ref={timelineRef}
+                    className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm"
                   >
-                    Abrir tarefas
-                  </Link>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-text-muted">
-                  {caseTasks.length ? (
-                    caseTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="rounded-2xl border border-border bg-white p-3 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                      >
-                        <div className="flex items-center justify-between gap-3 text-xs text-text-subtle">
-                          <span className="inline-flex rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-text-muted">
-                            {task.status.replace('_', ' ')}
-                          </span>
-                          {task.dueDate && <span>Vence em {formatDate(task.dueDate)}</span>}
+                    <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: 'rgba(107, 94, 88, 0.1)', color: '#6B5E58' }}
+                        >
+                          <Clock className="w-5 h-5" />
                         </div>
-                        <p className="mt-2 text-sm font-semibold text-text">
-                          {normalizeChecklistTitle(task.title)}
-                        </p>
-                        {task.description && (
-                          <p className="mt-1 text-xs text-text-subtle">{task.description}</p>
+                        <h3 className="font-semibold text-gray-900">Linha do Tempo do Caso</h3>
+                      </div>
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-gray-50"
+                        style={{ color: '#721011' }}
+                        onClick={openModal}
+                      >
+                        <Plus className="w-5 h-5" />
+                        Adicionar nota
+                      </button>
+                    </div>
+
+                    <div className="px-5 py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {['Tudo', 'Docs', 'Agenda', 'Comercial', 'Juridico', 'Automacao', 'Humano'].map(
+                          (tab) => (
+                            <FilterChip
+                              key={tab}
+                              active={
+                                activeTab === 'Tudo'
+                                  ? tab === 'Tudo'
+                                  : tab.toLowerCase() === categoryMap[activeTab]
+                              }
+                              onClick={() => {
+                                if (tab === 'Tudo') {
+                                  setActiveTab('Tudo')
+                                } else {
+                                  const mapped = tabs.find(
+                                    (t) => categoryMap[t]?.toLowerCase() === tab.toLowerCase()
+                                  )
+                                  if (mapped) setActiveTab(mapped)
+                                }
+                              }}
+                            >
+                              {tab}
+                            </FilterChip>
+                          )
                         )}
                       </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-border bg-white p-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
-                      Nenhuma tarefa vinculada a este caso.
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
-            {activeTab !== 'Tudo' && activeTab !== 'Tarefas' && (
-              <Card className="border-border bg-white/85">
-                <CardHeader className="flex-row items-center justify-between space-y-0">
-                  <CardTitle>{activeTab}</CardTitle>
-                    <Button variant="outline" size="sm" onClick={openModal}>
-                      Adicionar nota
-                    </Button>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-text-muted">
-                  {filteredEvents.length ? (
-                    filteredEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className="rounded-2xl border border-border bg-white p-3 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                      >
-                        <p className="text-sm font-semibold text-text">{event.title}</p>
-                        <p className="text-xs text-text-subtle">{event.description}</p>
-                        <p className="mt-2 text-[11px] text-text-subtle">
-                          {formatDateTime(event.date)}
+                    {timelineEvents.length > 0 ? (
+                      <div className="p-5">
+                        <Timeline events={timelineEvents} onAddEvent={openModal} />
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                          <FileText className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          Nenhum evento encontrado para este filtro.
                         </p>
                       </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-border bg-white p-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
-                      Sem eventos para esta categoria.
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Tarefas Tab */}
+              {activeTab === 'Tarefas' && (
+                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                  <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Tarefas do caso</h3>
+                      <p className="text-xs text-gray-500">
+                        Atividades vinculadas a este dossie.
+                      </p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <aside className="space-y-4">
-            <Card className="border-border bg-white/85">
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    {caso.cliente
-                      .split(' ')
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join('')}
+                    <Link
+                      to={`/app/tarefas?casoId=${caso.id}`}
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                    >
+                      Abrir tarefas
+                    </Link>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-text">{caso.cliente}</p>
-                    <p className="text-xs text-text-subtle">
-                      {lead?.email ?? 'cliente@email.com'}
-                    </p>
+                  <div className="p-5 space-y-3">
+                    {caseTasks.length ? (
+                      caseTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-4"
+                        >
+                          <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
+                            <span
+                              className={cn(
+                                'inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase',
+                                taskStatusPill(task.status)
+                              )}
+                            >
+                              {task.status.replace('_', ' ')}
+                            </span>
+                            {task.dueDate && <span>Vence em {formatDate(task.dueDate)}</span>}
+                          </div>
+                          <p className="mt-2 text-sm font-semibold text-gray-900">
+                            {normalizeChecklistTitle(task.title)}
+                          </p>
+                          {task.description && (
+                            <p className="mt-1 text-xs text-gray-500">{task.description}</p>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 text-sm text-gray-500">
+                        Nenhuma tarefa vinculada a este caso.
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-border bg-white px-3 py-2 text-xs text-text shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
-                  {lead?.phone ?? '(11) 99999-0000'}
-                </div>
-              </CardContent>
-            </Card>
+              )}
 
-            <Card className="border-border bg-white/85">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Tarefas</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 rounded-full px-3"
+              {/* Other tabs */}
+              {activeTab !== 'Tudo' && activeTab !== 'Tarefas' && (
+                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                  <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-900">{activeTab}</h3>
+                    <button
+                      type="button"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                      onClick={openModal}
+                    >
+                      Adicionar nota
+                    </button>
+                  </div>
+                  <div className="p-5 space-y-3">
+                    {filteredEvents.length ? (
+                      filteredEvents.map((event) => (
+                        <div
+                          key={event.id}
+                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-4"
+                        >
+                          <p className="text-sm font-semibold text-gray-900">{event.title}</p>
+                          <p className="text-xs text-gray-500">{event.description}</p>
+                          <p className="mt-2 text-[11px] text-gray-400">
+                            {formatDateTime(event.date)}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 text-sm text-gray-500">
+                        Sem eventos para esta categoria.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Client Info & Tasks */}
+            <div className="space-y-6">
+              {/* Client Card */}
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                <div className="p-5 border-b border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold text-white"
+                      style={{ backgroundColor: '#721011' }}
+                    >
+                      {clientInitials}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{caso.cliente}</h3>
+                      <p className="text-sm text-gray-500">{lead?.email ?? 'cliente@email.com'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5">
+                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <Phone className="w-5 h-5" />
+                    <span>{lead?.phone ?? '+55 31 99999-0000'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tasks Card */}
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Tarefas</h3>
+                  <button
+                    type="button"
+                    className="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                     onClick={openChecklistDrawerForCreate}
                   >
                     Adicionar tarefa
-                  </Button>
+                  </button>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-text-muted">
-                {checklistItems.length === 0 && (
-                  <div className="rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft">
-                    Nenhuma tarefa cadastrada para este caso.
-                  </div>
-                )}
-                {checklistItems.map((item) => (
-                  <div
-                    key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openChecklistDrawer(item.task)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        openChecklistDrawer(item.task)
-                      }
-                    }}
-                    className="flex items-center justify-between rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)] transition hover:bg-surface-2"
-                  >
-                    <span>{item.label}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="text-[11px] font-semibold text-text-subtle hover:text-text"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          openChecklistDrawer(item.task)
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="text-[11px] font-semibold text-text-subtle hover:text-danger"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          handleDeleteChecklist(item.id)
-                        }}
-                      >
-                        Excluir
-                      </button>
-                      <span
-                        className={cn(
-                          'rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase',
-                          item.status === 'ok'
-                            ? 'border-[#CFEBD8] bg-[#E8F7EE] text-[#167A3D]'
-                            : 'border-[#F1D28A] bg-[#FFF1CC] text-[#8A5A00]',
-                        )}
-                      >
-                        {item.status === 'ok' ? 'ok' : 'pendente'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
 
-            <Card className="border-border bg-white/85">
-              <CardHeader>
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle>Notas do caso</CardTitle>
+                <div className="px-5 py-2">
+                  {checklistItems.length === 0 ? (
+                    <div className="py-4 text-center text-sm text-gray-500">
+                      Nenhuma tarefa cadastrada para este caso.
+                    </div>
+                  ) : (
+                    checklistItems.map((item) => (
+                      <TaskItem
+                        key={item.id}
+                        title={item.label}
+                        status={item.status === 'ok' ? 'OK' : 'PENDENTE'}
+                        onEdit={() => openChecklistDrawer(item.task)}
+                        onDelete={() => handleDeleteChecklist(item.id)}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Notes Card */}
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Notas do caso</h3>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="text-xs text-text-subtle hover:text-text"
+                      className="text-sm font-medium hover:underline"
+                      style={{ color: '#721011' }}
                       onClick={handleScrollToTimeline}
                     >
                       Ver linha do tempo
                     </button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 rounded-full px-3"
-                        onClick={openModal}
-                      >
-                        Adicionar nota
-                      </Button>
+                    <button
+                      type="button"
+                      className="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                      onClick={openModal}
+                    >
+                      Adicionar nota
+                    </button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-text-muted">
-                {recentNotas.length ? (
-                  recentNotas.map((nota) => (
-                    <div
-                      key={nota.id}
-                      className="rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                    >
-                      <div className="text-sm font-semibold text-text">{nota.title}</div>
-                      {nota.description && (
-                        <div className="mt-1 text-xs text-text-subtle">{nota.description}</div>
-                      )}
-                      <div className="mt-2 text-[11px] text-text-subtle">
-                        {formatDateTime(nota.date)}
-                      </div>
+
+                <div className="p-5">
+                  {recentNotas.length ? (
+                    <div className="space-y-3">
+                      {recentNotas.map((nota) => (
+                        <div
+                          key={nota.id}
+                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-3"
+                        >
+                          <div className="text-sm font-semibold text-gray-900">{nota.title}</div>
+                          {nota.description && (
+                            <div className="mt-1 text-xs text-gray-500">{nota.description}</div>
+                          )}
+                          <div className="mt-2 text-[11px] text-gray-400">
+                            {formatDateTime(nota.date)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-border bg-white px-3 py-3 text-xs text-text-subtle shadow-soft">
-                    Nenhuma nota registrada para este caso.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  ) : (
+                    <p className="text-center text-sm text-gray-500">
+                      Nenhuma nota registrada para este caso.
+                    </p>
+                  )}
+                </div>
+              </div>
 
-            <Card className="border-border bg-white/85">
-              <CardHeader>
-                <CardTitle>Documentos recentes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-text-muted">
-                {caseDocs.slice(0, 3).map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="rounded-2xl border border-border bg-white px-3 py-2 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+              {/* Recent Documents Card */}
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Documentos recentes</h3>
+                  <Link
+                    to="/app/documentos"
+                    className="text-sm font-medium hover:underline"
+                    style={{ color: '#721011' }}
                   >
-                    <div className="text-sm font-semibold text-text">{doc.title}</div>
-                    <div className="text-xs text-text-subtle">{doc.status}</div>
-                  </div>
-                ))}
-                <Link to="/app/documentos" className="text-xs text-primary hover:underline">
-                  Ver documentos
-                </Link>
-              </CardContent>
-            </Card>
-          </aside>
-        </div>
-      </PageState>
+                    Ver documentos
+                  </Link>
+                </div>
 
+                <div className="p-5">
+                  {caseDocs.length > 0 ? (
+                    <div className="space-y-3">
+                      {caseDocs.slice(0, 3).map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-3"
+                        >
+                          <div className="text-sm font-semibold text-gray-900">{doc.title}</div>
+                          <div className="text-xs text-gray-500">{doc.status}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                        <Folder className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <p className="text-sm text-gray-500">Nenhum documento anexado.</p>
+                      <button
+                        type="button"
+                        className="mt-3 text-sm font-medium flex items-center gap-1 mx-auto hover:gap-2 transition-all"
+                        style={{ color: '#721011' }}
+                      >
+                        <Plus className="w-5 h-5" />
+                        Adicionar documento
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </PageState>
+      </div>
+
+      {/* Modal for adding notes */}
       <Modal
         open={modalOpen}
         onClose={closeModal}
@@ -960,44 +1218,52 @@ export const CasoPage = () => {
         description="Registre uma nova nota do caso."
         footer={
           <>
-            <Button variant="ghost" onClick={closeModal} disabled={eventSaving}>
+            <button
+              type="button"
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={closeModal}
+              disabled={eventSaving}
+            >
               Cancelar
-            </Button>
-              <Button variant="primary" onClick={handleSaveEvent} disabled={eventSaving}>
-                {eventSaving ? 'Salvando...' : 'Salvar nota'}
-              </Button>
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-70"
+              style={{ backgroundColor: '#721011' }}
+              onClick={handleSaveEvent}
+              disabled={eventSaving}
+            >
+              {eventSaving ? 'Salvando...' : 'Salvar nota'}
+            </button>
           </>
         }
       >
         <div className="space-y-4">
           {eventError && (
-            <div className="rounded-2xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
               {eventError}
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-text-subtle">
-              Titulo
-            </label>
-            <Input
+            <label className="text-xs uppercase tracking-wide text-gray-500">Titulo</label>
+            <input
+              type="text"
               placeholder="Descreva a nota"
+              className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
               value={eventForm.title}
-              onChange={(event) =>
-                setEventForm((prev) => ({ ...prev, title: event.target.value }))
-              }
+              onChange={(e) => setEventForm((prev) => ({ ...prev, title: e.target.value }))}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-text-subtle">
-              Categoria
-            </label>
+            <label className="text-xs uppercase tracking-wide text-gray-500">Categoria</label>
             <select
-              className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+              className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
               value={eventForm.category}
-              onChange={(event) =>
+              onChange={(e) =>
                 setEventForm((prev) => ({
                   ...prev,
-                  category: event.target.value as TimelineCategory,
+                  category: e.target.value as TimelineCategory,
                 }))
               }
             >
@@ -1009,56 +1275,46 @@ export const CasoPage = () => {
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-text-subtle">
-              Descricao
-            </label>
+            <label className="text-xs uppercase tracking-wide text-gray-500">Descricao</label>
             <textarea
-              className="min-h-[120px] w-full rounded-2xl border border-border bg-white px-3 py-2 text-sm text-text"
+              className="min-h-[120px] w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
               placeholder="Detalhes da nota"
               value={eventForm.description}
-              onChange={(event) =>
-                setEventForm((prev) => ({ ...prev, description: event.target.value }))
+              onChange={(e) =>
+                setEventForm((prev) => ({ ...prev, description: e.target.value }))
               }
             />
           </div>
         </div>
       </Modal>
+
+      {/* Task Drawer */}
       {taskDrawerOpen &&
         createPortal(
           <div className="fixed inset-0 z-50">
             <div
-              className="absolute inset-0 bg-[rgba(17,24,39,0.35)]"
-              style={{ backdropFilter: 'blur(6px)' }}
+              className="absolute inset-0 bg-black/30"
+              style={{ backdropFilter: 'blur(4px)' }}
               onClick={closeTaskDrawer}
             />
-            <aside className="absolute right-0 top-0 flex h-full w-full max-w-[480px] flex-col rounded-l-2xl border-l border-border bg-white shadow-[0_18px_50px_rgba(18,38,63,0.18)]">
-              <div
-                className="relative overflow-hidden border-b border-border px-6 py-6"
-                style={{
-                  backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.96) 70%, rgba(215,236,255,0.3) 100%), url(${heroLight})`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right top',
-                  backgroundSize: '320px',
-                }}
-              >
+            <aside className="absolute right-0 top-0 flex h-full w-full max-w-[480px] flex-col bg-white shadow-xl">
+              <div className="border-b border-gray-100 px-6 py-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
-                    <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
+                    <p className="text-[11px] uppercase tracking-[0.32em] text-gray-400">
                       Tarefa
                     </p>
-                    <h3 className="font-display text-2xl text-text">
-                      {taskDrawerMode === 'create'
-                        ? 'Nova tarefa'
-                        : taskDrawerForm.title || 'Tarefa'}
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      {taskDrawerMode === 'create' ? 'Nova tarefa' : taskDrawerForm.title || 'Tarefa'}
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-text-muted">
+                      <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-500">
                         Tarefa do caso
                       </span>
                       <span
                         className={cn(
                           'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase',
-                          taskStatusPill(taskDrawerForm.status),
+                          taskStatusPill(taskDrawerForm.status)
                         )}
                       >
                         {taskDrawerForm.status.replace('_', ' ')}
@@ -1066,7 +1322,7 @@ export const CasoPage = () => {
                       <span
                         className={cn(
                           'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase',
-                          taskPriorityPill(taskDrawerForm.priority),
+                          taskPriorityPill(taskDrawerForm.priority)
                         )}
                       >
                         {taskDrawerForm.priority}
@@ -1075,7 +1331,7 @@ export const CasoPage = () => {
                   </div>
                   <button
                     type="button"
-                    className="text-sm text-text-subtle hover:text-text"
+                    className="text-sm text-gray-400 hover:text-gray-700"
                     onClick={closeTaskDrawer}
                     aria-label="Fechar"
                   >
@@ -1084,36 +1340,35 @@ export const CasoPage = () => {
                 </div>
               </div>
 
-              <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 text-sm text-text-muted">
+              <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 text-sm text-gray-600">
                 {taskDrawerError && (
-                  <div className="rounded-2xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
                     {taskDrawerError}
                   </div>
                 )}
                 <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-wide text-text-subtle">
-                    Titulo
-                  </label>
-                  <Input
+                  <label className="text-xs uppercase tracking-wide text-gray-500">Titulo</label>
+                  <input
+                    type="text"
                     placeholder="Descreva a tarefa"
+                    className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                     value={taskDrawerForm.title}
-                    onChange={(event) =>
-                      setTaskDrawerForm((prev) => ({ ...prev, title: event.target.value }))
+                    onChange={(e) =>
+                      setTaskDrawerForm((prev) => ({ ...prev, title: e.target.value }))
                     }
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-wide text-text-subtle">
-                      Status
-                    </label>
+                    <label className="text-xs uppercase tracking-wide text-gray-500">Status</label>
                     <select
-                      className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                       value={taskDrawerForm.status}
-                      onChange={(event) =>
+                      onChange={(e) =>
                         setTaskDrawerForm((prev) => ({
                           ...prev,
-                          status: event.target.value as Tarefa['status'],
+                          status: e.target.value as Tarefa['status'],
                         }))
                       }
                     >
@@ -1123,16 +1378,16 @@ export const CasoPage = () => {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-wide text-text-subtle">
+                    <label className="text-xs uppercase tracking-wide text-gray-500">
                       Prioridade
                     </label>
                     <select
-                      className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                       value={taskDrawerForm.priority}
-                      onChange={(event) =>
+                      onChange={(e) =>
                         setTaskDrawerForm((prev) => ({
                           ...prev,
-                          priority: event.target.value as Tarefa['priority'],
+                          priority: e.target.value as Tarefa['priority'],
                         }))
                       }
                     >
@@ -1143,71 +1398,102 @@ export const CasoPage = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-wide text-text-subtle">
-                    Prazo
-                  </label>
-                  <Input
+                  <label className="text-xs uppercase tracking-wide text-gray-500">Prazo</label>
+                  <input
                     type="date"
+                    className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                     value={taskDrawerForm.dueDate}
-                    onChange={(event) =>
-                      setTaskDrawerForm((prev) => ({ ...prev, dueDate: event.target.value }))
+                    onChange={(e) =>
+                      setTaskDrawerForm((prev) => ({ ...prev, dueDate: e.target.value }))
                     }
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-wide text-text-subtle">
+                  <label className="text-xs uppercase tracking-wide text-gray-500">
                     Descricao
                   </label>
                   <textarea
-                    className="min-h-[120px] w-full rounded-2xl border border-border bg-white px-3 py-2 text-sm text-text"
+                    className="min-h-[120px] w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                     placeholder="Detalhes da tarefa"
                     value={taskDrawerForm.description}
-                    onChange={(event) =>
+                    onChange={(e) =>
                       setTaskDrawerForm((prev) => ({
                         ...prev,
-                        description: event.target.value,
+                        description: e.target.value,
                       }))
                     }
                   />
                 </div>
-                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-text-subtle">
-                    Vinculo
-                  </p>
-                  <p className="mt-2 text-sm text-text">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Vinculo</p>
+                  <p className="mt-2 text-sm text-gray-700">
                     Caso: {caso.title} - {caso.cliente}
                   </p>
                   {taskDrawerTask ? (
-                    <p className="mt-1 text-[11px] text-text-subtle">
+                    <p className="mt-1 text-[11px] text-gray-400">
                       Criada em {formatDateTime(taskDrawerTask.createdAt)}
                     </p>
                   ) : (
-                    <p className="mt-1 text-[11px] text-text-subtle">
+                    <p className="mt-1 text-[11px] text-gray-400">
                       O item sera criado para este caso.
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="border-t border-border bg-white/95 px-6 py-4">
+              <div className="border-t border-gray-100 bg-white px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <Button variant="ghost" onClick={closeTaskDrawer} disabled={taskDrawerSaving}>
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    onClick={closeTaskDrawer}
+                    disabled={taskDrawerSaving}
+                  >
                     Cancelar
-                  </Button>
-                  <Button
-                    variant="primary"
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-70"
+                    style={{ backgroundColor: '#721011' }}
                     onClick={handleSaveTaskDrawer}
                     disabled={taskDrawerSaving}
                   >
                     {taskDrawerSaving ? 'Salvando...' : 'Salvar tarefa'}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </aside>
           </div>,
-          document.body,
+          document.body
         )}
-      </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+        input:focus, select:focus, textarea:focus {
+          --tw-ring-color: rgba(114, 16, 17, 0.2);
+          box-shadow: 0 0 0 2px var(--tw-ring-color);
+          border-color: #721011;
+        }
+
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: #E0E0E0;
+          border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: #BDBDBD;
+        }
+      `}</style>
     </div>
   )
 }

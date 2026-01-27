@@ -13,6 +13,8 @@ import {
   Briefcase,
   Search,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   UserRound,
   Users,
   Database,
@@ -104,6 +106,7 @@ export const AppShell = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false)
   const [sidebarGroupOpen, setSidebarGroupOpen] = React.useState<string | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const profileMenuRef = React.useRef<HTMLDivElement | null>(null)
 
   const profilePath = React.useMemo(() => {
@@ -200,15 +203,37 @@ export const AppShell = () => {
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {/* Sidebar - Desktop */}
       <aside
-        className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col border-r border-gray-200 bg-white lg:flex"
+        className={cn(
+          "fixed left-0 top-0 z-30 hidden h-screen flex-col border-r border-gray-200 bg-white lg:flex transition-all duration-300",
+          sidebarCollapsed ? "w-20" : "w-64"
+        )}
       >
+        {/* Toggle Button */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="absolute -right-3 top-20 z-40 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors"
+          aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+        >
+          {sidebarCollapsed ? (
+            <ChevronRight className="h-4 w-4 text-gray-600" />
+          ) : (
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
+          )}
+        </button>
+
         {/* Logo */}
-        <div className="h-16 flex items-center border-b border-gray-100 px-5">
-          <Logo size="md" />
+        <div className={cn(
+          "h-16 flex items-center border-b border-gray-100 transition-all duration-300",
+          sidebarCollapsed ? "px-3 justify-center" : "px-5"
+        )}>
+          <Logo size="md" collapsed={sidebarCollapsed} />
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
+        <nav className={cn(
+          "flex-1 overflow-y-auto py-4 transition-all duration-300",
+          sidebarCollapsed ? "px-2" : "px-3"
+        )}>
           {sidebarGroups.map((group, index) => {
             const normalizedPath = location.pathname.startsWith('/app/caso/')
               ? '/app/casos'
@@ -222,9 +247,14 @@ export const AppShell = () => {
                 {index > 0 && <div className="my-4" />}
 
                 {/* Section Title */}
-                <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  {group.label}
-                </div>
+                {!sidebarCollapsed && (
+                  <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    {group.label}
+                  </div>
+                )}
+                {sidebarCollapsed && index > 0 && (
+                  <div className="mx-2 border-t border-gray-100" />
+                )}
 
                 {/* Nav Items */}
                 <div className="space-y-1 relative">
@@ -234,8 +264,10 @@ export const AppShell = () => {
                       <NavLink
                         key={item.to}
                         to={item.to}
+                        title={sidebarCollapsed ? item.label : undefined}
                         className={cn(
-                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                          'w-full flex items-center rounded-lg text-sm font-medium transition-all duration-200',
+                          sidebarCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5',
                           isActive
                             ? 'text-gray-900'
                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -248,8 +280,10 @@ export const AppShell = () => {
                         <div className="flex-shrink-0" style={isActive ? { color: '#721011' } : {}}>
                           <item.icon className="h-5 w-5" />
                         </div>
-                        <span className="flex-1 text-left">{item.label}</span>
-                        {isActive && (
+                        {!sidebarCollapsed && (
+                          <span className="flex-1 text-left">{item.label}</span>
+                        )}
+                        {isActive && !sidebarCollapsed && (
                           <div
                             className="w-1 h-6 rounded-full absolute left-0"
                             style={{ backgroundColor: '#721011' }}
@@ -265,18 +299,29 @@ export const AppShell = () => {
         </nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3">
+        <div className={cn(
+          "border-t border-gray-100 transition-all duration-300",
+          sidebarCollapsed ? "p-2" : "p-4"
+        )}>
+          <div className={cn(
+            "flex items-center",
+            sidebarCollapsed ? "justify-center" : "gap-3"
+          )}>
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+              className={cn(
+                "rounded-full flex items-center justify-center text-white font-semibold text-sm",
+                sidebarCollapsed ? "w-10 h-10" : "w-10 h-10"
+              )}
               style={{ backgroundColor: '#721011' }}
             >
               {initials}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{shortName}</p>
-              <p className="text-xs text-gray-500">Perfil</p>
-            </div>
+            {!sidebarCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{shortName}</p>
+                <p className="text-xs text-gray-500">Perfil</p>
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -341,7 +386,10 @@ export const AppShell = () => {
 
       {/* Header */}
       <header
-        className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20 lg:ml-64"
+        className={cn(
+          "h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20 transition-all duration-300",
+          sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
+        )}
       >
         <div className="flex items-center gap-3">
           {/* Mobile Menu Toggle */}
@@ -455,7 +503,10 @@ export const AppShell = () => {
       </header>
 
       {/* Main Content */}
-      <main className="lg:ml-64">
+      <main className={cn(
+        "transition-all duration-300",
+        sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
+      )}>
         <Outlet />
       </main>
 
