@@ -1,5 +1,5 @@
-﻿import * as React from 'react'
-import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase, Pencil, Trash2 } from 'lucide-react'
+import * as React from 'react'
+import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase, Pencil, Trash2, Flame } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
@@ -7,7 +7,6 @@ import { LeadDrawer } from '@/components/LeadDrawer'
 import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import heroLight from '@/assets/hero-light.svg'
 import type { Lead } from '@/types/domain'
 import { formatDateTime, formatPhone } from '@/utils/format'
 import { useLeads } from '@/hooks/useLeads'
@@ -28,18 +27,18 @@ const resolveStatus = (
 }
 
 const statusPill = (status: Lead['status']) => {
-  if (status === 'ganho') return 'border-success-border bg-success-bg text-success'
-  if (status === 'perdido') return 'border-danger-border bg-danger-bg text-danger'
-  if (status === 'proposta') return 'border-warning-border bg-warning-bg text-warning'
-  if (status === 'qualificado') return 'border-info-border bg-info-bg text-info'
-  if (status === 'em_contato') return 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary'
-  return 'border-border bg-surface-2 text-text-muted'
+  if (status === 'ganho') return 'bg-green-50 text-green-700 border-green-200'
+  if (status === 'perdido') return 'bg-red-50 text-red-700 border-red-200'
+  if (status === 'proposta') return 'bg-amber-50 text-amber-700 border-amber-200'
+  if (status === 'qualificado') return 'bg-blue-50 text-blue-700 border-blue-200'
+  if (status === 'em_contato') return 'bg-purple-50 text-purple-700 border-purple-200'
+  return 'bg-gray-50 text-gray-700 border-gray-200'
 }
 
 const heatPill = (heat: Lead['heat']) => {
-  if (heat === 'quente') return 'border-danger-border bg-danger-bg text-danger'
-  if (heat === 'morno') return 'border-warning-border bg-warning-bg text-warning'
-  return 'border-info-border bg-info-bg text-info'
+  if (heat === 'quente') return 'bg-red-50 text-red-700 border-red-200'
+  if (heat === 'morno') return 'bg-amber-50 text-amber-700 border-amber-200'
+  return 'bg-blue-50 text-blue-700 border-blue-200'
 }
 
 export const LeadsPage = () => {
@@ -72,7 +71,6 @@ export const LeadsPage = () => {
     observacoes: '',
   }), [])
 
-  // Estado do formulário de novo lead
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingLeadId)
 
@@ -85,7 +83,7 @@ export const LeadsPage = () => {
     const emNegociacao = leads.filter(l => ['proposta', 'qualificado'].includes(l.status)).length
     const ganhos = leads.filter(l => l.status === 'ganho').length
     const taxaConversao = total > 0 ? ((ganhos / total) * 100).toFixed(1) : '0'
-    
+
     return { total, quentes, emNegociacao, ganhos, taxaConversao }
   }, [leads])
 
@@ -107,8 +105,7 @@ export const LeadsPage = () => {
         lead.phone.replace(/\D/g, '').includes(term.replace(/\D/g, ''))
       const matchesStatus = statusFilter === 'todos' || lead.status === statusFilter
       const matchesHeat = heatFilter === 'todos' || lead.heat === heatFilter
-      
-      // Filtro por aba
+
       if (activeTab === 'Quentes') return matchesQuery && matchesStatus && lead.heat === 'quente'
       if (activeTab === 'Em negociacao') {
         return matchesQuery && matchesHeat && ['proposta', 'qualificado'].includes(lead.status)
@@ -116,7 +113,7 @@ export const LeadsPage = () => {
       if (activeTab === 'Fechados') {
         return matchesQuery && matchesHeat && ['ganho', 'perdido'].includes(lead.status)
       }
-      
+
       return matchesQuery && matchesStatus && matchesHeat
     })
   }, [query, statusFilter, heatFilter, activeTab, leads])
@@ -134,7 +131,6 @@ export const LeadsPage = () => {
     <Button
       variant="primary"
       size="sm"
-      className="h-9 rounded-full px-4"
       onClick={() => {
         resetLeadForm()
         setShowNewLeadForm(true)
@@ -271,499 +267,361 @@ export const LeadsPage = () => {
     }
   }
 
-  // Se está mostrando formulário de novo lead
   if (showNewLeadForm) {
     return (
-      <div
-        className={cn(
-          'min-h-screen pb-12',
-          'bg-base text-text',
-        )}
-      >
-        <div className="space-y-6">
+      <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
-          <header
-            className={cn(
-              'relative overflow-hidden rounded-3xl border p-8 shadow-2xl','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
-            )}
-          >
-            <div
-              className={cn(
-                'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-                'opacity-90',
-              )}
-              style={{ backgroundImage: `url(${heroLight})` }}
-            />
-            <div className="relative z-10">
-              <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className={cn(
-                      'rounded-full p-2',
-                      'bg-emerald-500/20'
-                    )}>
-                      <Zap className={cn('h-5 w-5', 'text-emerald-600')} />
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {isEditing ? 'Editar Lead' : 'Novo Lead'}
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                {isEditing ? 'Ajuste os dados do lead' : 'Preencha os dados do novo lead'}
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                resetLeadForm()
+                setShowNewLeadForm(false)
+              }}
+              variant="outline"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+          </div>
+
+          {/* Formulário */}
+          <div className="bg-white rounded-xl border border-gray-100 p-6">
+            <form className="space-y-6">
+              {/* Informações Pessoais */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Informações do Lead
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Nome Completo *
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        required
+                        value={formData.nome}
+                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                        style={{ focusRingColor: '#721011' } as React.CSSProperties}
+                        placeholder="Digite o nome completo"
+                      />
                     </div>
-                    <p
-                      className={cn(
-                        'text-xs font-bold uppercase tracking-[0.3em]',
-                        'text-emerald-700',
-                      )}
-                    >
-                      {isEditing ? 'Editar Lead' : 'Novo Lead'}
-                    </p>
                   </div>
-                  <h2 className={cn('font-display text-4xl font-bold', 'text-text')}>
-                    {isEditing ? 'Atualizar Oportunidade' : 'Adicionar Oportunidade'}
-                  </h2>
-                  <p className={cn('text-base', 'text-text-muted')}>
-                    {isEditing ? 'Ajuste os dados do lead e salve as alterações' : 'Preencha os dados do novo lead para adicionar ao pipeline'}
-                  </p>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Email *
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Telefone *
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="tel"
+                        required
+                        value={formData.telefone}
+                        onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Empresa
+                    </label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={formData.empresa}
+                        onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
+                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        placeholder="Nome da empresa"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Área de Interesse
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.area}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                      placeholder="Ex: Família, Trabalhista"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Origem
+                    </label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={formData.origem}
+                        onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
+                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        placeholder="Ex: Website, Indicação"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as LeadRow['status'] })}
+                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    >
+                      <option value="novo">Novo</option>
+                      <option value="em_contato">Em Contato</option>
+                      <option value="qualificado">Qualificado</option>
+                      <option value="proposta">Proposta</option>
+                      <option value="ganho">Ganho</option>
+                      <option value="perdido">Perdido</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Temperatura
+                    </label>
+                    <select
+                      value={formData.heat}
+                      onChange={(e) => setFormData({ ...formData, heat: e.target.value as LeadRow['heat'] })}
+                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    >
+                      <option value="frio">Frio</option>
+                      <option value="morno">Morno</option>
+                      <option value="quente">Quente</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Observações
+                    </label>
+                    <textarea
+                      value={formData.observacoes}
+                      onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                      rows={4}
+                      className="w-full rounded-lg border border-gray-200 p-4 text-sm focus:outline-none focus:ring-2"
+                      placeholder="Descreva informações adicionais sobre o lead..."
+                    />
+                  </div>
                 </div>
-                <Button 
+              </div>
+
+              {/* Botões */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleSaveLead}
+                  disabled={saving}
+                  className="flex-1 h-10 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: '#721011' }}
+                >
+                  <Save className="inline mr-2 h-4 w-4" />
+                  {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar Lead'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     resetLeadForm()
                     setShowNewLeadForm(false)
                   }}
-                  variant="outline"
-                  className={cn(
-                    'h-14 rounded-full px-8 font-bold shadow-lg transition-all hover:scale-105','border-border hover:bg-surface-2'
-                  )}
+                  className="px-6 h-10 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  <ArrowLeft className="mr-2 h-5 w-5" />
-                  Voltar
-                </Button>
+                  Cancelar
+                </button>
               </div>
-            </div>
-          </header>
-
-          {/* Formulário */}
-          <Card
-            className={cn(
-              'border',
-              'border-border bg-surface/90',
-            )}
-          >
-            <CardContent className="p-8">
-              <form className="space-y-6">
-                {/* Informações Pessoais */}
-                <div>
-                  <h3 className={cn('mb-4 text-lg font-bold', 'text-text')}>
-                    Informações do Lead
-                  </h3>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Nome Completo *
-                      </label>
-                      <div className="relative">
-                        <User className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
-                        <input
-                          type="text"
-                          required
-                          value={formData.nome}
-                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                          className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                          )}
-                          placeholder="Digite o nome completo"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Email *
-                      </label>
-                      <div className="relative">
-                        <Mail className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
-                        <input
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                          )}
-                          placeholder="email@exemplo.com"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Telefone *
-                      </label>
-                      <div className="relative">
-                        <Phone className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
-                        <input
-                          type="tel"
-                          required
-                          value={formData.telefone}
-                          onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                          className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                          )}
-                          placeholder="(00) 00000-0000"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Empresa
-                      </label>
-                      <div className="relative">
-                        <Briefcase className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
-                        <input
-                          type="text"
-                          value={formData.empresa}
-                          onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
-                          className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                          )}
-                          placeholder="Nome da empresa"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Origem
-                      </label>
-                      <div className="relative">
-                        <MapPin className={cn('absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2', 'text-slate-400')} />
-                        <input
-                          type="text"
-                          value={formData.origem}
-                          onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
-                          className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                          )}
-                          placeholder="Ex: Website, Indicação, Redes Sociais"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Detalhes do Lead */}
-                <div>
-                  <h3 className={cn('mb-4 text-lg font-bold', 'text-text')}>
-                    Detalhes da Oportunidade
-                  </h3>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Status
-                      </label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value as LeadRow['status'] })}
-                        className={cn(
-                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
-                        )}
-                      >
-                        <option value="novo">Novo</option>
-                        <option value="em_contato">Em Contato</option>
-                        <option value="qualificado">Qualificado</option>
-                        <option value="proposta">Proposta</option>
-                        <option value="ganho">Ganho</option>
-                        <option value="perdido">Perdido</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Temperatura
-                      </label>
-                      <select
-                        value={formData.heat}
-                        onChange={(e) => setFormData({ ...formData, heat: e.target.value as LeadRow['heat'] })}
-                        className={cn(
-                          'h-12 w-full rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
-                        )}
-                      >
-                        <option value="frio">Frio</option>
-                        <option value="morno">Morno</option>
-                        <option value="quente">Quente</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Area de Interesse
-                      </label>
-                      <div className="relative">
-                        <Briefcase className={cn('absolute left-4 top-4 h-5 w-5', 'text-slate-400')} />
-                        <input
-                          type="text"
-                          value={formData.area}
-                          onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                          className={cn(
-                            'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                          )}
-                          placeholder="Ex: Consultoria jurídica, Contrato empresarial"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <label className={cn('text-sm font-semibold', 'text-slate-700')}>
-                        Resumo / Observações
-                      </label>
-                      <textarea
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                        rows={4}
-                        className={cn(
-                          'w-full rounded-xl border-2 p-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                        )}
-                        placeholder="Descreva informações adicionais sobre o lead..."
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botões de Ação */}
-                <div className="flex flex-wrap gap-4 pt-4">
-                  <Button
-                    type="button"
-                    onClick={handleSaveLead}
-                    disabled={saving}
-                    className={cn(
-                      'h-14 flex-1 rounded-xl px-8 font-bold shadow-xl transition-all hover:scale-105 disabled:opacity-50','bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
-                    )}
-                  >
-                    <Save className="mr-2 h-5 w-5" />
-                    {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar Lead'}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      resetLeadForm()
-                      setShowNewLeadForm(false)
-                    }}
-                    variant="outline"
-                    className={cn(
-                      'h-14 rounded-xl border-2 px-8 font-bold transition-all hover:scale-105','border-border hover:bg-surface-2'
-                    )}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+            </form>
+          </div>
         </div>
+
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+          input:focus, select:focus, textarea:focus {
+            --tw-ring-color: #721011;
+            border-color: #721011;
+          }
+        `}</style>
       </div>
     )
   }
 
   return (
-    <div
-      className={cn(
-        'min-h-screen pb-12',
-        'bg-base text-text',
-      )}
-    >
+    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
-        {/* Header com gradiente moderno voltado para vendas */}
-        <header
-          className={cn(
-            'relative overflow-hidden rounded-3xl border p-8 shadow-2xl','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
-          )}
-        >
-          <div
-            className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              'opacity-90',
-            )}
-            style={{ backgroundImage: `url(${heroLight})` }}
-          />
-          <div className="relative z-10">
-            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className={cn(
-                    'rounded-full p-2',
-                    'bg-emerald-500/20'
-                  )}>
-                    <TrendingUp className={cn('h-5 w-5', 'text-emerald-600')} />
-                  </div>
-                  <p
-                    className={cn(
-                      'text-xs font-bold uppercase tracking-[0.3em]',
-                      'text-emerald-700',
-                    )}
-                  >
-                    Pipeline de Vendas
-                  </p>
+        {/* Header */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                >
+                  <TrendingUp className="h-5 w-5" />
                 </div>
-                <h2 className={cn('font-display text-4xl font-bold', 'text-text')}>
-                  Gestão de Leads
-                </h2>
-                <p className={cn('text-base', 'text-text-muted')}>
-                  Acompanhe oportunidades e impulsione suas vendas
-                </p>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Pipeline de Vendas
+                </span>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  variant="outline"
-                  className="h-14 rounded-full px-6 font-semibold"
-                  onClick={() => {
-                    void fetchLeads()
-                  }}
-                  disabled={loading}
-                >
-                  Atualizar
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (!canManageLeads) {
-                      toast.error('Apenas gestores podem adicionar leads.')
-                      return
-                    }
-                    resetLeadForm()
-                    setShowNewLeadForm(true)
-                  }}
-                  className={cn(
-                    'group h-14 rounded-full px-8 font-bold shadow-xl transition-all hover:scale-105 hover:shadow-2xl',
-                    'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600',
-                  )}
-                  disabled={!canManageLeads}
-                >
-                  <Zap className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
-                  Novo Lead
-                  <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                </Button>
-              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Gestão de Leads</h1>
+              <p className="text-sm text-gray-500 mt-1">
+                Acompanhe oportunidades e impulsione suas vendas
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => void fetchLeads()}
+                disabled={loading}
+                className="px-4 py-2 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Atualizar
+              </button>
+              <button
+                onClick={() => {
+                  if (!canManageLeads) {
+                    toast.error('Apenas gestores podem adicionar leads.')
+                    return
+                  }
+                  resetLeadForm()
+                  setShowNewLeadForm(true)
+                }}
+                disabled={!canManageLeads}
+                className="px-6 py-2 rounded-lg font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50"
+                style={{ backgroundColor: '#721011' }}
+              >
+                <Zap className="inline mr-2 h-4 w-4" />
+                Novo Lead
+              </button>
             </div>
           </div>
-        </header>
-
-        {/* Cards de métricas - estilo CRM de vendas */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className={cn(
-            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            'border-border bg-white hover:border-blue-500/30'
-          )}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
-                    Total Pipeline
-                  </p>
-                  <p className="text-4xl font-bold tracking-tight">{metrics.total}</p>
-                  <p className={cn('text-xs font-medium', 'text-slate-500')}>
-                    oportunidades ativas
-                  </p>
-                </div>
-                <div className={cn(
-                  'rounded-2xl p-4 transition-colors',
-                  'bg-blue-50 group-hover:bg-blue-100'
-                )}>
-                  <TrendingUp className={cn('h-8 w-8', 'text-blue-600')} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={cn(
-            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            'border-border bg-white hover:border-red-500/30'
-          )}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
-                    Leads Quentes
-                  </p>
-                  <p className="text-4xl font-bold tracking-tight text-red-500">{metrics.quentes}</p>
-                  <p className={cn('text-xs font-medium uppercase', 'text-red-600')}>
-                    Acao imediata
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-gradient-to-br from-red-500/10 to-orange-500/10 p-4 group-hover:from-red-500/20 group-hover:to-orange-500/20">
-                  <Zap className="h-8 w-8 text-red-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={cn(
-            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            'border-border bg-white hover:border-amber-500/30'
-          )}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
-                    Em negociacao
-                  </p>
-                  <p className="text-4xl font-bold tracking-tight text-amber-500">{metrics.emNegociacao}</p>
-                  <p className={cn('text-xs font-medium', 'text-amber-600')}>
-                    Propostas ativas
-                  </p>
-                </div>
-                <div className={cn(
-                  'rounded-2xl p-4 transition-colors',
-                  'bg-amber-500/10 group-hover:bg-amber-500/20'
-                )}>
-                  <Clock className={cn('h-8 w-8', 'text-amber-600')} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={cn(
-            'group border transition-all duration-300 hover:scale-105 hover:shadow-xl',
-            'border-border bg-white hover:border-emerald-500/30'
-          )}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className={cn('text-sm font-semibold', 'text-slate-600')}>
-                    Taxa de conversao
-                  </p>
-                  <p className="text-4xl font-bold tracking-tight text-emerald-500">{metrics.taxaConversao}%</p>
-                  <p className={cn('text-xs font-medium', 'text-emerald-600')}>
-                    {metrics.ganhos} fechamentos
-                  </p>
-                </div>
-                <div className={cn(
-                  'rounded-2xl p-4 transition-colors',
-                  'bg-emerald-500/10 group-hover:bg-emerald-500/20'
-                )}>
-                  <DollarSign className={cn('h-8 w-8', 'text-emerald-600')} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Tabela de Leads - Design Moderno */}
-        <Card
-          className={cn(
-            'border',
-            'border-border bg-surface/90',
-          )}
-        >
-          <CardContent className="p-6 space-y-5">
+        {/* Métricas */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(114, 16, 17, 0.15)', color: '#721011' }}
+              >
+                <TrendingUp className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="text-2xl font-bold text-gray-900">{metrics.total}</div>
+              <div className="text-sm text-gray-500 mt-1">Total Pipeline</div>
+              <div className="text-xs text-gray-400 mt-1">oportunidades ativas</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}
+              >
+                <Flame className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="text-2xl font-bold" style={{ color: '#ef4444' }}>{metrics.quentes}</div>
+              <div className="text-sm text-gray-500 mt-1">Leads Quentes</div>
+              <div className="text-xs" style={{ color: '#ef4444' }}>AÇÃO IMEDIATA</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(191, 111, 50, 0.15)', color: '#BF6F32' }}
+              >
+                <Clock className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="text-2xl font-bold" style={{ color: '#BF6F32' }}>{metrics.emNegociacao}</div>
+              <div className="text-sm text-gray-500 mt-1">Em negociação</div>
+              <div className="text-xs text-gray-400 mt-1">Propostas ativas</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }}
+              >
+                <DollarSign className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="text-2xl font-bold" style={{ color: '#22c55e' }}>{metrics.taxaConversao}%</div>
+              <div className="text-sm text-gray-500 mt-1">Taxa de conversão</div>
+              <div className="text-xs text-gray-400 mt-1">{metrics.ganhos} fechamentos</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Lista de Leads */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="space-y-4">
             {/* Tabs e Filtros */}
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap gap-3">
                 {tabs.map((tab) => (
                   <button
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab)}
                     className={cn(
-                      'rounded-full border-2 px-6 py-2.5 text-sm font-bold transition-all',
+                      'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                       activeTab === tab
-                        ?'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-500/10'
-                        :'border-border bg-white text-text-muted hover:border-emerald-400 hover:bg-surface-2'
+                        ? 'text-white shadow-md'
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                     )}
+                    style={activeTab === tab ? { backgroundColor: '#721011' } : {}}
                   >
                     {tab}
                   </button>
@@ -771,27 +629,19 @@ export const LeadsPage = () => {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                {/* Barra de Busca */}
                 <div className="relative flex-1 min-w-[300px]">
-                  <Search className={cn(
-                    'absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2',
-                    'text-slate-500'
-                  )} />
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <input
-                    className={cn(
-                      'h-12 w-full rounded-xl border-2 pl-12 pr-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text placeholder:text-text-subtle focus:border-emerald-500 focus:ring-emerald-200',
-                    )}
+                    className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                    style={{ '--tw-ring-color': '#721011' } as React.CSSProperties}
                     placeholder="Buscar por nome, telefone ou área..."
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                   />
                 </div>
 
-                {/* Filtros */}
                 <select
-                  className={cn(
-                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
-                  )}
+                  className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
@@ -804,9 +654,7 @@ export const LeadsPage = () => {
                 </select>
 
                 <select
-                  className={cn(
-                    'h-12 rounded-xl border-2 px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4','border-border bg-white text-text focus:border-emerald-500 focus:ring-emerald-200',
-                  )}
+                  className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
                   value={heatFilter}
                   onChange={(event) => setHeatFilter(event.target.value)}
                 >
@@ -818,20 +666,17 @@ export const LeadsPage = () => {
                   ))}
                 </select>
 
-                <Button
-                  variant="outline"
+                <button
                   onClick={resetFilters}
-                  className={cn(
-                    'h-12 rounded-xl border-2 px-6 font-semibold','border-border hover:bg-surface-2'
-                  )}
+                  className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  <Filter className="mr-2 h-4 w-4" />
+                  <Filter className="inline mr-2 h-4 w-4" />
                   Limpar
-                </Button>
+                </button>
               </div>
             </div>
 
-            {/* Lista de Leads - Cards Modernos */}
+            {/* Lista */}
             <PageState
               status={pageState}
               emptyTitle="Nenhum lead encontrado"
@@ -846,122 +691,82 @@ export const LeadsPage = () => {
                     .map((part) => part[0])
                     .slice(0, 2)
                     .join('')
-                  
+
                   return (
                     <div
                       key={lead.id}
                       onClick={() => setSelectedLead(lead)}
-                      className={cn(
-                        'group cursor-pointer rounded-2xl border-2 p-5 transition-all hover:scale-[1.01] hover:shadow-xl','border-border bg-white hover:border-emerald-400 hover:bg-emerald-50/30',
-                      )}
+                      className="group cursor-pointer rounded-xl border border-gray-100 p-4 transition-all hover:shadow-md hover:border-gray-200"
                     >
                       <div className="flex flex-wrap items-center gap-4">
-                        {/* Avatar */}
-                        <div className={cn(
-                          'flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold shadow-lg transition-transform group-hover:scale-110','bg-gradient-to-br from-emerald-500 to-teal-500 text-white'
-                        )}>
+                        <div
+                          className="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-bold text-white"
+                          style={{ backgroundColor: '#721011' }}
+                        >
                           {initials}
                         </div>
 
-                        {/* Informações */}
                         <div className="flex-1 min-w-[200px]">
                           <div className="flex items-center gap-2">
-                            <h3 className={cn(
-                              'text-lg font-bold',
-                              'text-text'
-                            )}>
+                            <h3 className="text-base font-semibold text-gray-900">
                               {lead.name}
                             </h3>
                             <span
                               className={cn(
-                                'inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-bold',
+                                'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium',
                                 heatPill(lead.heat)
                               )}
                             >
-                              {lead.heat === 'quente' ? 'Quente' : lead.heat === 'morno' ? 'Morno' : 'Frio'}
                               {lead.heat}
                             </span>
                           </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm">
-                            <span className={cn('flex items-center gap-1', 'text-slate-600')}>
-                              <Mail className="h-4 w-4" />
+                          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
                               {lead.email}
                             </span>
-                            <span className={cn('flex items-center gap-1', 'text-slate-600')}>
-                              <Phone className="h-4 w-4" />
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
                               {formatPhone(lead.phone)}
                             </span>
                           </div>
                         </div>
 
-                        {/* Status e Ações */}
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <span
                               className={cn(
-                                'inline-flex rounded-xl border-2 px-4 py-1.5 text-sm font-bold capitalize',
+                                'inline-flex rounded-lg border px-3 py-1 text-xs font-medium capitalize',
                                 statusPill(lead.status)
                               )}
                             >
                               {lead.status}
                             </span>
-                            <p className={cn('mt-1 text-xs font-medium', 'text-slate-500')}>
-                              {lead.area}
-                            </p>
+                            <p className="mt-1 text-xs text-gray-500">{lead.area}</p>
                           </div>
-                          
-                          <div className="flex flex-col gap-2">
-                            <Button
-                              size="sm"
-                              className={cn(
-                                'h-9 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 font-semibold shadow-md hover:from-emerald-500 hover:to-teal-500'
-                              )}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                // Ação de contato
-                              }}
-                            >
-                              <MessageSquare className="h-4 w-4" />
-                            </Button>
+
+                          <div className="flex gap-2">
                             {canManageLeads && (
                               <>
                                 <button
                                   type="button"
-                                  title="Encaminhar"
-                                  className={cn(
-                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition','border-border bg-white text-text-muted hover:border-emerald-400 hover:text-emerald-600'
-                                  )}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setAssigningLeadId((current) => (current === lead.id ? null : lead.id))
-                                    setSelectedAdvogadoId('')
-                                  }}
-                                >
-                                  <User className="h-4 w-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className={cn(
-                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition','border-border bg-white text-text-muted hover:border-emerald-400 hover:text-emerald-600'
-                                  )}
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleEditLead(lead.id)
                                   }}
                                 >
-                                  <Pencil className="h-4 w-4" />
+                                  <Pencil className="h-4 w-4 text-gray-600" />
                                 </button>
                                 <button
                                   type="button"
-                                  className={cn(
-                                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border text-xs font-semibold transition','border-border bg-white text-text-muted hover:border-red-400 hover:text-red-600'
-                                  )}
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-red-50 transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleDeleteLead(lead.id, lead.name)
                                   }}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-4 w-4 text-red-600" />
                                 </button>
                               </>
                             )}
@@ -971,16 +776,12 @@ export const LeadsPage = () => {
 
                       {canManageLeads && assigningLeadId === lead.id && (
                         <div
-                          className={cn(
-                            'mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-xs','border-border bg-surface-2/70 text-text-muted',
-                          )}
+                          className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <span className="text-xs font-semibold">Encaminhar para</span>
+                          <span className="text-xs font-medium text-gray-700">Encaminhar para</span>
                           <select
-                            className={cn(
-                              'h-9 rounded-lg border px-3 text-xs','border-border bg-white text-text',
-                            )}
+                            className="h-8 rounded-lg border border-gray-200 px-3 text-xs bg-white"
                             value={selectedAdvogadoId}
                             onChange={(event) => setSelectedAdvogadoId(event.target.value)}
                           >
@@ -991,23 +792,18 @@ export const LeadsPage = () => {
                               </option>
                             ))}
                           </select>
-                          <Button
-                            size="sm"
-                            className="h-9 px-4 text-xs"
+                          <button
+                            className="h-8 px-4 rounded-lg text-xs font-medium text-white"
+                            style={{ backgroundColor: '#721011' }}
                             onClick={(event) => {
                               event.stopPropagation()
                               void handleEncaminharLead(lead.id)
                             }}
                           >
                             Encaminhar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={cn(
-                              'h-9 px-4 text-xs',
-                              'text-text-muted hover:text-text',
-                            )}
+                          </button>
+                          <button
+                            className="h-8 px-4 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:bg-white"
                             onClick={(event) => {
                               event.stopPropagation()
                               setAssigningLeadId(null)
@@ -1015,20 +811,13 @@ export const LeadsPage = () => {
                             }}
                           >
                             Cancelar
-                          </Button>
-                          {advogados.length === 0 && (
-                            <span className="text-xs">Nenhum advogado cadastrado</span>
-                          )}
+                          </button>
                         </div>
                       )}
 
-                      {/* Rodapé do Card */}
                       {lead.lastContactAt && (
-                        <div className={cn(
-                          'mt-3 flex items-center gap-2 border-t pt-3 text-xs font-medium',
-                          'border-slate-200 text-slate-500'
-                        )}>
-                          <Clock className="h-3.5 w-3.5" />
+                        <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
+                          <Clock className="h-3 w-3" />
                           Último contato: {formatDateTime(lead.lastContactAt)}
                           {lead.owner && (
                             <>
@@ -1043,8 +832,8 @@ export const LeadsPage = () => {
                 })}
               </div>
             </PageState>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <LeadDrawer
@@ -1053,7 +842,32 @@ export const LeadsPage = () => {
         relatedCase={relatedCase}
         onClose={() => setSelectedLead(null)}
       />
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+        input:focus, select:focus, textarea:focus {
+          --tw-ring-color: #721011;
+          border-color: #721011;
+        }
+
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: #E0E0E0;
+          border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: #BDBDBD;
+        }
+      `}</style>
     </div>
   )
 }
-
