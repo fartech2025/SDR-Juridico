@@ -14,17 +14,35 @@ import {
   TrendingUp,
   BarChart3,
   Filter,
-  Plus
+  Plus,
+  ClipboardList,
+  ListTodo
 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { Modal } from '@/components/ui/modal'
-import type { AgendaItem, AgendaStatus } from '@/types/domain'
+import type { AgendaItem, AgendaStatus, Tarefa } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useAgenda } from '@/hooks/useAgenda'
+import { useTarefas } from '@/hooks/useTarefas'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useGoogleCalendarCreate } from '@/hooks/useGoogleCalendarCreate'
+
+// Unified calendar item type
+type CalendarItemType = 'evento' | 'tarefa'
+interface UnifiedCalendarItem {
+  id: string
+  title: string
+  date: string
+  time: string
+  durationMinutes: number
+  tipo: string
+  status: AgendaStatus
+  cliente?: string
+  itemType: CalendarItemType
+  originalItem: AgendaItem | Tarefa
+}
 
 const resolveStatus = (
   value: string | null,
@@ -89,7 +107,14 @@ const tipoIcons: Record<string, React.ReactNode> = {
   videochamada: <Video className="h-3.5 w-3.5" />,
   audiencia: <Gavel className="h-3.5 w-3.5" />,
   prazo: <Clock className="h-3.5 w-3.5" />,
+  tarefa: <ListTodo className="h-3.5 w-3.5" />,
   default: <Calendar className="h-3.5 w-3.5" />,
+}
+
+// Tarefa styles
+const tarefaStyles = {
+  container: 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-300 text-purple-900',
+  badge: 'bg-purple-100 border-purple-200 text-purple-700',
 }
 
 const statusIcons: Record<AgendaStatus, React.ReactNode> = {
@@ -149,13 +174,75 @@ const buildFormState = (overrides: Partial<EditorFormState> = {}): EditorFormSta
 export const AgendaPage = () => {
   const {
     eventos: agendaItems,
-    loading,
-    error,
+    loading: loadingAgenda,
+    error: errorAgenda,
     createEvento,
     updateEvento,
     deleteEvento,
   } = useAgenda()
+  const {
+    tarefas,
+    loading: loadingTarefas,
+    error: errorTarefas,
+  } = useTarefas()
   const { displayName, user } = useCurrentUser()
+
+  const loading = loadingAgenda || loadingTarefas
+  const error = errorAgenda || errorTarefas
+
+  // Convert tarefas to unified calendar items
+  const tarefasAsCalendarItems = React.useMemo((): UnifiedCalendarItem[] => {
+    return tarefas
+      .filter(t => t.dueDate && t.status !== 'concluida')
+      .map(t => {
+        const dueDate = new Date(t.dueDate!)
+        const dateStr = toIsoDate(dueDate)
+        const timeStr = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`
+
+        // Map tarefa status to agenda status for styling
+        const statusMap: Record<string, AgendaStatus> = {
+          pendente: 'pendente',
+          em_progresso: 'confirmado',
+          aguardando_validacao: 'pendente',
+          concluida: 'concluido',
+          devolvida: 'cancelado',
+        }
+
+        return {
+          id: `tarefa-${t.id}`,
+          title: t.title,
+          date: dateStr,
+          time: timeStr || '09:00',
+          durationMinutes: 60,
+          tipo: 'tarefa',
+          status: statusMap[t.status] || 'pendente',
+          cliente: t.casoId ? 'Vinculado a caso' : undefined,
+          itemType: 'tarefa' as CalendarItemType,
+          originalItem: t,
+        }
+      })
+  }, [tarefas])
+
+  // Convert agenda items to unified calendar items
+  const agendaAsCalendarItems = React.useMemo((): UnifiedCalendarItem[] => {
+    return agendaItems.map(item => ({
+      id: item.id,
+      title: item.title,
+      date: item.date,
+      time: item.time,
+      durationMinutes: item.durationMinutes,
+      tipo: item.tipo || item.type || 'default',
+      status: item.status,
+      cliente: item.cliente,
+      itemType: 'evento' as CalendarItemType,
+      originalItem: item,
+    }))
+  }, [agendaItems])
+
+  // Combined items
+  const allCalendarItems = React.useMemo(() => {
+    return [...agendaAsCalendarItems, ...tarefasAsCalendarItems]
+  }, [agendaAsCalendarItems, tarefasAsCalendarItems])
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [viewMode, setViewMode] = React.useState<'week' | 'month'>('week')
@@ -227,10 +314,10 @@ export const AgendaPage = () => {
   }, [currentDate])
 
   const eventsByDate = React.useMemo(() => {
-    const map = new Map<string, AgendaItem[]>()
+    const map = new Map<string, UnifiedCalendarItem[]>()
     const filteredItems = activeFilter === 'all'
-      ? agendaItems
-      : agendaItems.filter(item => item.tipo === activeFilter)
+      ? allCalendarItems
+      : allCalendarItems.filter(item => item.tipo === activeFilter)
 
     filteredItems.forEach((item) => {
       const list = map.get(item.date) ?? []
@@ -239,13 +326,13 @@ export const AgendaPage = () => {
     })
     map.forEach((list) => list.sort((a, b) => toMinutes(a.time) - toMinutes(b.time)))
     return map
-  }, [agendaItems, activeFilter])
+  }, [allCalendarItems, activeFilter])
 
   const calendarEvents = React.useMemo(() => {
     const weekDates = new Set(weekDays.map((day) => day.iso))
     const filteredItems = activeFilter === 'all'
-      ? agendaItems
-      : agendaItems.filter(item => item.tipo === activeFilter)
+      ? allCalendarItems
+      : allCalendarItems.filter(item => item.tipo === activeFilter)
 
     return filteredItems
       .filter((item) => weekDates.has(item.date))
@@ -258,24 +345,24 @@ export const AgendaPage = () => {
         const span = Math.max(1, Math.ceil(item.durationMinutes / 60))
         return { id: item.id, dayIndex, slotIndex, span, item }
       })
-      .filter(Boolean) as Array<{ id: string; dayIndex: number; slotIndex: number; span: number; item: AgendaItem }>
-  }, [agendaItems, weekDays, activeFilter])
+      .filter(Boolean) as Array<{ id: string; dayIndex: number; slotIndex: number; span: number; item: UnifiedCalendarItem }>
+  }, [allCalendarItems, weekDays, activeFilter])
 
   const upcomingItems = React.useMemo(() => {
     const now = new Date()
-    return agendaItems
+    return allCalendarItems
       .map((item) => ({ item, at: new Date(`${item.date}T${item.time}:00`) }))
       .filter(({ at }) => !Number.isNaN(at.getTime()) && at >= now)
       .sort((a, b) => a.at.getTime() - b.at.getTime())
       .map(({ item }) => item)
-  }, [agendaItems])
+  }, [allCalendarItems])
 
   const metrics = React.useMemo(() => {
     const now = new Date()
     const weekStart = startOfWeek(now)
     const weekEnd = addDays(weekStart, 7)
 
-    const thisWeekEvents = agendaItems.filter(item => {
+    const thisWeekEvents = allCalendarItems.filter(item => {
       const eventDate = new Date(item.date)
       return eventDate >= weekStart && eventDate < weekEnd
     })
@@ -283,12 +370,15 @@ export const AgendaPage = () => {
     const totalMinutes = thisWeekEvents.reduce((sum, item) => sum + (item.durationMinutes || 30), 0)
     const hoursScheduled = Math.round(totalMinutes / 60 * 10) / 10
 
-    const confirmed = agendaItems.filter(e => e.status === 'confirmado').length
-    const total = agendaItems.length
+    const confirmed = allCalendarItems.filter(e => e.status === 'confirmado').length
+    const total = allCalendarItems.length
     const confirmationRate = total > 0 ? Math.round((confirmed / total) * 100) : 0
 
-    return { hoursScheduled, eventsThisWeek: thisWeekEvents.length, confirmationRate }
-  }, [agendaItems])
+    const tarefasCount = tarefasAsCalendarItems.length
+    const audienciasCount = allCalendarItems.filter(e => e.tipo === 'audiencia').length
+
+    return { hoursScheduled, eventsThisWeek: thisWeekEvents.length, confirmationRate, tarefasCount, audienciasCount }
+  }, [allCalendarItems, tarefasAsCalendarItems])
 
   const openEditor = (mode: 'create' | 'edit', item?: AgendaItem | null) => {
     if (mode === 'edit' && item) {
@@ -453,33 +543,44 @@ export const AgendaPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                <Clock className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{metrics.hoursScheduled}h</p>
-                <p className="text-sm text-gray-500">Esta semana</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                <BarChart3 className="h-5 w-5 text-green-600" />
+                <Calendar className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{metrics.eventsThisWeek}</p>
-                <p className="text-sm text-gray-500">Eventos</p>
+                <p className="text-sm text-gray-500">Eventos semana</p>
               </div>
             </div>
           </div>
           <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                <TrendingUp className="h-5 w-5 text-purple-600" />
+                <ListTodo className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{metrics.tarefasCount}</p>
+                <p className="text-sm text-gray-500">Tarefas</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                <Gavel className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{metrics.audienciasCount}</p>
+                <p className="text-sm text-gray-500">Audiências</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{metrics.confirmationRate}%</p>
@@ -540,6 +641,18 @@ export const AgendaPage = () => {
               >
                 <Gavel className="h-3 w-3" />
                 Audiência
+              </button>
+              <button
+                onClick={() => setActiveFilter('tarefa')}
+                className={cn(
+                  'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
+                  activeFilter === 'tarefa'
+                    ? 'border-purple-600 bg-purple-600 text-white'
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                )}
+              >
+                <ListTodo className="h-3 w-3" />
+                Tarefas
               </button>
             </div>
 
@@ -687,9 +800,18 @@ export const AgendaPage = () => {
                                 </button>
 
                                 {slotEvents.map((event) => {
-                                  const styles = statusStyles[event.item.status] ?? statusStyles.pendente
+                                  const isTarefa = event.item.itemType === 'tarefa'
+                                  const styles = isTarefa ? tarefaStyles : (statusStyles[event.item.status] ?? statusStyles.pendente)
                                   const tipoIcon = tipoIcons[event.item.tipo || 'default'] || tipoIcons.default
                                   const statusIcon = statusIcons[event.item.status]
+
+                                  const handleClick = () => {
+                                    if (isTarefa) {
+                                      navigate('/app/tarefas')
+                                    } else {
+                                      openEditor('edit', event.item.originalItem as AgendaItem)
+                                    }
+                                  }
 
                                   return (
                                     <div
@@ -703,9 +825,9 @@ export const AgendaPage = () => {
                                       style={{
                                         height: event.span > 1 ? `calc(${event.span * 6}rem + ${(event.span - 1) * 0.25}rem - 0.5rem)` : 'calc(100% - 0.5rem)'
                                       }}
-                                      onClick={() => openEditor('edit', event.item)}
+                                      onClick={handleClick}
                                       onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') openEditor('edit', event.item)
+                                        if (e.key === 'Enter' || e.key === ' ') handleClick()
                                       }}
                                     >
                                       <div className="flex items-center justify-between text-[0.625rem] font-semibold mb-1">
@@ -713,9 +835,15 @@ export const AgendaPage = () => {
                                           {tipoIcon}
                                           <span>{event.item.time}</span>
                                         </div>
-                                        <span className="rounded-full bg-white/50 px-1.5 py-0.5 text-[0.5625rem]">
-                                          {event.item.durationMinutes || 30}min
-                                        </span>
+                                        {isTarefa ? (
+                                          <span className="rounded-full bg-white/50 px-1.5 py-0.5 text-[0.5625rem]">
+                                            Tarefa
+                                          </span>
+                                        ) : (
+                                          <span className="rounded-full bg-white/50 px-1.5 py-0.5 text-[0.5625rem]">
+                                            {event.item.durationMinutes || 30}min
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="text-[0.75rem] font-bold leading-tight truncate">
                                         {event.item.title}
@@ -726,7 +854,7 @@ export const AgendaPage = () => {
                                       <div className="mt-1 flex items-center gap-1">
                                         <span className={cn('inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[0.5625rem] font-semibold', styles.badge)}>
                                           {statusIcon}
-                                          <span className="hidden sm:inline">{statusLabels[event.item.status]}</span>
+                                          <span className="hidden sm:inline">{isTarefa ? 'Tarefa' : statusLabels[event.item.status]}</span>
                                         </span>
                                       </div>
                                     </div>
@@ -785,20 +913,38 @@ export const AgendaPage = () => {
                               )}
                             </div>
                             <div className="mt-2 space-y-1">
-                              {dayEvents.slice(0, 3).map((event) => (
-                                <button
-                                  key={event.id}
-                                  type="button"
-                                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-left text-[11px] text-gray-700 hover:bg-gray-100 transition"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    openEditor('edit', event)
-                                  }}
-                                >
-                                  <div className="truncate font-semibold">{event.title}</div>
-                                  <div className="text-[10px] text-gray-500">{event.time}</div>
-                                </button>
-                              ))}
+                              {dayEvents.slice(0, 3).map((event) => {
+                                const isTarefa = event.itemType === 'tarefa'
+                                return (
+                                  <button
+                                    key={event.id}
+                                    type="button"
+                                    className={cn(
+                                      "w-full rounded-lg border px-2 py-1 text-left text-[11px] transition",
+                                      isTarefa
+                                        ? "border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100"
+                                        : event.tipo === 'audiencia'
+                                          ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                          : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                                    )}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      if (isTarefa) {
+                                        navigate('/app/tarefas')
+                                      } else {
+                                        openEditor('edit', event.originalItem as AgendaItem)
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-1 truncate font-semibold">
+                                      {isTarefa && <ListTodo className="h-2.5 w-2.5" />}
+                                      {event.tipo === 'audiencia' && <Gavel className="h-2.5 w-2.5" />}
+                                      <span className="truncate">{event.title}</span>
+                                    </div>
+                                    <div className="text-[10px] opacity-75">{event.time}</div>
+                                  </button>
+                                )
+                              })}
                               {dayEvents.length > 3 && (
                                 <div className="text-[10px] font-medium text-gray-500">
                                   +{dayEvents.length - 3} compromissos
@@ -861,19 +1007,19 @@ export const AgendaPage = () => {
                       <div className="flex h-3 w-3 items-center justify-center rounded-full bg-blue-500">
                         <CheckCircle2 className="h-2 w-2 text-white" />
                       </div>
-                      <span>Confirmada</span>
+                      <span>Evento confirmado</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <div className="flex h-3 w-3 items-center justify-center rounded-full bg-purple-500">
+                        <ListTodo className="h-2 w-2 text-white" />
+                      </div>
+                      <span>Tarefa</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <div className="flex h-3 w-3 items-center justify-center rounded-full bg-amber-500">
-                        <AlertCircle className="h-2 w-2 text-white" />
+                        <Gavel className="h-2 w-2 text-white" />
                       </div>
-                      <span>Pendente</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
-                        <XCircle className="h-2 w-2 text-white" />
-                      </div>
-                      <span>Cancelada</span>
+                      <span>Audiência</span>
                     </div>
                   </div>
                 </div>
@@ -881,13 +1027,13 @@ export const AgendaPage = () => {
                 {/* Upcoming Events */}
                 <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                   <div className="flex items-center justify-between text-sm text-gray-900 mb-3">
-                    <span className="font-semibold">Próximas reuniões</span>
+                    <span className="font-semibold">Próximos compromissos</span>
                     <button
                       type="button"
                       className="text-xs font-medium text-[#721011] hover:underline"
-                      onClick={() => navigate('/app/agenda')}
+                      onClick={() => navigate('/app/tarefas')}
                     >
-                      Ver todos
+                      Ver tarefas
                     </button>
                   </div>
                   {upcomingItems.length === 0 ? (
@@ -906,8 +1052,17 @@ export const AgendaPage = () => {
                             ? `em ${hours}h ${minutes}min`
                             : `em ${minutes}min`
 
+                        const isTarefa = item.itemType === 'tarefa'
                         const tipoIcon = tipoIcons[item.tipo || 'default'] || tipoIcons.default
-                        const styles = statusStyles[item.status] || statusStyles.pendente
+                        const styles = isTarefa ? tarefaStyles : (statusStyles[item.status] || statusStyles.pendente)
+
+                        const handleItemClick = () => {
+                          if (isTarefa) {
+                            navigate('/app/tarefas')
+                          } else {
+                            openEditor('edit', item.originalItem as AgendaItem)
+                          }
+                        }
 
                         return (
                           <button
@@ -917,7 +1072,7 @@ export const AgendaPage = () => {
                               "w-full rounded-lg border p-3 text-left transition-all hover:scale-[1.02] hover:shadow-md",
                               styles.container
                             )}
-                            onClick={() => openEditor('edit', item)}
+                            onClick={handleItemClick}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
@@ -926,7 +1081,7 @@ export const AgendaPage = () => {
                                   <p className="font-semibold text-sm leading-tight">{item.title}</p>
                                 </div>
                                 <p className="text-xs opacity-90">
-                                  {item.time} • {item.cliente || 'Sem cliente'}
+                                  {item.time} • {item.cliente || (isTarefa ? 'Tarefa' : 'Sem cliente')}
                                 </p>
                                 {diff < 2 * 60 * 60 * 1000 && diff > 0 && (
                                   <p className="text-xs font-semibold mt-1">⏰ {timeUntil}</p>
