@@ -8,25 +8,41 @@
 
 :root {
   /* ========================================
-     CORES PRINCIPAIS - PALETA CLARA
+     CORES PRINCIPAIS - TALENTJUD DESIGN SYSTEM
      ======================================== */
-  
-  /* Brand Primary - Azul Profissional */
-  --brand-primary: #0066cc;
-  --brand-primary-dark: #004a99;
-  --brand-primary-light: #3385ff;
-  --brand-primary-subtle: #e6f2ff;
-  
-  /* Brand Secondary - Teal Moderno */
-  --brand-secondary: #00a085;
-  --brand-secondary-dark: #008070;
-  --brand-secondary-light: #1abc9c;
-  --brand-secondary-subtle: #e0faf7;
-  
-  /* Brand Accent - Laranja Vivo */
-  --brand-accent: #ff9500;
-  --brand-accent-dark: #e68000;
-  --brand-accent-light: #ffb84d;
+
+  /* TalentJUD Primary - Burgundy */
+  --brand-primary-900: #4A0B0C;
+  --brand-primary-800: #5C0D0E;
+  --brand-primary-700: #721011;  /* Main burgundy */
+  --brand-primary-600: #8A1314;
+  --brand-primary-500: #A21617;
+  --brand-primary-100: #F5E6E6;
+  --brand-primary-50: #FAF3F3;
+
+  /* Mapeamento para compatibilidade com tokens existentes */
+  --brand-primary: var(--brand-primary-700);
+  --brand-primary-dark: var(--brand-primary-900);
+  --brand-primary-light: var(--brand-primary-500);
+  --brand-primary-subtle: var(--brand-primary-50);
+
+  /* TalentJUD Accent - Amber */
+  --brand-accent-700: #8F5225;
+  --brand-accent-600: #A66029;
+  --brand-accent-500: #BF6F32;  /* Main amber */
+  --brand-accent-400: #CC8652;
+  --brand-accent-300: #D99D72;
+  --brand-accent-100: #F5E6DA;
+
+  --brand-accent: var(--brand-accent-500);
+  --brand-accent-dark: var(--brand-accent-700);
+  --brand-accent-light: var(--brand-accent-300);
+
+  /* Brand Secondary - Warm Gray (mantido para compatibilidade) */
+  --brand-secondary: #6B5E58;
+  --brand-secondary-dark: #504843;
+  --brand-secondary-light: #8A7E78;
+  --brand-secondary-subtle: #F8F7F6;
   
   /* ========================================
      CORES SEMANTICAS - TONS CLAROS
@@ -61,19 +77,19 @@
   --color-info-border: #cffafe;
   
   /* ========================================
-     CORES NEUTRAS - PALETA CLARA LIMPA
+     CORES NEUTRAS - TALENTJUD WARM GRAY SCALE
      ======================================== */
-  
-  --color-gray-50: #f8fafc;
-  --color-gray-100: #f1f5f9;
-  --color-gray-200: #e2e8f0;
-  --color-gray-300: #cbd5e1;
-  --color-gray-400: #94a3b8;
-  --color-gray-500: #64748b;
-  --color-gray-600: #475569;
-  --color-gray-700: #334155;
-  --color-gray-800: #1e293b;
-  --color-gray-900: #0f172a;
+
+  --color-gray-50: #F8F7F6;
+  --color-gray-100: #F1F0EE;
+  --color-gray-200: #E2E0DC;
+  --color-gray-300: #C3BFB9;
+  --color-gray-400: #A39D98;
+  --color-gray-500: #8A7E78;
+  --color-gray-600: #6B5E58;  /* Main warm gray */
+  --color-gray-700: #504843;
+  --color-gray-800: #3D3632;
+  --color-gray-900: #2A2522;
   
   /* ========================================
      CORES DE SUPERFÍCIE - TONS CLAROS
@@ -124,6 +140,10 @@
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+
+  /* TalentJUD Sombras com Cor da Marca */
+  --shadow-primary: 0 4px 14px rgba(114, 16, 17, 0.15);
+  --shadow-accent: 0 4px 14px rgba(191, 111, 50, 0.15);
   
   /* ========================================
      BORDER RADIUS
@@ -154,9 +174,9 @@
      TIPOGRAFIA
      ======================================== */
   
-  /* Font Families */
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Manrope', system-ui, sans-serif;
+  /* Font Families - TalentJUD Typography */
+  --font-display: 'Inter', 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', 'Manrope', system-ui, sans-serif;
   --font-mono: 'Fira Code', 'Courier New', monospace;
   
   /* Font Sizes - Responsivo */

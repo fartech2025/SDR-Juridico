@@ -1,15 +1,10 @@
 import * as React from 'react'
-import { CalendarDays, ChevronRight, Flag, Sparkles } from 'lucide-react'
+import { CalendarDays, ChevronRight, Flag, Sparkles, TrendingUp, TrendingDown, Minus, Clock, Briefcase, AlertTriangle, FileText, Users, Flame } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-import heroLight from '@/assets/hero-light.svg'
-import { ActionCard } from '@/components/ActionCard'
-import { NotificationCenter } from '@/components/NotificationCenter'
 import { PageState } from '@/components/PageState'
-import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDateTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { useAgenda } from '@/hooks/useAgenda'
@@ -26,36 +21,6 @@ const resolveStatus = (
     return value
   }
   return 'ready'
-}
-
-const slaBadgeClass = (value: string) => {
-  if (value === 'critico') return 'border-danger-bg bg-danger-bg text-danger'
-  if (value === 'atencao') return 'border-warning-bg bg-warning-bg text-warning'
-  return 'border-success-bg bg-success-bg text-success'
-}
-
-const stageBadgeClass = (value: string) => {
-  if (value === 'em_andamento') {
-    return 'border-info-bg bg-info-bg text-info'
-  }
-  if (value === 'negociacao') {
-    return 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary'
-  }
-  return 'border-gray-200 bg-gray-100 text-gray-600'
-}
-
-const categoryBadgeClass = (value: string) => {
-  const label = value.toLowerCase()
-  if (label === 'juridico') {
-    return 'border-brand-secondary-subtle bg-brand-secondary-subtle text-brand-secondary'
-  }
-  if (label === 'comercial') {
-    return 'border-brand-primary-subtle bg-brand-primary-subtle text-brand-primary'
-  }
-  if (label === 'agenda') {
-    return 'border-success-bg bg-success-bg text-success'
-  }
-  return 'border-gray-200 bg-gray-100 text-gray-600'
 }
 
 const toIsoDate = (value: Date) => {
@@ -141,10 +106,194 @@ const buildNotifications = (
   },
 ]
 
+// Stats Card Component
+const StatsCard = ({
+  icon: Icon,
+  label,
+  value,
+  change,
+  changeType,
+  color
+}: {
+  icon: React.ElementType
+  label: string
+  value: string | number
+  change?: string
+  changeType?: 'up' | 'down' | 'neutral'
+  color: string
+}) => (
+  <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+    <div className="flex items-start justify-between">
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center"
+        style={{ backgroundColor: `${color}15`, color }}
+      >
+        <Icon className="w-5 h-5" />
+      </div>
+      {change && (
+        <span className={cn(
+          'text-xs font-medium px-2 py-1 rounded-full',
+          changeType === 'up' ? 'bg-green-50 text-green-700' :
+          changeType === 'down' ? 'bg-red-50 text-red-700' :
+          'bg-gray-50 text-gray-600'
+        )}>
+          {changeType === 'up' ? <TrendingUp className="w-3 h-3 inline" /> :
+           changeType === 'down' ? <TrendingDown className="w-3 h-3 inline" /> :
+           <Minus className="w-3 h-3 inline" />} {change}
+        </span>
+      )}
+    </div>
+    <div className="mt-4">
+      <div className="text-2xl font-bold text-gray-900">{value}</div>
+      <div className="text-sm text-gray-500 mt-1">{label}</div>
+    </div>
+  </div>
+)
+
+// Action Card Component
+const ActionCard = ({
+  title,
+  subtitle,
+  status,
+  statusColor,
+  client,
+  area,
+  onAction
+}: {
+  title: string
+  subtitle: string
+  status: string
+  statusColor: 'green' | 'orange'
+  client: string
+  area: string
+  onAction: () => void
+}) => (
+  <div className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all">
+    <div className="p-5">
+      <div className="flex items-start justify-between mb-3">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(191, 111, 50, 0.1)', color: '#BF6F32' }}
+        >
+          <Sparkles className="w-5 h-5" />
+        </div>
+        <span className="text-xs font-medium text-gray-400">Próxima ação</span>
+      </div>
+      <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
+      <p className="text-sm text-gray-500 mb-4">Cliente: {client}</p>
+      <div className="flex items-center gap-2 mb-4">
+        <span
+          className="px-2.5 py-1 text-xs font-medium rounded-full"
+          style={{
+            backgroundColor: statusColor === 'green' ? '#E8F5E9' : '#FFF3E0',
+            color: statusColor === 'green' ? '#2E7D32' : '#BF6F32'
+          }}
+        >
+          {status}
+        </span>
+        <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+          {area}
+        </span>
+      </div>
+      <p className="text-xs text-gray-400 mb-4">{subtitle}</p>
+    </div>
+    <button
+      onClick={onAction}
+      className="w-full py-3 px-5 flex items-center justify-between text-sm font-medium border-t border-gray-100 hover:bg-gray-50 transition-colors"
+      style={{ color: '#721011' }}
+    >
+      <span>Abrir dossiê</span>
+      <ChevronRight className="w-4 h-4" />
+    </button>
+  </div>
+)
+
+// Task Card Component
+const TaskCard = ({
+  icon: Icon,
+  title,
+  description,
+  status,
+  buttonText,
+  color,
+  onClick
+}: {
+  icon: React.ElementType
+  title: string
+  description: string
+  status: string
+  buttonText: string
+  color: string
+  onClick: () => void
+}) => (
+  <div className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-all">
+    <div className="flex items-start gap-4">
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: `${color}15`, color }}
+      >
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
+        <p className="text-sm text-gray-500 mb-3">{description}</p>
+        <div className="flex items-center justify-between">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+            {status}
+          </span>
+          <button
+            onClick={onClick}
+            className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
+            style={{ color: '#721011' }}
+          >
+            {buttonText}
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)
+
+// Quick Action Button Component
+const QuickActionButton = ({ icon: Icon, label, onClick }: {
+  icon: React.ElementType
+  label: string
+  onClick: () => void
+}) => (
+  <button
+    onClick={onClick}
+    className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all text-left"
+  >
+    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50">
+      <Icon className="w-5 h-5 text-gray-600" />
+    </div>
+    <span className="text-sm font-medium text-gray-700">{label}</span>
+    <ChevronRight className="w-4 h-4 ml-auto text-gray-400" />
+  </button>
+)
+
+// Notification Item Component
+const NotificationItem = ({ title, time, isNew }: {
+  title: string
+  time: string
+  isNew?: boolean
+}) => (
+  <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+    {isNew && (
+      <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#721011' }} />
+    )}
+    {!isNew && <div className="w-2" />}
+    <div className="flex-1 min-w-0">
+      <p className="text-sm text-gray-900 truncate">{title}</p>
+      <p className="text-xs text-gray-400 mt-1">{time}</p>
+    </div>
+  </div>
+)
+
 export const DashboardPage = () => {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  // Light-only app - no dark mode
   const status = resolveStatus(params.get('state'))
   const { leads, loading: leadsLoading, error: leadsError, fetchLeads } = useLeads()
   const { casos, loading: casosLoading, error: casosError, fetchCasos } = useCasos()
@@ -233,38 +382,16 @@ export const DashboardPage = () => {
     const currentLeads = countInRange(leadsActive, (lead) => lead.createdAt, weekStart, now)
     const prevLeads = countInRange(leadsActive, (lead) => lead.createdAt, prevWeekStart, weekStart)
 
-    const totalLeads = leads.length
-    const convertedLeads = leads.filter((lead) => lead.status === 'ganho').length
-    const conversionRate = totalLeads ? Math.round((convertedLeads / totalLeads) * 100) : 0
-
     const casesActive = casos.filter((caso) => caso.status === 'ativo').length
     const pendingDocs = documentos.filter((doc) => doc.status === 'pendente').length
 
-    const avgResponseHours = (() => {
-      const valid = leads.filter((lead) => lead.lastContactAt)
-      if (valid.length === 0) return 0
-      const total = valid.reduce((acc, lead) => {
-        const start = new Date(lead.createdAt).getTime()
-        const end = new Date(lead.lastContactAt as string).getTime()
-        const diff = Math.max(0, end - start)
-        return acc + diff
-      }, 0)
-      return Math.round(total / valid.length / (1000 * 60 * 60))
-    })()
-
-    const receita = Math.round(
-      casos.reduce((acc, caso) => acc + (Number.isFinite(caso.value) ? caso.value : 0), 0)
-    )
-
     return [
-      buildKpi('kpi-001', 'Leads ativos', leadsActive.length, currentLeads - prevLeads, 'vs semana anterior'),
-      buildKpi('kpi-002', 'Taxa de conversao', conversionRate, 0, 'ultimos 30 dias'),
-      buildKpi('kpi-003', 'Casos em andamento', casesActive, 0, 'mes atual'),
-      buildKpi('kpi-004', 'Pendencias criticas', pendingDocs, 0, 'ultimas 24h'),
-      buildKpi('kpi-005', 'Tempo medio de resposta (h)', avgResponseHours, 0, 'ultimos 7 dias'),
-      buildKpi('kpi-006', 'Receita potencial', receita, 0, 'pipeline atual'),
+      buildKpi('kpi-001', 'Leads Hoje', leadsActive.length, currentLeads - prevLeads, 'vs semana anterior'),
+      buildKpi('kpi-002', 'Casos Ativos', casesActive, 0, 'mes atual'),
+      buildKpi('kpi-003', 'Tarefas Pendentes', pendingDocs, 0, 'ultimas 24h'),
+      buildKpi('kpi-004', 'Eventos Críticos', criticalEvents.length, 0, 'hoje'),
     ]
-  }, [casos, documentos, leads])
+  }, [casos, documentos, leads, criticalEvents])
 
   const notifications = React.useMemo(() => {
     const pendingDocs = documentos.filter((doc) => doc.status === 'pendente').length
@@ -277,294 +404,194 @@ export const DashboardPage = () => {
   }, [agendaItems, casos, documentos, leads, todayIso])
 
   return (
-    <div className="min-h-screen pb-12 bg-base text-text">
-      <div className="space-y-6">
-        <header
-          className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface p-8 shadow-lg"
-        >
-          {/* Light mode decorative elements */}
-          <div className="absolute inset-0">
-            <div className="absolute -right-10 -top-10 h-52 w-52 rounded-full bg-brand-primary/8 blur-3xl" />
-            <div className="absolute -bottom-16 left-12 h-64 w-64 rounded-full bg-brand-secondary/8 blur-3xl" />
-          </div>
-          <div
-            className="absolute inset-0 bg-no-repeat bg-right bg-[length:520px] opacity-90"
-            style={{ backgroundImage: `url(${heroLight})` }}
-          />
-          <div className="relative z-10 space-y-3">
-            <p className="text-[11px] uppercase tracking-[0.32em] text-text-muted">
-              Dashboard
-            </p>
-            <h2 className="font-display text-3xl text-text">
-              Resumo executivo
-            </h2>
-            <p className="max-w-2xl text-sm text-text-muted">
-              Foco em caso critico, produtividade e agenda juridica com uma visão clara do funil.
-            </p>
-          </div>
-        </header>
-
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <PageState
         status={pageState}
         errorDescription={errorMessage}
         onRetry={showRetry ? handleRetry : undefined}
       >
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {kpis.slice(0, 4).map((item) => (
-            <StatCard
-              key={item.id}
-              label={item.label}
-              value={item.value}
-              delta={item.delta}
-              trend={item.trend}
-              period={item.period}
-              className="border border-border bg-surface/90"
+        <div className="p-6">
+          {/* Stats Row */}
+          <div className="grid grid-cols-4 gap-6 mb-6">
+            <StatsCard
+              icon={Flame}
+              label={kpis[0]?.label || 'Leads Hoje'}
+              value={kpis[0]?.value || 0}
+              change={kpis[0]?.delta ? `${Math.abs(kpis[0].delta)}` : undefined}
+              changeType={kpis[0]?.trend === 'up' ? 'up' : kpis[0]?.trend === 'down' ? 'down' : 'neutral'}
+              color="#721011"
             />
-          ))}
-        </div>
+            <StatsCard
+              icon={Briefcase}
+              label={kpis[1]?.label || 'Casos Ativos'}
+              value={kpis[1]?.value || 0}
+              change={kpis[1]?.delta ? `${Math.abs(kpis[1].delta)}` : undefined}
+              changeType={kpis[1]?.trend === 'up' ? 'up' : kpis[1]?.trend === 'down' ? 'down' : 'neutral'}
+              color="#BF6F32"
+            />
+            <StatsCard
+              icon={Clock}
+              label={kpis[2]?.label || 'Tarefas Pendentes'}
+              value={kpis[2]?.value || 0}
+              change={kpis[2]?.delta ? `${Math.abs(kpis[2].delta)}` : undefined}
+              changeType={kpis[2]?.trend === 'up' ? 'up' : kpis[2]?.trend === 'down' ? 'down' : 'neutral'}
+              color="#6B5E58"
+            />
+            <StatsCard
+              icon={AlertTriangle}
+              label={kpis[3]?.label || 'Eventos Críticos'}
+              value={kpis[3]?.value || 0}
+              changeType="neutral"
+              color="#2E7D32"
+            />
+          </div>
 
-        <div className="grid gap-4 xl:grid-cols-[2.2fr_1fr]">
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <ActionCard
+          {/* Main Grid */}
+          <div className="grid grid-cols-3 gap-6">
+            {/* Left Column */}
+            <div className="col-span-2 space-y-6">
+              {/* Task Cards */}
+              <TaskCard
+                icon={Flame}
                 title="Lead quente aguardando retorno"
                 description={
                   leadHot
-                    ? `Contato pendente: ${leadHot.name} (${leadHot.area}).`
+                    ? `Contato pendente: ${leadHot.name} (${leadHot.area})`
                     : 'Nenhum lead quente identificado.'
                 }
-                priority="P0"
-                actionLabel="Acelerar lead"
-                href="/app/leads"
-                className="border border-border bg-surface/95 from-surface via-surface to-surface-alt text-text"
+                status="P0"
+                buttonText="Acelerar lead"
+                color="#721011"
+                onClick={() => navigate('/app/leads')}
               />
-              <ActionCard
-                title="Documento pendente de validacao"
+
+              <TaskCard
+                icon={FileText}
+                title="Documento pendente de validação"
                 description={
                   docPending
-                    ? `${docPending.title} para ${docPending.cliente}.`
+                    ? `${docPending.title} - ${docPending.cliente}`
                     : 'Nenhum documento pendente.'
                 }
-                priority="P1"
-                actionLabel="Validar agora"
-                href="/app/documentos"
-                secondaryActionLabel="Abrir dossie"
-                secondaryHref={`/app/caso/${docPending?.casoId ?? 'caso-sem-dados'}`}
-                className="border border-border bg-surface/95 text-text"
+                status="P1"
+                buttonText="Validar agora"
+                color="#BF6F32"
+                onClick={() => navigate('/app/documentos')}
               />
+
+              <TaskCard
+                icon={AlertTriangle}
+                title="Eventos críticos hoje"
+                description={
+                  criticalEvents.length > 0
+                    ? `${criticalEvents.length} eventos críticos registrados hoje.`
+                    : 'Nenhum evento crítico registrado hoje.'
+                }
+                status="OK"
+                buttonText="Ver agenda"
+                color="#2E7D32"
+                onClick={() => navigate('/app/agenda')}
+              />
+
+              {/* Agenda */}
+              <div className="bg-white rounded-xl border border-gray-100 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">Agenda do dia</h3>
+                  <button
+                    onClick={() => navigate('/app/agenda')}
+                    className="text-sm font-medium"
+                    style={{ color: '#721011' }}
+                  >
+                    Ver todos
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {agendaToday.length === 0 && (
+                    <div className="text-center py-8 text-sm text-gray-400">
+                      Nenhum compromisso agendado para hoje.
+                    </div>
+                  )}
+                  {agendaToday.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                      <span className="text-sm font-mono text-gray-400 w-12">{item.time}</span>
+                      <div
+                        className="w-1 h-8 rounded-full"
+                        style={{ backgroundColor: '#721011' }}
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-700">{item.title}</span>
+                        <p className="text-xs text-gray-400">{item.cliente}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <Card
-              className="border border-border bg-surface/90"
-            >
-              <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
-                <div className="flex items-center gap-2">
-                  <Flag className="h-4 w-4 text-warning" />
-                  <CardTitle className="text-sm">Eventos criticos hoje</CardTitle>
-                </div>
-                {criticalEvents[0]?.casoId && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(`/app/caso/${criticalEvents[0].casoId}`)}
-                    className="px-0 text-primary hover:text-primary"
-                  >
-                    Ver caso
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-3 px-6 pb-6">
-                {criticalEvents.length === 0 && (
-                  <div className="rounded-2xl border border-border bg-white px-4 py-6 text-center text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]">
-                    Nenhum evento critico registrado hoje.
-                  </div>
-                )}
-                {criticalEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="space-y-1">
-                        <span className="text-sm font-semibold text-text">
-                          {event.title}
-                        </span>
-                        <p className="text-xs text-text-muted">{event.description}</p>
-                        <div className="flex items-center gap-2 text-xs text-text-subtle">
-                          <Badge
-                            className={cn('uppercase', categoryBadgeClass(event.category))}
-                          >
-                            {event.category}
-                          </Badge>
-                          <Link
-                            to={`/app/caso/${event.casoId}`}
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                          >
-                            Abrir dossie
-                            <ChevronRight className="h-3 w-3" />
-                          </Link>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-text-subtle">
-                        {formatDateTime(event.date)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Next Action Card */}
+              {nextCase && (
+                <ActionCard
+                  title={nextCase.title}
+                  subtitle="Atualize o dossiê e registre as pendências prioritárias."
+                  status="OK"
+                  statusColor="green"
+                  client={nextCase.cliente}
+                  area={nextCase.area}
+                  onAction={() => navigate(`/app/caso/${nextCase.id}`)}
+                />
+              )}
 
-            <Card
-              className="border border-border bg-surface/90"
-            >
-              <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-accent" />
-                  <CardTitle className="text-sm">Agenda do dia</CardTitle>
+              {/* Quick Actions */}
+              <div className="bg-white rounded-xl border border-gray-100 p-5">
+                <h3 className="font-semibold text-gray-900 mb-4">Ações rápidas</h3>
+                <div className="space-y-3">
+                  <QuickActionButton icon={Flame} label="Novo lead" onClick={() => navigate('/app/leads')} />
+                  <QuickActionButton icon={Briefcase} label="Novo caso" onClick={() => navigate('/app/casos')} />
+                  <QuickActionButton icon={Clock} label="Nova tarefa" onClick={() => navigate('/app/tarefas')} />
+                  <QuickActionButton icon={CalendarDays} label="Novo compromisso" onClick={() => navigate('/app/agenda')} />
+                  <QuickActionButton icon={FileText} label="Upload documento" onClick={() => navigate('/app/documentos')} />
+                </div>
+              </div>
+
+              {/* Notifications */}
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Notificações</h3>
+                  <span
+                    className="px-2 py-0.5 text-xs font-medium rounded-full text-white"
+                    style={{ backgroundColor: '#721011' }}
+                  >
+                    {notifications.filter(n => !n.read).length} novos
+                  </span>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {notifications.slice(0, 4).map((notif) => (
+                    <NotificationItem
+                      key={notif.id}
+                      title={notif.title}
+                      time={formatDateTime(notif.date)}
+                      isNew={!notif.read}
+                    />
+                  ))}
                 </div>
                 <Link
-                  to="/app/agenda"
-                  className="text-xs text-primary hover:underline"
+                  to="/app/notificacoes"
+                  className="w-full py-3 text-sm font-medium border-t border-gray-100 hover:bg-gray-50 transition-colors block text-center"
+                  style={{ color: '#721011' }}
                 >
-                  Ver todos
+                  Ver todas notificações
                 </Link>
-              </CardHeader>
-              <CardContent className="space-y-3 px-6 pb-6">
-                {agendaToday.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 py-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-text">
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-text-subtle">
-                        {item.cliente} - {item.location}
-                      </p>
-                    </div>
-                    <div className="text-right text-xs text-text-subtle">
-                      <div>{item.time}</div>
-                      <div>{item.durationMinutes} min</div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-4">
-            <Card
-              className="border border-border bg-surface/90"
-            >
-              <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Proxima melhor acao</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 px-6 pb-6 text-sm text-text-muted">
-                {nextCase ? (
-                  <div
-                    className="rounded-2xl border border-border bg-white px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                  >
-                    <p className="text-sm font-semibold text-text">
-                      {nextCase.title}
-                    </p>
-                    <p className="text-xs text-text-subtle">
-                      Cliente: {nextCase.cliente} - Area {nextCase.area}
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge className={cn('uppercase', slaBadgeClass(nextCase.slaRisk))}>
-                        {nextCase.slaRisk}
-                      </Badge>
-                      <Badge className={cn('uppercase', stageBadgeClass(nextCase.stage))}>
-                        {nextCase.stage}
-                      </Badge>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="rounded-2xl border border-border bg-white px-4 py-4 text-xs text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
-                  >
-                    Nenhum caso ativo encontrado.
-                  </div>
-                )}
-                <p className="text-xs text-text-muted">
-                  Atualize o dossie e registre as pendencias prioritarias.
-                </p>
-                <div className="flex justify-end">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => nextCase && navigate(`/app/caso/${nextCase.id}`)}
-                    className="rounded-full px-4"
-                    disabled={!nextCase}
-                  >
-                    Abrir dossie
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-border bg-surface/90">
-              <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
-                <CardTitle className="text-sm">Acoes rapidas</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 px-6 pb-6">
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => navigate('/app/leads')}
-                >
-                  Novo lead
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => navigate('/app/casos')}
-                >
-                  Novo caso
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => navigate('/app/tarefas')}
-                >
-                  Nova tarefa
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => navigate('/app/agenda')}
-                >
-                  Novo compromisso
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => navigate('/app/documentos')}
-                >
-                  Upload documento
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <NotificationCenter
-              notifications={notifications.slice(0, 6)}
-              className="border border-border bg-surface/95 text-text"
-            />
+              </div>
+            </div>
           </div>
         </div>
       </PageState>
-      </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+      `}</style>
     </div>
   )
 }

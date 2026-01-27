@@ -3,7 +3,7 @@ import { telemetryService } from '@/services/telemetryService'
 
 type AuditChangeInput = {
   orgId: string | null
-  action: 'create' | 'update' | 'delete'
+  action: 'create' | 'update' | 'delete' | 'request_document' | 'attach_document' | 'submit_for_validation' | 'approve' | 'reject'
   entity: string
   entityId: string | null
   details?: Record<string, any> | null

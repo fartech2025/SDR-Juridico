@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   ListTodo,
   Power,
-  Scale,
   Settings,
   SlidersHorizontal,
   Briefcase,
@@ -20,6 +19,7 @@ import {
   ShieldCheck,
   Menu,
   X,
+  Flame,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -28,8 +28,7 @@ import { useIsFartechAdmin, useIsOrgAdmin } from '@/hooks/usePermissions'
 import { usePageTracking } from '@/hooks/usePageTracking'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
-import { FontSizeButton } from '@/components/FontSizeControl'
-import { ThemeToggle } from '@/components/ThemeToggle'
+import { Logo } from '@/components/ui/Logo'
 import { cn } from '@/utils/cn'
 import { auditService, sessionService } from '@/services/auditService'
 
@@ -51,7 +50,7 @@ const appNavGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Relacionamento',
     items: [
-      { label: 'Leads', to: '/app/leads', icon: Users },
+      { label: 'Leads', to: '/app/leads', icon: Flame },
       { label: 'Clientes', to: '/app/clientes', icon: UserRound },
       { label: 'Casos', to: '/app/casos', icon: Briefcase },
     ],
@@ -138,22 +137,9 @@ export const AppShell = () => {
     [sidebarGroups, location.pathname],
   )
 
-  // Track page views automaticamente
   usePageTracking()
 
-  // Debug logs
   React.useEffect(() => {
-    console.log('👤 AppShell User Info:', { 
-      displayName, 
-      isFartechAdmin, 
-      isOrgAdmin, 
-      location: location.pathname 
-    })
-  }, [displayName, isFartechAdmin, isOrgAdmin, location.pathname])
-
-  // Redirect Fartech Admin to /admin if accessing /app
-  React.useEffect(() => {
-    // Only redirect if we're sure about the admin status (not loading)
     if (isFartechAdmin && location.pathname.startsWith('/app')) {
       navigate('/admin/organizations', { replace: true })
     }
@@ -191,7 +177,6 @@ export const AppShell = () => {
 
   const handleLogout = async () => {
     setLogoutOpen(false)
-    // Log de logout e encerrar sessão
     await auditService.logLogout()
     sessionService.end()
     await signOut()
@@ -212,30 +197,18 @@ export const AppShell = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f8fc] text-text" style={{ backgroundColor: '#f7f8fc', color: '#0f172a' }}>
-      {/* Sidebar - Responsivo */}
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      {/* Sidebar - Desktop */}
       <aside
-        className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col border-r border-border shadow-soft lg:flex"
-        style={{
-          backgroundColor: '#f7f8fc',
-          borderColor: '#e2e8f0',
-          background: '#f7f8fc',
-          backgroundImage: 'none',
-        }}
+        className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col border-r border-gray-200 bg-white lg:flex"
       >
-        <div className="flex items-center gap-3 px-6 py-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-[#ff6aa2] via-[#ff8fb1] to-[#6aa8ff] text-white shadow-soft">
-            <Scale className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.28em] text-text-subtle">
-              SDR
-            </p>
-            <p className="text-sm font-semibold text-text">Juridico Online</p>
-          </div>
+        {/* Logo */}
+        <div className="h-16 flex items-center border-b border-gray-100 px-5">
+          <Logo size="md" />
         </div>
 
-        <nav className="flex-1 space-y-2 px-4">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3">
           {sidebarGroups.map((group, index) => {
             const normalizedPath = location.pathname.startsWith('/app/caso/')
               ? '/app/casos'
@@ -245,164 +218,118 @@ export const AppShell = () => {
             )
             const isOpen = sidebarGroupOpen === group.label
             return (
-              <div key={group.label} className="space-y-2">
-                {index > 0 && <div className="my-2 border-t border-border/50" />}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSidebarGroupOpen((current) =>
-                      current === group.label ? null : group.label,
-                    )
-                  }
-                  className={cn(
-                    'flex w-full items-center justify-between rounded-xl px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] transition',
-                    isOpen || hasActiveItem
-                      ? 'bg-surface-2 text-text'
-                      : 'text-text-subtle hover:bg-surface-2 hover:text-text',
-                  )}
-                  aria-expanded={isOpen}
-                  aria-controls={`sidebar-group-${group.label}`}
-                >
-                  <span>{group.label}</span>
-                  <ChevronDown
-                    className={cn(
-                      'h-3 w-3 transition',
-                      isOpen ? 'rotate-180 text-primary' : 'text-text-subtle',
-                    )}
-                  />
-                </button>
-                <div
-                  id={`sidebar-group-${group.label}`}
-                  className={cn('space-y-1', isOpen ? 'block' : 'hidden')}
-                >
-                  {group.items.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      className={({ isActive }) =>
-                        cn(
-                          'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
+              <div key={group.label} className="space-y-1">
+                {index > 0 && <div className="my-4" />}
+
+                {/* Section Title */}
+                <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  {group.label}
+                </div>
+
+                {/* Nav Items */}
+                <div className="space-y-1 relative">
+                  {group.items.map((item) => {
+                    const isActive = normalizedPath.startsWith(item.to)
+                    return (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                           isActive
-                            ? 'bg-[#E9EEFF] text-primary'
-                            : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                        )
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <item.icon
-                            className={cn(
-                              'h-4 w-4',
-                              isActive
-                                ? 'text-primary'
-                                : 'text-text-subtle group-hover:text-primary',
-                            )}
+                            ? 'text-gray-900'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        )}
+                        style={isActive ? {
+                          backgroundColor: 'rgba(114, 16, 17, 0.08)',
+                          color: '#721011'
+                        } : {}}
+                      >
+                        <div className="flex-shrink-0" style={isActive ? { color: '#721011' } : {}}>
+                          <item.icon className="h-5 w-5" />
+                        </div>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {isActive && (
+                          <div
+                            className="w-1 h-6 rounded-full absolute left-0"
+                            style={{ backgroundColor: '#721011' }}
                           />
-                          <span>{item.label}</span>
-                        </>
-                      )}
-                    </NavLink>
-                  ))}
+                        )}
+                      </NavLink>
+                    )
+                  })}
                 </div>
               </div>
             )
           })}
         </nav>
 
-        {/* User Profile Section */}
-        <div className="border-t border-border/50 p-4">
-          <button
-            type="button"
-            onClick={handleProfileNavigate}
-            className="flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-2"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-white">
+        {/* User Profile */}
+        <div className="p-4 border-t border-gray-100">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+              style={{ backgroundColor: '#721011' }}
+            >
               {initials}
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium text-text">
-                {shortName}
-              </p>
-              <p className="text-xs text-text-subtle">Perfil</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{shortName}</p>
+              <p className="text-xs text-gray-500">Perfil</p>
             </div>
-          </button>
+          </div>
         </div>
       </aside>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-20 lg:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
-          <div className="absolute left-0 top-16 w-64 max-h-[calc(100vh-64px)] flex-col overflow-y-auto border-r border-border bg-white shadow-soft">
-            <nav className="space-y-2 p-4">
+          <div className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl overflow-y-auto">
+            {/* Mobile Logo */}
+            <div className="h-16 flex items-center border-b border-gray-100 px-5">
+              <Logo size="md" />
+            </div>
+
+            {/* Mobile Navigation */}
+            <nav className="py-4 px-3">
               {sidebarGroups.map((group, index) => {
                 const normalizedPath = location.pathname.startsWith('/app/caso/')
                   ? '/app/casos'
                   : location.pathname
-                const hasActiveItem = group.items.some((item) =>
-                  normalizedPath.startsWith(item.to),
-                )
                 const isOpen = sidebarGroupOpen === group.label
                 return (
-                  <div key={group.label} className="space-y-2">
-                    {index > 0 && <div className="my-2 border-t border-border/50" />}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSidebarGroupOpen((current) =>
-                          current === group.label ? null : group.label,
-                        )
-                      }
-                      className={cn(
-                        'flex w-full items-center justify-between rounded-xl px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] transition',
-                        isOpen || hasActiveItem
-                          ? 'bg-surface-2 text-text'
-                          : 'text-text-subtle hover:bg-surface-2 hover:text-text',
-                      )}
-                      aria-expanded={isOpen}
-                      aria-controls={`mobile-sidebar-group-${group.label}`}
-                    >
-                      <span>{group.label}</span>
-                      <ChevronDown
-                        className={cn(
-                          'h-3 w-3 transition',
-                          isOpen ? 'rotate-180 text-primary' : 'text-text-subtle',
-                        )}
-                      />
-                    </button>
-                    <div
-                      id={`mobile-sidebar-group-${group.label}`}
-                      className={cn('space-y-1', isOpen ? 'block' : 'hidden')}
-                    >
-                      {group.items.map((item) => (
-                        <NavLink
-                          key={item.to}
-                          to={item.to}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={({ isActive }) =>
-                            cn(
-                              'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition',
+                  <div key={group.label} className="space-y-1">
+                    {index > 0 && <div className="my-4" />}
+
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      {group.label}
+                    </div>
+
+                    <div className="space-y-1">
+                      {group.items.map((item) => {
+                        const isActive = normalizedPath.startsWith(item.to)
+                        return (
+                          <NavLink
+                            key={item.to}
+                            to={item.to}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={cn(
+                              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                               isActive
-                                ? 'bg-[#E9EEFF] text-primary'
-                                : 'text-text-muted hover:bg-[#F2F5FF] hover:text-text',
-                            )
-                          }
-                        >
-                          {({ isActive }) => (
-                            <>
-                              <item.icon
-                                className={cn(
-                                  'h-4 w-4',
-                                  isActive
-                                    ? 'text-primary'
-                                    : 'text-text-subtle group-hover:text-primary',
-                                )}
-                              />
-                              <span>{item.label}</span>
-                            </>
-                          )}
-                        </NavLink>
-                      ))}
+                                ? 'text-gray-900'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                            )}
+                            style={isActive ? {
+                              backgroundColor: 'rgba(114, 16, 17, 0.08)',
+                              color: '#721011'
+                            } : {}}
+                          >
+                            <item.icon className="h-5 w-5" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        )
+                      })}
                     </div>
                   </div>
                 )
@@ -412,91 +339,91 @@ export const AppShell = () => {
         </div>
       )}
 
-      {/* Header - Responsivo */}
-      <header className="fixed left-0 right-0 top-0 z-20 flex h-16 items-center justify-between border-b px-4 shadow-soft backdrop-blur lg:left-60 lg:px-8" style={{ backgroundColor: 'rgba(255,255,255,0.95)', borderColor: '#e2e8f0' }}>
-        {/* Logo/Menu Mobile */}
-        <div className="flex items-center gap-3 lg:hidden">
+      {/* Header */}
+      <header
+        className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20 lg:ml-64"
+      >
+        <div className="flex items-center gap-3">
+          {/* Mobile Menu Toggle */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-full"
+            className="lg:hidden"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-        </div>
 
-        {/* Desktop greeting */}
-        <div className="hidden items-center gap-3 lg:flex">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-            {initials}
-          </div>
-          <div>
-            <p className="text-xs text-text-subtle">Bom dia</p>
-            <p className="text-sm font-semibold text-text">{displayName}</p>
+          {/* Greeting */}
+          <div className="hidden lg:block">
+            <span className="text-gray-400 text-sm">Bom dia,</span>
+            <span className="text-gray-900 font-semibold ml-1">{displayName}</span>
           </div>
         </div>
 
-        {/* Right actions - Responsivo */}
-        <div className="flex items-center gap-2 lg:gap-3">
-          <div className="relative hidden items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm text-text-muted shadow-soft md:flex">
-            <Search className="h-4 w-4 text-text-subtle" />
+        <div className="flex items-center gap-4">
+          {/* Search */}
+          <div className="relative hidden md:block">
             <input
+              type="text"
               placeholder="Pesquisar..."
-              className="w-44 bg-transparent text-sm text-text placeholder:text-text-subtle focus:outline-none"
+              className="w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{
+                '--tw-ring-color': '#721011',
+                boxShadow: 'var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color)'
+              } as React.CSSProperties}
             />
-            <span className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-primary shadow-soft">
-              3
-            </span>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <Search className="h-5 w-5" />
+            </div>
           </div>
 
-          {/* FontSizeButton original */}
-          <FontSizeButton />
+          {/* Notifications */}
+          <button className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+            <Bell className="h-5 w-5 text-gray-600" />
+            <span
+              className="absolute top-2 right-2 w-2 h-2 rounded-full"
+              style={{ backgroundColor: '#721011' }}
+            />
+          </button>
 
-          {/* Theme Toggle */}
-          <ThemeToggle />
-
-          <Button variant="ghost" size="sm" className="relative rounded-full">
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="rounded-full hidden sm:inline-flex"
+          {/* Settings */}
+          <button
+            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-600"
             onClick={() => navigate('/app/config')}
           >
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className="hidden md:inline ml-1">Preferencias</span>
-          </Button>
+            <Settings className="h-5 w-5" />
+            <span className="hidden md:inline">Preferências</span>
+          </button>
 
+          {/* Profile Menu */}
           <div className="relative hidden sm:flex" ref={profileMenuRef}>
             <button
               type="button"
               onClick={() => setProfileMenuOpen((open) => !open)}
-              className="flex items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs text-text shadow-soft transition hover:bg-surface-2"
-              aria-haspopup="menu"
-              aria-expanded={profileMenuOpen}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-700"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold"
+                style={{ backgroundColor: '#721011' }}
+              >
                 {initials}
               </div>
               <span>{shortName}</span>
               <ChevronDown
-                className={`h-3 w-3 text-text-subtle transition ${profileMenuOpen ? 'rotate-180' : ''}`}
+                className={cn('h-4 w-4 text-gray-400 transition', profileMenuOpen && 'rotate-180')}
               />
             </button>
 
             {profileMenuOpen && (
               <div
-                className="absolute right-0 top-full z-30 mt-2 w-52 rounded-2xl border border-border bg-white p-2 text-xs text-text shadow-soft"
+                className="absolute right-0 top-full z-30 mt-2 w-52 rounded-xl border border-gray-200 bg-white p-2 shadow-lg"
                 role="menu"
               >
                 <button
                   type="button"
                   onClick={handleProfileNavigate}
-                  className="w-full rounded-xl px-3 py-2 text-left font-medium text-text transition hover:bg-surface-2"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100"
                   role="menuitem"
                 >
                   Acessar perfil
@@ -504,7 +431,7 @@ export const AppShell = () => {
                 <button
                   type="button"
                   onClick={handleSwitchUser}
-                  className="w-full rounded-xl px-3 py-2 text-left font-medium text-text transition hover:bg-surface-2"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100"
                   role="menuitem"
                 >
                   Trocar usuario
@@ -515,7 +442,8 @@ export const AppShell = () => {
                     setProfileMenuOpen(false)
                     setLogoutOpen(true)
                   }}
-                  className="w-full rounded-xl px-3 py-2 text-left font-medium text-danger transition hover:bg-danger/10"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition hover:bg-red-50"
+                  style={{ color: '#dc2626' }}
                   role="menuitem"
                 >
                   Sair
@@ -526,20 +454,12 @@ export const AppShell = () => {
         </div>
       </header>
 
-      <main className="relative min-h-screen bg-[#f7f8fc] pt-16 lg:pl-60">
-        <div className="px-4 py-6 md:px-8">
-          <Outlet />
-        </div>
-        <div className="pointer-events-none absolute bottom-6 right-6 opacity-10 md:bottom-10 md:right-10">
-          <img
-            src="https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/TALENT%20SDR%20SEM%20FUNDO.png"
-            alt="Talent SDR Juridico"
-            className="w-48 max-w-[60vw] md:w-64"
-            loading="lazy"
-          />
-        </div>
+      {/* Main Content */}
+      <main className="lg:ml-64">
+        <Outlet />
       </main>
 
+      {/* Logout Modal */}
       <Modal
         open={logoutOpen}
         onClose={() => setLogoutOpen(false)}
@@ -553,24 +473,56 @@ export const AppShell = () => {
             >
               Cancelar
             </Button>
-            <Button variant="danger" className="flex-1" onClick={handleLogout}>
+            <Button
+              variant="danger"
+              className="flex-1"
+              onClick={handleLogout}
+            >
               Sair
             </Button>
           </>
         }
       >
         <div className="space-y-3 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger/15 text-danger">
+          <div
+            className="mx-auto flex h-12 w-12 items-center justify-center rounded-full"
+            style={{ backgroundColor: 'rgba(220, 38, 38, 0.15)', color: '#dc2626' }}
+          >
             <Power className="h-5 w-5" />
           </div>
-          <h3 className="text-lg font-semibold text-text">
+          <h3 className="text-lg font-semibold text-gray-900">
             Deseja sair do sistema?
           </h3>
-          <p className="text-xs text-text-muted">
+          <p className="text-sm text-gray-500">
             Sua sessao sera encerrada com seguranca.
           </p>
         </div>
       </Modal>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+        input:focus {
+          --tw-ring-color: #721011;
+        }
+
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: #E0E0E0;
+          border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: #BDBDBD;
+        }
+      `}</style>
     </div>
   )
 }

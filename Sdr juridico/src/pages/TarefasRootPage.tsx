@@ -13,10 +13,10 @@ export const TarefasRootPage = () => {
     <div className="space-y-4">
       <Card className="p-2">
         <div className="flex gap-2">
-          <Button variant={tab === 'kanban' ? 'default' : 'secondary'} onClick={() => setTab('kanban')}>
+          <Button variant={tab === 'kanban' ? 'primary' : 'secondary'} onClick={() => setTab('kanban')}>
             Kanban
           </Button>
-          <Button variant={tab === 'lista' ? 'default' : 'secondary'} onClick={() => setTab('lista')}>
+          <Button variant={tab === 'lista' ? 'primary' : 'secondary'} onClick={() => setTab('lista')}>
             Lista
           </Button>
         </div>

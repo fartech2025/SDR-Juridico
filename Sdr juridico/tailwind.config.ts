@@ -7,9 +7,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand Colors
+        // Brand Colors - TalentJUD
         brand: {
           primary: 'var(--brand-primary)',
+          'primary-900': 'var(--brand-primary-900)',
+          'primary-800': 'var(--brand-primary-800)',
+          'primary-700': 'var(--brand-primary-700)',
+          'primary-600': 'var(--brand-primary-600)',
+          'primary-500': 'var(--brand-primary-500)',
+          'primary-100': 'var(--brand-primary-100)',
+          'primary-50': 'var(--brand-primary-50)',
           'primary-dark': 'var(--brand-primary-dark)',
           'primary-light': 'var(--brand-primary-light)',
           'primary-subtle': 'var(--brand-primary-subtle)',
@@ -18,8 +25,32 @@ const config: Config = {
           'secondary-light': 'var(--brand-secondary-light)',
           'secondary-subtle': 'var(--brand-secondary-subtle)',
           accent: 'var(--brand-accent)',
+          'accent-700': 'var(--brand-accent-700)',
+          'accent-600': 'var(--brand-accent-600)',
+          'accent-500': 'var(--brand-accent-500)',
+          'accent-400': 'var(--brand-accent-400)',
+          'accent-300': 'var(--brand-accent-300)',
+          'accent-100': 'var(--brand-accent-100)',
           'accent-dark': 'var(--brand-accent-dark)',
           'accent-light': 'var(--brand-accent-light)',
+        },
+        // TalentJUD Aliases
+        burgundy: {
+          900: 'var(--brand-primary-900)',
+          800: 'var(--brand-primary-800)',
+          700: 'var(--brand-primary-700)',
+          600: 'var(--brand-primary-600)',
+          500: 'var(--brand-primary-500)',
+          100: 'var(--brand-primary-100)',
+          50: 'var(--brand-primary-50)',
+        },
+        amber: {
+          700: 'var(--brand-accent-700)',
+          600: 'var(--brand-accent-600)',
+          500: 'var(--brand-accent-500)',
+          400: 'var(--brand-accent-400)',
+          300: 'var(--brand-accent-300)',
+          100: 'var(--brand-accent-100)',
         },
         // Surface Colors
         base: 'var(--color-base)',
@@ -101,6 +132,9 @@ const config: Config = {
         soft: 'var(--shadow-soft)',
         card: 'var(--shadow-card)',
         modal: 'var(--shadow-modal)',
+        // TalentJUD Shadows
+        primary: 'var(--shadow-primary)',
+        accent: 'var(--shadow-accent)',
       },
       fontFamily: {
         display: 'var(--font-display)',

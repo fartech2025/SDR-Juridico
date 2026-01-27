@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { PageState } from '@/components/PageState'
+import { LoadingState, ErrorState } from '@/components/StateComponents'
 import type { Tarefa } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDate } from '@/utils/format'
@@ -36,14 +36,14 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
 const statusBadge = (status: Tarefa['status']) => {
   if (status === 'concluida') return 'border-success-border bg-success-bg text-success'
   if (status === 'aguardando_validacao') return 'border-info-border bg-info-bg text-info'
-  if (status === 'devolvida') return 'border-danger-border bg-danger-bg text-danger'
-  if (status === 'em_progresso') return 'border-warning-border bg-warning-bg text-warning'
+  if (status === 'devolvida') return 'border-(--brand-primary-100) bg-(--brand-primary-50) text-(--brand-primary-700)'
+  if (status === 'em_progresso') return 'border-(--brand-accent-100) bg-(--brand-accent-100) text-(--brand-accent-700)'
   return 'border-border bg-surface-2 text-text-muted'
 }
 
 const priorityBadge = (priority: Tarefa['priority']) => {
-  if (priority === 'alta') return 'border-danger-border bg-danger-bg text-danger'
-  if (priority === 'normal') return 'border-info-border bg-info-bg text-info'
+  if (priority === 'alta') return 'border-(--brand-primary-100) bg-(--brand-primary-50) text-(--brand-primary-700)'
+  if (priority === 'normal') return 'border-(--brand-accent-100) bg-(--brand-accent-100) text-(--brand-accent-700)'
   return 'border-border bg-surface-2 text-text-muted'
 }
 
@@ -75,7 +75,7 @@ const DroppableColumn = ({
   const { setNodeRef, isOver } = useDroppable({ id: columnKey })
 
   return (
-    <div ref={setNodeRef} className={cn(isOver ? 'ring-2 ring-primary/40 rounded-xl' : '')}>
+    <div ref={setNodeRef} className={cn(isOver ? 'ring-2 ring-(--brand-primary-700) ring-opacity-40 rounded-xl' : '')}>
       <Card className="min-h-[560px]">
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-semibold">
@@ -97,14 +97,13 @@ const DraggableTaskCard = ({
   onOpen: () => void
   children: React.ReactNode
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { taskId: task.id } satisfies DragData,
   })
 
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
-    transition,
   }
 
   return (
@@ -114,7 +113,7 @@ const DraggableTaskCard = ({
         onClick={onOpen}
         className={cn(
           'w-full text-left rounded-xl border bg-background p-3 shadow-sm hover:bg-surface-2 transition',
-          isOverdue(task) ? 'border-danger-border' : 'border-border',
+          isOverdue(task) ? 'border-l-4 border-(--brand-primary-700)' : 'border-border',
         )}
       >
         <div className="flex items-start justify-between gap-2">
@@ -238,11 +237,8 @@ export const TarefasKanbanPage = () => {
     return { overdue, awaiting }
   }, [tarefas])
 
-  if (loading) return <PageState title="Carregando tarefas." description="Aguarde um momento." />
-  if (error)
-    return (
-      <PageState title="Erro ao carregar tarefas" description={error.message} actionLabel="Tentar novamente" onAction={fetchTarefas} />
-    )
+  if (loading) return <LoadingState message="Carregando tarefas..." />
+  if (error) return <ErrorState error={error.message} onRetry={fetchTarefas} />
 
   return (
     <div className="space-y-4">

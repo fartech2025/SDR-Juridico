@@ -90,10 +90,6 @@ export interface Tarefa {
   confirmedAt?: string | null
   confirmedBy?: string | null
   rejectedReason?: string | null
-  submittedAt?: string | null
-  confirmedAt?: string | null
-  confirmedBy?: string | null
-  rejectedReason?: string | null
   leadId?: string | null
   clienteId?: string | null
   casoId?: string | null

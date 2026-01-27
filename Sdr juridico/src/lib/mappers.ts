@@ -182,10 +182,6 @@ export const mapTarefaRowToTarefa = (row: TarefaRow): Tarefa => ({
   confirmedAt: (row as any).confirmed_at || null,
   confirmedBy: (row as any).confirmed_by || null,
   rejectedReason: (row as any).rejected_reason || null,
-  submittedAt: (row as any).submitted_at || null,
-  confirmedAt: (row as any).confirmed_at || null,
-  confirmedBy: (row as any).confirmed_by || null,
-  rejectedReason: (row as any).rejected_reason || null,
   ...resolveTaskLinks(row),
 })
 

@@ -175,10 +175,6 @@ export interface TarefaRow {
   confirmed_at?: string | null
   confirmed_by?: string | null
   rejected_reason?: string | null
-  submitted_at?: string | null
-  confirmed_at?: string | null
-  confirmed_by?: string | null
-  rejected_reason?: string | null
   dificuldade?: TaskDifficulty | null
   assignee_ids?: string[] | null
   tarefas_assignees?: Array<{ user_id: string }> | null
