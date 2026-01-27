@@ -3,9 +3,6 @@ import { CheckCircle, Clock, ListTodo, Pencil, Plus, Search, Trash2 } from 'luci
 import { useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import type { Tarefa } from '@/types/domain'
 import { cn } from '@/utils/cn'
@@ -19,17 +16,17 @@ import { useCasos } from '@/hooks/useCasos'
 type LinkType = 'none' | 'lead' | 'cliente' | 'caso'
 
 const statusBadge = (status: Tarefa['status']) => {
-  if (status === 'concluida') return 'border-success-border bg-success-bg text-success'
-  if (status === 'aguardando_validacao') return 'border-info-border bg-info-bg text-info'
-  if (status === 'devolvida') return 'border-danger-border bg-danger-bg text-danger'
-  if (status === 'em_progresso') return 'border-warning-border bg-warning-bg text-warning'
-  return 'border-border bg-surface-2 text-text-muted'
+  if (status === 'concluida') return 'bg-green-50 text-green-700 border-green-200'
+  if (status === 'aguardando_validacao') return 'bg-purple-50 text-purple-700 border-purple-200'
+  if (status === 'devolvida') return 'bg-red-50 text-red-700 border-red-200'
+  if (status === 'em_progresso') return 'bg-blue-50 text-blue-700 border-blue-200'
+  return 'bg-gray-100 text-gray-700 border-gray-200'
 }
 
 const priorityBadge = (priority: Tarefa['priority']) => {
-  if (priority === 'alta') return 'border-danger-border bg-danger-bg text-danger'
-  if (priority === 'normal') return 'border-info-border bg-info-bg text-info'
-  return 'border-border bg-surface-2 text-text-muted'
+  if (priority === 'alta') return 'bg-red-50 text-red-700 border-red-200'
+  if (priority === 'normal') return 'bg-gray-100 text-gray-700 border-gray-200'
+  return 'bg-blue-50 text-blue-700 border-blue-200'
 }
 
 const buildInitialForm = () => ({
@@ -259,231 +256,218 @@ export const TarefasPage = () => {
         ? 'ready'
         : 'empty'
   const emptyAction = (
-    <Button
-      variant="primary"
-      size="sm"
-      className="h-9 rounded-full px-4"
+    <button
       onClick={openCreateModal}
+      className="h-10 px-4 rounded-lg font-medium text-white flex items-center gap-2"
+      style={{ backgroundColor: '#721011' }}
     >
-      <Plus className="mr-2 h-4 w-4" />
+      <Plus className="h-4 w-4" />
       Nova tarefa
-    </Button>
+    </button>
   )
 
   return (
-    <div className="min-h-screen bg-base pb-12 text-text">
-      <div className="space-y-6">
-        <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt p-6 shadow-card">
-          <div className="relative z-10 space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-text-muted">Tarefas</p>
-            <h2 className="font-display text-2xl text-text">Rotinas e lembretes internos</h2>
-            <p className="text-sm text-text-muted">
-              Planeje atividades por lead, cliente ou caso. Lembretes somente no app.
-            </p>
-          </div>
-        </header>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border-border bg-white/90 shadow-soft">
-            <CardContent className="flex items-center justify-between p-5">
-              <div>
-                <p className="text-xs text-text-subtle">Pendentes</p>
-                <p className="text-2xl font-semibold text-text">{summary.pending}</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning-bg text-warning">
-                <Clock className="h-5 w-5" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border bg-white/90 shadow-soft">
-            <CardContent className="flex items-center justify-between p-5">
-              <div>
-                <p className="text-xs text-text-subtle">Atrasadas</p>
-                <p className="text-2xl font-semibold text-text">{summary.overdue}</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-danger-bg text-danger">
-                <Clock className="h-5 w-5" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border bg-white/90 shadow-soft">
-            <CardContent className="flex items-center justify-between p-5">
-              <div>
-                <p className="text-xs text-text-subtle">Concluidas</p>
-                <p className="text-2xl font-semibold text-text">{summary.done}</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-bg text-success">
-                <CheckCircle className="h-5 w-5" />
-              </div>
-            </CardContent>
-          </Card>
+    <div className="space-y-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      {/* Header */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">T A R E F A S</p>
+          <h2 className="text-lg font-bold text-gray-900">Rotinas e lembretes internos</h2>
+          <p className="text-sm text-gray-500">
+            Planeje atividades por lead, cliente ou caso. Lembretes somente no app.
+          </p>
         </div>
-
-        <Card className="border-border bg-white/90">
-          <CardHeader className="flex flex-wrap items-center justify-between gap-4">
-            <div className="space-y-1">
-              <CardTitle>Lista de tarefas</CardTitle>
-              <p className="text-xs text-text-subtle">Organize por prioridade e vencimento.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 rounded-full px-4"
-                onClick={() => {
-                  void fetchTarefas()
-                }}
-                disabled={loading}
-              >
-                Atualizar
-              </Button>
-              <Button onClick={openCreateModal} className="h-10 rounded-full px-4">
-                <Plus className="mr-2 h-4 w-4" />
-                Nova tarefa
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[260px]">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
-                <Input
-                  className="h-11 rounded-full border border-border bg-surface pl-11 text-sm text-text placeholder:text-text-subtle"
-                  placeholder="Buscar tarefas..."
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </div>
-              <select
-                className="h-11 rounded-full border border-border bg-white px-4 text-sm text-text"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-              >
-                <option value="todos">Status</option>
-                <option value="pendente">Pendente</option>
-                <option value="em_progresso">Em progresso</option>
-                <option value="concluida">Concluida</option>
-              </select>
-              <select
-                className="h-11 rounded-full border border-border bg-white px-4 text-sm text-text"
-                value={priorityFilter}
-                onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
-              >
-                <option value="todos">Prioridade</option>
-                <option value="baixa">Baixa</option>
-                <option value="normal">Normal</option>
-                <option value="alta">Alta</option>
-              </select>
-              <select
-                className="h-11 rounded-full border border-border bg-white px-4 text-sm text-text"
-                value={linkFilter}
-                onChange={(event) => setLinkFilter(event.target.value as typeof linkFilter)}
-              >
-                <option value="todos">Vinculo</option>
-                <option value="lead">Lead</option>
-                <option value="cliente">Cliente</option>
-                <option value="caso">Caso</option>
-              </select>
-              {linkFilter !== 'todos' && (
-                <input
-                  className="h-11 rounded-full border border-border bg-white px-4 text-sm text-text"
-                  placeholder="ID do vinculo"
-                  value={linkIdFilter}
-                  onChange={(event) => setLinkIdFilter(event.target.value)}
-                />
-              )}
-            </div>
-
-            <PageState
-              status={pageState}
-              emptyTitle="Nenhuma tarefa encontrada"
-              emptyAction={emptyAction}
-              onRetry={error ? fetchTarefas : undefined}
-            >
-              <div className="space-y-3">
-                {sortedTarefas.map((task) => {
-                  const displayTitle = stripChecklistPrefix(task.title)
-                  const isOverdue =
-                    task.dueDate && task.status !== 'concluida' && task.dueDate < todayIso
-                  return (
-                    <div
-                      key={task.id}
-                      className={cn(
-                        'flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-soft',
-                        'border-border bg-white'
-                      )}
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <ListTodo className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-[200px]">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold text-text">{displayTitle}</p>
-                          <span
-                            className={cn(
-                              'inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase',
-                              statusBadge(task.status),
-                            )}
-                          >
-                            {task.status.replace('_', ' ')}
-                          </span>
-                          <span
-                            className={cn(
-                              'inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase',
-                              priorityBadge(task.priority),
-                            )}
-                          >
-                            {task.priority}
-                          </span>
-                          {isOverdue && (
-                            <span className="rounded-full border border-danger-border bg-danger-bg px-2.5 py-0.5 text-[10px] font-semibold uppercase text-danger">
-                              atrasada
-                            </span>
-                          )}
-                        </div>
-                        {task.description && (
-                          <p className="mt-1 text-xs text-text-subtle">{task.description}</p>
-                        )}
-                        <div className="mt-2 text-xs text-text-subtle">
-                          {resolveLinkLabel(task)}
-                          {task.dueDate && (
-                            <span className="ml-3">Vence em {formatDate(task.dueDate)}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-9 rounded-full px-3"
-                          onClick={() => handleToggleStatus(task)}
-                        >
-                          {task.status === 'concluida' ? 'Reabrir' : 'Concluir'}
-                        </Button>
-                        <button
-                          type="button"
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-muted hover:text-text"
-                          onClick={() => openEditModal(task)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-muted hover:text-danger"
-                          onClick={() => handleDelete(task)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </PageState>
-          </CardContent>
-        </Card>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500">Pendentes</p>
+            <p className="text-2xl font-bold text-gray-900">{summary.pending}</p>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+            <Clock className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500">Atrasadas</p>
+            <p className="text-2xl font-bold text-gray-900">{summary.overdue}</p>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+            <Clock className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500">Concluídas</p>
+            <p className="text-2xl font-bold text-gray-900">{summary.done}</p>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-600">
+            <CheckCircle className="h-5 w-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* Tasks List Card */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Lista de tarefas</h3>
+            <p className="text-sm text-gray-500">Organize por prioridade e vencimento.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void fetchTarefas()}
+              disabled={loading}
+              className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Atualizar
+            </button>
+            <button
+              onClick={openCreateModal}
+              className="h-10 px-4 rounded-lg font-medium text-white flex items-center gap-2"
+              style={{ backgroundColor: '#721011' }}
+            >
+              <Plus className="h-4 w-4" />
+              Nova tarefa
+            </button>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="relative flex-1 min-w-[260px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': '#721011' } as React.CSSProperties}
+              placeholder="Buscar tarefas..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
+          <select
+            className="h-10 rounded-lg border border-gray-200 px-4 text-sm text-gray-700 focus:outline-none focus:ring-2"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+          >
+            <option value="todos">Status</option>
+            <option value="pendente">Pendente</option>
+            <option value="em_progresso">Em progresso</option>
+            <option value="concluida">Concluida</option>
+          </select>
+          <select
+            className="h-10 rounded-lg border border-gray-200 px-4 text-sm text-gray-700 focus:outline-none focus:ring-2"
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
+          >
+            <option value="todos">Prioridade</option>
+            <option value="baixa">Baixa</option>
+            <option value="normal">Normal</option>
+            <option value="alta">Alta</option>
+          </select>
+          <select
+            className="h-10 rounded-lg border border-gray-200 px-4 text-sm text-gray-700 focus:outline-none focus:ring-2"
+            value={linkFilter}
+            onChange={(event) => setLinkFilter(event.target.value as typeof linkFilter)}
+          >
+            <option value="todos">Vinculo</option>
+            <option value="lead">Lead</option>
+            <option value="cliente">Cliente</option>
+            <option value="caso">Caso</option>
+          </select>
+        </div>
+
+        {/* Task List */}
+        <PageState
+          status={pageState}
+          emptyTitle="Nenhuma tarefa encontrada"
+          emptyAction={emptyAction}
+          onRetry={error ? fetchTarefas : undefined}
+        >
+          <div className="space-y-3">
+            {sortedTarefas.map((task) => {
+              const displayTitle = stripChecklistPrefix(task.title)
+              const isOverdue =
+                task.dueDate && task.status !== 'concluida' && task.dueDate < todayIso
+              return (
+                <div
+                  key={task.id}
+                  className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
+                >
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                  >
+                    <ListTodo className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-900">{displayTitle}</p>
+                      <span
+                        className={cn(
+                          'inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase',
+                          statusBadge(task.status),
+                        )}
+                      >
+                        {task.status.replace('_', ' ')}
+                      </span>
+                      <span
+                        className={cn(
+                          'inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase',
+                          priorityBadge(task.priority),
+                        )}
+                      >
+                        {task.priority}
+                      </span>
+                      {isOverdue && (
+                        <span className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-700">
+                          atrasada
+                        </span>
+                      )}
+                    </div>
+                    {task.description && (
+                      <p className="mt-1 text-xs text-gray-500">{task.description}</p>
+                    )}
+                    <div className="mt-2 text-xs text-gray-500">
+                      {resolveLinkLabel(task)}
+                      {task.dueDate && (
+                        <span className="ml-3">Vence em {formatDate(task.dueDate)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggleStatus(task)}
+                      className="h-9 px-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      {task.status === 'concluida' ? 'Reabrir' : 'Concluir'}
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                      onClick={() => openEditModal(task)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      onClick={() => handleDelete(task)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </PageState>
+      </div>
+
+      {/* Modal */}
       <Modal
         open={modalOpen}
         onClose={closeModal}
@@ -491,33 +475,43 @@ export const TarefasPage = () => {
         description="Registre tarefas e lembretes internos."
         footer={
           <>
-            <Button variant="ghost" onClick={closeModal} disabled={saving}>
+            <button
+              onClick={closeModal}
+              disabled={saving}
+              className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSave} disabled={saving}>
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="h-10 px-4 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: '#721011' }}
+            >
               {saving ? 'Salvando...' : 'Salvar tarefa'}
-            </Button>
+            </button>
           </>
         }
       >
         <div className="space-y-4">
           {formError && (
-            <div className="rounded-2xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
               {formError}
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-text-subtle">Titulo</label>
-            <Input
+            <label className="text-sm font-medium text-gray-700">Titulo</label>
+            <input
               value={formState.title}
               onChange={(event) => setFormState((prev) => ({ ...prev, title: event.target.value }))}
               placeholder="Ex: Checar prazos do projeto"
+              className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-text-subtle">Descricao</label>
+            <label className="text-sm font-medium text-gray-700">Descricao</label>
             <textarea
-              className="min-h-[120px] w-full rounded-2xl border border-border bg-white px-3 py-2 text-sm text-text"
+              className="min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
               value={formState.description}
               onChange={(event) =>
                 setFormState((prev) => ({ ...prev, description: event.target.value }))
@@ -527,9 +521,9 @@ export const TarefasPage = () => {
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wide text-text-subtle">Prioridade</label>
+              <label className="text-sm font-medium text-gray-700">Prioridade</label>
               <select
-                className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.priority}
                 onChange={(event) =>
                   setFormState((prev) => ({
@@ -544,9 +538,9 @@ export const TarefasPage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wide text-text-subtle">Status</label>
+              <label className="text-sm font-medium text-gray-700">Status</label>
               <select
-                className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.status}
                 onChange={(event) =>
                   setFormState((prev) => ({
@@ -561,19 +555,20 @@ export const TarefasPage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wide text-text-subtle">Vencimento</label>
-              <Input
+              <label className="text-sm font-medium text-gray-700">Vencimento</label>
+              <input
                 type="date"
                 value={formState.dueDate}
                 onChange={(event) => setFormState((prev) => ({ ...prev, dueDate: event.target.value }))}
+                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
               />
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wide text-text-subtle">Vinculo</label>
+              <label className="text-sm font-medium text-gray-700">Vinculo</label>
               <select
-                className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.linkType}
                 onChange={(event) =>
                   setFormState((prev) => ({
@@ -590,9 +585,9 @@ export const TarefasPage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wide text-text-subtle">Selecionar</label>
+              <label className="text-sm font-medium text-gray-700">Selecionar</label>
               <select
-                className="h-10 w-full rounded-2xl border border-border bg-white px-3 text-sm text-text"
+                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.linkId}
                 onChange={(event) =>
                   setFormState((prev) => ({ ...prev, linkId: event.target.value }))
@@ -625,6 +620,11 @@ export const TarefasPage = () => {
           </div>
         </div>
       </Modal>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+        input:focus, select:focus, textarea:focus { --tw-ring-color: #721011; border-color: #721011; }
+      `}</style>
     </div>
   )
 }
