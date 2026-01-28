@@ -43,7 +43,7 @@ export default function AuthCallback() {
             navigate('/reset-password')
           } else {
             // Redirecionar para dashboard
-            navigate('/dashboard')
+            navigate('/app/dashboard')
           }
         } else {
           console.warn('⚠️ Tokens não encontrados na URL')

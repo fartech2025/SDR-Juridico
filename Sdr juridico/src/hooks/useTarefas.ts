@@ -34,17 +34,24 @@ const resolveEntidadePayload = (link: {
 }
 
 export function useTarefas() {
-  const { user } = useCurrentUser()
+  const { user, role } = useCurrentUser()
   const [state, setState] = useState<UseTarefasState>({
     tarefas: [],
     loading: true,
     error: null,
   })
 
+  // Determina se o usuário é gestor/admin
+  const isGestor = role === 'org_admin' || role === 'fartech_admin'
+
   const fetchTarefas = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
-      const tarefas = await tarefasService.getTarefas()
+      // Passa userId e isGestor para filtrar por role
+      const tarefas = await tarefasService.getTarefas({
+        userId: user?.id,
+        isGestor,
+      })
       setState((prev) => ({
         ...prev,
         tarefas: tarefas.map(mapTarefaRowToTarefa),
@@ -57,7 +64,7 @@ export function useTarefas() {
         loading: false,
       }))
     }
-  }, [])
+  }, [user?.id, isGestor])
 
   const fetchTarefasByEntidade = useCallback(async (entidade: 'lead' | 'cliente' | 'caso', entidadeId: string) => {
     try {
@@ -182,6 +189,7 @@ const rejectTarefa = useCallback(async (id: string, reason: string) => {
 
 return {
     ...state,
+    isGestor,
     fetchTarefas,
     fetchTarefasByEntidade,
     createTarefa,

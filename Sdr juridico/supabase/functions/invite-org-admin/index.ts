@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -71,6 +71,26 @@ serve(async (req) => {
     }
 
     console.log('✅ Usuário tem permissão fartech_admin')
+
+    // ✅ SECURITY: Validar que a organização existe e o usuário está autorizado
+    const { data: orgData, error: orgError } = await supabaseAdmin
+      .from('organizations')
+      .select('id')
+      .eq('id', body.orgId || undefined)
+      .single()
+
+    if (orgError || !orgData) {
+      console.error('❌ Organização não encontrada:', orgError?.message)
+      return json({ error: 'Organização não encontrada' }, 404)
+    }
+
+    // ✅ SECURITY: Validar email do novo admin
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(adminEmail)) {
+      return json({ error: 'Email inválido' }, 400)
+    }
+
+    console.log('✅ Validações de segurança OK')
 
     const body = await req.json()
     const { orgId, adminEmail, adminName, responsavelEmail } = body

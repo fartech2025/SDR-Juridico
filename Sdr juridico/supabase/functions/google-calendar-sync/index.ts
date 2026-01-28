@@ -12,7 +12,7 @@ const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') ?? ''
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') ?? ''
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -94,9 +94,23 @@ serve(async (req) => {
     orgId = membership.org_id
   }
 
+  // ✅ SECURITY: Verificar que usuário tem permissão para sincronizar esta organização
+  const { data: userOrg, error: userOrgError } = await supabase
+    .from('org_members')
+    .select('role')
+    .eq('user_id', authData.user.id)
+    .eq('org_id', orgId)
+    .eq('ativo', true)
+    .single()
+
+  if (userOrgError || !userOrg || !['org_admin', 'gestor'].includes(userOrg.role || '')) {
+    return jsonResponse({ error: 'Permission denied. Only org admin or gestor can sync calendar' }, 403)
+  }
+
   log('info', 'Starting manual sync', {
     userId: authData.user.id,
     orgId,
+    userRole: userOrg.role,
   })
 
   const { data: integration, error: integrationError } = await supabase

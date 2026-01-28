@@ -176,6 +176,13 @@ export const TarefasKanbanPage = () => {
   const [active, setActive] = React.useState<Tarefa | null>(null)
   const [rejectReason, setRejectReason] = React.useState('')
   const [assignedDraft, setAssignedDraft] = React.useState('')
+  // Estados para criar/editar tarefa
+  const [createModalOpen, setCreateModalOpen] = React.useState(false)
+  const [editMode, setEditMode] = React.useState(false)
+  const [formTitle, setFormTitle] = React.useState('')
+  const [formDescription, setFormDescription] = React.useState('')
+  const [formPriority, setFormPriority] = React.useState<Tarefa['priority']>('normal')
+  const [formDueDate, setFormDueDate] = React.useState('')
 
   React.useEffect(() => {
     void fetchTarefas()
@@ -204,7 +211,12 @@ export const TarefasKanbanPage = () => {
   const openTask = (t: Tarefa) => {
     setActive(t)
     setRejectReason('')
-    setAssignedDraft(((t as any).assigned_user_id as string) || '')
+    setAssignedDraft(t.ownerId || '')
+    setEditMode(false)
+    setFormTitle(t.title)
+    setFormDescription(t.description || '')
+    setFormPriority(t.priority)
+    setFormDueDate(t.dueDate?.split('T')[0] || '')
     setModalOpen(true)
   }
 
@@ -278,7 +290,14 @@ export const TarefasKanbanPage = () => {
             </div>
             {canCreate && (
               <button
-                onClick={() => createTarefa({ title: 'Nova tarefa', description: '', priority: 'normal', status: 'pendente' })}
+                onClick={() => {
+                  setFormTitle('')
+                  setFormDescription('')
+                  setFormPriority('normal')
+                  setFormDueDate('')
+                  setAssignedDraft('')
+                  setCreateModalOpen(true)
+                }}
                 className="h-10 px-4 rounded-lg font-medium text-white transition-all hover:shadow-lg flex items-center gap-2"
                 style={{ backgroundColor: '#721011' }}
               >
@@ -300,6 +319,7 @@ export const TarefasKanbanPage = () => {
                 {items.map((t) => (
                   <DraggableTaskCard key={t.id} task={t} onOpen={() => openTask(t)}>
                     <div className="mt-3 flex flex-wrap gap-2">
+                      {/* Botões para ADVOGADO */}
                       {role === 'ADVOGADO' && key === 'pendente' && (
                         <button
                           className="h-7 px-3 text-xs font-medium rounded-md border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
@@ -324,6 +344,57 @@ export const TarefasKanbanPage = () => {
                         >
                           Enviar p/ Confirmação
                         </button>
+                      )}
+                      {role === 'ADVOGADO' && key === 'devolvida' && (
+                        <button
+                          className="h-7 px-3 text-xs font-medium rounded-md border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            void onMove(t, 'em_progresso')
+                          }}
+                        >
+                          Retomar
+                        </button>
+                      )}
+
+                      {/* Botões para GESTOR/ADMIN */}
+                      {canApprove && key === 'pendente' && (
+                        <button
+                          className="h-7 px-3 text-xs font-medium rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            void onMove(t, 'em_progresso')
+                          }}
+                        >
+                          Mover p/ Em Progresso
+                        </button>
+                      )}
+                      {canApprove && key === 'em_progresso' && (
+                        <>
+                          <button
+                            className="h-7 px-3 text-xs font-medium rounded-md border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              void submitForConfirmation(t.id)
+                            }}
+                          >
+                            Enviar p/ Validação
+                          </button>
+                          <button
+                            className="h-7 px-3 text-xs font-medium rounded-md text-white transition-colors"
+                            style={{ backgroundColor: '#22c55e' }}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              void approveTarefa(t.id)
+                            }}
+                          >
+                            Concluir Diretamente
+                          </button>
+                        </>
                       )}
                       {canApprove && key === 'aguardando_validacao' && (
                         <>
@@ -351,6 +422,42 @@ export const TarefasKanbanPage = () => {
                           </button>
                         </>
                       )}
+                      {canApprove && key === 'devolvida' && (
+                        <>
+                          <button
+                            className="h-7 px-3 text-xs font-medium rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              void onMove(t, 'em_progresso')
+                            }}
+                          >
+                            Reabrir
+                          </button>
+                          <button
+                            className="h-7 px-3 text-xs font-medium rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              void onMove(t, 'pendente')
+                            }}
+                          >
+                            Voltar p/ Pendente
+                          </button>
+                        </>
+                      )}
+                      {canApprove && key === 'concluida' && (
+                        <button
+                          className="h-7 px-3 text-xs font-medium rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            void onMove(t, 'em_progresso')
+                          }}
+                        >
+                          Reabrir
+                        </button>
+                      )}
                     </div>
                   </DraggableTaskCard>
                 ))}
@@ -361,56 +468,130 @@ export const TarefasKanbanPage = () => {
         </div>
       </DndContext>
 
-      {/* Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={active ? active.title : 'Tarefa'}>
+      {/* Modal de Visualização/Edição */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editMode ? 'Editar Tarefa' : (active ? active.title : 'Tarefa')}>
         {active ? (
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="text-sm">
-                <div className="text-gray-500">Status</div>
-                <div className="font-medium text-gray-900">{COLUMN_LABELS[active.status]}</div>
-              </div>
-              <div className="text-sm">
-                <div className="text-gray-500">Prazo</div>
-                <div className="font-medium text-gray-900">{active.dueDate ? formatDate(active.dueDate) : '—'}</div>
-              </div>
-              <div className="text-sm">
-                <div className="text-gray-500">Prioridade</div>
-                <div className="font-medium text-gray-900">{active.priority}</div>
-              </div>
-              <div className="text-sm">
-                <div className="text-gray-500">Descrição</div>
-                <div className="mt-1 whitespace-pre-wrap text-gray-900">{active.description || '—'}</div>
-              </div>
-            </div>
+            {/* Modo de visualização */}
+            {!editMode && (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="text-sm">
+                    <div className="text-gray-500">Status</div>
+                    <div className="font-medium text-gray-900">{COLUMN_LABELS[active.status]}</div>
+                  </div>
+                  <div className="text-sm">
+                    <div className="text-gray-500">Prazo</div>
+                    <div className="font-medium text-gray-900">{active.dueDate ? formatDate(active.dueDate) : '—'}</div>
+                  </div>
+                  <div className="text-sm">
+                    <div className="text-gray-500">Prioridade</div>
+                    <div className="font-medium text-gray-900">{active.priority}</div>
+                  </div>
+                  <div className="text-sm col-span-2">
+                    <div className="text-gray-500">Descrição</div>
+                    <div className="mt-1 whitespace-pre-wrap text-gray-900">{active.description || '—'}</div>
+                  </div>
+                </div>
 
-            {canApprove && (
-              <div className="space-y-2">
-                <div className="text-sm text-gray-500">Reatribuir responsável (apenas Gestor/Admin)</div>
-                <div className="flex flex-col gap-2 sm:flex-row">
+                {canApprove && (
+                  <button
+                    className="h-10 px-4 rounded-lg font-medium text-white transition-colors"
+                    style={{ backgroundColor: '#721011' }}
+                    onClick={() => setEditMode(true)}
+                  >
+                    Editar Tarefa
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Modo de edição (apenas Gestor/Admin) */}
+            {editMode && canApprove && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-500">Título</label>
                   <input
-                    defaultValue={(active as any).assigned_user_id || ''}
-                    placeholder="ID do usuário (auth.users.id)"
-                    onChange={(e) => setAssignedDraft(e.target.value)}
-                    className="h-10 flex-1 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    placeholder="Título da tarefa"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-500">Descrição</label>
+                  <textarea
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2"
+                    placeholder="Descrição da tarefa"
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm text-gray-500">Prioridade</label>
+                    <select
+                      value={formPriority}
+                      onChange={(e) => setFormPriority(e.target.value as Tarefa['priority'])}
+                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    >
+                      <option value="baixa">Baixa</option>
+                      <option value="normal">Normal</option>
+                      <option value="alta">Alta</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-gray-500">Prazo</label>
+                    <input
+                      type="date"
+                      value={formDueDate}
+                      onChange={(e) => setFormDueDate(e.target.value)}
+                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-500">Responsável (ID do usuário)</label>
+                  <input
+                    value={assignedDraft}
+                    onChange={(e) => setAssignedDraft(e.target.value)}
+                    placeholder="ID do usuário (auth.users.id)"
+                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                  />
+                </div>
+                <div className="flex gap-2">
                   <button
                     className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setEditMode(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    className="h-10 px-4 rounded-lg font-medium text-white transition-colors"
+                    style={{ backgroundColor: '#721011' }}
                     onClick={async () => {
-                      const nextUser = assignedDraft.trim()
-                      if (!nextUser) return
-                      await updateTarefa(active.id, { assigned_user_id: nextUser } as any)
-                      setActive({ ...(active as any), assigned_user_id: nextUser } as any)
+                      if (!formTitle.trim()) return
+                      await updateTarefa(active.id, {
+                        title: formTitle.trim(),
+                        description: formDescription.trim() || null,
+                        priority: formPriority,
+                        dueDate: formDueDate || null,
+                        ownerId: assignedDraft.trim() || undefined,
+                      })
+                      setEditMode(false)
+                      setModalOpen(false)
                     }}
                   >
-                    Salvar responsável
+                    Salvar Alterações
                   </button>
                 </div>
               </div>
             )}
 
-            {canApprove && active.status === 'aguardando_validacao' && (
-              <div className="space-y-2">
+            {/* Seção de aprovação/devolução */}
+            {!editMode && canApprove && active.status === 'aguardando_validacao' && (
+              <div className="space-y-2 border-t pt-4">
                 <div className="text-sm text-gray-500">Motivo da devolução (obrigatório)</div>
                 <input
                   value={rejectReason}
@@ -433,7 +614,10 @@ export const TarefasKanbanPage = () => {
                   <button
                     className="h-10 px-4 rounded-lg font-medium text-white transition-colors"
                     style={{ backgroundColor: '#22c55e' }}
-                    onClick={() => approveTarefa(active.id)}
+                    onClick={async () => {
+                      await approveTarefa(active.id)
+                      setModalOpen(false)
+                    }}
                   >
                     Aprovar
                   </button>
@@ -442,6 +626,89 @@ export const TarefasKanbanPage = () => {
             )}
           </div>
         ) : null}
+      </Modal>
+
+      {/* Modal de Criar Tarefa */}
+      <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Nova Tarefa">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-500">Título *</label>
+            <input
+              value={formTitle}
+              onChange={(e) => setFormTitle(e.target.value)}
+              className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+              placeholder="Título da tarefa"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-500">Descrição</label>
+            <textarea
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              rows={3}
+              className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2"
+              placeholder="Descrição da tarefa"
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-500">Prioridade</label>
+              <select
+                value={formPriority}
+                onChange={(e) => setFormPriority(e.target.value as Tarefa['priority'])}
+                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+              >
+                <option value="baixa">Baixa</option>
+                <option value="normal">Normal</option>
+                <option value="alta">Alta</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-500">Prazo</label>
+              <input
+                type="date"
+                value={formDueDate}
+                onChange={(e) => setFormDueDate(e.target.value)}
+                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-500">Atribuir para (ID do usuário)</label>
+            <input
+              value={assignedDraft}
+              onChange={(e) => setAssignedDraft(e.target.value)}
+              placeholder="Deixe vazio para atribuir a você mesmo"
+              className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={() => setCreateModalOpen(false)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="h-10 px-4 rounded-lg font-medium text-white transition-colors"
+              style={{ backgroundColor: '#721011' }}
+              onClick={async () => {
+                if (!formTitle.trim()) return
+                await createTarefa({
+                  title: formTitle.trim(),
+                  description: formDescription.trim() || null,
+                  priority: formPriority,
+                  status: 'pendente',
+                  dueDate: formDueDate || null,
+                  ownerId: assignedDraft.trim() || undefined,
+                })
+                setCreateModalOpen(false)
+              }}
+            >
+              Criar Tarefa
+            </button>
+          </div>
+        </div>
       </Modal>
 
       <style>{`
