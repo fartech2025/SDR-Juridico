@@ -69,11 +69,67 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       setCurrentRole(user.role || null)
 
       if (user.org_id) {
-        const org = await organizationsService.getById(user.org_id)
-        setCurrentOrg(org)
-
-        if (org) {
-          await loadStats(org.id)
+        try {
+          const org = await organizationsService.getById(user.org_id)
+          
+          // Se não encontrar, criar org genérica para não travar
+          if (!org) {
+            console.warn('⚠️ Organização não encontrada, usando fallback:', user.org_id)
+            const fallbackOrg: Organization = {
+              id: user.org_id,
+              name: 'Organização',
+              slug: 'org',
+              cnpj: null,
+              email: 'org@example.com',
+              phone: null,
+              address: null,
+              plan: 'trial',
+              max_users: 100,
+              max_storage_gb: 10,
+              max_cases: null,
+              status: 'active',
+              billing_email: null,
+              billing_cycle: 'monthly',
+              next_billing_date: null,
+              logo_url: null,
+              primary_color: '#059669',
+              secondary_color: null,
+              custom_domain: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }
+            setCurrentOrg(fallbackOrg)
+          } else {
+            setCurrentOrg(org)
+            await loadStats(org.id)
+          }
+        } catch (err) {
+          console.error('❌ Erro ao carregar organização:', err)
+          // Fallback mesmo em caso de erro
+          const fallbackOrg: Organization = {
+            id: user.org_id,
+            name: 'Organização',
+            slug: 'org',
+            cnpj: null,
+            email: 'org@example.com',
+            phone: null,
+            address: null,
+            plan: 'trial',
+            max_users: 100,
+            max_storage_gb: 10,
+            max_cases: null,
+            status: 'active',
+            billing_email: null,
+            billing_cycle: 'monthly',
+            next_billing_date: null,
+            logo_url: null,
+            primary_color: '#059669',
+            secondary_color: null,
+            custom_domain: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+          setCurrentOrg(fallbackOrg)
         }
       } else {
         setCurrentOrg(null)

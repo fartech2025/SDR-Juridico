@@ -1,5 +1,5 @@
 // Permissions Service - RBAC management
-// Date: 2026-01-13
+// Correção: Modelo de permissões unificado e cache funcional
 
 import { supabase } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
@@ -10,116 +10,179 @@ import type {
   UserWithRole,
   Resource,
   PermissionAction,
+  UserRole,
 } from '@/types/permissions'
 import {
   getPermissionsByRole,
   FARTECH_ADMIN_PERMISSIONS,
 } from '@/types/permissions'
 import { ensureUsuario } from '@/services/usuariosService'
-import { telemetryService } from '@/services/telemetryService'
 
-const resolveRoleFromPermissoes = (permissoes: string[], memberRole?: string | null) => {
-  if (permissoes.includes('fartech_admin')) {
-    return 'fartech_admin'
-  }
-  if (memberRole && ['admin', 'gestor', 'org_admin'].includes(memberRole)) {
-    return 'org_admin'
-  }
-  if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
-    return 'org_admin'
-  }
-  return 'user'
+// ============================================================
+// TIPOS
+// ============================================================
+
+type OrgMemberRole = 'admin' | 'gestor' | 'advogado' | 'secretaria' | 'leitura'
+
+interface CachedUser extends UserWithRole {
+  cachedAt: number
 }
 
-let currentUserPromise: Promise<UserWithRole | null> | null = null
+// ============================================================
+// CONSTANTES
+// ============================================================
+
+const USER_CACHE_TTL_MS = 10000 // 10 segundos
+const IS_DEV = import.meta.env.DEV
+
+// ============================================================
+// CACHE
+// ============================================================
+
+let cachedUser: CachedUser | null = null
+
+function isCacheValid(): boolean {
+  if (!cachedUser) return false
+  return (Date.now() - cachedUser.cachedAt) < USER_CACHE_TTL_MS
+}
+
+function clearUserCache(): void {
+  cachedUser = null
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+/**
+ * Resolve o papel do usuário baseado APENAS em org_members.role.
+ * usuarios.permissoes é usado APENAS para verificar fartech_admin.
+ */
+function resolveUserRole(
+  isFartechAdmin: boolean,
+  memberRole: OrgMemberRole | null
+): UserRole {
+  if (isFartechAdmin) {
+    return 'fartech_admin'
+  }
+
+  if (!memberRole) {
+    return 'user'
+  }
+
+  const roleMap: Record<OrgMemberRole, UserRole> = {
+    admin: 'org_admin',
+    gestor: 'org_admin',
+    advogado: 'user',
+    secretaria: 'user',
+    leitura: 'user',
+  }
+
+  return roleMap[memberRole] || 'user'
+}
+
+function logDebug(message: string, data?: unknown): void {
+  if (IS_DEV) {
+    console.log(`[PermissionsService] ${message}`, data ?? '')
+  }
+}
+
+// ============================================================
+// SERVICE
+// ============================================================
 
 export const permissionsService = {
   /**
-   * Get current user with role information
+   * Obtém o usuário atual com informações de role.
+   * Implementa cache para evitar múltiplas chamadas.
    */
   async getCurrentUser(): Promise<UserWithRole | null> {
-    if (currentUserPromise) {
-      return currentUserPromise
+    // Retorna cache se válido
+    if (isCacheValid() && cachedUser) {
+      return cachedUser
     }
 
-    currentUserPromise = (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return null
-
-        const { usuario, missingUsuariosTable, seed } = await ensureUsuario(user)
-
-        const fallbackName =
-          (user.user_metadata && (user.user_metadata as { nome_completo?: string }).nome_completo) ||
-          user.email ||
-          'Usuario'
-        const baseName = usuario?.nome_completo || seed?.nome_completo || fallbackName
-        const baseEmail = usuario?.email || seed?.email || user.email || ''
-        const permissoes = usuario?.permissoes || seed?.permissoes || []
-        const isFartechAdmin = permissoes.includes('fartech_admin') || seed?.is_fartech_admin === true
-
-        console.log('[PermissionsService] Dados do usuario:', { usuario, seed })
-        console.log('[PermissionsService] Permissoes do usuario:', permissoes)
-        console.log('[PermissionsService] isFartechAdmin:', isFartechAdmin)
-
-        if (missingUsuariosTable) {
-          console.log('[PermissionsService] usuarios table missing, using fallback')
-        }
-
-        const { data: memberData } = await supabase
-          .from('org_members')
-          .select('org_id, role')
-          .eq('user_id', user.id)
-          .eq('ativo', true)
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .maybeSingle()
-
-        const membershipRole = memberData?.role || seed?.role || null
-        const role = resolveRoleFromPermissoes(permissoes, membershipRole)
-
-        console.log('[PermissionsService] Role final:', role, 'membershipRole:', membershipRole)
-
-        return {
-          id: user.id,
-          email: baseEmail,
-          name: baseName,
-          role,
-          org_id: memberData?.org_id || seed?.org_id || null,
-          is_fartech_admin: isFartechAdmin,
-        } as UserWithRole
-      } catch (error) {
-        console.error('Error getting current user:', error)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        clearUserCache()
         return null
       }
-    })()
 
-    try {
-      return await currentUserPromise
-    } finally {
-      currentUserPromise = null
+      // Busca dados do usuário
+      const { usuario, seed } = await ensureUsuario(user)
+
+      // Resolve nome e email
+      const fallbackName =
+        (user.user_metadata as { nome_completo?: string })?.nome_completo ||
+        user.email ||
+        'Usuario'
+      const name = usuario?.nome_completo || seed?.nome_completo || fallbackName
+      const email = usuario?.email || seed?.email || user.email || ''
+
+      // Verifica se é fartech_admin (APENAS via usuarios.permissoes)
+      const permissoes = usuario?.permissoes || seed?.permissoes || []
+      const isFartechAdmin = permissoes.includes('fartech_admin')
+
+      logDebug('Dados do usuario:', { id: user.id, isFartechAdmin })
+
+      // Busca membership (FONTE DE VERDADE para role na org)
+      const { data: memberData } = await supabase
+        .from('org_members')
+        .select('org_id, role')
+        .eq('user_id', user.id)
+        .eq('ativo', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      const memberRole = (memberData?.role || seed?.role || null) as OrgMemberRole | null
+      const role = resolveUserRole(isFartechAdmin, memberRole)
+
+      logDebug('Role resolvido:', { role, memberRole })
+
+      const userWithRole: UserWithRole = {
+        id: user.id,
+        email,
+        name,
+        role,
+        org_id: memberData?.org_id || seed?.org_id || null,
+        is_fartech_admin: isFartechAdmin,
+      }
+
+      // Atualiza cache
+      cachedUser = {
+        ...userWithRole,
+        cachedAt: Date.now(),
+      }
+
+      return userWithRole
+    } catch (error) {
+      console.error('Erro ao obter usuario atual:', error)
+      clearUserCache()
+      return null
     }
   },
 
   /**
-   * Check if user has permission
+   * Verifica se o usuário tem uma permissão específica.
    */
   async checkPermission(check: PermissionCheck): Promise<PermissionResult> {
     try {
       const user = await this.getCurrentUser()
       if (!user) {
-        return { allowed: false, reason: 'Usuário não autenticado' }
+        return { allowed: false, reason: 'Usuario nao autenticado' }
       }
 
-      // Fartech admins have all permissions
+      // Fartech admins têm todas as permissões
       if (user.is_fartech_admin) {
         return { allowed: true }
       }
 
-      // Get permissions for user's role
+      // Obtém permissões do role
       const permissions = getPermissionsByRole(user.role)
 
-      // Check if permission exists
+      // Verifica se tem a permissão
       const hasPermission = permissions.some(
         (p) =>
           p.resource === check.resource &&
@@ -127,46 +190,49 @@ export const permissionsService = {
       )
 
       if (!hasPermission) {
-        return { 
-          allowed: false, 
-          reason: `Usuário não tem permissão para ${check.action} em ${check.resource}` 
+        return {
+          allowed: false,
+          reason: `Usuario nao tem permissao para ${check.action} em ${check.resource}`,
         }
       }
 
-      // For cross-org operations, verify org_id
-      if (check.target_org_id && !user.is_fartech_admin) {
-        return { 
-          allowed: false, 
-          reason: 'Operação não permitida em outra organização' 
+      // Verifica acesso cross-org
+      if (check.target_org_id && check.target_org_id !== user.org_id) {
+        return {
+          allowed: false,
+          reason: 'Operacao nao permitida em outra organizacao',
         }
       }
 
       return { allowed: true }
     } catch (error) {
-      console.error('Error checking permission:', error)
-      return { 
-        allowed: false, 
-        reason: 'Erro ao verificar permissão' 
+      console.error('Erro ao verificar permissao:', error)
+      return {
+        allowed: false,
+        reason: 'Erro ao verificar permissao',
       }
     }
   },
 
   /**
-   * Check multiple permissions at once
+   * Verifica múltiplas permissões de uma vez.
    */
-  async checkPermissions(checks: PermissionCheck[]): Promise<Record<string, PermissionResult>> {
+  async checkPermissions(
+    checks: PermissionCheck[]
+  ): Promise<Record<string, PermissionResult>> {
     const results: Record<string, PermissionResult> = {}
 
-    for (const check of checks) {
+    const promises = checks.map(async (check) => {
       const key = `${check.resource}:${check.action}`
       results[key] = await this.checkPermission(check)
-    }
+    })
 
+    await Promise.all(promises)
     return results
   },
 
   /**
-   * Get all permissions for current user
+   * Obtém todas as permissões do usuário atual.
    */
   async getUserPermissions(): Promise<Permission[]> {
     try {
@@ -179,203 +245,87 @@ export const permissionsService = {
 
       return getPermissionsByRole(user.role)
     } catch (error) {
-      console.error('Error getting user permissions:', error)
+      console.error('Erro ao obter permissoes:', error)
       return []
     }
   },
 
   /**
-   * Check if user can access resource
+   * Verifica se o usuário pode acessar um recurso.
    */
-  async canAccess(resource: Resource, action: PermissionAction = 'read'): Promise<boolean> {
+  async canAccess(
+    resource: Resource,
+    action: PermissionAction = 'read'
+  ): Promise<boolean> {
     const result = await this.checkPermission({ resource, action })
     return result.allowed
   },
 
   /**
-   * Check if user is Fartech admin
+   * Verifica se o usuário é Fartech admin.
    */
   async isFartechAdmin(): Promise<boolean> {
-    try {
-      const user = await this.getCurrentUser()
-      return user?.is_fartech_admin || false
-    } catch (error) {
-      return false
-    }
+    const user = await this.getCurrentUser()
+    return user?.is_fartech_admin ?? false
   },
 
   /**
-   * Check if user is org admin
+   * Verifica se o usuário é admin da organização.
    */
   async isOrgAdmin(): Promise<boolean> {
-    try {
-      const user = await this.getCurrentUser()
-      return user?.role === 'org_admin' || user?.is_fartech_admin || false
-    } catch (error) {
-      return false
-    }
+    const user = await this.getCurrentUser()
+    return user?.role === 'org_admin' || user?.is_fartech_admin || false
   },
 
   /**
-   * Check if user can manage users in their org
-   */
-  async canManageUsers(): Promise<boolean> {
-    return this.canAccess('users', 'manage')
-  },
-
-  /**
-   * Check if user can manage organization settings
-   */
-  async canManageOrg(): Promise<boolean> {
-    return this.canAccess('organizations', 'manage')
-  },
-
-  /**
-   * Check if user can access billing
-   */
-  async canAccessBilling(): Promise<boolean> {
-    return this.canAccess('billing', 'read')
-  },
-
-  /**
-   * Get user's organization ID
+   * Obtém o ID da organização do usuário.
    */
   async getUserOrgId(): Promise<string | null> {
-    try {
-      const user = await this.getCurrentUser()
-      return user?.org_id || null
-    } catch (error) {
-      return null
-    }
+    const user = await this.getCurrentUser()
+    return user?.org_id ?? null
   },
 
   /**
-   * Get user's organization membership with role
-   */
-  async getUserOrgMembership(_orgId: string): Promise<{ role: string; org_id: string } | null> {
-    try {
-      void _orgId
-      return null
-    } catch (error) {
-      console.error('Error getting user org membership:', error)
-      return null
-    }
-  },
-
-  /**
-   * Validate if user can perform action on specific org
-   */
-  async validateOrgAccess(_targetOrgId: string): Promise<boolean> {
-    try {
-      void _targetOrgId
-      const user = await this.getCurrentUser()
-      if (!user) return false
-
-      // Fartech admins can access any org
-      if (user.is_fartech_admin) return true
-
-      // Other users can only access their own org
-      return false
-    } catch (error) {
-      return false
-    }
-  },
-
-  /**
-   * Check if user can perform action on resource within their org
-   */
-  async canAccessInOrg(
-    resource: Resource,
-    action: PermissionAction,
-    targetOrgId: string
-  ): Promise<PermissionResult> {
-    // First check basic permission
-    const permissionResult = await this.checkPermission({ resource, action })
-    if (!permissionResult.allowed) return permissionResult
-
-    // Then check org access
-    const hasOrgAccess = await this.validateOrgAccess(targetOrgId)
-    if (!hasOrgAccess) {
-      return {
-        allowed: false,
-        reason: 'Acesso negado para esta organização',
-      }
-    }
-
-    return { allowed: true }
-  },
-
-  /**
-   * Log permission check for audit
-   */
-  async logPermissionCheck(
-    check: PermissionCheck,
-    result: PermissionResult,
-    metadata?: Record<string, any>
-  ): Promise<void> {
-    try {
-      const user = await this.getCurrentUser()
-      if (!user) return
-      if (!user.org_id) return
-
-      // Only log if explicitly enabled or for sensitive operations
-      const sensitiveResources: Resource[] = ['organizations', 'users', 'billing']
-      if (!sensitiveResources.includes(check.resource)) return
-
-      await telemetryService.logAuditEvent({
-        org_id: user.org_id,
-        actor_user_id: user.id,
-        action: check.action,
-        entity: check.resource,
-        entity_id: metadata?.resource_id || null,
-        details: {
-          ...metadata,
-          success: result.allowed,
-          reason: result.reason,
-        },
-      })
-    } catch (error) {
-      console.error('Error logging permission check:', error)
-      // Don't throw - logging should not break functionality
-    }
-  },
-
-  /**
-   * Require permission (throws if not allowed)
+   * Requer uma permissão (lança erro se não permitido).
    */
   async requirePermission(check: PermissionCheck): Promise<void> {
     const result = await this.checkPermission(check)
     if (!result.allowed) {
-      throw new AppError(
-        result.reason || 'Permissão negada',
-        'permission_denied'
-      )
+      throw new AppError(result.reason || 'Permissao negada', 'permission_denied')
     }
   },
 
   /**
-   * Require Fartech admin role (throws if not)
+   * Requer role de Fartech admin.
    */
   async requireFartechAdmin(): Promise<void> {
     const isFartech = await this.isFartechAdmin()
     if (!isFartech) {
       throw new AppError(
-        'Esta operação requer permissões de administrador Fartech',
+        'Esta operacao requer permissoes de administrador Fartech',
         'permission_denied'
       )
     }
   },
 
   /**
-   * Require org admin role (throws if not)
+   * Requer role de admin da organização.
    */
   async requireOrgAdmin(): Promise<void> {
     const isAdmin = await this.isOrgAdmin()
     if (!isAdmin) {
       throw new AppError(
-        'Esta operação requer permissões de administrador da organização',
+        'Esta operacao requer permissoes de administrador',
         'permission_denied'
       )
     }
+  },
+
+  /**
+   * Limpa o cache do usuário.
+   * Deve ser chamado no logout.
+   */
+  clearCache(): void {
+    clearUserCache()
   },
 }

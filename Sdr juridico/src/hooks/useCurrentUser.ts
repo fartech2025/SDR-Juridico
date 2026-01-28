@@ -11,15 +11,23 @@ const roleLabels: Record<UserRole, string> = {
 }
 
 const resolveRoleFromPermissoes = (permissoes: string[], memberRole?: string | null): UserRole => {
+  // APENAS usa permissoes para detectar fartech_admin
   if (permissoes.includes('fartech_admin')) {
     return 'fartech_admin'
   }
-  if (memberRole && ['admin', 'gestor', 'org_admin'].includes(memberRole)) {
-    return 'org_admin'
+
+  // Mapeia o role de org_members para UserRole
+  if (memberRole) {
+    const roleMap: Record<string, UserRole> = {
+      'admin': 'org_admin',
+      'gestor': 'org_admin',
+      'advogado': 'user',
+      'secretaria': 'user',
+      'leitura': 'user',
+    }
+    return roleMap[memberRole] || 'user'
   }
-  if (permissoes.includes('gestor') || permissoes.includes('org_admin')) {
-    return 'org_admin'
-  }
+
   return 'user'
 }
 

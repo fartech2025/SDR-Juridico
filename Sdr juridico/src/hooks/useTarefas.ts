@@ -97,9 +97,7 @@ export function useTarefas() {
         titulo: payload.title,
         descricao: payload.description || null,
         priority: payload.priority || 'normal',
-        status: payload.status || 'pendente',
         due_at: payload.dueDate || null,
-        completed_at: null,
         ...entidadePayload,
       })
       const mapped = mapTarefaRowToTarefa(tarefa)
@@ -131,7 +129,6 @@ export function useTarefas() {
         status: updates.status,
         due_at: updates.dueDate,
         assigned_user_id: updates.ownerId ?? undefined,
-        completed_at: updates.completedAt ?? undefined,
         ...entidadePayload,
       })
       const mapped = mapTarefaRowToTarefa(tarefa)
