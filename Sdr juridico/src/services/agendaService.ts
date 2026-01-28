@@ -79,18 +79,31 @@ const buildAgendamentoPayload = (evento: Partial<AgendaRow>) => {
 
 export const agendaService = {
   /**
-   * Busca todos os eventos da agenda
+   * Busca eventos da agenda - filtrada por role:
+   * - Gestor/Admin: vê todos os eventos da org
+   * - Advogado: vê apenas seus próprios eventos (owner_user_id)
    */
-  async getEventos(): Promise<AgendaRow[]> {
+  async getEventos(options?: { userId?: string; isGestor?: boolean }): Promise<AgendaRow[]> {
     try {
       const { orgId, isFartechAdmin } = await resolveOrgScope()
       if (!isFartechAdmin && !orgId) return []
 
-      const query = supabase
+      let query = supabase
         .from('agendamentos')
         .select('*')
         .order('start_at', { ascending: true })
-      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
+
+      // Aplica filtro de org
+      if (!isFartechAdmin) {
+        query = query.eq('org_id', orgId)
+      }
+
+      // Advogado só vê seus próprios eventos
+      if (options?.userId && !options?.isGestor && !isFartechAdmin) {
+        query = query.eq('owner_user_id', options.userId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw new AppError(error.message, 'database_error')
       return (data || []).map((row: DbAgendamentoRow) => mapDbAgendamentoToAgenda(row))

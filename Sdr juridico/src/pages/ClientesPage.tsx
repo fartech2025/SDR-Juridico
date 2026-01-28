@@ -1,13 +1,10 @@
 import * as React from 'react'
-import { Search, Plus, Pencil, Trash2, UserPlus } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, UserPlus, Users, AlertTriangle, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ClienteDrawer } from '@/components/ClienteDrawer'
-import heroLight from '@/assets/hero-light.svg'
 import type { Cliente } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
@@ -26,36 +23,25 @@ const resolveStatus = (
   return 'ready'
 }
 
-const statusPill = (status: Cliente['status']) => {
+const statusBadge = (status: Cliente['status']) => {
   if (status === 'inativo') {
-    return 'border-border bg-surface-2 text-text-muted'
+    return 'bg-gray-100 text-gray-600'
   }
   if (status === 'em_risco') {
-    return 'border-danger-border bg-danger-bg text-danger'
+    return 'bg-red-100 text-red-700'
   }
-  return 'border-success-border bg-success-bg text-success'
+  return 'bg-green-100 text-green-700'
 }
 
-const healthPill = (health: Cliente['health']) => {
+const healthBadge = (health: Cliente['health']) => {
   if (health === 'critico') {
-    return 'border-danger-border bg-danger-bg text-danger'
+    return 'bg-red-100 text-red-700'
   }
   if (health === 'atencao') {
-    return 'border-warning-border bg-warning-bg text-warning'
+    return 'bg-amber-100 text-amber-700'
   }
-  return 'border-success-border bg-success-bg text-success'
+  return 'bg-green-100 text-green-700'
 }
-
-const appShellClass = 'min-h-screen bg-base text-text pb-12'
-const heroCardClass =
-  'relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt p-8 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]'
-const formControlClass =
-  'h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm font-medium text-text shadow-sm placeholder:text-text-subtle transition focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
-const textareaControlClass =
-  'rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-text shadow-sm placeholder:text-text-subtle transition focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
-const labelClass = 'text-sm font-semibold text-text'
-const filterControlClass =
-  'h-11 rounded-full border border-border bg-white px-3 text-sm text-text shadow-soft focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15'
 
 export const ClientesPage = () => {
   const { clientes, loading, error, fetchClientes, createCliente, updateCliente, deleteCliente, assignClienteAdvogado } = useClientes()
@@ -68,7 +54,6 @@ export const ClientesPage = () => {
   const [healthFilter, setHealthFilter] = React.useState('todos')
   const [areaFilter, setAreaFilter] = React.useState('todos')
   const [ownerFilter, setOwnerFilter] = React.useState('todos')
-  const [activeTab, setActiveTab] = React.useState('Todos')
   const [showForm, setShowForm] = React.useState(false)
   const [editingClienteId, setEditingClienteId] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -94,15 +79,6 @@ export const ClientesPage = () => {
 
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingClienteId)
-
-  const tabs = [
-    'Todos',
-    'Docs',
-    'Agenda',
-    'Comercial',
-    'Juridico',
-    'Automacao',
-  ]
 
   const filters = React.useMemo(
     () => ({
@@ -131,6 +107,12 @@ export const ClientesPage = () => {
     })
   }, [query, statusFilter, healthFilter, areaFilter, ownerFilter, clientes])
 
+  const stats = React.useMemo(() => ({
+    total: clientes.length,
+    ativos: clientes.filter(c => c.status === 'ativo').length,
+    emRisco: clientes.filter(c => c.status === 'em_risco').length,
+  }), [clientes])
+
   const forcedState = resolveStatus(params.get('state'))
   const baseState = loading
     ? 'loading'
@@ -141,18 +123,18 @@ export const ClientesPage = () => {
         : 'ready'
   const pageState = forcedState !== 'ready' ? forcedState : baseState
   const emptyAction = canManageClientes ? (
-    <Button
-      variant="primary"
-      size="sm"
-      className="h-9 rounded-full px-4"
+    <button
+      type="button"
+      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+      style={{ backgroundColor: '#721011' }}
       onClick={() => {
         resetClienteForm()
         setShowForm(true)
       }}
     >
-      <Plus className="mr-2 h-4 w-4" />
+      <Plus className="h-4 w-4" />
       Novo cliente
-    </Button>
+    </button>
   ) : null
 
   const resetFilters = () => {
@@ -287,364 +269,286 @@ export const ClientesPage = () => {
     }
   }
 
+  // Form view
   if (showForm) {
     return (
-      <div className={appShellClass}>
-        <div className="space-y-6">
-          <header className={heroCardClass}>
-            <div
-              className={cn(
-                'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-                'opacity-90',
-              )}
-              style={{ backgroundImage: `url(${heroLight})` }}
-            />
-            <div className="relative z-10">
-              <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        'rounded-full p-2',
-                        'bg-brand-secondary/20',
-                      )}
-                    >
-                      <Plus className={cn('h-5 w-5', 'text-brand-secondary')} />
-                    </div>
-                    <p
-                      className={cn(
-                        'text-xs font-bold uppercase tracking-[0.3em]',
-                        'text-brand-secondary',
-                      )}
-                    >
-                      {isEditing ? 'Editar cliente' : 'Novo cliente'}
-                    </p>
-                  </div>
-                  <h2 className={cn('font-display text-4xl font-bold', 'text-text')}>
-                    {isEditing ? 'Atualizar cadastro' : 'Cadastrar cliente'}
-                  </h2>
-                  <p className={cn('text-base', 'text-text-muted')}>
-                    {isEditing ? 'Atualize os dados e salve as alteracoes.' : 'Preencha os dados para criar um novo cliente.'}
-                  </p>
-                </div>
-                <Button
-                  onClick={() => {
-                    resetClienteForm()
-                    setShowForm(false)
-                  }}
-                  variant="outline"
-                  className={cn(
-                    'h-14 rounded-full px-8 font-bold shadow-lg transition-all hover:scale-105',
-                    'border-border hover:bg-surface-2',
-                  )}
+      <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="mx-auto max-w-4xl space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                {isEditing ? 'Editar cliente' : 'Novo cliente'}
+              </p>
+              <h1 className="mt-1 text-2xl font-bold text-gray-900">
+                {isEditing ? 'Atualizar cadastro' : 'Cadastrar cliente'}
+              </h1>
+              <p className="mt-1 text-sm text-gray-500">
+                {isEditing ? 'Atualize os dados e salve as alterações.' : 'Preencha os dados para criar um novo cliente.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                resetClienteForm()
+                setShowForm(false)
+              }}
+              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Voltar
+            </button>
+          </div>
+
+          {/* Form Card */}
+          <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Nome *</label>
+                <input
+                  value={formData.nome}
+                  onChange={(event) => setFormData({ ...formData, nome: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="Nome do cliente"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(event) => setFormData({ ...formData, email: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Telefone</label>
+                <input
+                  value={formData.telefone}
+                  onChange={(event) => setFormData({ ...formData, telefone: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Tipo</label>
+                <select
+                  value={formData.tipo}
+                  onChange={(event) => setFormData({ ...formData, tipo: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
                 >
-                  Voltar
-                </Button>
+                  <option value="pf">Pessoa física</option>
+                  <option value="pj">Pessoa jurídica</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {formData.tipo === 'pj' ? 'CNPJ' : 'CPF'}
+                </label>
+                <input
+                  value={formData.documento}
+                  onChange={(event) => setFormData({ ...formData, documento: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder={formData.tipo === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Área de atuação</label>
+                <input
+                  value={formData.area_atuacao}
+                  onChange={(event) => setFormData({ ...formData, area_atuacao: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="Ex: Empresarial, Trabalhista"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(event) => setFormData({ ...formData, status: event.target.value as ClienteRow['status'] })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                >
+                  <option value="ativo">Ativo</option>
+                  <option value="em_risco">Em risco</option>
+                  <option value="inativo">Inativo</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Saúde</label>
+                <select
+                  value={formData.health || 'ok'}
+                  onChange={(event) => setFormData({ ...formData, health: event.target.value as ClienteRow['health'] })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                >
+                  <option value="ok">Ok</option>
+                  <option value="atencao">Atenção</option>
+                  <option value="critico">Crítico</option>
+                </select>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Endereço</label>
+                <input
+                  value={formData.endereco}
+                  onChange={(event) => setFormData({ ...formData, endereco: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="Rua, número, bairro"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Cidade</label>
+                <input
+                  value={formData.cidade}
+                  onChange={(event) => setFormData({ ...formData, cidade: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="Cidade"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Estado</label>
+                <input
+                  value={formData.estado}
+                  onChange={(event) => setFormData({ ...formData, estado: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="UF"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">CEP</label>
+                <input
+                  value={formData.cep}
+                  onChange={(event) => setFormData({ ...formData, cep: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="00000-000"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Observações</label>
+                <textarea
+                  value={formData.observacoes}
+                  onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })}
+                  rows={4}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  placeholder="Observações adicionais"
+                />
               </div>
             </div>
-          </header>
 
-          <Card
-            className={cn(
-              'border',
-              'border-border bg-surface/90',
-            )}
-          >
-            <CardContent className="p-8 space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Nome *
-                  </label>
-                  <input
-                    value={formData.nome}
-                    onChange={(event) => setFormData({ ...formData, nome: event.target.value })}
-                    className={formControlClass}
-                    placeholder="Nome do cliente"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(event) => setFormData({ ...formData, email: event.target.value })}
-                    className={formControlClass}
-                    placeholder="email@exemplo.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Telefone
-                  </label>
-                  <input
-                    value={formData.telefone}
-                    onChange={(event) => setFormData({ ...formData, telefone: event.target.value })}
-                    className={formControlClass}
-                    placeholder="(00) 00000-0000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Tipo
-                  </label>
-                  <select
-                    value={formData.tipo}
-                    onChange={(event) => setFormData({ ...formData, tipo: event.target.value })}
-                    className={formControlClass}
-                  >
-                    <option value="pf">Pessoa fisica</option>
-                    <option value="pj">Pessoa juridica</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    {formData.tipo === 'pj' ? 'CNPJ' : 'CPF'}
-                  </label>
-                  <input
-                    value={formData.documento}
-                    onChange={(event) => setFormData({ ...formData, documento: event.target.value })}
-                    className={formControlClass}
-                    placeholder={formData.tipo === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Area de atuacao
-                  </label>
-                  <input
-                    value={formData.area_atuacao}
-                    onChange={(event) => setFormData({ ...formData, area_atuacao: event.target.value })}
-                    className={formControlClass}
-                    placeholder="Ex: Empresarial, Trabalhista"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Status
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(event) => setFormData({ ...formData, status: event.target.value as ClienteRow['status'] })}
-                    className={formControlClass}
-                  >
-                    <option value="ativo">Ativo</option>
-                    <option value="em_risco">Em risco</option>
-                    <option value="inativo">Inativo</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Saude
-                  </label>
-                  <select
-                    value={formData.health || 'ok'}
-                    onChange={(event) => setFormData({ ...formData, health: event.target.value as ClienteRow['health'] })}
-                    className={formControlClass}
-                  >
-                    <option value="ok">Ok</option>
-                    <option value="atencao">Atencao</option>
-                    <option value="critico">Critico</option>
-                  </select>
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className={labelClass}>
-                    Endereco
-                  </label>
-                  <input
-                    value={formData.endereco}
-                    onChange={(event) => setFormData({ ...formData, endereco: event.target.value })}
-                    className={formControlClass}
-                    placeholder="Rua, numero, bairro"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Cidade
-                  </label>
-                  <input
-                    value={formData.cidade}
-                    onChange={(event) => setFormData({ ...formData, cidade: event.target.value })}
-                    className={formControlClass}
-                    placeholder="Cidade"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    Estado
-                  </label>
-                  <input
-                    value={formData.estado}
-                    onChange={(event) => setFormData({ ...formData, estado: event.target.value })}
-                    className={formControlClass}
-                    placeholder="UF"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>
-                    CEP
-                  </label>
-                  <input
-                    value={formData.cep}
-                    onChange={(event) => setFormData({ ...formData, cep: event.target.value })}
-                    className={formControlClass}
-                    placeholder="00000-000"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className={labelClass}>
-                    Observacoes
-                  </label>
-                  <textarea
-                    value={formData.observacoes}
-                    onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })}
-                    className={textareaControlClass}
-                    placeholder="Observacoes adicionais"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    resetClienteForm()
-                    setShowForm(false)
-                  }}
-                  className={cn(
-                    'h-12 rounded-xl border-2 px-6 text-sm font-semibold',
-                    'border-border hover:bg-surface-2',
-                  )}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleSaveCliente}
-                  className={cn(
-                    'h-12 rounded-xl px-8 text-sm font-semibold shadow-lg',
-                    'bg-gradient-to-r from-brand-secondary to-brand-accent hover:from-brand-secondary-dark hover:to-brand-accent-dark',
-                  )}
-                  disabled={saving}
-                >
-                  {saving ? 'Salvando...' : isEditing ? 'Salvar alteracoes' : 'Salvar cliente'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="mt-8 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  resetClienteForm()
+                  setShowForm(false)
+                }}
+                className="rounded-lg border border-gray-200 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveCliente}
+                disabled={saving}
+                className="rounded-lg px-6 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                style={{ backgroundColor: '#721011' }}
+              >
+                {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar cliente'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
+  // List view
   return (
-    <div className={appShellClass}>
-      <div className="space-y-5">
-        <header className={cn(heroCardClass, 'p-6')}>
-          <div
-            className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
-              'opacity-90',
-            )}
-            style={{ backgroundImage: `url(${heroLight})` }}
-          />
-          <div className="relative z-10 space-y-2">
-            <p
-              className={cn(
-                'text-xs uppercase tracking-[0.3em]',
-                'text-text-muted',
-              )}
-            >
-              Clientes
-            </p>
-            <h2 className={cn('font-display text-2xl', 'text-text')}>
-              Carteira ativa
-            </h2>
-            <p className={cn('text-sm', 'text-text-muted')}>
-              Carteira ativa com indicadores de risco e status.
+    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">CLIENTES</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Gerencie sua carteira de clientes com indicadores de risco e status.
             </p>
           </div>
-        </header>
-
-        <Card
-          className={cn(
-            'border',
-            'border-border bg-surface/90',
-          )}
-        >
-        <CardHeader className="space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle>Registros ativos</CardTitle>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-text-subtle">
-                <span>Total: {clientes.length}</span>
-                <span>Exibindo: {filteredClientes.length}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 rounded-full px-4"
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void fetchClientes()}
+              disabled={loading}
+              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Atualizar
+            </button>
+            {canManageClientes && (
+              <button
+                type="button"
                 onClick={() => {
-                  void fetchClientes()
-                }}
-                disabled={loading}
-              >
-                Atualizar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 rounded-full px-4"
-                onClick={() => {
-                  if (!canManageClientes) {
-                    toast.error('Apenas gestores podem adicionar clientes.')
-                    return
-                  }
                   resetClienteForm()
                   setShowForm(true)
                 }}
-                disabled={!canManageClientes}
+                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+                style={{ backgroundColor: '#721011' }}
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 Novo cliente
-              </Button>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-sm text-gray-500">Total de Clientes</p>
+              </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  'rounded-full border px-4 py-1.5 text-xs font-medium transition',
-                  activeTab === tab
-                    ?'border-brand-secondary/60 bg-brand-secondary/10 text-brand-secondary'
-                    :'border-border bg-white text-text-muted hover:bg-surface-2 hover:text-text',
-                )}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.ativos}</p>
+                <p className="text-sm text-gray-500">Ativos</p>
+              </div>
+            </div>
           </div>
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.emRisco}</p>
+                <p className="text-sm text-gray-500">Em Risco</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <div className="grid gap-3 lg:grid-cols-[2fr_repeat(4,1fr)_auto]">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
+        {/* Filters */}
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                className="h-11 w-full rounded-full border border-border bg-surface pl-11 pr-4 text-sm text-text placeholder:text-text-subtle shadow-soft focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/15"
-                placeholder="Buscar cliente"
+                className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                placeholder="Buscar cliente..."
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
             </div>
             <select
-              className={filterControlClass}
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
             >
@@ -656,11 +560,11 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className={filterControlClass}
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
               value={healthFilter}
               onChange={(event) => setHealthFilter(event.target.value)}
             >
-              <option value="todos">Saude</option>
+              <option value="todos">Saúde</option>
               {filters.health.map((health) => (
                 <option key={health} value={health}>
                   {health}
@@ -668,11 +572,11 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className={filterControlClass}
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
               value={areaFilter}
               onChange={(event) => setAreaFilter(event.target.value)}
             >
-              <option value="todos">Area</option>
+              <option value="todos">Área</option>
               {filters.area.map((area) => (
                 <option key={area} value={area}>
                   {area}
@@ -680,11 +584,11 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className={filterControlClass}
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
               value={ownerFilter}
               onChange={(event) => setOwnerFilter(event.target.value)}
             >
-              <option value="todos">Responsavel</option>
+              <option value="todos">Responsável</option>
               {filters.owner.map((owner) => (
                 <option key={owner} value={owner}>
                   {owner}
@@ -693,79 +597,74 @@ export const ClientesPage = () => {
             </select>
             <button
               type="button"
-              className={cn(
-                'h-11 text-xs',
-                'text-text-muted hover:text-text',
-              )}
+              className="text-sm text-gray-500 hover:text-gray-700"
               onClick={resetFilters}
             >
               Limpar filtros
             </button>
           </div>
+          <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+            <span>Total: {clientes.length}</span>
+            <span>·</span>
+            <span>Exibindo: {filteredClientes.length}</span>
+          </div>
+        </div>
 
-          <PageState
-            status={pageState}
-            emptyTitle="Nenhum cliente encontrado"
-            emptyDescription="Ajuste os filtros para localizar a carteira."
-            emptyAction={emptyAction}
-            onRetry={error ? fetchClientes : undefined}
-          >
-            <div
-              className={cn(
-                'overflow-hidden rounded-2xl border shadow-soft',
-                'border-border bg-white',
-              )}
-            >
-              <table className="w-full border-collapse text-left text-sm">
-                <thead
-                  className={cn(
-                    'text-[11px] uppercase tracking-[0.22em]',
-                    'bg-surface-2 text-text-muted',
-                  )}
-                >
-                  <tr>
-                    <th className="px-4 py-3" />
-                    <th className="px-4 py-3">Cliente</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Saude</th>
-                    <th className="px-4 py-3">Casos</th>
-                    <th className="px-4 py-3">Responsavel</th>
-                    <th className="px-4 py-3 text-right">Atualizacao</th>
-                    <th className="px-4 py-3 text-right">Acoes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClientes.map((cliente) => {
-                    const initials = cliente.name
-                      .split(' ')
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join('')
-                    return (
-                      <React.Fragment key={cliente.id}>
-                        <tr
-                          className={cn(
-                            'cursor-pointer border-t','border-border hover:bg-surface-2/60',
-                          )}
-                          onClick={() => setSelectedCliente(cliente)}
-                        >
+        {/* Table */}
+        <PageState
+          status={pageState}
+          emptyTitle="Nenhum cliente encontrado"
+          emptyDescription="Ajuste os filtros para localizar a carteira."
+          emptyAction={emptyAction}
+          onRetry={error ? fetchClientes : undefined}
+        >
+          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead className="bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th className="px-4 py-3 w-10" />
+                  <th className="px-4 py-3">Cliente</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Saúde</th>
+                  <th className="px-4 py-3">Casos</th>
+                  <th className="px-4 py-3">Responsável</th>
+                  <th className="px-4 py-3 text-right">Atualização</th>
+                  <th className="px-4 py-3 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredClientes.map((cliente) => {
+                  const initials = cliente.name
+                    .split(' ')
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join('')
+                  return (
+                    <React.Fragment key={cliente.id}>
+                      <tr
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => setSelectedCliente(cliente)}
+                      >
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
-                            className="h-4 w-4 rounded border border-border bg-white text-primary"
+                            className="h-4 w-4 rounded border-gray-300"
                             onClick={(event) => event.stopPropagation()}
                           />
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                            <div
+                              className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white"
+                              style={{ backgroundColor: '#721011' }}
+                            >
                               {initials}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-text">
+                              <div className="font-medium text-gray-900">
                                 {cliente.name}
                               </div>
-                              <div className="text-xs text-text-subtle">
+                              <div className="text-xs text-gray-500">
                                 {cliente.area}
                               </div>
                             </div>
@@ -774,8 +673,8 @@ export const ClientesPage = () => {
                         <td className="px-4 py-3">
                           <span
                             className={cn(
-                              'inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize',
-                              statusPill(cliente.status),
+                              'inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize',
+                              statusBadge(cliente.status),
                             )}
                           >
                             {cliente.status}
@@ -784,31 +683,29 @@ export const ClientesPage = () => {
                         <td className="px-4 py-3">
                           <span
                             className={cn(
-                              'inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize',
-                              healthPill(cliente.health),
+                              'inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize',
+                              healthBadge(cliente.health),
                             )}
                           >
                             {cliente.health}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-text">
+                        <td className="px-4 py-3 text-gray-700">
                           {cliente.caseCount}
                         </td>
-                        <td className="px-4 py-3 text-sm text-text">
+                        <td className="px-4 py-3 text-gray-700">
                           {cliente.owner}
                         </td>
-                        <td className="px-4 py-3 text-right text-xs text-text-subtle">
+                        <td className="px-4 py-3 text-right text-xs text-gray-500">
                           {formatDateTime(cliente.lastUpdate)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {canManageClientes ? (
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"
                                 title="Encaminhar"
-                                className={cn(
-                                  'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-brand-secondary',
-                                )}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   setAssigningClienteId((current) => (current === cliente.id ? null : cliente.id))
@@ -819,9 +716,8 @@ export const ClientesPage = () => {
                               </button>
                               <button
                                 type="button"
-                                className={cn(
-                                  'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-brand-secondary',
-                                )}
+                                title="Editar"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   handleEditCliente(cliente.id)
@@ -831,9 +727,8 @@ export const ClientesPage = () => {
                               </button>
                               <button
                                 type="button"
-                                className={cn(
-                                  'inline-flex h-8 w-8 items-center justify-center rounded-full border','border-border bg-white text-text-muted hover:text-red-600',
-                                )}
+                                title="Excluir"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-red-600"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   handleDeleteCliente(cliente.id, cliente.name)
@@ -843,27 +738,17 @@ export const ClientesPage = () => {
                               </button>
                             </div>
                           ) : (
-                            <span className="text-xs text-text-subtle">Sem permissao</span>
+                            <span className="text-xs text-gray-400">Sem permissão</span>
                           )}
                         </td>
                       </tr>
                       {canManageClientes && assigningClienteId === cliente.id && (
-                        <tr
-                          className={cn(
-                            'border-t','border-border bg-surface-2/60',
-                          )}
-                        >
+                        <tr className="bg-gray-50">
                           <td colSpan={8} className="px-4 py-3">
-                            <div
-                              className={cn(
-                                'flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-xs','border-border bg-white text-text-muted',
-                              )}
-                            >
-                              <span className="text-xs font-semibold">Encaminhar para</span>
+                            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
+                              <span className="text-sm font-medium text-gray-700">Encaminhar para:</span>
                               <select
-                                className={cn(
-                                  'h-9 rounded-lg border px-3 text-xs','border-border bg-white text-text',
-                                )}
+                                className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
                                 value={selectedClienteAdvogadoId}
                                 onChange={(event) => setSelectedClienteAdvogadoId(event.target.value)}
                               >
@@ -874,51 +759,46 @@ export const ClientesPage = () => {
                                   </option>
                                 ))}
                               </select>
-                              <Button
-                                size="sm"
-                                className="h-9 px-4 text-xs"
+                              <button
+                                type="button"
+                                className="rounded-lg px-4 py-2 text-sm font-medium text-white"
+                                style={{ backgroundColor: '#721011' }}
                                 onClick={() => {
                                   void handleEncaminharCliente(cliente.id)
                                 }}
                               >
                                 Encaminhar
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={cn(
-                                  'h-9 px-4 text-xs',
-                                  'text-text-muted hover:text-text',
-                                )}
+                              </button>
+                              <button
+                                type="button"
+                                className="text-sm text-gray-500 hover:text-gray-700"
                                 onClick={() => {
                                   setAssigningClienteId(null)
                                   setSelectedClienteAdvogadoId('')
                                 }}
                               >
                                 Cancelar
-                              </Button>
+                              </button>
                               {advogados.length === 0 && (
-                                <span className="text-xs">Nenhum advogado cadastrado</span>
+                                <span className="text-xs text-gray-500">Nenhum advogado cadastrado</span>
                               )}
                             </div>
                           </td>
                         </tr>
                       )}
                     </React.Fragment>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </PageState>
-        </CardContent>
-      </Card>
-    </div>
-    <ClienteDrawer
-      open={Boolean(selectedCliente)}
-      cliente={selectedCliente}
-      onClose={() => setSelectedCliente(null)}
-    />
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </PageState>
+      </div>
+      <ClienteDrawer
+        open={Boolean(selectedCliente)}
+        cliente={selectedCliente}
+        onClose={() => setSelectedCliente(null)}
+      />
     </div>
   )
 }

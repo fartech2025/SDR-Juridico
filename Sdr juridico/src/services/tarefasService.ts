@@ -102,15 +102,30 @@ const resolveCurrentUserId = async (fallback?: string | null) => {
 }
 
 export const tarefasService = {
-  async getTarefas(): Promise<TarefaRow[]> {
+  /**
+   * Busca tarefas - filtrada por role:
+   * - Gestor/Admin: vê todas as tarefas da org
+   * - Advogado: vê apenas suas tarefas atribuídas
+   */
+  async getTarefas(options?: { userId?: string; isGestor?: boolean }): Promise<TarefaRow[]> {
     try {
-      const { orgId } = await resolveOrgScope()
-      if (!orgId) return []
-      const query = supabase
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      let query = supabase
         .from('tarefas')
         .select('*')
-        .eq('org_id', orgId)
         .order('due_at', { ascending: true })
+
+      // Aplica filtro de org
+      if (!isFartechAdmin) {
+        query = query.eq('org_id', orgId)
+      }
+
+      // Advogado só vê suas próprias tarefas
+      if (options?.userId && !options?.isGestor && !isFartechAdmin) {
+        query = query.eq('assigned_user_id', options.userId)
+      }
 
       const { data, error } = await query
 

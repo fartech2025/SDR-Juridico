@@ -576,32 +576,50 @@ export const DataJudPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <header
-        className="relative overflow-hidden rounded-2xl border border-border bg-surface p-7 shadow-soft"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.94) 70%, rgba(216,232,255,0.3) 100%), url(${heroLight})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: '560px',
-        }}
-      >
-        <div className="relative z-10 space-y-2">
-          <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-primary" />
-            <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
-              Integração CNJ
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        'bg-base text-text',
+      )}
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <div className="space-y-5">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]',
+            'border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
+          )}
+        >
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              'opacity-90',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-2">
+            <p
+              className={cn(
+                'text-[11px] uppercase tracking-[0.32em]',
+                'text-text-muted',
+              )}
+            >
+              Integracao CNJ
+            </p>
+            <div className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-[#721011]" />
+              <h2 className={cn('font-display text-2xl', 'text-text')}>
+                API DataJud
+              </h2>
+            </div>
+            <p className={cn('text-sm', 'text-text-muted')}>
+              Base Nacional de Dados do Poder Judiciario - Consulta de processos judiciais
             </p>
           </div>
-          <h2 className="font-display text-2xl text-text">API DataJud</h2>
-          <p className="text-sm text-text-muted">
-            Base Nacional de Dados do Poder Judiciário - Consulta de processos judiciais
-          </p>
-        </div>
-      </header>
+        </header>
 
       {/* Status da Conexão */}
-      <Card>
+      <Card className="border border-border bg-surface/90">
         <CardHeader>
           <CardTitle className="text-sm flex items-center justify-between">
             <span>Status da Conexão</span>
@@ -672,7 +690,7 @@ export const DataJudPage = () => {
       </Card>
 
       {/* Tipo de Busca */}
-      <Card>
+      <Card className="border border-border bg-surface/90">
         <CardHeader>
           <CardTitle className="text-sm">Tipo de Busca</CardTitle>
         </CardHeader>
@@ -696,7 +714,7 @@ export const DataJudPage = () => {
                   className={cn(
                     'flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition',
                     tipoBusca === tipo.id
-                      ? 'border-primary bg-primary/10 text-primary'
+                      ? 'border-[#721011]/60 bg-[#721011]/10 text-[#721011]'
                       : 'border-border bg-white text-text-muted hover:text-text'
                   )}
                 >
@@ -710,7 +728,7 @@ export const DataJudPage = () => {
       </Card>
 
       {/* Tribunal */}
-      <Card>
+      <Card className="border border-border bg-surface/90">
         <CardHeader>
           <CardTitle className="text-sm">Tribunal</CardTitle>
         </CardHeader>
@@ -730,7 +748,7 @@ export const DataJudPage = () => {
       </Card>
 
       {/* Formulário de Busca */}
-      <Card>
+      <Card className="border border-border bg-surface/90">
         <CardHeader>
           <CardTitle className="text-sm">
             {tipoBusca === 'numero' && 'Buscar por Número do Processo'}
@@ -839,7 +857,7 @@ export const DataJudPage = () => {
 
       {/* Resultados */}
       {totalEncontrado > 0 && (
-        <Card>
+        <Card className="border border-border bg-surface/90">
           <CardHeader>
             <CardTitle className="text-sm">
               Resultados da Busca
@@ -1114,6 +1132,7 @@ export const DataJudPage = () => {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   )
 }

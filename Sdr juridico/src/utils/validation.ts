@@ -205,6 +205,54 @@ export const hasPathTraversal = (input: string): boolean => {
   return pathPatterns.some(pattern => pattern.test(input))
 }
 
+// DataJud Search Schema - Validação segura para buscas DataJud
+export const datajudSearchSchema = z.object({
+  searchType: z.enum(['numero_processo', 'parte']),
+  tribunal: z.enum(['trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6', 'stf', 'stj']),
+  query: z.string()
+    .min(1, 'Parâmetro de busca é obrigatório')
+    .max(1000, 'Parâmetro muito longo')
+    .refine(q => !hasPathTraversal(q), 'Parâmetro contém caracteres suspeitos'),
+  size: z.number()
+    .min(1, 'Size mínimo é 1')
+    .max(50, 'Size máximo é 50')
+    .optional()
+    .default(10),
+})
+
+// Login Schema - Validação de credenciais
+export const loginSchema = z.object({
+  email: z.string()
+    .email('Email inválido')
+    .max(100, 'Email muito longo'),
+  password: z.string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .max(128, 'Senha muito longa'),
+})
+
+// Invite Admin Schema - Validação para convite de admin
+export const inviteAdminSchema = z.object({
+  adminEmail: z.string()
+    .email('Email do admin inválido')
+    .max(100, 'Email muito longo'),
+  adminName: z.string()
+    .min(3, 'Nome deve ter no mínimo 3 caracteres')
+    .max(100, 'Nome muito longo')
+    .regex(/^[a-zA-Z\s\'\-]+$/, 'Nome contém caracteres inválidos'),
+  responsavelEmail: z.string()
+    .email('Email do responsável inválido')
+    .max(100, 'Email muito longo')
+    .optional(),
+  orgId: z.string()
+    .uuid('ID da organização inválido'),
+})
+
+// Google Calendar Sync Schema - Validação para sincronização
+export const googleCalendarSyncSchema = z.object({
+  org_id: z.string()
+    .uuid('ID da organização inválido'),
+})
+
 // Validation helper
 export const validateInput = <T>(schema: z.ZodSchema<T>, data: unknown): { success: boolean; data?: T; errors?: string[] } => {
   try {
@@ -229,4 +277,8 @@ export const schemas = {
   case: caseSchema,
   document: documentSchema,
   client: clientSchema,
+  datajudSearch: datajudSearchSchema,
+  login: loginSchema,
+  inviteAdmin: inviteAdminSchema,
+  googleCalendarSync: googleCalendarSyncSchema,
 }

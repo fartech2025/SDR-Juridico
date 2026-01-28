@@ -315,8 +315,8 @@ export const ConfigPage = () => {
             className={cn(
               'rounded-full border px-4 py-1.5 text-xs uppercase tracking-wide transition',
               activeTab === tab
-                ?'border-emerald-500/60 bg-emerald-500/10 text-emerald-600'
-                :'border-border bg-white text-text-muted hover:text-text',
+                ? 'border-[#721011]/60 bg-[#721011]/10 text-[#721011]'
+                : 'border-border bg-white text-text-muted hover:text-text',
             )}
           >
             {tab}
@@ -384,7 +384,7 @@ export const ConfigPage = () => {
                         variant="primary"
                         size="sm"
                         onClick={() => navigate('/app/datajud')}
-                        className="!bg-emerald-600 !text-white hover:!bg-emerald-500 !border-0"
+                        className="!bg-[#721011] !text-white hover:!bg-[#8a1315] !border-0"
                       >
                         <Database className="h-4 w-4 mr-2" />
                         Acessar API
@@ -394,7 +394,7 @@ export const ConfigPage = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedIntegration(integration)}
-                        className="!bg-emerald-600 !text-white hover:!bg-emerald-500 !border-0"
+                        className="!bg-[#721011] !text-white hover:!bg-[#8a1315] !border-0"
                       >
                         {actionLabel}
                       </Button>
@@ -506,7 +506,8 @@ export const ConfigPage = () => {
             {selectedIsGoogleCalendar && (
               <div
                 className={cn(
-                  'rounded-2xl border px-3 py-3 text-xs shadow-soft','border-emerald-500/40 bg-emerald-500/10 text-emerald-700',
+                  'rounded-2xl border px-3 py-3 text-xs shadow-soft',
+                  'border-[#721011]/40 bg-[#721011]/10 text-[#721011]',
                 )}
               >
                 Use o botao abaixo para vincular ou desvincular sua conta do

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Filter, Search, ShieldCheck } from 'lucide-react'
 
+import heroLight from '@/assets/hero-light.svg'
 import { PageState } from '@/components/PageState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -86,38 +87,67 @@ export const AuditoriaPage = () => {
   const pageState = loading ? 'loading' : error ? 'error' : logs.length ? 'ready' : 'empty'
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <ShieldCheck className="h-5 w-5" />
+    <div
+      className={cn(
+        'min-h-screen pb-12',
+        'bg-base text-text',
+      )}
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <div className="space-y-5">
+        <header
+          className={cn(
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]',
+            'border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
+          )}
+        >
+          <div
+            className={cn(
+              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              'opacity-90',
+            )}
+            style={{ backgroundImage: `url(${heroLight})` }}
+          />
+          <div className="relative z-10 space-y-2">
+            <p
+              className={cn(
+                'text-[11px] uppercase tracking-[0.32em]',
+                'text-text-muted',
+              )}
+            >
+              Sistema
+            </p>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-[#721011]" />
+              <h2 className={cn('font-display text-2xl', 'text-text')}>
+                Auditoria
+              </h2>
+            </div>
+            <p className={cn('text-sm', 'text-text-muted')}>
+              Acompanhe mudancas e acessos do sistema.
+            </p>
           </div>
-          <div>
-            <h1 className="text-2xl font-semibold text-text">Auditoria</h1>
-            <p className="text-sm text-text-subtle">Acompanhe mudancas e acessos.</p>
+          <div className="absolute right-6 top-6 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearFilters}
+              className="h-9 rounded-full px-4 bg-white/80"
+            >
+              Limpar filtros
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchLogs}
+              className="h-9 rounded-full px-4 bg-white/80"
+            >
+              Atualizar
+            </Button>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClearFilters}
-            className="h-9 rounded-full px-4"
-          >
-            Limpar filtros
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchLogs}
-            className="h-9 rounded-full px-4"
-          >
-            Atualizar
-          </Button>
-        </div>
-      </header>
+        </header>
 
-      <Card className="border-border bg-white/85">
+      <Card className="border border-border bg-surface/90">
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>Filtros</CardTitle>
           <Filter className="h-4 w-4 text-text-subtle" />
@@ -187,6 +217,7 @@ export const AuditoriaPage = () => {
           )}
         </div>
       </PageState>
+      </div>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { agendaService } from '@/services/agendaService'
 import type { AgendaRow } from '@/lib/supabaseClient'
 import type { AgendaItem } from '@/types/domain'
 import { mapAgendamentoRowToAgendaItem } from '@/lib/mappers'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 interface UseAgendaState {
   eventos: AgendaItem[]
@@ -19,19 +20,29 @@ interface Estatisticas {
 }
 
 export function useAgenda() {
+  const { user, role } = useCurrentUser()
   const [state, setState] = useState<UseAgendaState>({
     eventos: [],
     loading: true,
     error: null,
   })
 
+  // Determina se o usuário é gestor/admin
+  const isGestor = role === 'org_admin' || role === 'fartech_admin'
+
   /**
-   * Busca todos os eventos
+   * Busca todos os eventos - filtrado por role:
+   * - Gestor/Admin: vê todos os eventos da org
+   * - Advogado: vê apenas seus próprios eventos
    */
   const fetchEventos = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }))
-      const eventos = await agendaService.getEventos()
+      // Passa userId e isGestor para filtrar por role
+      const eventos = await agendaService.getEventos({
+        userId: user?.id,
+        isGestor,
+      })
       setState((prev) => ({
         ...prev,
         eventos: eventos.map(mapAgendamentoRowToAgendaItem),
@@ -44,7 +55,7 @@ export function useAgenda() {
         loading: false,
       }))
     }
-  }, [])
+  }, [user?.id, isGestor])
 
   /**
    * Busca um evento específico
@@ -246,6 +257,7 @@ export function useAgenda() {
 
   return {
     ...state,
+    isGestor,
     fetchEventos,
     fetchEvento,
     fetchPorPeriodo,
