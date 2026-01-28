@@ -44,7 +44,7 @@ export type UsuarioStatus = 'ativo' | 'inativo' | 'suspenso'
 export type UserRole = 'fartech_admin' | 'org_admin' | 'user'
 export type TaskPriority = 'baixa' | 'normal' | 'alta'
 export type TaskDifficulty = 'baixa' | 'media' | 'alta'
-export type TaskStatus = 'pendente' | 'em_progresso' | 'aguardando_validacao' | 'concluida' | 'devolvida'
+export type TaskStatus = 'pendente' | 'em_andamento' | 'aguardando_validacao' | 'concluida' | 'cancelada' | 'devolvida'
 
 export interface UsuarioRow {
   id: string

@@ -1,0 +1,25 @@
+-- Migration: Task Status Enum Verification
+-- Date: 2026-01-28
+-- Description: Verifies and documents the task_status enum values
+--              The enum should contain: pendente, em_andamento, aguardando_validacao, concluida, cancelada, devolvida
+
+-- =========================
+-- Task Status Enum Values (read-only verification)
+-- =========================
+-- The task_status enum in the database should have these values:
+--
+-- SELECT enumlabel FROM pg_enum 
+-- JOIN pg_type ON pg_enum.enumtypid = pg_type.oid 
+-- WHERE pg_type.typname = 'task_status'
+-- ORDER BY enumsortorder;
+--
+-- Expected output:
+-- 1. pendente
+-- 2. em_andamento  (NOT em_progresso)
+-- 3. concluida
+-- 4. cancelada
+-- 5. devolvida
+-- 6. aguardando_validacao (may be in different order)
+--
+-- NOTE: The frontend has been updated to use these correct enum values.
+-- No changes are needed to the database - the enum is already correct.

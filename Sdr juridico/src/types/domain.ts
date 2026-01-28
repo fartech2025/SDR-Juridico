@@ -74,7 +74,7 @@ export interface AgendaItem {
 }
 
 export type TaskPriority = 'baixa' | 'normal' | 'alta'
-export type TaskStatus = 'pendente' | 'em_progresso' | 'aguardando_validacao' | 'concluida' | 'devolvida'
+export type TaskStatus = 'pendente' | 'em_andamento' | 'aguardando_validacao' | 'concluida' | 'cancelada' | 'devolvida'
 
 export interface Tarefa {
   id: string

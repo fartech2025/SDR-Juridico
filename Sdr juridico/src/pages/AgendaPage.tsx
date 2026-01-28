@@ -202,7 +202,7 @@ export const AgendaPage = () => {
         // Map tarefa status to agenda status for styling
         const statusMap: Record<string, AgendaStatus> = {
           pendente: 'pendente',
-          em_progresso: 'confirmado',
+          em_andamento: 'confirmado',
           aguardando_validacao: 'pendente',
           concluida: 'concluido',
           devolvida: 'cancelado',
@@ -356,6 +356,13 @@ export const AgendaPage = () => {
       .sort((a, b) => a.at.getTime() - b.at.getTime())
       .map(({ item }) => item)
   }, [allCalendarItems])
+
+  // Tasks without due date
+  const tarefasSemPrazo = React.useMemo(() => {
+    return tarefas
+      .filter(t => !t.dueDate && t.status !== 'concluida')
+      .sort((a, b) => a.priority === 'alta' ? -1 : b.priority === 'alta' ? 1 : 0)
+  }, [tarefas])
 
   const metrics = React.useMemo(() => {
     const now = new Date()
@@ -1088,6 +1095,71 @@ export const AgendaPage = () => {
                                 )}
                               </div>
                               {statusIcons[item.status]}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Tasks without due date */}
+                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-sm text-gray-900 mb-3">
+                    <span className="font-semibold">Tarefas sem prazo</span>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-[#721011] hover:underline"
+                      onClick={() => navigate('/app/tarefas')}
+                    >
+                      Ver todas
+                    </button>
+                  </div>
+                  {tarefasSemPrazo.length === 0 ? (
+                    <p className="text-xs text-gray-500">Nenhuma tarefa sem prazo.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {tarefasSemPrazo.slice(0, 4).map((item) => {
+                        const priorityColor = {
+                          alta: 'border-red-200 bg-red-50 text-red-700',
+                          normal: 'border-gray-200 bg-gray-50 text-gray-700',
+                          baixa: 'border-blue-200 bg-blue-50 text-blue-700',
+                        }[item.priority] || 'border-gray-200 bg-gray-50 text-gray-700'
+
+                        const statusColor = {
+                          pendente: 'bg-amber-100 text-amber-700',
+                          em_andamento: 'bg-blue-100 text-blue-700',
+                          aguardando_validacao: 'bg-purple-100 text-purple-700',
+                          devolvida: 'bg-gray-100 text-gray-700',
+                          cancelada: 'bg-red-100 text-red-700',
+                          concluida: 'bg-green-100 text-green-700',
+                        }[item.status] || 'bg-gray-100 text-gray-700'
+
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className={cn(
+                              "w-full rounded-lg border p-3 text-left transition-all hover:scale-[1.02] hover:shadow-md",
+                              priorityColor
+                            )}
+                            onClick={() => navigate('/app/tarefas')}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <ListTodo className="h-3.5 w-3.5" />
+                                  <p className="font-semibold text-sm leading-tight">{item.title}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", statusColor)}>
+                                    {item.status.replace('_', ' ')}
+                                  </span>
+                                  {item.casoId && (
+                                    <p className="text-xs opacity-75">Vinculado a caso</p>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </button>
                         )

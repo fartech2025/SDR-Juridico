@@ -24,17 +24,19 @@ type ColumnKey = Tarefa['status']
 
 const COLUMN_LABELS: Record<ColumnKey, string> = {
   pendente: 'Pendente',
-  em_progresso: 'Em progresso',
+  em_andamento: 'Em andamento',
   aguardando_validacao: 'Aguard. Confirmação',
   concluida: 'Concluída',
+  cancelada: 'Cancelada',
   devolvida: 'Devolvida',
 }
 
 const COLUMN_BG: Record<ColumnKey, string> = {
   pendente: 'bg-amber-50',
-  em_progresso: 'bg-blue-50',
+  em_andamento: 'bg-blue-50',
   aguardando_validacao: 'bg-purple-50',
   concluida: 'bg-green-50',
+  cancelada: 'bg-red-50',
   devolvida: 'bg-gray-50',
 }
 
@@ -234,7 +236,14 @@ export const TarefasKanbanPage = () => {
       if (t.status === 'aguardando_validacao' || t.status === 'concluida') return
       if (next === 'concluida' || next === 'devolvida') return
     }
-    await updateTarefa(t.id, { status: next })
+    try {
+      await updateTarefa(t.id, { status: next })
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Erro ao mover tarefa'
+      console.error('Erro ao atualizar status da tarefa:', errorMsg)
+      // Re-throw to trigger error boundary
+      throw error
+    }
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -248,7 +257,17 @@ export const TarefasKanbanPage = () => {
     if (!task) return
     if (task.status === next) return
 
-    void onMove(task, next)
+    void onMove(task, next).catch((error) => {
+      console.error('Erro ao mover tarefa:', error)
+      // Show error toast or notification
+      const errorMsg = error instanceof Error ? error.message : 'Erro ao mover tarefa'
+      if (errorMsg.includes('task_status')) {
+        console.error(
+          'ERRO DE ENUM: O banco de dados não reconhece o status. ' +
+          'Verifique se o enum task_status foi criado corretamente.'
+        )
+      }
+    })
   }
 
   const kpi = React.useMemo(() => {
@@ -326,13 +345,13 @@ export const TarefasKanbanPage = () => {
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            void onMove(t, 'em_progresso')
+                            void onMove(t, 'em_andamento')
                           }}
                         >
                           Iniciar
                         </button>
                       )}
-                      {role === 'ADVOGADO' && key === 'em_progresso' && (
+                      {role === 'ADVOGADO' && key === 'em_andamento' && (
                         <button
                           className="h-7 px-3 text-xs font-medium rounded-md text-white transition-colors"
                           style={{ backgroundColor: '#721011' }}
@@ -351,7 +370,7 @@ export const TarefasKanbanPage = () => {
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            void onMove(t, 'em_progresso')
+                            void onMove(t, 'em_andamento')
                           }}
                         >
                           Retomar
@@ -365,13 +384,13 @@ export const TarefasKanbanPage = () => {
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            void onMove(t, 'em_progresso')
+                            void onMove(t, 'em_andamento')
                           }}
                         >
-                          Mover p/ Em Progresso
+                          Mover p/ Em Andamento
                         </button>
                       )}
-                      {canApprove && key === 'em_progresso' && (
+                      {canApprove && key === 'em_andamento' && (
                         <>
                           <button
                             className="h-7 px-3 text-xs font-medium rounded-md border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
@@ -429,7 +448,7 @@ export const TarefasKanbanPage = () => {
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
-                              void onMove(t, 'em_progresso')
+                              void onMove(t, 'em_andamento')
                             }}
                           >
                             Reabrir
@@ -452,7 +471,7 @@ export const TarefasKanbanPage = () => {
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            void onMove(t, 'em_progresso')
+                            void onMove(t, 'em_andamento')
                           }}
                         >
                           Reabrir

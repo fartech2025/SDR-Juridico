@@ -101,7 +101,7 @@ const toDateInput = (value?: string | null) => (value ? value.slice(0, 10) : '')
 
 const taskStatusPill = (status: Tarefa['status']) => {
   if (status === 'concluida') return 'border-green-200 bg-green-50 text-green-700'
-  if (status === 'em_progresso') return 'border-orange-200 bg-orange-50 text-orange-700'
+  if (status === 'em_andamento') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-gray-200 bg-gray-50 text-gray-600'
 }
 
@@ -1373,7 +1373,7 @@ export const CasoPage = () => {
                       }
                     >
                       <option value="pendente">Pendente</option>
-                      <option value="em_progresso">Em progresso</option>
+                      <option value="em_andamento">Em andamento</option>
                       <option value="concluida">Concluida</option>
                     </select>
                   </div>
