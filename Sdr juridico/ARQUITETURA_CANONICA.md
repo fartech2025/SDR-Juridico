@@ -846,47 +846,488 @@ PATCH: Bug fixes
 
 ## 🗄️ MODELO DE DADOS (Multi-Tenant)
 
-### Tabelas Principais
+### 📐 Diagrama ER Completo
 
-```sql
--- organizations (Escritórios/Tenants)
-organizations
-├── id (UUID, PK)
-├── name (VARCHAR)
-├── slug (VARCHAR, UNIQUE)
-├── cnpj (VARCHAR, UNIQUE)
-├── invite_token (VARCHAR, UNIQUE)
-├── plan_type (VARCHAR)
-├── status (VARCHAR)
-└── settings (JSONB)
-
--- users (Usuários)
-users
-├── id (UUID, PK)
-├── organization_id (UUID, FK)
-├── full_name (VARCHAR)
-├── email (VARCHAR, UNIQUE)
-├── role (VARCHAR)
-├── permissions (JSONB)
-└── status (VARCHAR)
-
--- invitations (Convites)
-invitations
-├── id (UUID, PK)
-├── organization_id (UUID, FK)
-├── email (VARCHAR)
-├── token (VARCHAR, UNIQUE)
-├── role (VARCHAR)
-└── status (VARCHAR)
+```mermaid
+erDiagram
+    %% CORE MULTI-TENANT
+    orgs ||--o{ org_members : "tem membros"
+    orgs ||--o{ leads : "possui"
+    orgs ||--o{ clientes : "possui"
+    orgs ||--o{ casos : "possui"
+    orgs ||--o{ documentos : "possui"
+    orgs ||--o{ agenda : "possui"
+    orgs ||--o{ tarefas : "possui"
+    orgs ||--o{ audit_logs : "registra"
+    orgs ||--o{ org_features : "habilita"
+    
+    %% USUÁRIOS E PERMISSÕES
+    usuarios ||--o{ org_members : "participa"
+    usuarios ||--o{ active_sessions : "tem sessões"
+    usuarios ||--o{ audit_logs : "executa ações"
+    usuarios ||--o{ analytics_events : "gera eventos"
+    roles ||--o{ org_members : "define papel"
+    roles ||--o{ role_permissions : "possui"
+    permissions ||--o{ role_permissions : "pertence a"
+    
+    %% RELAÇÕES DE NEGÓCIO
+    leads }o--|| usuarios : "responsavel"
+    leads ||--o{ casos : "converte em"
+    clientes ||--o{ casos : "possui"
+    clientes ||--o{ agenda : "agendado com"
+    casos ||--o{ documentos : "contém"
+    casos ||--o{ timeline_events : "registra eventos"
+    casos ||--o{ agenda : "agenda"
+    casos ||--o{ notificacoes : "gera"
+    casos ||--o{ tarefas : "possui"
+    
+    %% TAREFAS E DOCUMENTOS
+    tarefas ||--o{ tarefa_documentos : "solicita"
+    tarefa_documentos }o--|| documentos : "vincula"
+    
+    %% PROCESSOS JURÍDICOS
+    casos ||--o{ processos_favoritos : "monitora"
+    processos_favoritos ||--o{ historico_consultas : "histórico"
+    processos_favoritos ||--o{ movimentacoes_detectadas : "detecta"
+    
+    orgs {
+        uuid id PK
+        varchar name
+        varchar slug UK
+        varchar cnpj UK
+        varchar email
+        varchar plan "trial,basic,pro,enterprise"
+        varchar status "pending,active,suspended,cancelled"
+        integer max_users
+        integer max_storage_gb
+        jsonb settings
+        timestamp created_at
+    }
+    
+    org_members {
+        uuid id PK
+        uuid org_id FK
+        uuid user_id FK
+        varchar role "admin,gestor,advogado,secretaria,leitura"
+        boolean ativo
+        uuid invited_by FK
+        timestamp created_at
+    }
+    
+    usuarios {
+        uuid id PK
+        varchar nome_completo
+        varchar email UK
+        varchar telefone
+        text[] permissoes "fartech_admin,org_admin,user"
+        varchar status "ativo,inativo,suspenso"
+        jsonb preferencias
+        timestamp ultimo_acesso
+    }
+    
+    leads {
+        uuid id PK
+        uuid org_id FK
+        varchar nome
+        varchar email
+        varchar telefone
+        varchar status "novo,em_contato,qualificado,ganho,perdido"
+        varchar origem
+        text responsavel
+        timestamp created_at
+    }
+    
+    clientes {
+        uuid id PK
+        uuid org_id FK
+        varchar nome
+        varchar email
+        varchar cnpj
+        varchar cpf
+        varchar endereco
+        varchar status "ativo,em_risco,inativo"
+        timestamp created_at
+    }
+    
+    casos {
+        uuid id PK
+        uuid org_id FK
+        uuid cliente_id FK
+        uuid lead_id FK
+        varchar titulo
+        text descricao
+        varchar area
+        varchar status "aberto,em_andamento,resolvido,fechado"
+        varchar prioridade "baixa,media,alta,critica"
+        decimal valor
+        text[] tags
+        text responsavel
+        timestamp data_abertura
+    }
+    
+    documentos {
+        uuid id PK
+        uuid org_id FK
+        uuid caso_id FK
+        varchar titulo
+        varchar tipo
+        varchar status "pendente,aprovado,rejeitado"
+        text url
+        varchar arquivo_nome
+        integer arquivo_tamanho
+        text[] tags
+        timestamp created_at
+    }
+    
+    tarefas {
+        uuid id PK
+        uuid org_id FK
+        uuid caso_id FK
+        uuid assigned_user_id FK
+        varchar titulo
+        text descricao
+        varchar status "pendente,em_progresso,concluida,devolvida"
+        varchar prioridade "baixa,media,alta,critica"
+        timestamp due_at
+        timestamp submitted_at
+        timestamp confirmed_at
+        uuid confirmed_by FK
+        text rejected_reason
+    }
+    
+    tarefa_documentos {
+        uuid id PK
+        uuid org_id FK
+        uuid tarefa_id FK
+        uuid documento_id FK
+        text label
+        boolean solicitado
+        boolean entregue
+        timestamp delivered_at
+    }
+    
+    agenda {
+        uuid id PK
+        uuid org_id FK
+        uuid cliente_id FK
+        uuid caso_id FK
+        varchar titulo
+        varchar tipo "reuniao,ligacao,audiencia,prazo"
+        timestamp data_inicio
+        timestamp data_fim
+        varchar status "confirmado,pendente,cancelado"
+        text responsavel
+    }
+    
+    timeline_events {
+        uuid id PK
+        uuid org_id FK
+        uuid caso_id FK
+        varchar titulo
+        text descricao
+        varchar categoria "docs,agenda,comercial,juridico"
+        timestamp data_evento
+    }
+    
+    notificacoes {
+        uuid id PK
+        uuid org_id FK
+        uuid caso_id FK
+        uuid cliente_id FK
+        varchar titulo
+        varchar prioridade "P0,P1,P2"
+        boolean lida
+        text usuario_responsavel
+        timestamp data_notificacao
+    }
+    
+    audit_logs {
+        uuid id PK
+        uuid org_id FK
+        uuid user_id FK
+        varchar action "create,update,delete,login"
+        varchar entity_type
+        uuid entity_id
+        jsonb old_data
+        jsonb new_data
+        inet ip_address
+        timestamp created_at
+    }
+    
+    roles {
+        uuid id PK
+        varchar name UK
+        varchar display_name
+        boolean is_system
+    }
+    
+    permissions {
+        uuid id PK
+        varchar name UK
+        varchar resource "leads,casos,clientes"
+        varchar action "create,read,update,delete"
+    }
+    
+    role_permissions {
+        uuid role_id FK
+        uuid permission_id FK
+    }
+    
+    org_features {
+        uuid id PK
+        uuid org_id FK
+        varchar feature_key
+        boolean enabled
+        jsonb metadata
+    }
+    
+    active_sessions {
+        uuid id PK
+        uuid user_id FK
+        uuid org_id FK
+        varchar session_token
+        inet ip_address
+        timestamp last_activity
+        timestamp expires_at
+    }
+    
+    analytics_events {
+        uuid id PK
+        uuid org_id FK
+        uuid user_id FK
+        uuid session_id
+        varchar event_name
+        varchar event_type "page_view,button_click,feature_used"
+        jsonb properties
+        timestamp created_at
+    }
+    
+    processos_favoritos {
+        uuid id PK
+        uuid caso_id FK
+        varchar numero_processo
+        varchar tipo_processo
+        boolean notificacoes_ativas
+        timestamp created_at
+    }
+    
+    historico_consultas {
+        uuid id PK
+        uuid processo_id FK
+        jsonb dados_consulta
+        timestamp created_at
+    }
+    
+    movimentacoes_detectadas {
+        uuid id PK
+        uuid processo_id FK
+        text descricao
+        boolean lida
+        timestamp data_movimentacao
+    }
+    
+    cache_cnpj {
+        varchar cnpj PK
+        jsonb dados
+        timestamp expires_at
+    }
 ```
 
-### Atualização Multi-Tenant
+### 🎯 Análise de Engenharia da Estrutura
 
+#### ✅ Pontos Fortes da Arquitetura Atual
+
+1. **Multi-tenancy Robusto**
+   - Isolamento completo por `org_id` em todas as tabelas de negócio
+   - Sistema de membros (`org_members`) com roles granulares
+   - RLS (Row Level Security) implementado consistentemente
+
+2. **Auditoria e Observabilidade**
+   - `audit_logs`: Rastreamento completo de ações
+   - `analytics_events`: Tracking de comportamento
+   - `active_sessions`: Gerenciamento de sessões ativas
+
+3. **RBAC Dinâmico**
+   - Tabelas `roles`, `permissions`, `role_permissions`
+   - Permite configuração flexível de permissões
+   - Roles do sistema protegidas (`is_system`)
+
+4. **Gestão de Features**
+   - `org_features`: Feature flags por organização
+   - Permite habilitar/desabilitar funcionalidades por plano
+
+5. **Workflow de Tarefas**
+   - Sistema de aprovação com estados (pendente → submetida → confirmada/devolvida)
+   - Solicitação de documentos por tarefa
+   - Rastreamento de quem confirmou e quando
+
+#### ⚠️ Pontos de Atenção e Melhorias Sugeridas
+
+1. **Inconsistências de Nomenclatura**
+   ```sql
+   -- PROBLEMA: Mistura de português e inglês
+   ❌ leads.heat (inglês) vs casos.prioridade (português)
+   ❌ agenda (português) vs active_sessions (inglês)
+   ❌ clientes (português) vs users (inglês)
+   
+   -- SOLUÇÃO: Padronizar para inglês
+   ✅ leads, clients, cases, schedules, users
+   OU manter português completo
+   ✅ leads, clientes, casos, agendamentos, usuarios
+   ```
+
+2. **Campos Faltando em Algumas Tabelas**
+   ```sql
+   -- usuarios: Falta org_id (está em org_members)
+   -- Recomendação: Manter como está, pois um usuário pode
+   -- pertencer a múltiplas orgs via org_members
+   
+   -- clientes: Faltam campos de saúde/status conforme schema
+   ALTER TABLE clientes ADD COLUMN IF NOT EXISTS health VARCHAR(20) 
+     CHECK (health IN ('ok', 'atencao', 'critico'));
+   ```
+
+3. **Índices de Performance**
+   ```sql
+   -- ADICIONAR índices compostos para queries comuns:
+   CREATE INDEX idx_casos_org_status_priority 
+     ON casos(org_id, status, prioridade);
+   
+   CREATE INDEX idx_leads_org_status_created 
+     ON leads(org_id, status, created_at DESC);
+   
+   CREATE INDEX idx_agenda_org_responsavel_data 
+     ON agenda(org_id, responsavel, data_inicio);
+   
+   -- Índices para full-text search:
+   CREATE INDEX idx_casos_titulo_fts 
+     ON casos USING GIN (to_tsvector('portuguese', titulo));
+   ```
+
+4. **Soft Delete Pattern**
+   ```sql
+   -- Implementar soft delete em tabelas críticas
+   ALTER TABLE clientes ADD COLUMN deleted_at TIMESTAMPTZ;
+   ALTER TABLE casos ADD COLUMN deleted_at TIMESTAMPTZ;
+   ALTER TABLE leads ADD COLUMN deleted_at TIMESTAMPTZ;
+   
+   -- Views para dados ativos
+   CREATE VIEW clientes_ativos AS 
+     SELECT * FROM clientes WHERE deleted_at IS NULL;
+   ```
+
+5. **Versionamento de Documentos**
+   ```sql
+   -- Adicionar versionamento a documentos
+   ALTER TABLE documentos ADD COLUMN version INTEGER DEFAULT 1;
+   ALTER TABLE documentos ADD COLUMN parent_id UUID 
+     REFERENCES documentos(id);
+   
+   CREATE INDEX idx_documentos_parent_version 
+     ON documentos(parent_id, version DESC);
+   ```
+
+6. **Notificações em Tempo Real**
+   ```sql
+   -- Adicionar suporte a WebSocket/Realtime
+   CREATE TABLE notification_subscriptions (
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+     user_id UUID REFERENCES usuarios(id),
+     org_id UUID REFERENCES orgs(id),
+     channel TEXT NOT NULL,
+     subscription_data JSONB,
+     created_at TIMESTAMPTZ DEFAULT now()
+   );
+   ```
+
+7. **Cache de Relacionamentos**
+   ```sql
+   -- Desnormalização estratégica para performance
+   ALTER TABLE casos ADD COLUMN cliente_nome TEXT;
+   ALTER TABLE casos ADD COLUMN advogado_nome TEXT;
+   
+   -- Trigger para manter sincronizado
+   CREATE TRIGGER update_caso_cliente_nome
+     AFTER UPDATE ON clientes
+     FOR EACH ROW
+     EXECUTE FUNCTION sync_caso_cliente_nome();
+   ```
+
+8. **Limites e Quotas**
+   ```sql
+   -- Tabela para rastrear uso de quotas
+   CREATE TABLE org_quotas_usage (
+     org_id UUID PRIMARY KEY REFERENCES orgs(id),
+     cases_count INTEGER DEFAULT 0,
+     users_count INTEGER DEFAULT 0,
+     storage_used_mb BIGINT DEFAULT 0,
+     updated_at TIMESTAMPTZ DEFAULT now()
+   );
+   
+   -- Função para validar limites
+   CREATE FUNCTION check_org_limits()
+   RETURNS TRIGGER AS $$
+   BEGIN
+     -- Validar se org não excedeu limites do plano
+     -- Retornar erro se excedeu
+   END;
+   $$ LANGUAGE plpgsql;
+   ```
+
+#### 🚀 Recomendações de Implementação
+
+**FASE 1: Normalização (1 semana)**
+- [ ] Padronizar nomenclatura de tabelas e colunas
+- [ ] Adicionar campos faltantes conforme schema
+- [ ] Criar migration de correção
+
+**FASE 2: Performance (1 semana)**
+- [ ] Adicionar índices compostos
+- [ ] Implementar full-text search
+- [ ] Criar views materializadas para dashboards
+
+**FASE 3: Features Avançadas (2 semanas)**
+- [ ] Implementar soft delete
+- [ ] Versionamento de documentos
+- [ ] Sistema de quotas e limites
+- [ ] Notificações em tempo real
+
+**FASE 4: Segurança e Auditoria (1 semana)**
+- [ ] Review completo de RLS policies
+- [ ] Implementar rate limiting no DB
+- [ ] Adicionar logs de acesso sensível
+- [ ] Criptografia de campos sensíveis
+
+### 🔐 Row Level Security (RLS) - Status Atual
+
+Todas as tabelas principais implementam RLS:
+- ✅ `orgs`, `org_members`, `usuarios`
+- ✅ `leads`, `clientes`, `casos`
+- ✅ `documentos`, `agenda`, `tarefas`
+- ✅ `audit_logs`, `analytics_events`
+- ✅ `roles`, `permissions`, `role_permissions`
+
+**Padrão de Policies:**
 ```sql
--- Adicionar em todas as tabelas de negócio
-ALTER TABLE leads ADD COLUMN organization_id UUID;
-ALTER TABLE casos ADD COLUMN organization_id UUID;
-ALTER TABLE clientes ADD COLUMN organization_id UUID;
+-- 1. Fartech admins veem tudo
+CREATE POLICY "fartech_admin_all" ON [tabela]
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM usuarios 
+      WHERE id = auth.uid() 
+      AND 'fartech_admin' = ANY(permissoes))
+  );
+
+-- 2. Membros da org veem dados da org
+CREATE POLICY "org_members_own_data" ON [tabela]
+  FOR SELECT USING (
+    is_org_member(org_id)
+  );
+
+-- 3. Admins da org fazem tudo na org
+CREATE POLICY "org_admin_manage" ON [tabela]
+  FOR ALL USING (
+    is_org_admin_for_org(org_id)
+  );
 ```
 
 ---
