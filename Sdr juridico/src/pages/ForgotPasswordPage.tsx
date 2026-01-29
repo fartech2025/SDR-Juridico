@@ -5,26 +5,52 @@ import { toast } from 'sonner'
 
 import logoMark from '@/assets/logo-mark.svg'
 import { AuthLayout } from '@/layouts/AuthLayout'
+import { supabase } from '@/lib/supabaseClient'
 
 export const ForgotPasswordPage = () => {
   const [status, setStatus] = React.useState<
     'idle' | 'loading' | 'error' | 'success'
   >('idle')
   const [email, setEmail] = React.useState('')
+  const [errorMessage, setErrorMessage] = React.useState('')
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setErrorMessage('')
+
+    if (!email.trim()) {
+      setStatus('error')
+      setErrorMessage('Informe um email valido.')
+      toast.error('Informe um email valido.')
+      return
+    }
+
     setStatus('loading')
 
-    window.setTimeout(() => {
-      if (!email.trim()) {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      })
+
+      if (error) {
         setStatus('error')
-        toast.error('Informe um email valido.')
+        if (error.message.includes('rate limit')) {
+          setErrorMessage('Muitas tentativas. Aguarde alguns minutos.')
+          toast.error('Muitas tentativas. Aguarde alguns minutos.')
+        } else {
+          setErrorMessage(error.message)
+          toast.error('Erro ao enviar link: ' + error.message)
+        }
         return
       }
+
       setStatus('success')
       toast.success('Link de recuperacao enviado.')
-    }, 700)
+    } catch {
+      setStatus('error')
+      setErrorMessage('Erro inesperado. Tente novamente.')
+      toast.error('Erro inesperado. Tente novamente.')
+    }
   }
 
   return (
@@ -71,7 +97,7 @@ export const ForgotPasswordPage = () => {
         )}
         {status === 'error' && (
           <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
-            Email obrigatorio para enviar o link.
+            {errorMessage || 'Erro ao enviar o link.'}
           </div>
         )}
         <button

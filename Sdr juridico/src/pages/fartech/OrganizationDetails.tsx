@@ -124,10 +124,10 @@ export default function OrganizationDetails() {
             signUpError.message.includes('sending confirmation')) {
           console.log('⚠️ Email não configurado, criando usuário sem confirmação...')
           
-          // Mostrar mensagem de sucesso com instrução manual
-          setInviteStatus({ 
-            type: 'success', 
-            message: `✅ Tentativa de criar acesso realizada!\n\nEmail: ${adminEmail}\nSenha: ${tempPassword}\n\n⚠️ IMPORTANTE:\n1. O Supabase não está configurado para enviar emails\n2. Configure o SMTP em: Settings → Auth → SMTP Settings\n3. Ou envie essas credenciais manualmente ao administrador` 
+          // Mostrar mensagem sem expor senha
+          setInviteStatus({
+            type: 'success',
+            message: `Acesso criado para ${adminEmail}.\n\nO Supabase nao esta configurado para enviar emails.\nConfigure o SMTP em: Settings > Auth > SMTP Settings para que o usuario receba o link de acesso por email.\n\nApos configurar, reenvie o convite.`
           })
           return
         }

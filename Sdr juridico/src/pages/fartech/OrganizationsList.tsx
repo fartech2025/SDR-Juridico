@@ -202,7 +202,7 @@ export default function OrganizationsList() {
                     <Users className="h-7 w-7 text-emerald-200" />
                   </div>
                 </div>
-                <p className="relative mt-3 text-xs font-medium text-emerald-200">Across all orgs</p>
+                <p className="relative mt-3 text-xs font-medium text-emerald-200">Em todas as orgs</p>
               </div>
 
               <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-800 via-indigo-900 to-blue-900 p-6 shadow-lg border border-indigo-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
@@ -218,7 +218,7 @@ export default function OrganizationsList() {
                     <TrendingUp className="h-7 w-7 text-indigo-200" />
                   </div>
                 </div>
-                <p className="relative mt-3 text-xs font-medium text-indigo-200">Premium clients</p>
+                <p className="relative mt-3 text-xs font-medium text-indigo-200">Clientes premium</p>
               </div>
 
               <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-800 via-amber-900 to-orange-900 p-6 shadow-lg border border-amber-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">

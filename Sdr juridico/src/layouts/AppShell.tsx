@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart3,
   Bell,
+  Building2,
   CalendarClock,
   FileText,
   LayoutDashboard,
@@ -74,7 +75,9 @@ const appNavGroups: { label: string; items: NavItem[] }[] = [
 ]
 
 const adminNavItems = [
-  { label: 'Painel de gestao', to: '/admin/organizations', icon: LayoutDashboard },
+  { label: 'Organizacoes', to: '/admin/organizations', icon: Building2 },
+  { label: 'Usuarios', to: '/admin/users', icon: Users },
+  { label: 'Seguranca', to: '/admin/security', icon: ShieldCheck },
 ]
 
 const orgAdminNavItems = [

@@ -69,9 +69,9 @@ export function OrgActiveGuard({
     return <>{children}</>
   }
   
-  // No org assigned - should not happen if user is authenticated
+  // No org assigned - redirect to no-organization page
   if (!currentOrg) {
-    return <>{children}</>
+    return <Navigate to="/no-organization" replace />
   }
   
   // Org is not active

@@ -31,6 +31,7 @@ import SecurityMonitoringSimple from '@/pages/fartech/SecurityMonitoringSimple'
 import UserManagement from '@/pages/UserManagement'
 import OrgSettings from '@/pages/OrgSettings'
 import OrgSuspendedPage from '@/pages/OrgSuspendedPage'
+import NoOrganizationPage from '@/pages/NoOrganizationPage'
 
 // Guards
 import { FartechGuard } from '@/components/guards/FartechGuard'
@@ -203,6 +204,14 @@ export const router = createBrowserRouter([
         element: <UserProfilePage />,
       },
     ],
+  },
+  {
+    path: '/no-organization',
+    element: (
+      <ProtectedRoute>
+        <NoOrganizationPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/org/suspended',

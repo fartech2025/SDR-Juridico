@@ -48,6 +48,11 @@ export const UserProfilePage = () => {
   const [dirty, setDirty] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
 
+  // Password change state
+  const [newPassword, setNewPassword] = React.useState('')
+  const [confirmPassword, setConfirmPassword] = React.useState('')
+  const [savingPassword, setSavingPassword] = React.useState(false)
+
   const updateFormFromProfile = React.useCallback(() => {
     setForm(buildFormState(profile, fallbackEmail))
     setDirty(false)
@@ -95,6 +100,46 @@ export const UserProfilePage = () => {
     }
   }
 
+  const handlePasswordChange = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (newPassword.length < 8) {
+      toast.error('A nova senha deve ter no minimo 8 caracteres.')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas nao conferem.')
+      return
+    }
+
+    setSavingPassword(true)
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (updateError) {
+        if (updateError.message.includes('same_password') || updateError.message.includes('same password')) {
+          toast.error('A nova senha deve ser diferente da senha atual.')
+        } else {
+          toast.error('Erro ao alterar senha: ' + updateError.message)
+        }
+        return
+      }
+
+      toast.success('Senha alterada com sucesso.')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erro inesperado ao alterar senha.'
+      toast.error(message)
+    } finally {
+      setSavingPassword(false)
+    }
+  }
+
   const pageStatus = loading
     ? 'loading'
     : error
@@ -102,6 +147,8 @@ export const UserProfilePage = () => {
       : profile
         ? 'ready'
         : 'empty'
+
+  const passwordDirty = newPassword.length > 0 || confirmPassword.length > 0
 
   return (
     <div className="space-y-6">
@@ -174,6 +221,61 @@ export const UserProfilePage = () => {
                 disabled={!dirty || saving}
               >
                 {saving ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+
+        <Card className="border border-border bg-surface/90">
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <CardHeader className="space-y-2">
+              <CardTitle>Alterar senha</CardTitle>
+              <CardDescription>
+                Defina uma nova senha para sua conta. Minimo de 8 caracteres.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-text">
+                  Nova senha
+                </label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimo 8 caracteres"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-text">
+                  Confirmar nova senha
+                </label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repita a nova senha"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setNewPassword('')
+                  setConfirmPassword('')
+                }}
+                disabled={!passwordDirty || savingPassword}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={!passwordDirty || savingPassword}
+              >
+                {savingPassword ? 'Alterando...' : 'Alterar senha'}
               </Button>
             </CardFooter>
           </form>
