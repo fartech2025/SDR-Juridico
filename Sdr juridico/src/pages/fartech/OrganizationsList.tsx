@@ -177,64 +177,92 @@ export default function OrganizationsList() {
 
             {/* Stats Cards */}
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-6 shadow-lg border border-slate-600/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center justify-between">
+              <div
+                className="group rounded-2xl border p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                style={{ backgroundColor: 'var(--brand-primary-50)', borderColor: 'var(--brand-primary-100)' }}
+              >
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-400 tracking-wider uppercase">Total de Organizações</p>
-                    <p className="mt-2 text-3xl font-bold text-white">{totalOrgs}</p>
+                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--brand-primary-700)' }}>
+                      Total de Organizações
+                    </p>
+                    <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--brand-primary-900)' }}>
+                      {totalOrgs}
+                    </p>
                   </div>
-                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
-                    <Building2 className="h-7 w-7 text-slate-200" />
+                  <div className="rounded-xl p-2.5" style={{ backgroundColor: 'var(--brand-primary-100)' }}>
+                    <Building2 className="h-6 w-6" style={{ color: 'var(--brand-primary-700)' }} />
                   </div>
                 </div>
-                <p className="relative mt-3 text-xs font-medium text-slate-300">{activeOrgs} ativas</p>
+                <p className="mt-2 text-xs font-medium" style={{ color: 'var(--brand-primary-600)' }}>
+                  {activeOrgs} ativas
+                </p>
               </div>
 
-              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-teal-900 p-6 shadow-lg border border-emerald-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center justify-between">
+              <div
+                className="group rounded-2xl border p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                style={{ backgroundColor: 'var(--color-success-bg)', borderColor: 'var(--color-success-light)' }}
+              >
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-emerald-300 tracking-wider uppercase">Total de Usuários</p>
-                    <p className="mt-2 text-3xl font-bold text-white">{totalUsers}</p>
+                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-success-dark)' }}>
+                      Total de Usuários
+                    </p>
+                    <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--color-success-dark)' }}>
+                      {totalUsers}
+                    </p>
                   </div>
-                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
-                    <Users className="h-7 w-7 text-emerald-200" />
+                  <div className="rounded-xl p-2.5" style={{ backgroundColor: '#d1fae5' }}>
+                    <Users className="h-6 w-6" style={{ color: 'var(--color-success-dark)' }} />
                   </div>
                 </div>
-                <p className="relative mt-3 text-xs font-medium text-emerald-200">Em todas as orgs</p>
+                <p className="mt-2 text-xs font-medium" style={{ color: 'var(--color-success)' }}>
+                  Em todas as orgs
+                </p>
               </div>
 
-              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-800 via-indigo-900 to-blue-900 p-6 shadow-lg border border-indigo-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center justify-between">
+              <div
+                className="group rounded-2xl border p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                style={{ backgroundColor: 'var(--color-info-bg)', borderColor: 'var(--color-info-light)' }}
+              >
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-indigo-300 tracking-wider uppercase">Planos Enterprise</p>
-                    <p className="mt-2 text-3xl font-bold text-white">
+                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-info-dark)' }}>
+                      Planos Enterprise
+                    </p>
+                    <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--color-info-dark)' }}>
                       {filteredOrgs.filter(o => o.plan === 'enterprise').length}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
-                    <TrendingUp className="h-7 w-7 text-indigo-200" />
+                  <div className="rounded-xl p-2.5" style={{ backgroundColor: '#cffafe' }}>
+                    <TrendingUp className="h-6 w-6" style={{ color: 'var(--color-info-dark)' }} />
                   </div>
                 </div>
-                <p className="relative mt-3 text-xs font-medium text-indigo-200">Clientes premium</p>
+                <p className="mt-2 text-xs font-medium" style={{ color: 'var(--color-info)' }}>
+                  Clientes premium
+                </p>
               </div>
 
-              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-800 via-amber-900 to-orange-900 p-6 shadow-lg border border-amber-700/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center justify-between">
+              <div
+                className="group rounded-2xl border p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                style={{ backgroundColor: 'var(--color-warning-bg)', borderColor: 'var(--color-warning-light)' }}
+              >
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-amber-300 tracking-wider uppercase">Atenção Requerida</p>
-                    <p className="mt-2 text-3xl font-bold text-white">
+                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-warning-dark)' }}>
+                      Atenção Requerida
+                    </p>
+                    <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--color-warning-dark)' }}>
                       {filteredOrgs.filter(o => o.status === 'suspended').length}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white/10 backdrop-blur-sm p-2.5">
-                    <AlertCircle className="h-7 w-7 text-amber-200" />
+                  <div className="rounded-xl p-2.5" style={{ backgroundColor: '#fef3c7' }}>
+                    <AlertCircle className="h-6 w-6" style={{ color: 'var(--color-warning-dark)' }} />
                   </div>
                 </div>
-                <p className="relative mt-3 text-xs font-medium text-amber-200">Orgs suspensas</p>
+                <p className="mt-2 text-xs font-medium" style={{ color: 'var(--color-warning)' }}>
+                  Orgs suspensas
+                </p>
               </div>
             </div>
           </div>

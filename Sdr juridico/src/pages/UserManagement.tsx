@@ -2,18 +2,18 @@
 // Date: 2026-01-13
 
 import { useState, useEffect } from 'react'
-import { Users, Edit, Trash2, Shield, Search, UserPlus, X, Mail, User as UserIcon } from 'lucide-react'
+import { Users, Edit, Trash2, Shield, Search, UserPlus, X, Mail, User as UserIcon, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrgAdminGuard } from '@/components/guards'
 import { useOrganization } from '@/hooks/useOrganization'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { supabase } from '@/lib/supabaseClient'
-import type { UserRole } from '@/types/permissions'
-
 interface OrgUser {
   id: string
   email: string
   nome: string | null
-  role: UserRole
+  role: OrgMemberRole
+  ativo: boolean
   created_at: string
   last_sign_in_at: string | null
 }
@@ -30,42 +30,93 @@ const ORG_ROLE_LABELS: Record<OrgMemberRole, string> = {
 
 export default function UserManagement() {
   const { currentOrg } = useOrganization()
+  const { role: userRole } = useCurrentUser()
+  const isFartechAdmin = userRole === 'fartech_admin'
+
   const [users, setUsers] = useState<OrgUser[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('all')
+  const [allOrgs, setAllOrgs] = useState<{ id: string; name: string; max_users: number }[]>([])
+
+  // Load all orgs for fartech admin selector
+  useEffect(() => {
+    if (!isFartechAdmin) return
+    const loadOrgs = async () => {
+      const { data } = await supabase
+        .from('orgs')
+        .select('id, name, max_users')
+        .order('name')
+      setAllOrgs(data || [])
+    }
+    loadOrgs()
+  }, [isFartechAdmin])
 
   useEffect(() => {
     loadUsers()
-  }, [currentOrg])
+  }, [currentOrg, selectedOrgId, isFartechAdmin])
 
   const loadUsers = async () => {
+    // Determine target org
+    const targetOrgId = isFartechAdmin
+      ? (selectedOrgId === 'all' ? null : selectedOrgId)
+      : currentOrg?.id || null
+
+    if (!isFartechAdmin && !currentOrg) {
+      setUsers([])
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('id, email, nome_completo, permissoes, created_at, updated_at')
-        .order('created_at', { ascending: false })
 
-      if (error) throw error
-      const mapped = (data || []).map((row) => {
-        const permissoes = row.permissoes || []
-        const role: UserRole = permissoes.includes('fartech_admin')
-          ? 'fartech_admin'
-          : permissoes.includes('gestor') || permissoes.includes('org_admin')
-            ? 'org_admin'
-            : 'user'
+      if (targetOrgId) {
+        // Query org_members for specific org
+        const { data: members, error: membersError } = await supabase
+          .from('org_members')
+          .select('user_id, role, ativo, created_at')
+          .eq('org_id', targetOrgId)
+          .order('created_at', { ascending: false })
 
-        return {
-          id: row.id,
-          email: row.email,
-          nome: row.nome_completo,
-          role,
-          created_at: row.created_at,
-          last_sign_in_at: row.updated_at,
-        } as OrgUser
-      })
-      setUsers(mapped)
+        const hasOrgMembers = !membersError && members && members.length > 0
+
+        if (hasOrgMembers) {
+          const userIds = members.map(m => m.user_id)
+          const { data: usuarios, error: usersError } = await supabase
+            .from('usuarios')
+            .select('id, email, nome_completo, updated_at')
+            .in('id', userIds)
+
+          if (usersError) throw usersError
+
+          const userMap = new Map((usuarios || []).map(u => [u.id, u]))
+          const mapped: OrgUser[] = members
+            .filter(m => userMap.has(m.user_id))
+            .map(m => {
+              const u = userMap.get(m.user_id)!
+              return {
+                id: m.user_id,
+                email: u.email,
+                nome: u.nome_completo,
+                role: (m.role || 'leitura') as OrgMemberRole,
+                ativo: m.ativo !== false,
+                created_at: m.created_at,
+                last_sign_in_at: u.updated_at,
+              }
+            })
+          setUsers(mapped)
+        } else {
+          // org_members empty for this org — fallback to all usuarios
+          const mapped = await loadAllUsuarios()
+          setUsers(mapped)
+        }
+      } else {
+        // All orgs (fartech admin "Todas")
+        const mapped = await loadAllUsuarios()
+        setUsers(mapped)
+      }
     } catch (error) {
       console.error('Erro ao carregar usuarios:', error)
     } finally {
@@ -73,10 +124,53 @@ export default function UserManagement() {
     }
   }
 
+  const loadAllUsuarios = async (): Promise<OrgUser[]> => {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('id, email, nome_completo, permissoes, created_at, updated_at')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return (data || []).map((row) => {
+      const permissoes: string[] = row.permissoes || []
+      let role: OrgMemberRole = 'leitura'
+      if (permissoes.includes('gestor') || permissoes.includes('org_admin') || permissoes.includes('admin')) {
+        role = 'admin'
+      } else if (permissoes.includes('advogado')) {
+        role = 'advogado'
+      } else if (permissoes.includes('secretaria')) {
+        role = 'secretaria'
+      }
+      return {
+        id: row.id,
+        email: row.email,
+        nome: row.nome_completo,
+        role,
+        ativo: true,
+        created_at: row.created_at,
+        last_sign_in_at: row.updated_at,
+      }
+    })
+  }
+
   const filteredUsers = users.filter(user =>
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const activeUserCount = users.filter(u => u.ativo).length
+
+  // Resolve effective org info for display
+  const effectiveOrg = isFartechAdmin
+    ? (selectedOrgId === 'all' ? null : allOrgs.find(o => o.id === selectedOrgId) || null)
+    : currentOrg
+
+  const effectiveOrgName = isFartechAdmin
+    ? (selectedOrgId === 'all' ? 'Todas as Organizacoes' : effectiveOrg?.name || '')
+    : currentOrg?.name || ''
+
+  const effectiveMaxUsers = effectiveOrg?.max_users ?? null
 
   const handleInviteSuccess = () => {
     setShowInviteModal(false)
@@ -96,13 +190,13 @@ export default function UserManagement() {
                   Gerenciar Usuarios
                 </h1>
                 <p className="mt-1 text-sm text-gray-500">
-                  {currentOrg?.name} - {filteredUsers.length} usuarios
+                  {effectiveOrgName} — {activeUserCount}{effectiveMaxUsers !== null ? ` / ${effectiveMaxUsers}` : ''} usuarios
                 </p>
               </div>
 
               <button
                 onClick={() => setShowInviteModal(true)}
-                disabled={users.length >= (currentOrg?.max_users || Infinity)}
+                disabled={!effectiveOrg || activeUserCount >= (effectiveMaxUsers || Infinity)}
                 className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -113,25 +207,51 @@ export default function UserManagement() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Usage Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-900">
-                  Usuarios: {users.length} / {currentOrg?.max_users}
-                </p>
-                <p className="text-xs text-blue-700 mt-1">
-                  {currentOrg && currentOrg.max_users - users.length} vagas disponiveis
-                </p>
+          {/* Org Selector (fartech admin only) */}
+          {isFartechAdmin && (
+            <div className="bg-white rounded-lg shadow p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <Building2 className="w-5 h-5 text-gray-500" />
+                <label className="text-sm font-medium text-gray-700">Organizacao:</label>
+                <select
+                  value={selectedOrgId}
+                  onChange={(e) => setSelectedOrgId(e.target.value)}
+                  className="flex-1 max-w-sm px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="all">Todas as organizacoes</option>
+                  {allOrgs.map(org => (
+                    <option key={org.id} value={org.id}>
+                      {org.name} ({org.max_users} usuarios)
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              {users.length >= (currentOrg?.max_users || 0) && (
-                <div className="text-sm text-blue-700">
-                  Limite atingido - entre em contato para aumentar
-                </div>
-              )}
             </div>
-          </div>
+          )}
+
+          {/* Usage Info */}
+          {effectiveMaxUsers !== null && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-900">
+                    Usuarios ativos: {activeUserCount} / {effectiveMaxUsers}
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    {effectiveMaxUsers - activeUserCount > 0
+                      ? `${effectiveMaxUsers - activeUserCount} vagas disponiveis`
+                      : 'Nenhuma vaga disponivel'}
+                  </p>
+                </div>
+
+                {activeUserCount >= effectiveMaxUsers && (
+                  <div className="text-sm text-blue-700">
+                    Limite atingido - entre em contato para aumentar
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Search */}
           <div className="bg-white rounded-lg shadow mb-6 p-4">
@@ -179,7 +299,7 @@ export default function UserManagement() {
                     </tr>
                   ) : filteredUsers.length > 0 ? (
                     filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
+                      <tr key={user.id} className={`hover:bg-gray-50 ${!user.ativo ? 'opacity-60' : ''}`}>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
@@ -193,6 +313,11 @@ export default function UserManagement() {
                               </p>
                               <p className="text-sm text-gray-500">
                                 {user.email}
+                                {!user.ativo && (
+                                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                                    Inativo
+                                  </span>
+                                )}
                               </p>
                             </div>
                           </div>
@@ -239,10 +364,10 @@ export default function UserManagement() {
           </div>
         </div>
 
-        {showInviteModal && currentOrg && (
+        {showInviteModal && effectiveOrg && (
           <InviteUserModal
-            orgId={currentOrg.id}
-            orgName={currentOrg.name}
+            orgId={effectiveOrg.id}
+            orgName={effectiveOrg.name}
             onClose={() => setShowInviteModal(false)}
             onSuccess={handleInviteSuccess}
           />
@@ -410,26 +535,36 @@ function InviteUserModal({
   )
 }
 
-function RoleBadge({ role }: { role: UserRole }) {
-  const roleConfig = {
-    fartech_admin: {
-      label: 'Fartech Admin',
-      class: 'bg-purple-100 text-purple-800',
-      icon: Shield
-    },
-    org_admin: {
+function RoleBadge({ role }: { role: OrgMemberRole }) {
+  const roleConfig: Record<string, { label: string; class: string; icon: typeof Shield }> = {
+    admin: {
       label: 'Administrador',
-      class: 'bg-blue-100 text-blue-800',
-      icon: Shield
+      class: 'bg-purple-100 text-purple-800',
+      icon: Shield,
     },
-    user: {
-      label: 'Usuario',
+    gestor: {
+      label: 'Gestor',
+      class: 'bg-blue-100 text-blue-800',
+      icon: Shield,
+    },
+    advogado: {
+      label: 'Advogado',
+      class: 'bg-emerald-100 text-emerald-800',
+      icon: Users,
+    },
+    secretaria: {
+      label: 'Secretária',
+      class: 'bg-amber-100 text-amber-800',
+      icon: Users,
+    },
+    leitura: {
+      label: 'Somente Leitura',
       class: 'bg-gray-100 text-gray-800',
-      icon: Users
+      icon: Users,
     },
   }
 
-  const config = roleConfig[role]
+  const config = roleConfig[role] || roleConfig.leitura
   const Icon = config.icon
 
   return (
