@@ -4,7 +4,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { organizationsService } from '@/services/organizationsService'
 import { permissionsService } from '@/services/permissionsService'
-import type { Organization, OrganizationStats, OrganizationUsage } from '@/types/organization'
+import type {
+  Organization,
+  OrganizationSettings,
+  OrganizationStats,
+  OrganizationUsage,
+} from '@/types/organization'
 
 interface OrganizationContextValue {
   // Current organization
@@ -32,6 +37,55 @@ interface OrganizationContextValue {
 }
 
 const OrganizationContext = createContext<OrganizationContextValue | undefined>(undefined)
+
+const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
+  status: 'active',
+  activated_at: null,
+  suspended_at: null,
+  cancelled_at: null,
+  enable_api_access: false,
+  enable_white_label: false,
+  enable_custom_domain: false,
+  enable_sso: false,
+  apis: [],
+  integrations: [],
+  features: {},
+  notifications: {},
+  business_hours: {},
+  customization: {},
+  security: {},
+}
+
+const createFallbackOrganization = (orgId: string | null): Organization => ({
+  id: orgId || 'org-fallback',
+  name: 'Organização',
+  slug: 'org',
+  cnpj: null,
+  email: 'org@example.com',
+  phone: null,
+  address: null,
+  plan: 'trial',
+  max_users: 100,
+  max_storage_gb: 10,
+  max_cases: null,
+  status: 'active',
+  billing_email: null,
+  billing_cycle: 'monthly',
+  next_billing_date: null,
+  logo_url: null,
+  primary_color: '#059669',
+  secondary_color: null,
+  custom_domain: null,
+  settings: { ...DEFAULT_ORGANIZATION_SETTINGS },
+  metadata: {},
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  activated_at: null,
+  suspended_at: null,
+  cancelled_at: null,
+  provisioned_by: null,
+  managed_by: null,
+})
 
 export function OrganizationProvider({ children }: { children: React.ReactNode }) {
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null)
@@ -75,62 +129,18 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
           // Se não encontrar, criar org genérica para não travar
           if (!org) {
             console.warn('⚠️ Organização não encontrada, usando fallback:', user.org_id)
-            const fallbackOrg: Organization = {
-              id: user.org_id,
-              name: 'Organização',
-              slug: 'org',
-              cnpj: null,
-              email: 'org@example.com',
-              phone: null,
-              address: null,
-              plan: 'trial',
-              max_users: 100,
-              max_storage_gb: 10,
-              max_cases: null,
-              status: 'active',
-              billing_email: null,
-              billing_cycle: 'monthly',
-              next_billing_date: null,
-              logo_url: null,
-              primary_color: '#059669',
-              secondary_color: null,
-              custom_domain: null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }
+            const fallbackOrg = createFallbackOrganization(user.org_id)
             setCurrentOrg(fallbackOrg)
           } else {
             setCurrentOrg(org)
             await loadStats(org.id)
           }
         } catch (err) {
-          console.error('❌ Erro ao carregar organização:', err)
-          // Fallback mesmo em caso de erro
-          const fallbackOrg: Organization = {
-            id: user.org_id,
-            name: 'Organização',
-            slug: 'org',
-            cnpj: null,
-            email: 'org@example.com',
-            phone: null,
-            address: null,
-            plan: 'trial',
-            max_users: 100,
-            max_storage_gb: 10,
-            max_cases: null,
-            status: 'active',
-            billing_email: null,
-            billing_cycle: 'monthly',
-            next_billing_date: null,
-            logo_url: null,
-            primary_color: '#059669',
-            secondary_color: null,
-            custom_domain: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-          setCurrentOrg(fallbackOrg)
-        }
+        console.error('❌ Erro ao carregar organização:', err)
+        // Fallback mesmo em caso de erro
+        const fallbackOrg = createFallbackOrganization(user.org_id)
+        setCurrentOrg(fallbackOrg)
+      }
       } else {
         setCurrentOrg(null)
       }

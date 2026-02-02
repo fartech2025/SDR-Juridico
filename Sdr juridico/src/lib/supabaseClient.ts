@@ -22,6 +22,11 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 })
 
+// Debug helper: expõe o cliente no console do navegador durante o dev
+if (typeof window !== 'undefined') {
+  ;(window as any).supabase = supabase
+}
+
 export const isSupabaseConfigured = hasValidCredentials
 
 // Tipos para as tabelas

@@ -32,6 +32,7 @@ import { useAgenda } from '@/hooks/useAgenda'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTarefas } from '@/hooks/useTarefas'
 import { useDatajudTimeline } from '@/hooks/useDatajudTimeline'
+import { CasoDataJudSection } from '@/components/CasoDetail/CasoDataJudSection'
 
 const resolveStatus = (
   value: string | null,
@@ -109,6 +110,21 @@ const taskPriorityPill = (priority: Tarefa['priority']) => {
   if (priority === 'alta') return 'border-red-200 bg-red-50 text-red-700'
   if (priority === 'normal') return 'border-blue-200 bg-blue-50 text-blue-700'
   return 'border-gray-200 bg-gray-50 text-gray-600'
+}
+
+const FALLBACK_CASO: Caso = {
+  id: 'caso-sem-dados',
+  title: 'Sem caso',
+  cliente: 'Sem cliente',
+  area: 'Geral',
+  status: 'ativo',
+  heat: 'morno',
+  stage: 'triagem',
+  value: 0,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  tags: [],
+  slaRisk: 'ok',
 }
 
 // Badge Component
@@ -295,23 +311,15 @@ export const CasoPage = () => {
   const [eventError, setEventError] = React.useState<string | null>(null)
   const [eventSaving, setEventSaving] = React.useState(false)
   const timelineRef = React.useRef<HTMLDivElement | null>(null)
+  const [selectedCaso, setSelectedCaso] = React.useState<Caso>(FALLBACK_CASO)
 
-  const fallbackCaso: Caso = {
-    id: 'caso-sem-dados',
-    title: 'Sem caso',
-    cliente: 'Sem cliente',
-    area: 'Geral',
-    status: 'ativo',
-    heat: 'morno',
-    stage: 'triagem',
-    value: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    tags: [],
-    slaRisk: 'ok',
-  }
+  const caso = selectedCaso
 
-  const caso = casos.find((item) => item.id === id) ?? casos[0] ?? fallbackCaso
+  React.useEffect(() => {
+    const resolvedCaso =
+      casos.find((item) => item.id === id) ?? casos[0] ?? FALLBACK_CASO
+    setSelectedCaso(resolvedCaso)
+  }, [casos, id])
   const lead = leads.find((item) => item.id === caso?.leadId)
   const caseDocs = React.useMemo(
     () => documentos.filter((doc) => doc.casoId === caso?.id),
@@ -890,6 +898,16 @@ export const CasoPage = () => {
                       <ChevronDown className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {/* DataJud Integration Section */}
+                  <CasoDataJudSection
+                    caso={caso}
+                    clienteName={caso.cliente}
+                    onProcessoLinked={(updatedCaso) => {
+                      // Atualizar o caso local com dados DataJud
+                      setSelectedCaso(updatedCaso)
+                    }}
+                  />
 
                   {/* Timeline Section */}
                   <div

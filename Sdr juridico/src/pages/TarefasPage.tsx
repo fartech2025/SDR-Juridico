@@ -19,7 +19,7 @@ const statusBadge = (status: Tarefa['status']) => {
   if (status === 'concluida') return 'bg-green-50 text-green-700 border-green-200'
   if (status === 'aguardando_validacao') return 'bg-purple-50 text-purple-700 border-purple-200'
   if (status === 'devolvida') return 'bg-red-50 text-red-700 border-red-200'
-  if (status === 'em_progresso') return 'bg-blue-50 text-blue-700 border-blue-200'
+  if (status === 'em_andamento') return 'bg-blue-50 text-blue-700 border-blue-200'
   return 'bg-gray-100 text-gray-700 border-gray-200'
 }
 
@@ -355,7 +355,7 @@ export const TarefasPage = () => {
           >
             <option value="todos">Status</option>
             <option value="pendente">Pendente</option>
-            <option value="em_progresso">Em progresso</option>
+            <option value="em_andamento">Em andamento</option>
             <option value="concluida">Concluida</option>
           </select>
           <select
@@ -550,7 +550,7 @@ export const TarefasPage = () => {
                 }
               >
                 <option value="pendente">Pendente</option>
-                <option value="em_progresso">Em progresso</option>
+                <option value="em_andamento">Em andamento</option>
                 <option value="concluida">Concluida</option>
               </select>
             </div>

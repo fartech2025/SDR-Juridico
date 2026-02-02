@@ -24,6 +24,7 @@ export interface Lead {
 
 export type CasoStatus = 'ativo' | 'suspenso' | 'encerrado'
 export type CasoStage = 'triagem' | 'negociacao' | 'em_andamento' | 'conclusao'
+export type DataJudSyncStatus = 'nunca_sincronizado' | 'sincronizado' | 'em_erro' | 'pendente_sync'
 
 export interface Caso {
   id: string
@@ -39,6 +40,16 @@ export interface Caso {
   leadId?: string
   tags: string[]
   slaRisk: 'ok' | 'atencao' | 'critico'
+  // DataJud fields
+  numero_processo?: string
+  tribunal?: string
+  grau?: string
+  classe_processual?: string
+  assunto_principal?: string
+  datajud_processo_id?: string
+  datajud_sync_status?: DataJudSyncStatus
+  datajud_last_sync_at?: string
+  datajud_sync_error?: string
 }
 
 export type DocumentoStatus = 'pendente' | 'aprovado' | 'rejeitado' | 'solicitado' | 'completo'
@@ -188,3 +199,106 @@ export interface Cliente {
   owner: string
   lastUpdate: string
 }
+
+// ========================================
+// DataJud Related Types
+// ========================================
+
+export type Tribunal = 'trf' | 'trt' | 'tre' | 'stj' | 'tst' | 'stf' | 'oab'
+
+export interface DataJudProcesso {
+  id: string
+  numero_processo: string
+  tribunal: Tribunal | string
+  grau?: string
+  classe_processual?: string
+  assunto?: string
+  dataAjuizamento?: string
+  dataAtualizacao?: string
+  sigiloso?: boolean
+  raw_response?: Record<string, unknown>
+  cached_at: string
+  org_id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface DataJudMovimento {
+  id: string
+  datajud_processo_id: string
+  codigo?: string
+  nome: string
+  data_hora: string
+  complemento?: string
+  raw_response?: Record<string, unknown>
+  detected_at: string
+  notified: boolean
+  created_at: string
+}
+
+export interface DataJudApiCall {
+  id: string
+  user_id: string
+  org_id: string
+  action: 'search' | 'link' | 'unlink' | 'sync'
+  tribunal?: string
+  search_query?: string
+  resultado_count?: number
+  api_latency_ms?: number
+  status_code?: number
+  error_message?: string
+  ip_address?: string
+  user_agent?: string
+  created_at: string
+}
+
+export interface DataJudSyncJob {
+  id: string
+  caso_id: string
+  org_id: string
+  status: 'pendente' | 'em_progresso' | 'sucesso' | 'erro'
+  tentativas: number
+  proximo_retry?: string
+  erro_mensagem?: string
+  resultado?: Record<string, unknown>
+  started_at?: string
+  completed_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface DataJudSearchResponse {
+  hits: {
+    total: { value: number }
+    hits: Array<{
+      _source: {
+        numeroProcesso: string
+        classe: string
+        assunto: string
+        tribunal: string
+        orgaoJulgador: string
+        dataAjuizamento?: string
+        dataAtualizacao?: string
+        grau?: string
+        nivelSigilo?: string
+        dadosBasicos?: Record<string, unknown>
+        movimentos?: Array<{
+          codigo: string
+          nome: string
+          dataHora: string
+          complemento?: string
+        }>
+      }
+    }>
+  }
+}
+
+export interface DataJudSearchParams {
+  tribunal: Tribunal | string
+  searchType: 'numero' | 'parte' | 'classe' | 'avancada'
+  query: string
+  clienteId?: string
+  casosId?: string
+  pagina?: number
+}
+

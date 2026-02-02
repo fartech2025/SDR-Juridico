@@ -1,10 +1,22 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.89.0'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
+const DEFAULT_ORIGIN = Deno.env.get('APP_URL') || 'http://localhost:5173'
+const BASE_CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
+
+const getCorsHeaders = (req: Request) => ({
+  ...BASE_CORS_HEADERS,
+  'Access-Control-Allow-Origin': req.headers.get('origin') || DEFAULT_ORIGIN,
+})
+
+const jsonError = (req: Request, status: number, message: string) =>
+  new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+  })
+
 
 // Limites de rate limiting (por usuário/organização)
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minuto
@@ -80,16 +92,13 @@ async function logDataJudQuery(
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { status: 204, headers: getCorsHeaders(req) })
   }
 
   try {
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 401, 'Unauthorized')
     }
 
     // Verificar JWT token
@@ -101,29 +110,20 @@ Deno.serve(async (req) => {
 
     const { data, error: jwtError } = await supabaseAdmin.auth.getUser(token)
     if (jwtError || !data.user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 401, 'Invalid token')
     }
 
     const userId = data.user.id
 
     // Rate limiting
     if (!checkRateLimit(userId)) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 429, 'Rate limit exceeded')
     }
 
     // Verificar se usuário pertence a uma organização válida
     const { orgId, isValid } = await verifyUserAndOrg(supabaseAdmin, userId)
     if (!isValid) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 403, 'Forbidden')
     }
 
     // Parse request
@@ -131,19 +131,13 @@ Deno.serve(async (req) => {
     const { searchType, tribunal = 'trf1', query: searchQuery, size = 10 } = body
 
     if (!searchType || !searchQuery) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: searchType and query' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 400, 'Missing required fields: searchType and query')
     }
 
     // Validar tribunal
     const validTribunais = ['trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6', 'stf', 'stj']
     if (!validTribunais.includes(tribunal)) {
-      return new Response(JSON.stringify({ error: 'Invalid tribunal' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 400, 'Invalid tribunal')
     }
 
     // Sanitizar entrada
@@ -152,10 +146,7 @@ Deno.serve(async (req) => {
     // Chamar API DataJud
     const datajudApiKey = Deno.env.get('DATAJUD_API_KEY')
     if (!datajudApiKey) {
-      return new Response(JSON.stringify({ error: 'DataJud API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 500, 'DataJud API key not configured')
     }
 
     const datajudUrl = `https://api-publica.datajud.cnj.jus.br/${tribunal}/`
@@ -182,10 +173,7 @@ Deno.serve(async (req) => {
         },
       }
     } else {
-      return new Response(JSON.stringify({ error: 'Invalid searchType' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, 400, 'Invalid searchType')
     }
 
     const response = await fetch(datajudUrl, {
@@ -204,21 +192,15 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       console.error('DataJud API error:', responseData)
-      return new Response(JSON.stringify({ error: 'DataJud API error' }), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonError(req, response.status, 'DataJud API error')
     }
 
     return new Response(JSON.stringify(responseData), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   } catch (error) {
     console.error('Proxy error:', error)
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return jsonError(req, 500, 'Internal server error')
   }
 })

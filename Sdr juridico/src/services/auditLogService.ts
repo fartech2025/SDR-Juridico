@@ -3,10 +3,19 @@ import { telemetryService } from '@/services/telemetryService'
 
 type AuditChangeInput = {
   orgId: string | null
-  action: 'create' | 'update' | 'delete' | 'request_document' | 'attach_document' | 'submit_for_validation' | 'approve' | 'reject'
+  action: 'create' | 'update' | 'delete' | 'request_document' | 'attach_document' | 'submit_for_validation' | 'approve' | 'reject' | 'datajud_search' | 'datajud_link' | 'datajud_unlink' | 'datajud_sync'
   entity: string
   entityId: string | null
   details?: Record<string, any> | null
+}
+
+type DataJudAuditInput = {
+  orgId: string
+  action: 'search' | 'link' | 'unlink' | 'sync'
+  tribunal?: string
+  searchQuery?: string
+  casoId?: string
+  resultado?: Record<string, any>
 }
 
 const resolveActorUserId = async () => {
@@ -30,3 +39,36 @@ export async function logAuditChange(input: AuditChangeInput): Promise<boolean> 
     return false
   }
 }
+
+/**
+ * Log DataJud audit event
+ */
+export async function logDataJudAudit(input: DataJudAuditInput): Promise<boolean> {
+  if (!isSupabaseConfigured) return false
+  try {
+    const actorUserId = await resolveActorUserId()
+    if (!actorUserId) return false
+
+    const { error } = await supabase.from('datajud_api_calls').insert({
+      user_id: actorUserId,
+      org_id: input.orgId,
+      action: input.action,
+      tribunal: input.tribunal,
+      search_query: input.searchQuery,
+      resultado_count: input.resultado?.total || 0,
+      status_code: 200,
+      created_at: new Date().toISOString(),
+    })
+
+    if (error) {
+      console.error('Error logging DataJud audit:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in logDataJudAudit:', error)
+    return false
+  }
+}
+

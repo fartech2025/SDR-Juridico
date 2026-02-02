@@ -3,6 +3,8 @@
  * Monitora saúde da aplicação e conectividade
  */
 
+import { supabase } from '@/lib/supabaseClient'
+
 export const ServiceStatusValues = {
   HEALTHY: 'healthy',
   DEGRADED: 'degraded',
@@ -180,6 +182,57 @@ export async function checkLocalStorage(): Promise<boolean> {
 }
 
 /**
+ * Check de DataJud API connectivity
+ */
+export async function checkDataJudConnectivity(): Promise<boolean> {
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+    const response = await supabase.functions.invoke('datajud-enhanced', {
+      body: {
+        tribunal: 'trf1',
+        searchType: 'parte',
+        query: 'teste-conexao',
+      },
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+    return Boolean(response.data)
+  } catch (error) {
+    console.warn('DataJud connectivity check failed:', error)
+    return false
+  }
+}
+
+/**
+ * Check de Supabase connectivity
+ */
+export async function checkSupabaseConnectivity(): Promise<boolean> {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    if (!supabaseUrl) {
+      return false
+    }
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+    const response = await fetch(`${supabaseUrl}/health`, {
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+    return response.ok || response.status === 0
+  } catch (error) {
+    console.warn('Supabase connectivity check failed:', error)
+    return false
+  }
+}
+
+
+/**
  * Inicializa health checks automáticos
  */
 export function initializeHealthChecks() {
@@ -189,6 +242,12 @@ export function initializeHealthChecks() {
   // Check localStorage a cada 1 minuto
   healthMonitor.registerService('localStorage', checkLocalStorage, 60000)
 
+  // Check DataJud connectivity a cada 60 segundos
+  healthMonitor.registerService('datajud', checkDataJudConnectivity, 60000)
+
+  // Check Supabase connectivity a cada 30 segundos
+  healthMonitor.registerService('supabase', checkSupabaseConnectivity, 30000)
+
   // Cleanup ao descarregar a página
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', () => {
@@ -196,3 +255,4 @@ export function initializeHealthChecks() {
     })
   }
 }
+
