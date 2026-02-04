@@ -14,11 +14,15 @@ if (!hasValidCredentials) {
   console.warn('⚠️ Supabase não configurado. A app funcionará em modo offline/mock.')
 }
 
+// IMPORTANTE: Sempre persistir sessão e habilitar refresh de token
+// para garantir que edge functions recebam o token JWT corretamente
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: hasValidCredentials,
-    autoRefreshToken: hasValidCredentials,
-    detectSessionInUrl: hasValidCredentials,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'sdr-juridico-auth',
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
 })
 

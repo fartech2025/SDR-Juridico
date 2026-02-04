@@ -2,7 +2,19 @@
 // Date: 2026-01-13
 
 import { useState, useEffect } from 'react'
-import { Users, Edit, Trash2, Shield, Search, UserPlus, X, Mail, User as UserIcon, Building2 } from 'lucide-react'
+import {
+  Users,
+  Edit,
+  Trash2,
+  Shield,
+  Search,
+  UserPlus,
+  X,
+  Mail,
+  User as UserIcon,
+  Building2,
+  Loader2,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { OrgAdminGuard } from '@/components/guards'
 import { useOrganization } from '@/hooks/useOrganization'
@@ -16,6 +28,7 @@ interface OrgUser {
   ativo: boolean
   created_at: string
   last_sign_in_at: string | null
+  org_id?: string | null
 }
 
 type OrgMemberRole = 'admin' | 'gestor' | 'advogado' | 'secretaria' | 'leitura'
@@ -30,7 +43,7 @@ const ORG_ROLE_LABELS: Record<OrgMemberRole, string> = {
 
 export default function UserManagement() {
   const { currentOrg } = useOrganization()
-  const { role: userRole } = useCurrentUser()
+  const { role: userRole, user: authUser } = useCurrentUser()
   const isFartechAdmin = userRole === 'fartech_admin'
 
   const [users, setUsers] = useState<OrgUser[]>([])
@@ -39,6 +52,18 @@ export default function UserManagement() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [selectedOrgId, setSelectedOrgId] = useState<string>('all')
   const [allOrgs, setAllOrgs] = useState<{ id: string; name: string; max_users: number }[]>([])
+  const [editingUser, setEditingUser] = useState<OrgUser | null>(null)
+  const [removingUser, setRemovingUser] = useState<OrgUser | null>(null)
+
+  const actionOrgId = isFartechAdmin
+    ? (selectedOrgId === 'all' ? null : selectedOrgId)
+    : currentOrg?.id || null
+
+  const roleToPermissoes = (role: OrgMemberRole) => {
+    // Admin e gestor ambos recebem apenas 'org_admin' (não existe permissão 'gestor' separada)
+    if (role === 'admin' || role === 'gestor') return ['org_admin']
+    return ['user']
+  }
 
   // Load all orgs for fartech admin selector
   useEffect(() => {
@@ -76,7 +101,7 @@ export default function UserManagement() {
         // Query org_members for specific org
         const { data: members, error: membersError } = await supabase
           .from('org_members')
-          .select('user_id, role, ativo, created_at')
+          .select('user_id, role, ativo, created_at, org_id')
           .eq('org_id', targetOrgId)
           .order('created_at', { ascending: false })
 
@@ -104,6 +129,7 @@ export default function UserManagement() {
                 ativo: m.ativo !== false,
                 created_at: m.created_at,
                 last_sign_in_at: u.updated_at,
+                org_id: m.org_id || targetOrgId,
               }
             })
           setUsers(mapped)
@@ -150,8 +176,75 @@ export default function UserManagement() {
         ativo: true,
         created_at: row.created_at,
         last_sign_in_at: row.updated_at,
+        org_id: null,
       }
     })
+  }
+
+  const updateUserData = async ({
+    userId,
+    orgId,
+    nome,
+    role,
+    ativo,
+  }: {
+    userId: string
+    orgId: string
+    nome: string
+    role: OrgMemberRole
+    ativo: boolean
+  }) => {
+    const trimmedName = nome.trim() || 'Usuario'
+    const permissoes = roleToPermissoes(role)
+
+    const { error: userError } = await supabase
+      .from('usuarios')
+      .update({
+        nome_completo: trimmedName,
+        permissoes,
+      })
+      .eq('id', userId)
+
+    if (userError) {
+      throw new Error('Erro ao atualizar perfil: ' + userError.message)
+    }
+
+    const { error: memberError } = await supabase
+      .from('org_members')
+      .upsert(
+        {
+          org_id: orgId,
+          user_id: userId,
+          role,
+          ativo,
+        },
+        { onConflict: 'org_id,user_id' },
+      )
+
+    if (memberError) {
+      throw new Error('Erro ao atualizar papel do usuario: ' + memberError.message)
+    }
+  }
+
+  const deactivateUser = async (user: OrgUser, orgId: string) => {
+    const { error: memberError } = await supabase
+      .from('org_members')
+      .update({ ativo: false })
+      .eq('org_id', orgId)
+      .eq('user_id', user.id)
+
+    if (memberError) {
+      throw new Error('Erro ao inativar membro: ' + memberError.message)
+    }
+
+    const { error: userError } = await supabase
+      .from('usuarios')
+      .update({ permissoes: ['user'] })
+      .eq('id', user.id)
+
+    if (userError) {
+      throw new Error('Erro ao atualizar perfil: ' + userError.message)
+    }
   }
 
   const filteredUsers = users.filter(user =>
@@ -171,6 +264,8 @@ export default function UserManagement() {
     : currentOrg?.name || ''
 
   const effectiveMaxUsers = effectiveOrg?.max_users ?? null
+  const actionsBlockedReason = actionOrgId ? null : 'Selecione uma organizacao para gerenciar usuarios.'
+  const currentUserId = authUser?.id || null
 
   const handleInviteSuccess = () => {
     setShowInviteModal(false)
@@ -298,59 +393,72 @@ export default function UserManagement() {
                       </td>
                     </tr>
                   ) : filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                      <tr key={user.id} className={`hover:bg-gray-50 ${!user.ativo ? 'opacity-60' : ''}`}>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-emerald-600 font-semibold">
-                                {(user.nome || user.email)[0].toUpperCase()}
-                              </span>
+                    filteredUsers.map((user) => {
+                      const isSelf = currentUserId === user.id
+                      const disableActions = Boolean(actionsBlockedReason)
+
+                      return (
+                        <tr key={user.id} className={`hover:bg-gray-50 ${!user.ativo ? 'opacity-60' : ''}`}>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                                <span className="text-emerald-600 font-semibold">
+                                  {(user.nome || user.email)[0].toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {user.nome || 'Sem nome'}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {user.email}
+                                  {!user.ativo && (
+                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                                      Inativo
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {user.nome || 'Sem nome'}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {user.email}
-                                {!user.ativo && (
-                                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
-                                    Inativo
-                                  </span>
-                                )}
-                              </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <RoleBadge role={user.role} />
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {user.last_sign_in_at
+                              ? new Date(user.last_sign_in_at).toLocaleDateString('pt-BR')
+                              : 'Nunca'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => setEditingUser(user)}
+                                disabled={disableActions}
+                                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={actionsBlockedReason || 'Editar'}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setRemovingUser(user)}
+                                disabled={disableActions || isSelf}
+                                className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={
+                                  isSelf
+                                    ? 'Voce nao pode remover a si mesmo'
+                                    : actionsBlockedReason || 'Remover'
+                                }
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <RoleBadge role={user.role} />
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {user.last_sign_in_at
-                            ? new Date(user.last_sign_in_at).toLocaleDateString('pt-BR')
-                            : 'Nunca'}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Editar"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Remover"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                        </tr>
+                      )
+                    })
                   ) : (
                     <tr>
                       <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
@@ -370,6 +478,83 @@ export default function UserManagement() {
             orgName={effectiveOrg.name}
             onClose={() => setShowInviteModal(false)}
             onSuccess={handleInviteSuccess}
+          />
+        )}
+
+        {editingUser && actionOrgId && (
+          <EditUserModal
+            user={editingUser}
+            orgId={actionOrgId}
+            onClose={() => setEditingUser(null)}
+            onSaved={async ({ nome, role, ativo }) => {
+              try {
+                await updateUserData({
+                  userId: editingUser.id,
+                  orgId: actionOrgId,
+                  nome,
+                  role,
+                  ativo,
+                })
+                toast.success('Usuario atualizado com sucesso.')
+                setEditingUser(null)
+                loadUsers()
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Erro ao salvar usuario'
+                toast.error(message)
+              }
+            }}
+          />
+        )}
+
+        {removingUser && actionOrgId && (
+          <RemoveUserModal
+            user={removingUser}
+            onClose={() => setRemovingUser(null)}
+            onInactivate={async () => {
+              try {
+                await deactivateUser(removingUser, actionOrgId)
+                toast.success('Usuario inativado (permanece no Auth).')
+                setRemovingUser(null)
+                loadUsers()
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Erro ao inativar usuario'
+                toast.error(message)
+              }
+            }}
+            onDelete={async () => {
+              try {
+                const { data: sessionData } = await supabase.auth.getSession()
+                const accessToken = sessionData.session?.access_token
+
+                const { data, error } = await supabase.functions.invoke('delete-org-member', {
+                  body: {
+                    orgId: actionOrgId,
+                    userId: removingUser.id,
+                  },
+                  headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+                })
+
+                if (error) {
+                  throw error
+                }
+
+                if (data?.error) {
+                  throw new Error(String(data.error))
+                }
+
+                if (data?.warning) {
+                  toast.warning(String(data.warning))
+                } else {
+                  toast.success('Usuario removido (Auth + banco).')
+                }
+                setRemovingUser(null)
+                loadUsers()
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Erro ao remover usuario'
+                toast.error(message)
+              }
+            }}
+            disableDelete={currentUserId === removingUser.id}
           />
         )}
       </div>
@@ -412,28 +597,33 @@ function InviteUserModal({
     setSubmitting(true)
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('invite-org-member', {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('invite-org-member', {
         body: {
           orgId,
           email: trimmedEmail,
           nome: trimmedNome,
           role,
         },
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       })
 
       if (fnError) {
-        toast.error('Erro ao convidar usuario: ' + fnError.message)
+        const detail = (fnError as any)?.context?.response?.text || fnError.message
+        toast.error(`Erro ao convidar usuario: ${detail}`)
         setSubmitting(false)
         return
       }
 
-      if (data?.error) {
-        toast.error(data.error)
+      if (fnData?.error) {
+        toast.error(String(fnData.error))
         setSubmitting(false)
         return
       }
 
-      toast.success(data?.message || `Usuario ${trimmedNome} convidado para ${orgName}.`)
+      toast.success((fnData?.message as string) || `Usuario ${trimmedNome} convidado para ${orgName}.`)
       onSuccess()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro inesperado'
@@ -530,6 +720,213 @@ function InviteUserModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function EditUserModal({
+  user,
+  orgId,
+  onClose,
+  onSaved,
+}: {
+  user: OrgUser
+  orgId: string
+  onClose: () => void
+  onSaved: (data: { nome: string; role: OrgMemberRole; ativo: boolean }) => Promise<void>
+}) {
+  const [nome, setNome] = useState(user.nome || '')
+  const [role, setRole] = useState<OrgMemberRole>(user.role)
+  const [ativo, setAtivo] = useState<boolean>(user.ativo)
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!nome.trim()) {
+      toast.error('Informe o nome do usuario.')
+      return
+    }
+    try {
+      setSaving(true)
+      await onSaved({ nome, role, ativo })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao salvar usuario'
+      toast.error(message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <p className="text-xs text-gray-500">Org: {orgId}</p>
+            <h2 className="text-lg font-semibold text-gray-900">Editar Usuario</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              value={user.email}
+              disabled
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">Nome completo</label>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Nome do usuario"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">Funcao</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as OrgMemberRole)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            >
+              {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
+            <input
+              type="checkbox"
+              checked={ativo}
+              onChange={(e) => setAtivo(e.target.checked)}
+              className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+            />
+            Manter usuario ativo nesta organizacao
+          </label>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {saving ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function RemoveUserModal({
+  user,
+  onClose,
+  onInactivate,
+  onDelete,
+  disableDelete,
+}: {
+  user: OrgUser
+  onClose: () => void
+  onInactivate: () => Promise<void>
+  onDelete: () => Promise<void>
+  disableDelete?: boolean
+}) {
+  const [confirming, setConfirming] = useState<'inactive' | 'delete' | null>(null)
+
+  const handle = async (type: 'inactive' | 'delete') => {
+    try {
+      setConfirming(type)
+      if (type === 'inactive') {
+        await onInactivate()
+      } else {
+        await onDelete()
+      }
+    } finally {
+      setConfirming(null)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Gerenciar usuario</h2>
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">{user.nome || user.email}</span>
+          </p>
+          <div className="space-y-2 text-sm text-gray-600">
+            <p><strong>Inativar:</strong> remove acesso à organização (org_members.ativo=false, permissões reset), mas mantém o usuário no Auth.</p>
+            <p><strong>Remover:</strong> apaga o usuário da organização, da tabela usuarios e do Auth.</p>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => handle('inactive')}
+              disabled={confirming !== null}
+              className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {confirming === 'inactive' && <Loader2 className="w-4 h-4 animate-spin" />}
+              {confirming === 'inactive' ? 'Inativando...' : 'Inativar (reversível)'}
+            </button>
+            <button
+              type="button"
+              onClick={() => handle('delete')}
+              disabled={confirming !== null || disableDelete}
+              className="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              title={disableDelete ? 'Voce nao pode remover a si mesmo' : 'Remover definitivamente'}
+            >
+              {confirming === 'delete' && <Loader2 className="w-4 h-4 animate-spin" />}
+              {disableDelete ? 'Nao pode remover a si mesmo' : confirming === 'delete' ? 'Removendo...' : 'Remover definitivamente'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={confirming !== null}
+              className="w-full px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

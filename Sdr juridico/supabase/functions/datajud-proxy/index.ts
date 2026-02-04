@@ -48,6 +48,7 @@ async function verifyUserAndOrg(supabaseAdmin: any, userId: string): Promise<{ o
       .from('org_members')
       .select('org_id')
       .eq('user_id', userId)
+      .eq('ativo', true) // Apenas membros ativos podem acessar
       .single()
 
     if (error || !user) {
@@ -90,41 +91,78 @@ async function logDataJudQuery(
 }
 
 Deno.serve(async (req) => {
+  console.log('🚀 DataJud Proxy - Nova requisição recebida')
+  console.log('📋 Method:', req.method)
+
   // Handle CORS
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight - retornando 204')
     return new Response(null, { status: 204, headers: getCorsHeaders(req) })
   }
 
   try {
     const authHeader = req.headers.get('authorization')
+    console.log('🔑 Auth header presente:', !!authHeader)
+
     if (!authHeader) {
+      console.error('❌ Sem header de autorização')
       return jsonError(req, 401, 'Unauthorized')
     }
 
     // Verificar JWT token
     const token = authHeader.replace('Bearer ', '')
+    console.log('🔐 Token extraído (primeiros 20 chars):', token.substring(0, 20) + '...')
+
+    // MÉTODO ALTERNATIVO: Criar cliente com o token do usuário
+    // Isso valida o token automaticamente e nos dá acesso ao usuário
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_ANON_KEY') || '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
+    )
+
+    console.log('🔍 Verificando JWT token via getUser()...')
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser()
+
+    if (userError || !user) {
+      console.error('❌ Token inválido:', userError?.message || 'No user')
+      return jsonError(req, 401, 'Invalid token')
+    }
+
+    const userId = user.id
+    console.log('✅ Usuário autenticado:', userId)
+
+    // Cliente admin para operações privilegiadas (queries, audit log)
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     )
 
-    const { data, error: jwtError } = await supabaseAdmin.auth.getUser(token)
-    if (jwtError || !data.user) {
-      return jsonError(req, 401, 'Invalid token')
-    }
-
-    const userId = data.user.id
-
     // Rate limiting
+    console.log('⏱️  Verificando rate limit...')
     if (!checkRateLimit(userId)) {
+      console.error('❌ Rate limit excedido para usuário:', userId)
       return jsonError(req, 429, 'Rate limit exceeded')
     }
+    console.log('✅ Rate limit OK')
 
     // Verificar se usuário pertence a uma organização válida
+    console.log('🏢 Verificando organização do usuário...')
     const { orgId, isValid } = await verifyUserAndOrg(supabaseAdmin, userId)
+    console.log('📊 Resultado verifyUserAndOrg:', { orgId, isValid })
+
     if (!isValid) {
-      return jsonError(req, 403, 'Forbidden')
+      console.error('❌ Usuário sem organização válida')
+      return jsonError(req, 403, 'Forbidden - User not in active organization')
     }
+
+    console.log('✅ Usuário vinculado à org:', orgId)
 
     // Parse request
     const body = await req.json()
@@ -146,10 +184,12 @@ Deno.serve(async (req) => {
     // Chamar API DataJud
     const datajudApiKey = Deno.env.get('DATAJUD_API_KEY')
     if (!datajudApiKey) {
+      console.error('❌ DataJud API key não configurada')
       return jsonError(req, 500, 'DataJud API key not configured')
     }
 
     const datajudUrl = `https://api-publica.datajud.cnj.jus.br/${tribunal}/`
+    console.log('🔗 URL DataJud:', datajudUrl)
 
     let datajudPayload: Record<string, any> = {
       size: Math.min(size, 50), // Limite máximo 50 resultados
@@ -176,6 +216,9 @@ Deno.serve(async (req) => {
       return jsonError(req, 400, 'Invalid searchType')
     }
 
+    console.log('📦 Payload DataJud:', JSON.stringify(datajudPayload, null, 2))
+
+    console.log('🚀 Chamando API DataJud...')
     const response = await fetch(datajudUrl, {
       method: 'POST',
       headers: {
@@ -185,15 +228,28 @@ Deno.serve(async (req) => {
       body: JSON.stringify(datajudPayload),
     })
 
-    const responseData = await response.json()
+    console.log('📊 Status DataJud:', response.status, response.statusText)
+
+    let responseData
+    try {
+      responseData = await response.json()
+      console.log('✅ Response parseado como JSON')
+    } catch (parseError) {
+      console.error('❌ Erro ao parsear response JSON:', parseError)
+      const text = await response.text()
+      console.error('📝 Response text:', text)
+      return jsonError(req, 500, 'Invalid JSON response from DataJud')
+    }
 
     // Log de auditoria
     await logDataJudQuery(supabaseAdmin, userId, orgId, searchType, { tribunal, search_type: searchType }, response.ok)
 
     if (!response.ok) {
-      console.error('DataJud API error:', responseData)
-      return jsonError(req, response.status, 'DataJud API error')
+      console.error('❌ DataJud API error:', JSON.stringify(responseData, null, 2))
+      return jsonError(req, response.status, `DataJud API error: ${responseData.error || responseData.message || 'Unknown'}`)
     }
+
+    console.log('✅ Sucesso! Retornando dados...')
 
     return new Response(JSON.stringify(responseData), {
       status: 200,

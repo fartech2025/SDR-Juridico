@@ -167,7 +167,6 @@ serve(async (req) => {
           email: trimmedEmail,
           nome_completo: trimmedNome,
           permissoes,
-          status: 'ativo',
         },
         { onConflict: 'id' },
       )

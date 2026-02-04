@@ -72,36 +72,26 @@ serve(async (req) => {
 
     console.log('✅ Usuário tem permissão fartech_admin')
 
-    // ✅ SECURITY: Validar que a organização existe e o usuário está autorizado
-    const { data: orgData, error: orgError } = await supabaseAdmin
-      .from('organizations')
-      .select('id')
-      .eq('id', body.orgId || undefined)
-      .single()
-
-    if (orgError || !orgData) {
-      console.error('❌ Organização não encontrada:', orgError?.message)
-      return json({ error: 'Organização não encontrada' }, 404)
-    }
-
-    // ✅ SECURITY: Validar email do novo admin
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(adminEmail)) {
-      return json({ error: 'Email inválido' }, 400)
-    }
-
-    console.log('✅ Validações de segurança OK')
-
+    // MOVER PARSE DO BODY PARA AQUI (FIX: estava tentando acessar body antes de definir)
     const body = await req.json()
     const { orgId, adminEmail, adminName, responsavelEmail } = body
-    
+
     console.log('📦 Dados recebidos:', { orgId, adminEmail, adminName, responsavelEmail })
 
+    // Validar parâmetros obrigatórios
     if (!orgId || !adminEmail) {
       console.error('❌ Parâmetros obrigatórios ausentes')
       return json({ error: 'orgId e adminEmail são obrigatórios' }, 400)
     }
 
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(adminEmail)) {
+      console.error('❌ Email inválido')
+      return json({ error: 'Email inválido' }, 400)
+    }
+
+    console.log('✅ Validações de parâmetros OK')
     console.log('🔍 Buscando organização:', orgId)
     const { data: orgRow, error: orgError } = await supabaseAdmin
       .from('orgs')
@@ -191,7 +181,6 @@ serve(async (req) => {
       .update({
         nome_completo: nextNome,
         permissoes: Array.from(permissoes),
-        status: 'ativo',
       })
       .eq('id', userId)
 

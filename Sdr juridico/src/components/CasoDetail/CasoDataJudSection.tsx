@@ -2,8 +2,7 @@
 import { useState } from 'react'
 import { datajudCaseService } from '@/services/datajudCaseService'
 import { CasoDataJudSearchModal } from './CasoDataJudSearchModal'
-import type { Caso, DataJudProcesso } from '@/types/domain'
-import { Skeleton } from '@/components/ui/skeleton'
+import type { Caso, DataJudProcesso, DataJudMovimento } from '@/types/domain'
 import { toast } from 'sonner'
 
 interface CasoDataJudSectionProps {
@@ -20,17 +19,14 @@ export function CasoDataJudSection({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [showMovimentos, setShowMovimentos] = useState(false)
-  const [movimentos, setMovimentos] = useState<any[]>([])
+  const [movimentos, setMovimentos] = useState<DataJudMovimento[]>([])
   const [movimentosLoading, setMovimentosLoading] = useState(false)
 
   const hasProcesso = !!caso.numero_processo
 
   const handleSelectProcesso = async (processo: DataJudProcesso) => {
     try {
-      const result = await datajudCaseService.linkProcessoToCaso(
-        caso.id,
-        processo
-      )
+      await datajudCaseService.linkProcessoToCaso(caso.id, processo)
 
       const updatedCaso: Caso = {
         ...caso,
