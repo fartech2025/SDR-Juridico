@@ -33,6 +33,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTarefas } from '@/hooks/useTarefas'
 import { useDatajudTimeline } from '@/hooks/useDatajudTimeline'
 import { CasoDataJudSection } from '@/components/CasoDetail/CasoDataJudSection'
+import { CasoDouSection } from '@/features/dou'
 
 const resolveStatus = (
   value: string | null,
@@ -279,7 +280,7 @@ export const CasoPage = () => {
     error: datajudError,
     fetchByCaso: fetchDatajudByCaso,
   } = useDatajudTimeline()
-  const { displayName, user } = useCurrentUser()
+  const { displayName, user, orgId } = useCurrentUser()
   const status = resolveStatus(params.get('state'))
   const [activeTab, setActiveTab] = React.useState<TabKey>('Tudo')
   const [modalOpen, setModalOpen] = React.useState(false)
@@ -907,6 +908,12 @@ export const CasoPage = () => {
                       // Atualizar o caso local com dados DataJud
                       setSelectedCaso(updatedCaso)
                     }}
+                  />
+
+                  {/* DOU Integration Section */}
+                  <CasoDouSection
+                    caso={caso}
+                    orgId={orgId}
                   />
 
                   {/* Timeline Section */}

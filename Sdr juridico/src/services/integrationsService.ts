@@ -10,6 +10,7 @@ const defaultIntegrations = [
   { provider: 'twilio', name: 'Twilio', enabled: false },
   { provider: 'evolution', name: 'Evolution', enabled: false },
   { provider: 'avisa', name: 'Avisa', enabled: false },
+  { provider: 'dou', name: 'Diario Oficial da Uniao', enabled: false },
 ]
 
 export interface IntegrationRow {

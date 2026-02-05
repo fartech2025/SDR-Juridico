@@ -1,0 +1,45 @@
+{
+  "descricao": "Exemplo de configuração de critérios para monitoramento DOU",
+  "criterios": [
+    {
+      "termo": "0001234-56.2024.8.26.0100",
+      "tipo": "numero_processo",
+      "descricao": "Processo cliente João Silva"
+    },
+    {
+      "termo": "9876543-21.2023.5.02.0001",
+      "tipo": "numero_processo",
+      "descricao": "Processo trabalhista Maria Santos"
+    },
+    {
+      "termo": "EMPRESA XYZ LTDA",
+      "tipo": "nome_parte",
+      "descricao": "Cliente pessoa jurídica"
+    },
+    {
+      "termo": "João da Silva",
+      "tipo": "nome_parte",
+      "descricao": "Cliente pessoa física"
+    },
+    {
+      "termo": "SP123456",
+      "tipo": "oab",
+      "descricao": "Advogado responsável"
+    },
+    {
+      "termo": "RJ987654",
+      "tipo": "oab",
+      "descricao": "Advogado parceiro"
+    },
+    {
+      "termo": "intimação",
+      "tipo": "custom",
+      "descricao": "Monitorar intimações"
+    },
+    {
+      "termo": "citação",
+      "tipo": "custom",
+      "descricao": "Monitorar citações"
+    }
+  ]
+}

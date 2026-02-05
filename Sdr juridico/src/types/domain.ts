@@ -325,3 +325,63 @@ export interface DataJudSearchParams {
   pagina?: number
 }
 
+// ========================================
+// DOU (Diário Oficial da União) Types
+// ========================================
+
+export type DOUTipoPublicacao = 'intimacao' | 'citacao' | 'edital' | 'despacho' | 'sentenca' | 'outro'
+export type DOUMatchType = 'numero_processo' | 'nome_parte' | 'oab' | 'custom'
+
+export interface DOUPublicacao {
+  id: string
+  org_id: string
+  caso_id?: string
+  secao: string
+  data_publicacao: string
+  titulo: string
+  conteudo?: string
+  orgao_publicador?: string
+  tipo_publicacao: DOUTipoPublicacao
+  url_publicacao?: string
+  identifica?: string
+  pagina?: string
+  termo_encontrado?: string
+  match_type: DOUMatchType
+  relevancia: number
+  lida: boolean
+  notificada: boolean
+  raw_xml?: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface DOUTermoMonitorado {
+  id: string
+  org_id: string
+  caso_id?: string
+  termo: string
+  tipo: DOUMatchType
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface DOUSearchParams {
+  termo: string
+  dataInicio?: string
+  dataFim?: string
+}
+
+export interface DOUSyncLog {
+  id: string
+  org_id?: string
+  data_pesquisa: string
+  total_publicacoes_dou: number
+  termos_pesquisados: number
+  publicacoes_encontradas: number
+  status: 'pendente' | 'em_progresso' | 'sucesso' | 'erro'
+  erro_mensagem?: string
+  duracao_ms?: number
+  created_at: string
+}
+
