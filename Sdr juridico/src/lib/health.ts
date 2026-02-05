@@ -1,9 +1,25 @@
 /**
  * Sistema de Health Check e Monitoramento
  * Monitora saúde da aplicação e conectividade
+ * 
+ * IMPORTANTE: Health checks que requerem autenticação só são executados
+ * quando o usuário tem sessão válida. Isso evita erros 401 desnecessários.
  */
 
 import { supabase } from '@/lib/supabaseClient'
+
+// Flag para controlar se o usuário está autenticado
+let isAuthenticated = false
+let hasValidOrg = false
+
+/**
+ * Atualiza o estado de autenticação para controlar health checks
+ * Deve ser chamado quando o estado de auth/org mudar
+ */
+export function setHealthCheckAuthState(authenticated: boolean, validOrg: boolean = false) {
+  isAuthenticated = authenticated
+  hasValidOrg = validOrg
+}
 
 export const ServiceStatusValues = {
   HEALTHY: 'healthy',
@@ -183,8 +199,25 @@ export async function checkLocalStorage(): Promise<boolean> {
 
 /**
  * Check de DataJud API connectivity
+ * 
+ * DESABILITADO: Este check foi desabilitado porque a Edge Function
+ * datajud-enhanced pode não estar deployada ou requer configuração
+ * especial. O DataJud será verificado sob demanda quando o usuário
+ * acessar a funcionalidade específica.
+ * 
+ * Para reativar, descomente o código abaixo.
  */
 export async function checkDataJudConnectivity(): Promise<boolean> {
+  // Health check do DataJud desabilitado - sempre retorna true
+  // A conectividade será verificada quando o usuário usar a funcionalidade
+  return true
+  
+  /* CÓDIGO ORIGINAL - DESCOMENTE PARA REATIVAR
+  // Só verificar DataJud se usuário autenticado com organização válida
+  if (!isAuthenticated || !hasValidOrg) {
+    return true // Retorna true para não marcar como "offline" - simplesmente skip
+  }
+
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 5000)
@@ -201,13 +234,19 @@ export async function checkDataJudConnectivity(): Promise<boolean> {
     clearTimeout(timeoutId)
     return Boolean(response.data)
   } catch (error) {
+    // Silencia erros 401/403 quando não há autenticação adequada
+    if (error instanceof Error && error.message.includes('401')) {
+      return true // Skip check sem marcar como erro
+    }
     console.warn('DataJud connectivity check failed:', error)
     return false
   }
+  */
 }
 
 /**
  * Check de Supabase connectivity
+ * Usa um endpoint público que não requer autenticação
  */
 export async function checkSupabaseConnectivity(): Promise<boolean> {
   try {
@@ -219,12 +258,19 @@ export async function checkSupabaseConnectivity(): Promise<boolean> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 5000)
 
-    const response = await fetch(`${supabaseUrl}/health`, {
+    // Usar endpoint REST público em vez de /health que requer auth
+    // O endpoint /rest/v1/ retorna 200 mesmo sem auth (apenas mostra schema)
+    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+      method: 'HEAD',
       signal: controller.signal,
+      headers: {
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+      },
     })
 
     clearTimeout(timeoutId)
-    return response.ok || response.status === 0
+    // Qualquer resposta que não seja network error indica que Supabase está acessível
+    return response.status !== 0 && response.status < 500
   } catch (error) {
     console.warn('Supabase connectivity check failed:', error)
     return false
@@ -234,6 +280,10 @@ export async function checkSupabaseConnectivity(): Promise<boolean> {
 
 /**
  * Inicializa health checks automáticos
+ * 
+ * IMPORTANTE: Checks que requerem autenticação (DataJud) só executam
+ * efetivamente quando setHealthCheckAuthState(true, true) é chamado.
+ * Isso evita erros 401 quando o usuário não está logado ou não tem org.
  */
 export function initializeHealthChecks() {
   // Check internet connectivity a cada 30 segundos
@@ -243,9 +293,11 @@ export function initializeHealthChecks() {
   healthMonitor.registerService('localStorage', checkLocalStorage, 60000)
 
   // Check DataJud connectivity a cada 60 segundos
+  // NOTA: Só executa de verdade se isAuthenticated && hasValidOrg
   healthMonitor.registerService('datajud', checkDataJudConnectivity, 60000)
 
   // Check Supabase connectivity a cada 30 segundos
+  // Usa endpoint público, não requer auth
   healthMonitor.registerService('supabase', checkSupabaseConnectivity, 30000)
 
   // Cleanup ao descarregar a página

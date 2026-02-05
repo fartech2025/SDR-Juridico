@@ -18,8 +18,12 @@ export interface Lead {
   status: LeadStatus
   heat: LeadHeat
   createdAt: string
+  updatedAt?: string
   lastContactAt?: string
   owner: string
+  company?: string
+  notes?: string
+  estimatedValue?: number
 }
 
 export type CasoStatus = 'ativo' | 'suspenso' | 'encerrado'
@@ -57,14 +61,26 @@ export type DocumentoStatus = 'pendente' | 'aprovado' | 'rejeitado' | 'solicitad
 export interface Documento {
   id: string
   title: string
+  description?: string
   cliente: string
+  clienteId?: string
   casoId?: string
+  casoTitulo?: string
+  leadId?: string
+  leadNome?: string
   type: string
   status: DocumentoStatus
   createdAt: string
   updatedAt: string
   requestedBy: string
   tags: string[]
+  url?: string
+  fileName?: string
+  fileSize?: number
+  mimeType?: string
+  // Soft delete
+  deletedAt?: string
+  deletedBy?: string
 }
 
 export type AgendaStatus = 'confirmado' | 'pendente' | 'cancelado' | 'concluido'
@@ -79,9 +95,13 @@ export interface AgendaItem {
   durationMinutes: number
   cliente: string
   casoId?: string
+  leadId?: string
   owner: string
   location: string
   status: AgendaStatus
+  // Campos de integração externa
+  externalEventId?: string
+  externalProvider?: string
 }
 
 export type TaskPriority = 'baixa' | 'normal' | 'alta'
@@ -104,6 +124,9 @@ export interface Tarefa {
   leadId?: string | null
   clienteId?: string | null
   casoId?: string | null
+  // Soft delete fields
+  deletedAt?: string | null
+  deletedBy?: string | null
 }
 
 export type TimelineCategory =

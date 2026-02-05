@@ -8,6 +8,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import '@/index.css'
 
 // Inicializar health checks automáticos
+// Os checks que requerem autenticação só serão executados
+// quando setHealthCheckAuthState for chamado com authenticated=true
 initializeHealthChecks()
 
 // Aplicar tema

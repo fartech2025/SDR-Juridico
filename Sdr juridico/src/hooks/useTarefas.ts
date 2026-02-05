@@ -184,6 +184,35 @@ const rejectTarefa = useCallback(async (id: string, reason: string) => {
   return updated
 }, [])
 
+// Restaurar tarefa soft deleted
+const restoreTarefa = useCallback(async (id: string) => {
+  try {
+    setState((prev) => ({ ...prev, error: null }))
+    const row = await tarefasService.restoreTarefa(id)
+    const restored = mapTarefaRowToTarefa(row)
+    setState((prev) => ({
+      ...prev,
+      tarefas: [restored, ...prev.tarefas],
+    }))
+    return restored
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error('Erro ao restaurar tarefa')
+    setState((prev) => ({ ...prev, error: err }))
+    throw err
+  }
+}, [])
+
+// Buscar tarefas deletadas (para gestores)
+const fetchDeletedTarefas = useCallback(async () => {
+  try {
+    const rows = await tarefasService.getDeletedTarefas()
+    return rows.map(mapTarefaRowToTarefa)
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error('Erro ao buscar tarefas deletadas')
+    throw err
+  }
+}, [])
+
 return {
     ...state,
     isGestor,
@@ -195,5 +224,7 @@ return {
     submitForConfirmation,
     approveTarefa,
     rejectTarefa,
+    restoreTarefa,
+    fetchDeletedTarefas,
   }
 }

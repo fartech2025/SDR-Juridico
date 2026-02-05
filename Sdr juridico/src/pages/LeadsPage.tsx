@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase, Pencil, Trash2, Flame } from 'lucide-react'
+import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase, Pencil, Trash2, Flame, Sun, Snowflake, ArrowRight, CheckCircle2, XCircle, Users, LayoutGrid, List } from 'lucide-react'
 import { toast } from 'sonner'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 
 import { LeadDrawer } from '@/components/LeadDrawer'
 import { PageState } from '@/components/PageState'
@@ -26,19 +26,54 @@ const resolveStatus = (
   return 'ready'
 }
 
-const statusPill = (status: Lead['status']) => {
-  if (status === 'ganho') return 'bg-green-50 text-green-700 border-green-200'
-  if (status === 'perdido') return 'bg-red-50 text-red-700 border-red-200'
-  if (status === 'proposta') return 'bg-amber-50 text-amber-700 border-amber-200'
-  if (status === 'qualificado') return 'bg-blue-50 text-blue-700 border-blue-200'
-  if (status === 'em_contato') return 'bg-purple-50 text-purple-700 border-purple-200'
-  return 'bg-gray-50 text-gray-700 border-gray-200'
+// Badges de status - Visual Corporativo (tons cinza)
+const statusBadge = (status: Lead['status']) => {
+  const badges: Record<Lead['status'], string> = {
+    novo: 'bg-slate-100 text-slate-700 border border-slate-200',
+    em_contato: 'bg-slate-100 text-slate-700 border border-slate-200',
+    qualificado: 'bg-slate-200 text-slate-800 border border-slate-300',
+    proposta: 'bg-slate-200 text-slate-800 border border-slate-300',
+    ganho: 'bg-slate-800 text-white border border-slate-700',
+    perdido: 'bg-slate-400 text-white border border-slate-500',
+  }
+  return badges[status] || badges.novo
 }
 
-const heatPill = (heat: Lead['heat']) => {
-  if (heat === 'quente') return 'bg-red-50 text-red-700 border-red-200'
-  if (heat === 'morno') return 'bg-amber-50 text-amber-700 border-amber-200'
-  return 'bg-blue-50 text-blue-700 border-blue-200'
+const statusLabel = (status: Lead['status']) => {
+  const labels: Record<Lead['status'], string> = {
+    novo: 'Novo',
+    em_contato: 'Em Contato',
+    qualificado: 'Qualificado',
+    proposta: 'Proposta',
+    ganho: 'Ganho',
+    perdido: 'Perdido',
+  }
+  return labels[status] || status
+}
+
+// Badges de temperatura (heat) - Cores vibrantes
+const heatBadge = (heat: Lead['heat']) => {
+  const badges: Record<Lead['heat'], string> = {
+    quente: 'bg-gradient-to-r from-red-100 to-orange-100 text-red-700 border border-red-200',
+    morno: 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 border border-amber-200',
+    frio: 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border border-blue-200',
+  }
+  return badges[heat] || badges.frio
+}
+
+const heatIcon = (heat: Lead['heat']) => {
+  if (heat === 'quente') return <Flame className="w-3 h-3" />
+  if (heat === 'morno') return <Sun className="w-3 h-3" />
+  return <Snowflake className="w-3 h-3" />
+}
+
+const heatLabel = (heat: Lead['heat']) => {
+  const labels: Record<Lead['heat'], string> = {
+    quente: 'Quente',
+    morno: 'Morno',
+    frio: 'Frio',
+  }
+  return labels[heat] || heat
 }
 
 export const LeadsPage = () => {
@@ -253,6 +288,8 @@ export const LeadsPage = () => {
           ...payload,
           ultimo_contato: null,
           responsavel: null,
+          last_contact_at: null,
+          assigned_user_id: null,
         })
         toast.success('Lead criado com sucesso.')
       }
@@ -478,8 +515,8 @@ export const LeadsPage = () => {
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
           input:focus, select:focus, textarea:focus {
-            --tw-ring-color: #721011;
-            border-color: #721011;
+            --tw-ring-color: #64748b;
+            border-color: #64748b;
           }
         `}</style>
       </div>
@@ -487,34 +524,39 @@ export const LeadsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <div className="space-y-6">
+    <div className="min-h-screen bg-slate-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="space-y-5">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
-                >
-                  <TrendingUp className="h-5 w-5" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-100">
+                  <TrendingUp className="h-5 w-5 text-slate-600" />
                 </div>
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Pipeline de Vendas
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestão de Leads</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Acompanhe oportunidades e impulsione suas vendas
+              <h1 className="text-2xl font-bold text-slate-900">Gestão de Leads</h1>
+              <p className="text-sm text-slate-500 mt-1">
+                Acompanhe oportunidades e gerencie conversões
               </p>
             </div>
             <div className="flex gap-3">
+              <Link
+                to="/app/leads/kanban"
+                className="h-10 px-4 rounded-lg border border-slate-200 font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Kanban
+              </Link>
               <button
                 onClick={() => void fetchLeads()}
                 disabled={loading}
-                className="px-4 py-2 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="h-10 px-4 rounded-lg border border-slate-200 font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-50 flex items-center gap-2"
               >
+                <ArrowUpRight className="h-4 w-4" />
                 Atualizar
               </button>
               <button
@@ -527,113 +569,106 @@ export const LeadsPage = () => {
                   setShowNewLeadForm(true)
                 }}
                 disabled={!canManageLeads}
-                className="px-6 py-2 rounded-lg font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50"
-                style={{ backgroundColor: '#721011' }}
+                className="h-10 px-5 rounded-lg font-semibold text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:hover:bg-slate-800 flex items-center gap-2"
               >
-                <Zap className="inline mr-2 h-4 w-4" />
+                <Zap className="h-4 w-4" />
                 Novo Lead
               </button>
             </div>
           </div>
         </div>
 
-        {/* Métricas */}
+        {/* Métricas - Design Corporativo Discreto */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+          {/* Total Pipeline */}
+          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'rgba(114, 16, 17, 0.15)', color: '#721011' }}
-              >
-                <TrendingUp className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-50 border border-slate-200">
+                <Users className="w-5 h-5 text-slate-500" />
               </div>
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Pipeline</span>
             </div>
             <div className="mt-4">
-              <div className="text-2xl font-bold text-gray-900">{metrics.total}</div>
-              <div className="text-sm text-gray-500 mt-1">Total Pipeline</div>
-              <div className="text-xs text-gray-400 mt-1">oportunidades ativas</div>
+              <div className="text-3xl font-bold text-slate-800">{metrics.total}</div>
+              <div className="text-sm text-slate-500 mt-1">Total de Leads</div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+          {/* Leads Quentes */}
+          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-orange-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}
-              >
-                <Flame className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-orange-50 border border-orange-200">
+                <Flame className="w-5 h-5 text-orange-500" />
               </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-orange-50 text-orange-600 border border-orange-200">
+                Prioridade
+              </span>
             </div>
             <div className="mt-4">
-              <div className="text-2xl font-bold" style={{ color: '#ef4444' }}>{metrics.quentes}</div>
-              <div className="text-sm text-gray-500 mt-1">Leads Quentes</div>
-              <div className="text-xs" style={{ color: '#ef4444' }}>AÇÃO IMEDIATA</div>
+              <div className="text-3xl font-bold text-slate-800">{metrics.quentes}</div>
+              <div className="text-sm text-slate-500 mt-1">Leads Quentes</div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+          {/* Em Negociação */}
+          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'rgba(191, 111, 50, 0.15)', color: '#BF6F32' }}
-              >
-                <Clock className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-50 border border-blue-200">
+                <Clock className="w-5 h-5 text-blue-500" />
               </div>
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Ativos</span>
             </div>
             <div className="mt-4">
-              <div className="text-2xl font-bold" style={{ color: '#BF6F32' }}>{metrics.emNegociacao}</div>
-              <div className="text-sm text-gray-500 mt-1">Em negociação</div>
-              <div className="text-xs text-gray-400 mt-1">Propostas ativas</div>
+              <div className="text-3xl font-bold text-slate-800">{metrics.emNegociacao}</div>
+              <div className="text-sm text-slate-500 mt-1">Em Negociação</div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+          {/* Taxa de Conversão */}
+          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-emerald-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }}
-              >
-                <DollarSign className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-50 border border-emerald-200">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Sucesso</span>
             </div>
             <div className="mt-4">
-              <div className="text-2xl font-bold" style={{ color: '#22c55e' }}>{metrics.taxaConversao}%</div>
-              <div className="text-sm text-gray-500 mt-1">Taxa de conversão</div>
-              <div className="text-xs text-gray-400 mt-1">{metrics.ganhos} fechamentos</div>
+              <div className="text-3xl font-bold text-slate-800">{metrics.taxaConversao}%</div>
+              <div className="text-sm text-slate-500 mt-1">Taxa de Conversão</div>
+              <div className="text-xs text-slate-400 mt-0.5">{metrics.ganhos} fechamentos</div>
             </div>
           </div>
         </div>
-
         {/* Lista de Leads */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="p-5 space-y-4">
             {/* Tabs e Filtros */}
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-3">
+              {/* Tabs com estilo corporativo */}
+              <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-lg w-fit">
                 {tabs.map((tab) => (
                   <button
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab)}
                     className={cn(
-                      'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+                      'px-4 py-2 rounded-md font-medium text-sm transition-all duration-150',
                       activeTab === tab
-                        ? 'text-white shadow-md'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
                     )}
-                    style={activeTab === tab ? { backgroundColor: '#721011' } : {}}
                   >
                     {tab}
                   </button>
                 ))}
               </div>
 
+              {/* Filtros */}
               <div className="flex flex-wrap gap-3">
                 <div className="relative flex-1 min-w-[300px]">
-                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
-                    className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
-                    style={{ '--tw-ring-color': '#721011' } as React.CSSProperties}
+                    className="h-10 w-full rounded-lg border border-slate-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 transition-all bg-white"
                     placeholder="Buscar por nome, telefone ou área..."
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
@@ -641,36 +676,34 @@ export const LeadsPage = () => {
                 </div>
 
                 <select
-                  className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                  className="h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 bg-white min-w-[140px]"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
                   <option value="todos">Todos status</option>
                   {filters.status.map((status) => (
                     <option key={status} value={status}>
-                      {status}
+                      {statusLabel(status as Lead['status'])}
                     </option>
                   ))}
                 </select>
 
                 <select
-                  className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                  className="h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 bg-white min-w-[140px]"
                   value={heatFilter}
                   onChange={(event) => setHeatFilter(event.target.value)}
                 >
                   <option value="todos">Temperatura</option>
-                  {filters.heat.map((heat) => (
-                    <option key={heat} value={heat}>
-                      {heat}
-                    </option>
-                  ))}
+                  <option value="quente">Quente</option>
+                  <option value="morno">Morno</option>
+                  <option value="frio">Frio</option>
                 </select>
 
                 <button
                   onClick={resetFilters}
-                  className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="h-10 px-4 rounded-lg border border-slate-200 font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
                 >
-                  <Filter className="inline mr-2 h-4 w-4" />
+                  <XCircle className="h-4 w-4" />
                   Limpar
                 </button>
               </div>
@@ -684,7 +717,7 @@ export const LeadsPage = () => {
               emptyAction={emptyAction}
               onRetry={error ? fetchLeads : undefined}
             >
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {filteredLeads.map((lead) => {
                   const initials = lead.name
                     .split(' ')
@@ -696,77 +729,95 @@ export const LeadsPage = () => {
                     <div
                       key={lead.id}
                       onClick={() => setSelectedLead(lead)}
-                      className="group cursor-pointer rounded-xl border border-gray-100 p-4 transition-all hover:shadow-md hover:border-gray-200"
+                      className="group cursor-pointer rounded-lg border border-slate-200 p-4 transition-all duration-150 hover:shadow-md hover:border-slate-300 bg-white"
                     >
                       <div className="flex flex-wrap items-center gap-4">
+                        {/* Avatar */}
                         <div
-                          className="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-bold text-white"
+                          className="flex h-12 w-12 items-center justify-center rounded-lg text-sm font-bold text-white shadow-md transition-transform group-hover:scale-105"
                           style={{ backgroundColor: '#721011' }}
                         >
                           {initials}
                         </div>
 
+                        {/* Info Principal */}
                         <div className="flex-1 min-w-[200px]">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-base font-semibold text-gray-900">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-base font-semibold text-slate-900">
                               {lead.name}
                             </h3>
+                            {/* Badge de Temperatura */}
                             <span
                               className={cn(
-                                'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium',
-                                heatPill(lead.heat)
+                                'inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium',
+                                heatBadge(lead.heat)
                               )}
                             >
-                              {lead.heat}
+                              {heatIcon(lead.heat)} {heatLabel(lead.heat)}
                             </span>
                           </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded">
+                              <Mail className="h-3.5 w-3.5 text-slate-400" />
                               {lead.email}
                             </span>
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
+                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded">
+                              <Phone className="h-3.5 w-3.5 text-slate-400" />
                               {formatPhone(lead.phone)}
                             </span>
+                            {lead.area && (
+                              <span className="flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">
+                                <Briefcase className="h-3.5 w-3.5" />
+                                {lead.area}
+                              </span>
+                            )}
                           </div>
                         </div>
 
+                        {/* Status e Ações */}
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <span
                               className={cn(
-                                'inline-flex rounded-lg border px-3 py-1 text-xs font-medium capitalize',
-                                statusPill(lead.status)
+                                'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium min-w-[90px]',
+                                statusBadge(lead.status)
                               )}
                             >
-                              {lead.status}
+                              {statusLabel(lead.status)}
                             </span>
-                            <p className="mt-1 text-xs text-gray-500">{lead.area}</p>
+                            {lead.origin && (
+                              <p className="mt-1.5 text-xs text-slate-400 flex items-center gap-1 justify-end">
+                                <MapPin className="h-3 w-3" />
+                                {lead.origin}
+                              </p>
+                            )}
                           </div>
 
-                          <div className="flex gap-2">
+                          {/* Botões de Ação */}
+                          <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             {canManageLeads && (
                               <>
                                 <button
                                   type="button"
-                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700 hover:border-slate-300 transition-all"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleEditLead(lead.id)
                                   }}
+                                  title="Editar lead"
                                 >
-                                  <Pencil className="h-4 w-4 text-gray-600" />
+                                  <Pencil className="h-4 w-4" />
                                 </button>
                                 <button
                                   type="button"
-                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-red-50 transition-colors"
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700 hover:border-slate-300 transition-all"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleDeleteLead(lead.id, lead.name)
                                   }}
+                                  title="Excluir lead"
                                 >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                  <Trash2 className="h-4 w-4" />
                                 </button>
                               </>
                             )}
@@ -774,14 +825,15 @@ export const LeadsPage = () => {
                         </div>
                       </div>
 
+                      {/* Seção de Encaminhar */}
                       {canManageLeads && assigningLeadId === lead.id && (
                         <div
-                          className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"
+                          className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <span className="text-xs font-medium text-gray-700">Encaminhar para</span>
+                          <span className="text-xs font-semibold text-slate-700">Encaminhar para:</span>
                           <select
-                            className="h-8 rounded-lg border border-gray-200 px-3 text-xs bg-white"
+                            className="h-9 rounded-lg border border-slate-200 px-3 text-sm bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
                             value={selectedAdvogadoId}
                             onChange={(event) => setSelectedAdvogadoId(event.target.value)}
                           >
@@ -793,17 +845,17 @@ export const LeadsPage = () => {
                             ))}
                           </select>
                           <button
-                            className="h-8 px-4 rounded-lg text-xs font-medium text-white"
-                            style={{ backgroundColor: '#721011' }}
+                            className="h-9 px-4 rounded-lg text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 transition-all"
                             onClick={(event) => {
                               event.stopPropagation()
                               void handleEncaminharLead(lead.id)
                             }}
                           >
+                            <ArrowRight className="inline mr-1.5 h-4 w-4" />
                             Encaminhar
                           </button>
                           <button
-                            className="h-8 px-4 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:bg-white"
+                            className="h-9 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-white transition-colors"
                             onClick={(event) => {
                               event.stopPropagation()
                               setAssigningLeadId(null)
@@ -815,14 +867,16 @@ export const LeadsPage = () => {
                         </div>
                       )}
 
+                      {/* Último Contato */}
                       {lead.lastContactAt && (
                         <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
-                          <Clock className="h-3 w-3" />
-                          Último contato: {formatDateTime(lead.lastContactAt)}
+                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                          <span>Último contato: <strong>{formatDateTime(lead.lastContactAt)}</strong></span>
                           {lead.owner && (
                             <>
-                              <span className="mx-2">•</span>
-                              Responsável: {lead.owner}
+                              <span className="mx-1 text-gray-300">•</span>
+                              <User className="h-3.5 w-3.5 text-gray-400" />
+                              <span>Responsável: <strong>{lead.owner}</strong></span>
                             </>
                           )}
                         </div>
@@ -847,8 +901,8 @@ export const LeadsPage = () => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
         input:focus, select:focus, textarea:focus {
-          --tw-ring-color: #721011;
-          border-color: #721011;
+          --tw-ring-color: #64748b;
+          border-color: #64748b;
         }
 
         ::-webkit-scrollbar {
@@ -860,12 +914,12 @@ export const LeadsPage = () => {
         }
 
         ::-webkit-scrollbar-thumb {
-          background: #E0E0E0;
+          background: #cbd5e1;
           border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-          background: #BDBDBD;
+          background: #94a3b8;
         }
       `}</style>
     </div>

@@ -195,11 +195,13 @@ export const CasosPage = () => {
         heat: null,
         stage: formData.stage || null,
         valor: formData.valor ? Number(formData.valor) : null,
+        valor_estimado: formData.valor ? Number(formData.valor) : null,
         sla_risk: null,
         tags: null,
         responsavel: null,
         data_abertura: null,
         data_encerramento: null,
+        encerrado_em: null,
       }
 
       if (editingCasoId) {

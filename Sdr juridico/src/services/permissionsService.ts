@@ -127,7 +127,7 @@ export const permissionsService = {
       logDebug('Dados do usuario:', { id: user.id, isFartechAdmin })
 
       // Busca membership (FONTE DE VERDADE para role na org)
-      const { data: memberData } = await supabase
+      const { data: memberData, error: memberError } = await supabase
         .from('org_members')
         .select('org_id, role')
         .eq('user_id', user.id)
@@ -135,6 +135,8 @@ export const permissionsService = {
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle()
+
+      console.log('🔍 [PermissionsService] memberData:', memberData, '| memberError:', memberError)
 
       const memberRole = (memberData?.role || seed?.role || null) as OrgMemberRole | null
       const role = resolveUserRole(isFartechAdmin, memberRole)

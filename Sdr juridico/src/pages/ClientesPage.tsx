@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, Plus, Pencil, Trash2, UserPlus, Users, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, UserPlus, Users, AlertTriangle, CheckCircle, CheckCircle2, XCircle, Loader2, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
@@ -13,6 +13,79 @@ import { useAdvogados } from '@/hooks/useAdvogados'
 import { useOrganization } from '@/hooks/useOrganization'
 import type { ClienteRow } from '@/lib/supabaseClient'
 import { clientesService } from '@/services/clientesService'
+import { buscarEmpresaPorCnpj, formatarCnpj } from '@/services/queridoDiarioService'
+
+// ========== UTILITÁRIOS DE CPF/CNPJ ==========
+
+// Valida CPF usando algoritmo oficial
+function validarCPF(cpf: string): boolean {
+  const numeros = cpf.replace(/\D/g, '')
+  if (numeros.length !== 11) return false
+  if (/^(\d)\1{10}$/.test(numeros)) return false // Todos dígitos iguais
+  
+  let soma = 0
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(numeros[i]) * (10 - i)
+  }
+  let resto = (soma * 10) % 11
+  if (resto === 10 || resto === 11) resto = 0
+  if (resto !== parseInt(numeros[9])) return false
+  
+  soma = 0
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(numeros[i]) * (11 - i)
+  }
+  resto = (soma * 10) % 11
+  if (resto === 10 || resto === 11) resto = 0
+  return resto === parseInt(numeros[10])
+}
+
+// Valida CNPJ usando algoritmo oficial
+function validarCNPJ(cnpj: string): boolean {
+  const numeros = cnpj.replace(/\D/g, '')
+  if (numeros.length !== 14) return false
+  if (/^(\d)\1{13}$/.test(numeros)) return false // Todos dígitos iguais
+  
+  const pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  const pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  
+  let soma = 0
+  for (let i = 0; i < 12; i++) {
+    soma += parseInt(numeros[i]) * pesos1[i]
+  }
+  let resto = soma % 11
+  const digito1 = resto < 2 ? 0 : 11 - resto
+  if (digito1 !== parseInt(numeros[12])) return false
+  
+  soma = 0
+  for (let i = 0; i < 13; i++) {
+    soma += parseInt(numeros[i]) * pesos2[i]
+  }
+  resto = soma % 11
+  const digito2 = resto < 2 ? 0 : 11 - resto
+  return digito2 === parseInt(numeros[13])
+}
+
+// Formata CPF: 000.000.000-00
+function formatarCPF(cpf: string): string {
+  const numeros = cpf.replace(/\D/g, '')
+  if (numeros.length <= 3) return numeros
+  if (numeros.length <= 6) return `${numeros.slice(0, 3)}.${numeros.slice(3)}`
+  if (numeros.length <= 9) return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6)}`
+  return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9, 11)}`
+}
+
+// Formata CNPJ: 00.000.000/0000-00
+function formatarCNPJInput(cnpj: string): string {
+  const numeros = cnpj.replace(/\D/g, '')
+  if (numeros.length <= 2) return numeros
+  if (numeros.length <= 5) return `${numeros.slice(0, 2)}.${numeros.slice(2)}`
+  if (numeros.length <= 8) return `${numeros.slice(0, 2)}.${numeros.slice(2, 5)}.${numeros.slice(5)}`
+  if (numeros.length <= 12) return `${numeros.slice(0, 2)}.${numeros.slice(2, 5)}.${numeros.slice(5, 8)}/${numeros.slice(8)}`
+  return `${numeros.slice(0, 2)}.${numeros.slice(2, 5)}.${numeros.slice(5, 8)}/${numeros.slice(8, 12)}-${numeros.slice(12, 14)}`
+}
+
+// ========== FIM UTILITÁRIOS ==========
 
 const resolveStatus = (
   value: string | null,
@@ -79,6 +152,11 @@ export const ClientesPage = () => {
 
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingClienteId)
+  
+  // Estado para enriquecimento de dados
+  const [buscandoDados, setBuscandoDados] = React.useState(false)
+  const [documentoValido, setDocumentoValido] = React.useState<boolean | null>(null)
+  const [dadosEnriquecidos, setDadosEnriquecidos] = React.useState(false)
 
   const filters = React.useMemo(
     () => ({
@@ -148,6 +226,94 @@ export const ClientesPage = () => {
   const resetClienteForm = () => {
     setFormData(initialFormData)
     setEditingClienteId(null)
+    setDocumentoValido(null)
+    setDadosEnriquecidos(false)
+  }
+
+  // Função para tratar mudança de documento (CPF/CNPJ)
+  const handleDocumentoChange = async (valor: string) => {
+    const numeros = valor.replace(/\D/g, '')
+    
+    // Detectar automaticamente o tipo e formatar
+    if (numeros.length <= 11) {
+      // CPF
+      const formatado = formatarCPF(numeros)
+      setFormData(prev => ({ ...prev, documento: formatado, tipo: 'pf' }))
+      
+      // Validar quando completo
+      if (numeros.length === 11) {
+        const valido = validarCPF(numeros)
+        setDocumentoValido(valido)
+        if (!valido) {
+          toast.error('CPF inválido. Verifique os dígitos.')
+        } else {
+          toast.success('CPF válido!')
+        }
+      } else {
+        setDocumentoValido(null)
+      }
+    } else {
+      // CNPJ
+      const formatado = formatarCNPJInput(numeros)
+      setFormData(prev => ({ ...prev, documento: formatado, tipo: 'pj' }))
+      
+      // Validar quando completo
+      if (numeros.length === 14) {
+        const valido = validarCNPJ(numeros)
+        setDocumentoValido(valido)
+        
+        if (!valido) {
+          toast.error('CNPJ inválido. Verifique os dígitos.')
+        } else {
+          // CNPJ válido - buscar dados automaticamente
+          toast.success('CNPJ válido! Buscando dados...')
+          await enriquecerDadosCNPJ(numeros)
+        }
+      } else {
+        setDocumentoValido(null)
+      }
+    }
+  }
+
+  // Função para enriquecer dados via CNPJ
+  const enriquecerDadosCNPJ = async (cnpj: string) => {
+    setBuscandoDados(true)
+    try {
+      const empresa = await buscarEmpresaPorCnpj(cnpj)
+      
+      if (empresa) {
+        // Montar endereço completo
+        const enderecoCompleto = [
+          empresa.logradouro,
+          empresa.numero,
+          empresa.complemento,
+          empresa.bairro
+        ].filter(Boolean).join(', ')
+        
+        // Atualizar formulário com dados da empresa
+        setFormData(prev => ({
+          ...prev,
+          nome: prev.nome || empresa.razao_social || empresa.nome_fantasia || '',
+          email: prev.email || empresa.correio_eletronico?.toLowerCase() || '',
+          telefone: prev.telefone || empresa.ddd_telefone_1 || '',
+          endereco: prev.endereco || enderecoCompleto || '',
+          cidade: prev.cidade || empresa.municipio || '',
+          estado: prev.estado || empresa.uf || '',
+          cep: prev.cep || empresa.cep || '',
+          area_atuacao: prev.area_atuacao || empresa.cnae?.split(' - ')[1] || '',
+        }))
+        
+        setDadosEnriquecidos(true)
+        toast.success(`✨ Dados carregados: ${empresa.razao_social || empresa.nome_fantasia}`)
+      } else {
+        toast.warning('CNPJ não encontrado na base de dados pública.')
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados do CNPJ:', error)
+      toast.error('Não foi possível buscar dados do CNPJ.')
+    } finally {
+      setBuscandoDados(false)
+    }
   }
 
   const handleEditCliente = async (clienteId: string) => {
@@ -342,15 +508,52 @@ export const ClientesPage = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   {formData.tipo === 'pj' ? 'CNPJ' : 'CPF'}
+                  {buscandoDados && (
+                    <span className="flex items-center gap-1 text-xs text-blue-600">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Buscando dados...
+                    </span>
+                  )}
+                  {dadosEnriquecidos && (
+                    <span className="flex items-center gap-1 text-xs text-green-600">
+                      <Building2 className="h-3 w-3" />
+                      Dados carregados
+                    </span>
+                  )}
                 </label>
-                <input
-                  value={formData.documento}
-                  onChange={(event) => setFormData({ ...formData, documento: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
-                  placeholder={formData.tipo === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
-                />
+                <div className="relative">
+                  <input
+                    value={formData.documento}
+                    onChange={(event) => handleDocumentoChange(event.target.value)}
+                    disabled={buscandoDados}
+                    className={`h-11 w-full rounded-lg border bg-white px-4 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
+                      documentoValido === true
+                        ? 'border-green-400 focus:border-green-500 focus:ring-green-200'
+                        : documentoValido === false
+                        ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:border-[#721011] focus:ring-[#721011]/20'
+                    } ${buscandoDados ? 'bg-gray-50' : ''}`}
+                    placeholder={formData.tipo === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
+                    maxLength={18}
+                  />
+                  {/* Indicador de validação */}
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {buscandoDados ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                    ) : documentoValido === true ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : documentoValido === false ? (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    ) : null}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  {formData.tipo === 'pj' 
+                    ? 'Digite o CNPJ para buscar dados automaticamente da Receita Federal'
+                    : 'Digite o CPF para validação automática'}
+                </p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Área de atuação</label>

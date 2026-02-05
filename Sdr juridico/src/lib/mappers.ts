@@ -11,12 +11,14 @@ import type {
   AgendaItem,
   Caso,
   Cliente,
+  DataJudSyncStatus,
   Documento,
   Lead,
   LeadHeat,
   Tarefa,
   TimelineCategory,
   TimelineEvent,
+  CasoStage,
 } from '@/types/domain'
 
 const pad = (value: number) => value.toString().padStart(2, '0')
@@ -32,8 +34,9 @@ const toLocalTime = (value: string) => {
 }
 
 const resolveHeat = (row: LeadRow): LeadHeat => {
-  if (row.heat) return row.heat
-  const base = row.ultimo_contato || row.created_at
+  if (row.heat && ['quente', 'morno', 'frio'].includes(row.heat)) return row.heat as LeadHeat
+  // Usa o campo correto: last_contact_at (ou legado ultimo_contato)
+  const base = row.last_contact_at || row.ultimo_contato || row.created_at
   if (!base) return 'morno'
   const diffMs = Date.now() - new Date(base).getTime()
   const diffDays = diffMs / (1000 * 60 * 60 * 24)
@@ -84,33 +87,54 @@ const resolveTaskLinks = (row: TarefaRow) => {
 
 export const mapLeadRowToLead = (row: LeadRow): Lead => ({
   id: row.id,
-  name: row.nome,
-  email: row.email,
+  name: row.nome || 'Sem nome',
+  email: row.email || '',
   phone: row.telefone || '',
   area: row.area || 'Sem area',
-  origin: row.origem || row.empresa || 'Outro',
+  origin: row.origem || 'Outro',
   status: row.status,
   heat: resolveHeat(row),
   createdAt: row.created_at,
-  lastContactAt: row.ultimo_contato || undefined,
-  owner: row.responsavel || 'Nao atribuido',
+  updatedAt: row.updated_at,
+  lastContactAt: row.last_contact_at || row.ultimo_contato || undefined,
+  owner: row.assigned_user_id || row.responsavel || 'Nao atribuido',
+  company: row.empresa || undefined,
+  notes: row.observacoes || undefined,
 })
 
 export const mapCasoRowToCaso = (row: CasoRow): Caso => {
+  // Resolve heat com validação
+  const resolvedHeat: LeadHeat = (row.heat && ['quente', 'morno', 'frio'].includes(row.heat)) 
+    ? row.heat as LeadHeat 
+    : 'morno'
+  
+  // Resolve stage - usa fase_atual ou stage
+  const resolvedStage: CasoStage = (row.stage || row.fase_atual || 'triagem') as CasoStage
+  
   return {
     id: row.id,
     title: row.titulo,
     cliente: row.cliente?.nome || 'Sem cliente',
     area: row.area || 'Geral',
     status: resolveCaseStatus(row.status),
-    heat: row.heat || 'morno',
-    stage: row.stage || 'triagem',
-    value: row.valor || 0,
+    heat: resolvedHeat,
+    stage: resolvedStage,
+    value: row.valor_estimado ?? row.valor ?? 0,
     createdAt: row.created_at,
-    updatedAt: row.data_encerramento || row.updated_at,
+    updatedAt: row.encerrado_em || row.data_encerramento || row.updated_at || row.created_at,
     leadId: row.lead_id || undefined,
     tags: row.tags || [],
-    slaRisk: row.sla_risk || 'ok',
+    slaRisk: (row.sla_risk as Caso['slaRisk']) || 'ok',
+    // DataJud fields
+    numero_processo: row.numero_processo || undefined,
+    tribunal: row.tribunal || undefined,
+    grau: row.grau || undefined,
+    classe_processual: row.classe_processual || undefined,
+    assunto_principal: row.assunto_principal || undefined,
+    datajud_processo_id: row.datajud_processo_id || undefined,
+    datajud_sync_status: (row.datajud_sync_status as DataJudSyncStatus) || undefined,
+    datajud_last_sync_at: row.datajud_last_sync_at || undefined,
+    datajud_sync_error: row.datajud_sync_error || undefined,
   }
 }
 
@@ -137,14 +161,25 @@ export const mapClienteRowToCliente = (
 export const mapDocumentoRowToDocumento = (row: DocumentoRow): Documento => ({
   id: row.id,
   title: row.titulo,
-  cliente: row.cliente_nome || 'Sem cliente',
+  description: row.descricao || undefined,
+  cliente: row.cliente?.nome || row.cliente_nome || 'Sem cliente',
+  clienteId: row.cliente_id || undefined,
   casoId: row.caso_id || undefined,
+  casoTitulo: row.caso?.titulo || undefined,
+  leadId: row.lead_id || undefined,
+  leadNome: row.lead?.nome || undefined,
   type: resolveDocType(row),
   status: row.status || 'pendente',
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   requestedBy: row.solicitado_por || 'Sistema',
   tags: row.tags || [],
+  url: row.url || undefined,
+  fileName: row.arquivo_nome || undefined,
+  fileSize: row.arquivo_tamanho || undefined,
+  mimeType: row.mime_type || undefined,
+  deletedAt: row.deleted_at || undefined,
+  deletedBy: row.deleted_by || undefined,
 })
 
 export const mapAgendamentoRowToAgendaItem = (row: AgendaRow): AgendaItem => {
@@ -162,9 +197,12 @@ export const mapAgendamentoRowToAgendaItem = (row: AgendaRow): AgendaItem => {
     durationMinutes: durationMinutes || 30,
     cliente: row.cliente_nome || 'Sem cliente',
     casoId: row.caso_id || undefined,
-    owner: row.responsavel || 'Nao atribuido',
+    leadId: row.lead_id || undefined,
+    owner: row.responsavel || row.owner_user_id || 'Nao atribuido',
     location: row.local || 'Indefinido',
     status: row.status || 'pendente',
+    externalEventId: row.external_event_id || undefined,
+    externalProvider: row.external_provider || undefined,
   }
 }
 
@@ -182,6 +220,9 @@ export const mapTarefaRowToTarefa = (row: TarefaRow): Tarefa => ({
   confirmedAt: (row as any).confirmed_at || null,
   confirmedBy: (row as any).confirmed_by || null,
   rejectedReason: (row as any).rejected_reason || null,
+  // Soft delete fields
+  deletedAt: row.deleted_at || null,
+  deletedBy: row.deleted_by || null,
   ...resolveTaskLinks(row),
 })
 

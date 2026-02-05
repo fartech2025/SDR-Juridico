@@ -1,10 +1,11 @@
 import * as React from 'react'
-import { Check, Plus, X, Upload as UploadIcon, Pencil, Trash2, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Check, Plus, X, Upload as UploadIcon, Pencil, Trash2, FileText, Clock, CheckCircle, AlertCircle, Eye, ExternalLink, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { UploadDocumentos } from '@/components/UploadDocumentos'
+import { DocumentoViewer } from '@/components/DocumentoViewer'
 import { formatDateTime } from '@/utils/format'
 import type { Documento } from '@/types/domain'
 import { useDocumentos } from '@/hooks/useDocumentos'
@@ -44,11 +45,15 @@ export const DocumentosPage = () => {
     deleteDocumento,
     marcarCompleto,
     marcarRejeitado,
+    marcarVisualizado,
     solicitarNovamente,
+    abrirDocumento,
+    downloadDocumento,
   } = useDocumentos()
   const { casos } = useCasos()
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
-  const canManageDocs = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
+  // Permitir upload para qualquer usuário autenticado da organização
+  const canManageDocs = isFartechAdmin || ['org_admin', 'gestor', 'admin', 'advogado', 'estagiario', 'secretaria'].includes(currentRole || '') || !!currentOrg
   const [params] = useSearchParams()
   const [statusFilter, setStatusFilter] = React.useState('todos')
   const [typeFilter, setTypeFilter] = React.useState('todos')
@@ -57,6 +62,14 @@ export const DocumentosPage = () => {
   const [editingDoc, setEditingDoc] = React.useState<Documento | null>(null)
   const [docForm, setDocForm] = React.useState({ title: '', type: '' })
   const [savingDoc, setSavingDoc] = React.useState(false)
+  // Estado do viewer de documento
+  const [viewerDoc, setViewerDoc] = React.useState<{ 
+    id: string
+    url: string
+    titulo: string
+    fileName?: string
+    status: Documento['status']
+  } | null>(null)
 
   const filters = React.useMemo(
     () => ({
@@ -150,6 +163,54 @@ export const DocumentosPage = () => {
     }
   }
 
+  const handleVisualizar = async (docId: string, titulo: string) => {
+    try {
+      await marcarVisualizado(docId)
+      toast.success(`Documento marcado como visualizado: ${titulo}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao marcar como visualizado'
+      toast.error(message)
+    }
+  }
+
+  const handleAbrirDocumento = async (doc: Documento) => {
+    if (!doc.url) {
+      toast.error('Este documento não possui arquivo anexado')
+      return
+    }
+    try {
+      const signedUrl = await abrirDocumento(doc.url)
+      // Abre no modal viewer
+      setViewerDoc({
+        id: doc.id,
+        url: signedUrl,
+        titulo: doc.title,
+        fileName: doc.fileName,
+        status: doc.status,
+      })
+      // Marca como visualizado automaticamente
+      await marcarVisualizado(doc.id)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao abrir documento'
+      toast.error(message)
+    }
+  }
+
+  const handleDownloadDocumento = async (doc: Documento) => {
+    if (!doc.url) {
+      toast.error('Este documento não possui arquivo anexado')
+      return
+    }
+    try {
+      const nomeArquivo = doc.fileName || `${doc.title}.pdf`
+      await downloadDocumento(doc.url, nomeArquivo)
+      toast.success(`Download iniciado: ${doc.title}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao baixar documento'
+      toast.error(message)
+    }
+  }
+
   const handleSolicitar = async (docId: string, titulo: string) => {
     try {
       await solicitarNovamente(docId)
@@ -231,17 +292,15 @@ export const DocumentosPage = () => {
             >
               Atualizar
             </button>
-            {canManageDocs && (
-              <button
-                type="button"
-                onClick={() => setMostrarUpload(!mostrarUpload)}
-                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
-                style={{ backgroundColor: '#721011' }}
-              >
-                <UploadIcon className="h-4 w-4" />
-                {mostrarUpload ? 'Ocultar Upload' : 'Upload Documento'}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setMostrarUpload(!mostrarUpload)}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+              style={{ backgroundColor: '#721011' }}
+            >
+              <UploadIcon className="h-4 w-4" />
+              {mostrarUpload ? 'Ocultar Upload' : 'Upload Documento'}
+            </button>
           </div>
         </div>
 
@@ -293,6 +352,27 @@ export const DocumentosPage = () => {
           </div>
         </div>
 
+        {/* Upload Section - Fora do PageState para sempre estar disponível */}
+        {mostrarUpload && (
+          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-gray-900">Upload de Documentos</h3>
+              <button
+                type="button"
+                onClick={() => setMostrarUpload(false)}
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <UploadDocumentos
+              casoId={clienteFilter !== 'todos' ? selectedCase?.id : undefined}
+              orgId={currentOrg?.id}
+              onUploadComplete={handleUploadComplete}
+            />
+          </div>
+        )}
+
         <PageState
           status={pageState}
           emptyTitle="Nenhum documento encontrado"
@@ -301,28 +381,6 @@ export const DocumentosPage = () => {
           onRetry={error ? fetchDocumentos : undefined}
         >
           <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-            {/* Upload Section */}
-            {mostrarUpload && (
-              <div className="xl:col-span-2 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-900">Upload de Documentos</h3>
-                  <button
-                    type="button"
-                    onClick={() => setMostrarUpload(false)}
-                    className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <UploadDocumentos
-                  casoId={clienteFilter !== 'todos' ? selectedCase?.id : undefined}
-                  orgId={currentOrg?.id}
-                  onUploadComplete={handleUploadComplete}
-                  disabled={!canManageDocs}
-                />
-              </div>
-            )}
-
             {/* Edit Section */}
             {editingDoc && (
               <div className="xl:col-span-2 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -484,6 +542,35 @@ export const DocumentosPage = () => {
                         <td className="px-4 py-3">
                           {canManageDocs ? (
                             <div className="flex items-center gap-1">
+                              {/* Botões de visualização do arquivo */}
+                              {doc.url && (
+                                <>
+                                  <button
+                                    type="button"
+                                    title="Abrir documento"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+                                    onClick={() => void handleAbrirDocumento(doc)}
+                                  >
+                                    <ExternalLink className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Baixar documento"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-cyan-50 hover:text-cyan-600"
+                                    onClick={() => void handleDownloadDocumento(doc)}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                type="button"
+                                title="Marcar como visualizado"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-purple-50 hover:text-purple-600"
+                                onClick={() => void handleVisualizar(doc.id, doc.title)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
                               <button
                                 type="button"
                                 title="Validar"
@@ -577,6 +664,37 @@ export const DocumentosPage = () => {
           </div>
         </PageState>
       </div>
+
+      {/* Modal Viewer de Documento */}
+      <DocumentoViewer
+        isOpen={!!viewerDoc}
+        onClose={() => setViewerDoc(null)}
+        url={viewerDoc?.url || ''}
+        titulo={viewerDoc?.titulo || ''}
+        fileName={viewerDoc?.fileName}
+        status={viewerDoc?.status}
+        onDownload={viewerDoc ? () => {
+          const a = document.createElement('a')
+          a.href = viewerDoc.url
+          a.download = viewerDoc.fileName || `${viewerDoc.titulo}.pdf`
+          a.click()
+        } : undefined}
+        onAprovar={viewerDoc ? async () => {
+          await marcarCompleto(viewerDoc.id)
+          toast.success(`Documento aprovado: ${viewerDoc.titulo}`)
+          setViewerDoc(prev => prev ? { ...prev, status: 'aprovado' } : null)
+        } : undefined}
+        onRejeitar={viewerDoc ? async () => {
+          await marcarRejeitado(viewerDoc.id)
+          toast.success(`Documento rejeitado: ${viewerDoc.titulo}`)
+          setViewerDoc(prev => prev ? { ...prev, status: 'rejeitado' } : null)
+        } : undefined}
+        onSolicitar={viewerDoc ? async () => {
+          await solicitarNovamente(viewerDoc.id)
+          toast.success(`Solicitado novamente: ${viewerDoc.titulo}`)
+          setViewerDoc(prev => prev ? { ...prev, status: 'solicitado' } : null)
+        } : undefined}
+      />
     </div>
   )
 }

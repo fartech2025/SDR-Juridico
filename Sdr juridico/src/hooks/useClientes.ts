@@ -46,9 +46,9 @@ export function useClientes() {
         const caseCount = cliente.casos_count ?? casosCliente.length
         
         const hasCritico = casosCliente.some((caso) =>
-          ['alta', 'critica'].includes(caso.prioridade)
+          ['alta', 'critica'].includes(String(caso.prioridade))
         )
-        const hasAtencao = casosCliente.some((caso) => caso.prioridade === 'media')
+        const hasAtencao = casosCliente.some((caso) => String(caso.prioridade) === 'media')
 
         return mapClienteRowToCliente(cliente, {
           caseCount,

@@ -12,6 +12,7 @@ import { useCasos } from '@/hooks/useCasos'
 import { useDocumentos } from '@/hooks/useDocumentos'
 import { useLeads } from '@/hooks/useLeads'
 import { useNotas } from '@/hooks/useNotas'
+import { useTarefas } from '@/hooks/useTarefas'
 import type { KPI, Notification } from '@/types/domain'
 
 const resolveStatus = (
@@ -298,6 +299,7 @@ export const DashboardPage = () => {
   const { leads, loading: leadsLoading, error: leadsError, fetchLeads } = useLeads()
   const { casos, loading: casosLoading, error: casosError, fetchCasos } = useCasos()
   const { documentos, loading: docsLoading, error: docsError, fetchDocumentos } = useDocumentos()
+  const { tarefas, loading: tarefasLoading, error: tarefasError, fetchTarefas } = useTarefas()
   const {
     eventos: agendaItems,
     loading: agendaLoading,
@@ -308,8 +310,8 @@ export const DashboardPage = () => {
   const [loadTimeoutReached, setLoadTimeoutReached] = React.useState(false)
 
   const anyLoading =
-    leadsLoading || casosLoading || docsLoading || agendaLoading || notasLoading
-  const anyError = leadsError || casosError || docsError || agendaError || notasError
+    leadsLoading || casosLoading || docsLoading || tarefasLoading || agendaLoading || notasLoading
+  const anyError = leadsError || casosError || docsError || tarefasError || agendaError || notasError
 
   React.useEffect(() => {
     if (!anyLoading) {
@@ -328,13 +330,14 @@ export const DashboardPage = () => {
       fetchLeads(),
       fetchCasos(),
       fetchDocumentos(),
+      fetchTarefas(),
       fetchEventos(),
       fetchNotas(),
     ])
-  }, [fetchCasos, fetchDocumentos, fetchEventos, fetchLeads, fetchNotas])
+  }, [fetchCasos, fetchDocumentos, fetchTarefas, fetchEventos, fetchLeads, fetchNotas])
 
   const hasData = Boolean(
-    leads.length || casos.length || documentos.length || agendaItems.length || notas.length
+    leads.length || casos.length || documentos.length || tarefas.length || agendaItems.length || notas.length
   )
   const baseState =
     anyLoading && !loadTimeoutReached
@@ -383,15 +386,15 @@ export const DashboardPage = () => {
     const prevLeads = countInRange(leadsActive, (lead) => lead.createdAt, prevWeekStart, weekStart)
 
     const casesActive = casos.filter((caso) => caso.status === 'ativo').length
-    const pendingDocs = documentos.filter((doc) => doc.status === 'pendente').length
+    const pendingTasks = tarefas.filter((t) => t.status === 'pendente' || t.status === 'em_andamento').length
 
     return [
       buildKpi('kpi-001', 'Leads Hoje', leadsActive.length, currentLeads - prevLeads, 'vs semana anterior'),
       buildKpi('kpi-002', 'Casos Ativos', casesActive, 0, 'mes atual'),
-      buildKpi('kpi-003', 'Tarefas Pendentes', pendingDocs, 0, 'ultimas 24h'),
+      buildKpi('kpi-003', 'Tarefas Pendentes', pendingTasks, 0, 'ultimas 24h'),
       buildKpi('kpi-004', 'Eventos Críticos', criticalEvents.length, 0, 'hoje'),
     ]
-  }, [casos, documentos, leads, criticalEvents])
+  }, [casos, tarefas, leads, criticalEvents])
 
   const notifications = React.useMemo(() => {
     const pendingDocs = documentos.filter((doc) => doc.status === 'pendente').length

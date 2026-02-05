@@ -20,6 +20,8 @@ type DbAgendamentoRow = {
   external_provider?: string | null
   external_event_id?: string | null
   meta?: Record<string, any> | null
+  status?: string | null
+  tipo?: string | null
 }
 
 const mapDbAgendamentoToAgenda = (row: DbAgendamentoRow): AgendaRow => {
@@ -34,23 +36,33 @@ const mapDbAgendamentoToAgenda = (row: DbAgendamentoRow): AgendaRow => {
           )
         )
 
+  // Status: prioriza campo direto, depois meta
+  const status = (row.status || meta.status || 'pendente') as AgendaRow['status']
+  // Tipo: prioriza campo direto, depois meta
+  const tipo = row.tipo || meta.tipo || 'reuniao'
+
   return {
     id: row.id,
     created_at: row.created_at,
     updated_at: row.created_at,
+    org_id: row.org_id || null,
     titulo: row.title,
     descricao: row.description || null,
-    tipo: meta.tipo || 'reuniao',
+    tipo,
     data_inicio: row.start_at,
     data_fim: row.end_at,
     duracao_minutos: durationMinutes || null,
     cliente_nome: meta.cliente_nome || null,
     cliente_id: row.cliente_id || null,
     caso_id: row.caso_id || null,
+    lead_id: row.lead_id || null,
     responsavel: meta.responsavel || null,
+    owner_user_id: row.owner_user_id || null,
     local: row.location || null,
-    status: meta.status || 'pendente',
+    status,
     observacoes: meta.observacoes || null,
+    external_event_id: row.external_event_id || null,
+    external_provider: row.external_provider || null,
   }
 }
 
@@ -64,7 +76,14 @@ const buildAgendamentoPayload = (evento: Partial<AgendaRow>) => {
   if (evento.local !== undefined) payload.location = evento.local
   if (evento.cliente_id !== undefined) payload.cliente_id = evento.cliente_id
   if (evento.caso_id !== undefined) payload.caso_id = evento.caso_id
+  if (evento.lead_id !== undefined) payload.lead_id = evento.lead_id
+  if (evento.owner_user_id !== undefined) payload.owner_user_id = evento.owner_user_id
+  
+  // Campos diretos do banco (status e tipo)
+  if (evento.status !== undefined) payload.status = evento.status
+  if (evento.tipo !== undefined) payload.tipo = evento.tipo
 
+  // Meta mantém dados adicionais para retrocompatibilidade
   const meta: Record<string, any> = {}
   if (evento.tipo !== undefined) meta.tipo = evento.tipo
   if (evento.status !== undefined) meta.status = evento.status

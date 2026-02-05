@@ -45,6 +45,8 @@ const mapDbDocumentoToDocumentoRow = (row: DbDocumentoRow): DocumentoRow => {
     titulo: row.title,
     descricao: row.description || null,
     caso_id: row.caso_id || null,
+    cliente_id: meta.cliente_id || null,
+    lead_id: meta.lead_id || null,
     cliente_nome: meta.cliente_nome || null,
     tipo: meta.tipo || row.bucket || 'docs',
     status: meta.status || 'pendente',
@@ -108,7 +110,7 @@ const resolveOrgId = async (userId: string, casoId?: string) => {
 
 export const documentosService = {
   /**
-   * Busca todos os documentos
+   * Busca todos os documentos (excluindo soft deleted)
    */
   async getDocumentos(): Promise<DocumentoRow[]> {
     try {
@@ -117,12 +119,18 @@ export const documentosService = {
 
       const query = supabase
         .from('documentos')
-        .select('*')
+        .select('*, casos:caso_id(titulo), clientes:cliente_id(nome), leads:lead_id(nome)')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
-      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
+      return (data || []).map((row: any) => ({
+        ...mapDbDocumentoToDocumentoRow(row),
+        caso: row.casos ? { titulo: row.casos.titulo } : null,
+        cliente: row.clientes ? { nome: row.clientes.nome } : null,
+        lead: row.leads ? { nome: row.leads.nome } : null,
+      }))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
@@ -140,14 +148,20 @@ export const documentosService = {
 
       const query = supabase
         .from('documentos')
-        .select('*')
+        .select('*, casos:caso_id(titulo), clientes:cliente_id(nome), leads:lead_id(nome)')
         .eq('id', id)
+        .is('deleted_at', null)
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Documento nao encontrado', 'not_found')
 
-      return mapDbDocumentoToDocumentoRow(data as DbDocumentoRow)
+      return {
+        ...mapDbDocumentoToDocumentoRow(data as DbDocumentoRow),
+        caso: (data as any).casos ? { titulo: (data as any).casos.titulo } : null,
+        cliente: (data as any).clientes ? { nome: (data as any).clientes.nome } : null,
+        lead: (data as any).leads ? { nome: (data as any).leads.nome } : null,
+      }
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documento', 'database_error')
     }
@@ -163,15 +177,73 @@ export const documentosService = {
 
       const query = supabase
         .from('documentos')
-        .select('*')
+        .select('*, casos:caso_id(titulo), clientes:cliente_id(nome)')
         .eq('caso_id', casoId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
-      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
+      return (data || []).map((row: any) => ({
+        ...mapDbDocumentoToDocumentoRow(row),
+        caso: row.casos ? { titulo: row.casos.titulo } : null,
+        cliente: row.clientes ? { nome: row.clientes.nome } : null,
+      }))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos do caso', 'database_error')
+    }
+  },
+
+  /**
+   * Busca documentos de um cliente especifico
+   */
+  async getDocumentosByCliente(clienteId: string): Promise<DocumentoRow[]> {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
+        .from('documentos')
+        .select('*, casos:caso_id(titulo), clientes:cliente_id(nome)')
+        .eq('cliente_id', clienteId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
+
+      if (error) throw new AppError(error.message, 'database_error')
+      return (data || []).map((row: any) => ({
+        ...mapDbDocumentoToDocumentoRow(row),
+        caso: row.casos ? { titulo: row.casos.titulo } : null,
+        cliente: row.clientes ? { nome: row.clientes.nome } : null,
+      }))
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos do cliente', 'database_error')
+    }
+  },
+
+  /**
+   * Busca documentos de um lead especifico
+   */
+  async getDocumentosByLead(leadId: string): Promise<DocumentoRow[]> {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
+        .from('documentos')
+        .select('*, leads:lead_id(nome)')
+        .eq('lead_id', leadId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
+
+      if (error) throw new AppError(error.message, 'database_error')
+      return (data || []).map((row: any) => ({
+        ...mapDbDocumentoToDocumentoRow(row),
+        lead: row.leads ? { nome: row.leads.nome } : null,
+      }))
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos do lead', 'database_error')
     }
   },
 
@@ -185,13 +257,18 @@ export const documentosService = {
 
       const query = supabase
         .from('documentos')
-        .select('*')
+        .select('*, casos:caso_id(titulo), clientes:cliente_id(nome)')
         .filter('meta->>status', 'eq', status)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
-      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
+      return (data || []).map((row: any) => ({
+        ...mapDbDocumentoToDocumentoRow(row),
+        caso: row.casos ? { titulo: row.casos.titulo } : null,
+        cliente: row.clientes ? { nome: row.clientes.nome } : null,
+      }))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
     }
@@ -207,15 +284,46 @@ export const documentosService = {
 
       const query = supabase
         .from('documentos')
-        .select('*')
+        .select('*, casos:caso_id(titulo), clientes:cliente_id(nome)')
         .filter('meta->>tipo', 'eq', tipo)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
-      return (data || []).map((row: DbDocumentoRow) => mapDbDocumentoToDocumentoRow(row))
+      return (data || []).map((row: any) => ({
+        ...mapDbDocumentoToDocumentoRow(row),
+        caso: row.casos ? { titulo: row.casos.titulo } : null,
+        cliente: row.clientes ? { nome: row.clientes.nome } : null,
+      }))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos', 'database_error')
+    }
+  },
+
+  /**
+   * Busca documentos arquivados (soft deleted)
+   */
+  async getDocumentosArquivados(): Promise<DocumentoRow[]> {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
+        .from('documentos')
+        .select('*, casos:caso_id(titulo), clientes:cliente_id(nome)')
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
+
+      if (error) throw new AppError(error.message, 'database_error')
+      return (data || []).map((row: any) => ({
+        ...mapDbDocumentoToDocumentoRow(row),
+        caso: row.casos ? { titulo: row.casos.titulo } : null,
+        cliente: row.clientes ? { nome: row.clientes.nome } : null,
+      }))
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao buscar documentos arquivados', 'database_error')
     }
   },
 
@@ -235,6 +343,10 @@ export const documentosService = {
       if (!isFartechAdmin) {
         payload.org_id = orgId
       }
+      // Adicionar cliente_id e lead_id se fornecidos
+      if ((documento as any).cliente_id) payload.cliente_id = (documento as any).cliente_id
+      if ((documento as any).lead_id) payload.lead_id = (documento as any).lead_id
+      
       const { data, error } = await supabase
         .from('documentos')
         .insert([payload])
@@ -299,7 +411,7 @@ export const documentosService = {
   },
 
   /**
-   * Deleta um documento
+   * Deleta um documento (hard delete)
    */
   async deleteDocumento(id: string): Promise<void> {
     try {
@@ -329,6 +441,82 @@ export const documentosService = {
   },
 
   /**
+   * Arquiva um documento (soft delete)
+   */
+  async arquivarDocumento(id: string): Promise<DocumentoRow> {
+    try {
+      const { orgId, isFartechAdmin, userId } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
+        .from('documentos')
+        .update({
+          deleted_at: new Date().toISOString(),
+          deleted_by: userId || null,
+        })
+        .eq('id', id)
+        .select('*')
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      if (!data) throw new AppError('Documento nao encontrado', 'not_found')
+
+      const auditOrgId = orgId || (data as DbDocumentoRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'archive',
+        entity: 'documentos',
+        entityId: id,
+        details: { archived_by: userId },
+      })
+
+      return mapDbDocumentoToDocumentoRow(data as DbDocumentoRow)
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao arquivar documento', 'database_error')
+    }
+  },
+
+  /**
+   * Restaura um documento arquivado
+   */
+  async restaurarDocumento(id: string): Promise<DocumentoRow> {
+    try {
+      const { orgId, isFartechAdmin, userId } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
+        .from('documentos')
+        .update({
+          deleted_at: null,
+          deleted_by: null,
+        })
+        .eq('id', id)
+        .select('*')
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      if (!data) throw new AppError('Documento nao encontrado', 'not_found')
+
+      const auditOrgId = orgId || (data as DbDocumentoRow).org_id || null
+      void logAuditChange({
+        orgId: auditOrgId,
+        action: 'restore',
+        entity: 'documentos',
+        entityId: id,
+        details: { restored_by: userId },
+      })
+
+      return mapDbDocumentoToDocumentoRow(data as DbDocumentoRow)
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao restaurar documento', 'database_error')
+    }
+  },
+
+  /**
    * Marca documento como completo
    */
   async marcarCompleto(id: string): Promise<DocumentoRow> {
@@ -354,6 +542,52 @@ export const documentosService = {
    */
   async marcarPendente(id: string): Promise<DocumentoRow> {
     return this.updateDocumento(id, { status: 'pendente' })
+  },
+
+  /**
+   * Marca documento como visualizado
+   */
+  async marcarVisualizado(id: string): Promise<DocumentoRow> {
+    try {
+      const { orgId, isFartechAdmin, userId } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      // Primeiro, buscar o documento atual para obter o meta existente
+      const docAtual = await this.getDocumento(id)
+      const metaAtual = (docAtual as any).meta || {}
+      
+      // Atualizar meta com informações de visualização
+      const novoMeta = {
+        ...metaAtual,
+        visualizado: true,
+        visualizado_at: new Date().toISOString(),
+        visualizado_por: userId,
+      }
+
+      const query = supabase
+        .from('documentos')
+        .update({ meta: novoMeta })
+        .eq('id', id)
+        .select('*')
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      if (!data) throw new AppError('Documento nao encontrado', 'not_found')
+
+      void logAuditChange({
+        orgId,
+        action: 'view',
+        entity: 'documentos',
+        entityId: id,
+        details: { viewed_by: userId },
+      })
+
+      return mapDbDocumentoToDocumentoRow(data as any)
+    } catch (error) {
+      throw error instanceof AppError ? error : new AppError('Erro ao marcar documento como visualizado', 'database_error')
+    }
   },
 
   /**

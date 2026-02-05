@@ -114,11 +114,13 @@ const mapDbCasoToCasoRow = (row: DbCasoRow): CasoRow => ({
   heat: null,
   stage: normalizeStage(row.fase_atual) || mapDbStatusToStage(row.status),
   valor: row.valor_estimado || null,
+  valor_estimado: row.valor_estimado || null,
   sla_risk: null,
   tags: null,
   responsavel: null,
   data_abertura: row.created_at,
   data_encerramento: row.encerrado_em || null,
+  encerrado_em: row.encerrado_em || null,
   cliente: row.cliente || null,
 })
 

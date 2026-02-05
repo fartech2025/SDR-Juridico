@@ -4,6 +4,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { organizationsService } from '@/services/organizationsService'
 import { permissionsService } from '@/services/permissionsService'
+import { setHealthCheckAuthState } from '@/lib/health'
+import { supabase } from '@/lib/supabaseClient'
 import type {
   Organization,
   OrganizationSettings,
@@ -105,10 +107,13 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       setIsLoading(true)
       setError(null)
 
+      console.log('🔍 [OrgContext] Iniciando loadCurrentOrg...')
       const user = await permissionsService.getCurrentUser()
+      console.log('🔍 [OrgContext] User from permissionsService:', user)
       
       // If no user, they're not logged in - just finish loading
       if (!user) {
+        console.log('⚠️ [OrgContext] Nenhum usuário encontrado')
         setIsFartechAdmin(false)
         setCurrentRole(null)
         setCurrentOrg(null)
@@ -121,10 +126,13 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       setIsFartechAdmin(isFartech)
       
       setCurrentRole(user.role || null)
+      console.log('🔍 [OrgContext] user.org_id:', user.org_id, '| isFartech:', isFartech, '| role:', user.role)
 
       if (user.org_id) {
         try {
+          console.log('🔍 [OrgContext] Buscando org:', user.org_id)
           const org = await organizationsService.getById(user.org_id)
+          console.log('🔍 [OrgContext] Org encontrada:', org?.id, org?.name)
           
           // Se não encontrar, criar org genérica para não travar
           if (!org) {
@@ -142,6 +150,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
         setCurrentOrg(fallbackOrg)
       }
       } else {
+        console.warn('⚠️ [OrgContext] user.org_id é null/undefined!')
         setCurrentOrg(null)
       }
     } catch (err) {
@@ -153,6 +162,13 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       setIsLoading(false)
     }
   }, [])
+
+  // Sincronizar estado de auth com health checks
+  useEffect(() => {
+    const hasUser = !!currentOrg || isFartechAdmin
+    const hasOrg = !!currentOrg && currentOrg.status === 'active'
+    setHealthCheckAuthState(hasUser, hasOrg)
+  }, [currentOrg, isFartechAdmin])
 
   // Load organization stats
   const loadStats = async (orgId: string) => {
@@ -224,6 +240,39 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   // Load on mount
   useEffect(() => {
     loadCurrentOrg()
+  }, [loadCurrentOrg])
+
+  // Escutar mudanças de autenticação para recarregar org
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 [OrgContext] Auth state changed:', event, !!session?.user)
+      
+      // Recarregar organização quando:
+      // - Usuário faz login (SIGNED_IN)
+      // - Token é atualizado (TOKEN_REFRESHED) 
+      // - Usuário troca de conta (USER_UPDATED)
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        // Pequeno delay para garantir que o token está sincronizado
+        setTimeout(() => {
+          console.log('🔄 [OrgContext] Recarregando organização...')
+          loadCurrentOrg()
+        }, 100)
+      }
+      
+      // Limpar estado quando usuário faz logout
+      if (event === 'SIGNED_OUT') {
+        setCurrentOrg(null)
+        setIsFartechAdmin(false)
+        setCurrentRole(null)
+        setStats(null)
+        setUsage(null)
+        setAllOrgs([])
+      }
+    })
+
+    return () => {
+      authListener?.subscription?.unsubscribe?.()
+    }
   }, [loadCurrentOrg])
 
   const value: OrganizationContextValue = {

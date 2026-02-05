@@ -179,10 +179,37 @@ interface DadosContrato {
   observacoes: string
 }
 
+// Prefixos para cada tipo de documento
+const PREFIXOS_DOCUMENTO: Record<string, string> = {
+  peticao_inicial: 'PI',
+  contestacao: 'CONT',
+  recurso: 'REC',
+  procuracao: 'PROC',
+  contrato: 'CTR',
+  documento_pessoal: 'DOC',
+  comprovante: 'COMP',
+  laudo: 'LAUDO',
+  sentenca: 'SENT',
+  acordo: 'ACO',
+  outro: 'OUT',
+}
+
+// Função para gerar número interno único para qualquer tipo de documento
+const gerarNumeroIdDocumento = (tipo: string) => {
+  const data = new Date()
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase()
+  const prefixo = PREFIXOS_DOCUMENTO[tipo] || 'DOC'
+  return `${prefixo}-${ano}${mes}${dia}-${aleatorio}`
+}
+
 export function UploadDocumentos({ casoId, orgId, onUploadComplete, className, disabled = false }: UploadDocumentosProps) {
   const [arquivos, setArquivos] = React.useState<ArquivoUpload[]>([])
   const [dragActive, setDragActive] = React.useState(false)
   const [tipoDocumento, setTipoDocumento] = React.useState('')
+  const [numeroIdDocumento, setNumeroIdDocumento] = React.useState('')
   const [observacao, setObservacao] = React.useState('')
   const [dadosProcuracao, setDadosProcuracao] = React.useState<DadosProcuracao>({
     tipo: '',
@@ -208,6 +235,26 @@ export function UploadDocumentos({ casoId, orgId, onUploadComplete, className, d
     cartorio: '',
     testemunhas: '',
   })
+
+  // Gera número interno automaticamente quando seleciona qualquer tipo de documento
+  React.useEffect(() => {
+    if (tipoDocumento && !numeroIdDocumento) {
+      const novoNumero = gerarNumeroIdDocumento(tipoDocumento)
+      setNumeroIdDocumento(novoNumero)
+      // Se for procuração, também atualiza o campo específico
+      if (tipoDocumento === 'procuracao') {
+        setDadosProcuracao(prev => ({ ...prev, numeroId: novoNumero }))
+      }
+    }
+  }, [tipoDocumento])
+
+  // Sincroniza o número do documento principal com o da procuração
+  React.useEffect(() => {
+    if (tipoDocumento === 'procuracao' && numeroIdDocumento) {
+      setDadosProcuracao(prev => ({ ...prev, numeroId: numeroIdDocumento }))
+    }
+  }, [numeroIdDocumento, tipoDocumento])
+
   const [dadosContestacao, setDadosContestacao] = React.useState<DadosContestacao>({
     status: 'rascunho',
     numeroProcesso: '',
@@ -391,12 +438,17 @@ export function UploadDocumentos({ casoId, orgId, onUploadComplete, className, d
 
       // Preparar descrição com dados da procuração, contestação ou contrato se aplicável
       let descricaoCompleta = observacao || ''
+      const dadosBase = { observacao, numeroId: numeroIdDocumento }
+      
       if (tipoDocumento === 'procuracao') {
-        descricaoCompleta = JSON.stringify({ observacao, dadosProcuracao })
+        descricaoCompleta = JSON.stringify({ ...dadosBase, dadosProcuracao })
       } else if (tipoDocumento === 'contestacao') {
-        descricaoCompleta = JSON.stringify({ observacao, dadosContestacao })
+        descricaoCompleta = JSON.stringify({ ...dadosBase, dadosContestacao })
       } else if (tipoDocumento === 'contrato') {
-        descricaoCompleta = JSON.stringify({ observacao, dadosContrato })
+        descricaoCompleta = JSON.stringify({ ...dadosBase, dadosContrato })
+      } else if (tipoDocumento) {
+        // Para outros tipos de documento, inclui apenas o número ID e observação
+        descricaoCompleta = JSON.stringify(dadosBase)
       }
 
       // Fazer upload
@@ -423,6 +475,7 @@ export function UploadDocumentos({ casoId, orgId, onUploadComplete, className, d
       )
       if (todosCompletos) {
         setTipoDocumento('')
+        setNumeroIdDocumento('')
         setObservacao('')
       }
       
@@ -480,6 +533,36 @@ export function UploadDocumentos({ casoId, orgId, onUploadComplete, className, d
               <option value="outro">Outro</option>
             </select>
           </div>
+
+          {/* Campo Número/ID Interno - aparece para todos os tipos */}
+          {tipoDocumento && (
+            <div>
+              <label htmlFor="numeroIdDocumento" className="block text-sm font-medium text-text mb-2">
+                Número/ID Interno
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="numeroIdDocumento"
+                  type="text"
+                  value={numeroIdDocumento}
+                  onChange={(e) => setNumeroIdDocumento(e.target.value)}
+                  placeholder="Gerado automaticamente"
+                  className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => setNumeroIdDocumento(gerarNumeroIdDocumento(tipoDocumento))}
+                  className="px-3 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors"
+                  title="Gerar novo número"
+                >
+                  Gerar Novo
+                </button>
+              </div>
+              <p className="text-xs text-text-muted mt-1">
+                Este número será usado como identificador único do documento no sistema
+              </p>
+            </div>
+          )}
 
           <div>
             <label htmlFor="observacao" className="block text-sm font-medium text-text mb-2">

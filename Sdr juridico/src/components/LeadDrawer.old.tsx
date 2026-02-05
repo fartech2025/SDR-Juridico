@@ -489,40 +489,30 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
         {/* Footer */}
         <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
           <div className="flex items-center gap-3">
-            {lead.phone && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const phoneNumber = lead.phone?.replace(/\D/g, '')
-                  window.open(`https://wa.me/55${phoneNumber}`, '_blank')
-                }}
-                className="flex-1 relative z-10 cursor-pointer"
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Enviar WhatsApp
-              </Button>
-            )}
-            {relatedCase ? (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => navigate(`/app/caso/${relatedCase.id}`)}
-                className="flex-1 relative z-10 cursor-pointer"
-              >
-                Abrir dossiê
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => navigate(`/app/leads?convert=${lead.id}`)}
-                className="flex-1 relative z-10 cursor-pointer"
-              >
-                Converter em caso
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/app/leads')}
+              className="flex-1"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Enviar mensagem
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => relatedCase && navigate(`/app/caso/${relatedCase.id}`)}
+              disabled={!relatedCase}
+              className="flex-1"
+            >
+              Abrir dossiê
+            </Button>
           </div>
+          {!relatedCase && (
+            <p className="mt-2 text-xs text-gray-500 text-center">
+              Nenhum dossiê vinculado a este lead.
+            </p>
+          )}
         </div>
       </aside>
     </div>,

@@ -67,19 +67,27 @@ export interface UsuarioRow {
 export interface LeadRow {
   id: string
   created_at: string
-  updated_at: string
+  updated_at?: string
   org_id?: string | null
-  nome: string
-  email: string
+  nome: string | null
+  email: string | null
   telefone: string | null
-  empresa: string | null
-  area: string | null
+  area?: string | null
   origem: string | null
   status: LeadStatus
-  heat: LeadHeat
-  ultimo_contato: string | null
-  responsavel: string | null
-  observacoes: string | null
+  heat: LeadHeat | string | null
+  last_contact_at: string | null // Corrigido: era ultimo_contato
+  assigned_user_id: string | null // Corrigido: era responsavel
+  observacoes?: string | null
+  assunto?: string | null
+  resumo?: string | null
+  // Campos legado - mantidos para compatibilidade
+  empresa?: string | null
+  responsavel?: string | null
+  ultimo_contato?: string | null
+  // Soft delete fields
+  deleted_at?: string | null
+  deleted_by?: string | null
 }
 
 export interface ClienteRow {
@@ -107,26 +115,42 @@ export interface ClienteRow {
 export interface CasoRow {
   id: string
   created_at: string
-  updated_at: string
+  updated_at?: string
   org_id?: string | null
   titulo: string
   descricao: string | null
   cliente_id: string | null
   lead_id: string | null
-  area: string
+  area: string | null
   status: CaseStatus
-  prioridade: CasePriority
-  heat: LeadHeat | null
-  stage: CaseStage | null
-  valor: number | null
-  sla_risk: SlaRisk | null
+  prioridade: number | CasePriority
+  heat: LeadHeat | string | null
+  stage?: CaseStage | string | null
+  fase_atual?: string | null
+  valor_estimado: number | null // Corrigido: era valor
+  sla_risk: SlaRisk | string | null
   tags: string[] | null
-  responsavel: string | null
-  data_abertura: string | null
-  data_encerramento: string | null
+  responsavel_user_id?: string | null // Adicionado campo correto
+  encerrado_em: string | null // Corrigido: era data_encerramento
+  // DataJud fields
+  numero_processo?: string | null
+  tribunal?: string | null
+  grau?: string | null
+  classe_processual?: string | null
+  assunto_principal?: string | null
+  datajud_processo_id?: string | null
+  datajud_sync_status?: string | null
+  datajud_last_sync_at?: string | null
+  datajud_sync_error?: string | null
+  // Legado - JOINs
   cliente?: {
     nome: string | null
   } | null
+  // Campos legado para compatibilidade
+  valor?: number | null
+  data_encerramento?: string | null
+  responsavel?: string | null
+  data_abertura?: string | null
 }
 
 export interface DocumentoRow {
@@ -137,6 +161,8 @@ export interface DocumentoRow {
   titulo: string
   descricao: string | null
   caso_id: string | null
+  cliente_id: string | null
+  lead_id: string | null
   cliente_nome: string | null
   tipo: string
   status: 'pendente' | 'aprovado' | 'rejeitado' | 'solicitado' | 'completo'
@@ -146,12 +172,20 @@ export interface DocumentoRow {
   mime_type: string | null
   solicitado_por: string | null
   tags: string[] | null
+  // Soft delete fields
+  deleted_at?: string | null
+  deleted_by?: string | null
+  // Campos de JOIN (opcionais)
+  caso?: { titulo: string } | null
+  cliente?: { nome: string } | null
+  lead?: { nome: string } | null
 }
 
 export interface AgendaRow {
   id: string
   created_at: string
   updated_at: string
+  org_id?: string | null
   titulo: string
   descricao: string | null
   tipo: string
@@ -161,10 +195,15 @@ export interface AgendaRow {
   cliente_nome: string | null
   cliente_id: string | null
   caso_id: string | null
-  responsavel: string
+  lead_id: string | null
+  responsavel: string | null // Mapeado do meta.responsavel
+  owner_user_id?: string | null // Campo real do banco
   local: string | null
   status: 'confirmado' | 'pendente' | 'cancelado' | 'concluido'
   observacoes: string | null
+  // Campos de integração externa
+  external_event_id?: string | null
+  external_provider?: string | null
 }
 
 export interface TarefaRow {
@@ -187,6 +226,9 @@ export interface TarefaRow {
   dificuldade?: TaskDifficulty | null
   assignee_ids?: string[] | null
   tarefas_assignees?: Array<{ user_id: string }> | null
+  // Soft delete fields
+  deleted_at?: string | null
+  deleted_by?: string | null
 }
 
 export interface TarefaAssigneeRow {
@@ -235,4 +277,34 @@ export interface DatajudMovimentacaoRow {
   descricao: string | null
   codigo: string | null
   payload: Record<string, unknown> | null
+}
+
+// Histórico de Status de Tarefas
+export interface TarefaStatusHistoryRow {
+  id: string
+  created_at: string
+  tarefa_id: string
+  org_id: string
+  status_anterior: string | null
+  status_novo: string
+  changed_by: string | null
+  changed_by_name?: string | null
+  motivo: string | null
+  metadata?: Record<string, unknown> | null
+}
+
+// Histórico de Status de Leads
+export interface LeadStatusHistoryRow {
+  id: string
+  created_at: string
+  lead_id: string
+  org_id: string
+  status_anterior: string | null
+  status_novo: string
+  heat_anterior: string | null
+  heat_novo: string | null
+  changed_by: string | null
+  changed_by_name?: string | null
+  motivo: string | null
+  metadata?: Record<string, unknown> | null
 }

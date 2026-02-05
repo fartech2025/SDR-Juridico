@@ -3,7 +3,7 @@ import { telemetryService } from '@/services/telemetryService'
 
 type AuditChangeInput = {
   orgId: string | null
-  action: 'create' | 'update' | 'delete' | 'request_document' | 'attach_document' | 'submit_for_validation' | 'approve' | 'reject' | 'datajud_search' | 'datajud_link' | 'datajud_unlink' | 'datajud_sync'
+  action: 'create' | 'update' | 'delete' | 'request_document' | 'attach_document' | 'submit_for_validation' | 'approve' | 'reject' | 'datajud_search' | 'datajud_link' | 'datajud_unlink' | 'datajud_sync' | 'archive' | 'restore' | 'view' | 'soft_delete' | 'hard_delete'
   entity: string
   entityId: string | null
   details?: Record<string, any> | null

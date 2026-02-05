@@ -73,6 +73,8 @@ const mapDbLeadToLeadRow = (row: DbLeadRow): LeadRow => {
     ultimo_contato: row.last_contact_at || null,
     responsavel: qualificacao.responsavel ?? null,
     observacoes: row.resumo || qualificacao.observacoes || null,
+    last_contact_at: row.last_contact_at || null,
+    assigned_user_id: row.assigned_user_id || null,
   }
 }
 
@@ -156,7 +158,7 @@ export const leadsService = {
       )
     }
   },
-  // Buscar todos os leads
+  // Buscar todos os leads (apenas não deletados)
   async getLeads() {
     try {
       const { orgId, isFartechAdmin } = await resolveOrgScope()
@@ -167,6 +169,7 @@ export const leadsService = {
         .select(
           'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
         )
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
@@ -330,8 +333,106 @@ export const leadsService = {
     }
   },
 
-  // Deletar lead
+  // Deletar lead (Soft Delete)
   async deleteLead(id: string) {
+    try {
+      const { orgId, isFartechAdmin, userId } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      // Soft delete: apenas marca deleted_at
+      const query = supabase
+        .from('leads')
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: userId 
+        })
+        .eq('id', id)
+        .select('id')
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      void logAuditChange({
+        orgId,
+        action: 'soft_delete',
+        entity: 'leads',
+        entityId: id,
+        details: {},
+      })
+      return data
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : 'Erro ao deletar lead',
+        'database_error'
+      )
+    }
+  },
+
+  // Restaurar lead soft deleted
+  async restoreLead(id: string) {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
+        .from('leads')
+        .update({ 
+          deleted_at: null,
+          deleted_by: null 
+        })
+        .eq('id', id)
+        .select(
+          'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at'
+        )
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      void logAuditChange({
+        orgId,
+        action: 'restore',
+        entity: 'leads',
+        entityId: id,
+        details: {},
+      })
+      return mapDbLeadToLeadRow(data as DbLeadRow)
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : 'Erro ao restaurar lead',
+        'database_error'
+      )
+    }
+  },
+
+  // Buscar leads deletados (para lixeira)
+  async getDeletedLeads() {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) return []
+
+      const query = supabase
+        .from('leads')
+        .select(
+          'id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at, deleted_at'
+        )
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false })
+      const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
+
+      if (error) throw new AppError(error.message, 'database_error')
+      return (data || []).map((row: DbLeadRow) => mapDbLeadToLeadRow(row))
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : 'Erro ao buscar leads deletados',
+        'database_error'
+      )
+    }
+  },
+
+  // Deletar permanentemente (hard delete)
+  async hardDeleteLead(id: string) {
     try {
       const { orgId, isFartechAdmin } = await resolveOrgScope()
       if (!isFartechAdmin && !orgId) {
@@ -344,14 +445,14 @@ export const leadsService = {
       if (error) throw new AppError(error.message, 'database_error')
       void logAuditChange({
         orgId,
-        action: 'delete',
+        action: 'hard_delete',
         entity: 'leads',
         entityId: id,
         details: {},
       })
     } catch (error) {
       throw new AppError(
-        error instanceof Error ? error.message : 'Erro ao deletar lead',
+        error instanceof Error ? error.message : 'Erro ao deletar permanentemente lead',
         'database_error'
       )
     }

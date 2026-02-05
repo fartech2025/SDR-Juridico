@@ -28,6 +28,9 @@ type DbTarefaRow = {
   confirmed_at?: string | null
   confirmed_by?: string | null
   rejected_reason?: string | null
+  // Soft delete fields
+  deleted_at?: string | null
+  deleted_by?: string | null
 }
 
 type TarefaInsert = Partial<DbTarefaRow> & {
@@ -181,6 +184,7 @@ export const tarefasService = {
   async getTarefas(options?: {
     userId?: string
     isGestor?: boolean
+    includeDeleted?: boolean
   }): Promise<TarefaRow[]> {
     const { orgId, isFartechAdmin } = await resolveOrgScope()
     if (!isFartechAdmin && !orgId) return []
@@ -189,6 +193,11 @@ export const tarefasService = {
       .from('tarefas')
       .select('*')
       .order('due_at', { ascending: true, nullsFirst: false })
+
+    // Filtrar registros soft deleted (exceto se explicitamente solicitado)
+    if (!options?.includeDeleted) {
+      query = query.is('deleted_at', null)
+    }
 
     if (!isFartechAdmin) {
       query = query.eq('org_id', orgId)
@@ -212,7 +221,8 @@ export const tarefasService = {
    */
   async getTarefasByEntidade(
     entidade: 'lead' | 'cliente' | 'caso',
-    entidadeId: string
+    entidadeId: string,
+    includeDeleted = false
   ): Promise<TarefaRow[]> {
     const { orgId } = await resolveOrgScope()
     if (!orgId) return []
@@ -221,13 +231,20 @@ export const tarefasService = {
       throw new AppError('Tipo de entidade invalido', 'validation_error')
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('tarefas')
       .select('*')
       .eq('entidade', entidade)
       .eq('entidade_id', entidadeId)
       .eq('org_id', orgId)
       .order('due_at', { ascending: true, nullsFirst: false })
+
+    // Filtrar registros soft deleted (exceto se explicitamente solicitado)
+    if (!includeDeleted) {
+      query = query.is('deleted_at', null)
+    }
+
+    const { data, error } = await query
 
     if (error) {
       throw new AppError(`Erro ao buscar tarefas: ${error.message}`, 'database_error')
@@ -356,19 +373,27 @@ export const tarefasService = {
   },
 
   /**
-   * Deleta uma tarefa.
+   * Deleta uma tarefa (soft delete).
+   * O registro não é removido, apenas marcado com deleted_at.
    */
   async deleteTarefa(id: string): Promise<void> {
-    const { orgId } = await resolveOrgScope()
+    const { orgId, userId } = await resolveOrgScope()
     if (!orgId) {
       throw new AppError('Organizacao nao encontrada', 'auth_error')
     }
 
+    const now = new Date().toISOString()
+
+    // Soft delete: marca deleted_at em vez de remover
     const { error } = await supabase
       .from('tarefas')
-      .delete()
+      .update({
+        deleted_at: now,
+        deleted_by: userId,
+      })
       .eq('id', id)
       .eq('org_id', orgId)
+      .is('deleted_at', null) // Só deleta se não estiver já deletado
 
     if (error) {
       throw new AppError(`Erro ao deletar tarefa: ${error.message}`, 'database_error')
@@ -379,8 +404,80 @@ export const tarefasService = {
       action: 'delete',
       entity: 'tarefas',
       entityId: id,
-      details: {},
+      details: { soft_delete: true, deleted_at: now },
     })
+  },
+
+  /**
+   * Restaura uma tarefa soft deleted.
+   */
+  async restoreTarefa(id: string): Promise<TarefaRow> {
+    const { orgId } = await resolveOrgScope()
+    if (!orgId) {
+      throw new AppError('Organizacao nao encontrada', 'auth_error')
+    }
+
+    const { data, error } = await supabase
+      .from('tarefas')
+      .update({
+        deleted_at: null,
+        deleted_by: null,
+      })
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .not('deleted_at', 'is', null) // Só restaura se estiver deletado
+      .select('*')
+      .single()
+
+    if (error) {
+      throw new AppError(`Erro ao restaurar tarefa: ${error.message}`, 'database_error')
+    }
+
+    if (!data) {
+      throw new AppError('Tarefa nao encontrada ou ja esta ativa', 'not_found')
+    }
+
+    void logAuditChange({
+      orgId,
+      action: 'update',
+      entity: 'tarefas',
+      entityId: id,
+      details: { restored: true },
+    })
+
+    return mapDbTarefaToRow(data as DbTarefaRow)
+  },
+
+  /**
+   * Lista tarefas deletadas (para recuperação).
+   */
+  async getDeletedTarefas(): Promise<TarefaRow[]> {
+    const { orgId, isFartechAdmin } = await resolveOrgScope()
+    if (!isFartechAdmin && !orgId) return []
+
+    // Só gestores podem ver tarefas deletadas
+    const isAdminish = await isCurrentUserAdminish()
+    if (!isAdminish) {
+      throw new AppError('Apenas gestores podem ver tarefas deletadas', 'permission_denied')
+    }
+
+    let query = supabase
+      .from('tarefas')
+      .select('*')
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false })
+
+    if (!isFartechAdmin) {
+      query = query.eq('org_id', orgId)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      throw new AppError(`Erro ao buscar tarefas deletadas: ${error.message}`, 'database_error')
+    }
+
+    return (data || []).map((row: DbTarefaRow) => mapDbTarefaToRow(row))
   },
 
   /**

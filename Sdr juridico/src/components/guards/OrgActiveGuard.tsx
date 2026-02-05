@@ -49,24 +49,36 @@ export function OrgActiveGuard({
   loadingComponent = <div>Verificando organização...</div>,
   allowFartechAdmin = true,
 }: OrgActiveGuardProps) {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const isOrgActive = useIsOrgActive()
   const isFartechAdmin = useIsFartechAdmin()
-  const { currentOrg, loading, isLoading } = useOrganization()
+  const { currentOrg, loading, isLoading, error } = useOrganization()
   
-  // Still loading org data
-  if (loading || isLoading) {
+  // Auth ainda carregando - aguardar
+  if (authLoading) {
     return <>{loadingComponent}</>
   }
   
-  // Not authenticated - redirect to login
+  // Not authenticated - redirect to login ANTES de checar org
   if (!user) {
     return <Navigate to="/login" replace />
+  }
+  
+  // Still loading org data (com usuário autenticado)
+  if (loading || isLoading) {
+    return <>{loadingComponent}</>
   }
   
   // Fartech admins can bypass org status check
   if (allowFartechAdmin && isFartechAdmin) {
     return <>{children}</>
+  }
+  
+  // Se houve erro ao carregar org (mas usuário está logado), 
+  // não redirecionar imediatamente - pode ser erro temporário
+  if (error) {
+    console.error('Erro ao carregar organização:', error)
+    // Se o erro persistir, podemos tentar novamente ou mostrar mensagem
   }
   
   // No org assigned - redirect to no-organization page

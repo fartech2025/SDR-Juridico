@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown } from 'lucide-react'
+import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown, Bug } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
@@ -17,15 +17,19 @@ import {
   testarConexao,
   buscarProcessosPorParte,
   buscarProcessosPorClasse,
+  buscarProcessosPorCpfCnpj,
+  buscarProcessosPorCpfMultiTribunal,
   buscaAvancada,
   extrairInfoProcesso,
   buscarProcessoAutomatico,
   formatarNumeroProcesso,
+  debugAuthState,
+  detectarTribunalPorNumero,
   type ProcessoDataJud,
 } from '@/services/datajudService'
 import { cn } from '@/utils/cn'
 
-type TipoBusca = 'numero' | 'parte' | 'classe' | 'avancada'
+type TipoBusca = 'numero' | 'cpf' | 'parte' | 'classe' | 'avancada'
 
 const tribunais = [
   // Tribunais Superiores (4)
@@ -132,12 +136,13 @@ const tribunais = [
   { id: 'tjto', nome: 'TJTO - Tribunal de Justiça do Tocantins' },
 ]
 
+// Tipo para dados complementares do Querido Diário
 export const DataJudPage = () => {
   const navigate = useNavigate()
   const [conectado, setConectado] = React.useState<boolean>(false)
   const [testando, setTestando] = React.useState<boolean>(false)
   const [buscando, setBuscando] = React.useState<boolean>(false)
-  const [configurado, setConfigurado] = React.useState<boolean>(false)
+  const [configurado, setConfigurado] = React.useState<boolean>(true) // API pública, sempre configurada
   const [tipoBusca, setTipoBusca] = React.useState<TipoBusca>('numero')
   const [tribunal, setTribunal] = React.useState<string>('trf1')
   const [resultados, setResultados] = React.useState<ProcessoDataJud[]>([])
@@ -146,35 +151,44 @@ export const DataJudPage = () => {
   // Campos de busca
   const [numeroProcesso, setNumeroProcesso] = React.useState<string>('')
   const [nomeParte, setNomeParte] = React.useState<string>('')
+  const [cpfCnpj, setCpfCnpj] = React.useState<string>('')
   const [classe, setClasse] = React.useState<string>('')
+  const [buscarMultiTribunal, setBuscarMultiTribunal] = React.useState<boolean>(true)
+
+  // Tribunal detectado automaticamente
+  const tribunalDetectado = React.useMemo(() => {
+    if (tipoBusca === 'numero' && numeroProcesso.length >= 18) {
+      return detectarTribunalPorNumero(numeroProcesso)
+    }
+    return { tribunal: null, nomeCompleto: null, segmento: null }
+  }, [numeroProcesso, tipoBusca])
   const [orgao, setOrgao] = React.useState<string>('')
   const [dataInicio, setDataInicio] = React.useState<string>('')
   const [dataFim, setDataFim] = React.useState<string>('')
 
+  // Testar conexão ao carregar a página
   React.useEffect(() => {
-    let ativo = true
-    isDataJudConfigured()
-      .then((ok) => {
-        if (!ativo) return
-        setConfigurado(ok)
-        if (ok) {
-          handleTestarConexao()
-        }
-      })
-      .catch(() => {
-        if (ativo) {
-          setConfigurado(false)
-        }
-      })
-    return () => {
-      ativo = false
-    }
+    handleTestarConexao()
   }, [])
+
+  const handleDebugAuth = async () => {
+    console.log('🔍 [DataJud] Verificando estado de autenticação...')
+    const authState = await debugAuthState()
+    console.log('📋 [DataJud] Estado da autenticação:', authState)
+    
+    if (authState.hasSession) {
+      toast.success(`✅ Sessão ativa: ${authState.user?.email}\nToken expira: ${authState.expiresAt}`)
+    } else {
+      toast.error(`❌ ${authState.error || 'Sem sessão ativa'}`)
+    }
+  }
 
   const handleTestarConexao = async () => {
     setTestando(true)
     try {
+      console.log('🧪 [DataJud] Testando conexão direta...')
       const resultado = await testarConexao()
+      console.log('📋 [DataJud] Resultado do teste:', resultado)
       setConectado(resultado.sucesso)
       if (resultado.sucesso) {
         toast.success(resultado.mensagem)
@@ -182,6 +196,7 @@ export const DataJudPage = () => {
         toast.error(resultado.mensagem)
       }
     } catch (error) {
+      console.error('❌ [DataJud] Erro:', error)
       toast.error('Erro ao testar conexão')
       setConectado(false)
     } finally {
@@ -190,17 +205,12 @@ export const DataJudPage = () => {
   }
 
   const handleBuscar = async () => {
-    const ok = await isDataJudConfigured()
-    if (!ok) {
-      setConfigurado(false)
-      toast.error('API DataJud não configurada. Configure em .env')
-      return
-    }
-    setConfigurado(true)
-
     setBuscando(true)
+    
     try {
       let resultado
+      let processos: ProcessoDataJud[] = []
+      let total = 0
 
       switch (tipoBusca) {
         case 'numero':
@@ -219,6 +229,7 @@ export const DataJudPage = () => {
             setTotalEncontrado(1)
             setTribunal(buscaAuto.tribunal!)
             toast.success(`Processo encontrado no ${buscaAuto.tribunal?.toUpperCase()}`)
+            
             setBuscando(false)
             return
           } else {
@@ -226,6 +237,65 @@ export const DataJudPage = () => {
             setBuscando(false)
             return
           }
+
+        case 'cpf':
+          if (!cpfCnpj.trim()) {
+            toast.error('Digite o CPF ou CNPJ')
+            setBuscando(false)
+            return
+          }
+          
+          const cpfLimpo = cpfCnpj.replace(/\D/g, '')
+          if (cpfLimpo.length < 11) {
+            toast.error('CPF deve ter 11 dígitos, CNPJ deve ter 14 dígitos')
+            setBuscando(false)
+            return
+          }
+
+          if (buscarMultiTribunal) {
+            // Busca em múltiplos tribunais
+            toast.info('Buscando em múltiplos tribunais... Isso pode levar alguns segundos.')
+            const resultadoMulti = await buscarProcessosPorCpfMultiTribunal(cpfLimpo)
+            processos = resultadoMulti.processos
+            total = resultadoMulti.total
+            
+            if (resultadoMulti.tribunaisConsultados.length > 0) {
+              toast.success(
+                `Encontrados ${total} processos em ${resultadoMulti.tribunaisConsultados.length} tribunais: ${resultadoMulti.tribunaisConsultados.map(t => t.toUpperCase()).join(', ')}`
+              )
+            }
+            if (resultadoMulti.erros.length > 0) {
+              console.warn('Erros em alguns tribunais:', resultadoMulti.erros)
+            }
+          } else {
+            // Busca em tribunal específico
+            toast.info(`Buscando no ${tribunal.toUpperCase()}...`)
+            const resultadoCpf = await buscarProcessosPorCpfCnpj(cpfLimpo, tribunal)
+            processos = resultadoCpf.processos
+            total = resultadoCpf.total
+            
+            if (total > 0) {
+              toast.success(`Encontrados ${total} processos no ${tribunal.toUpperCase()}`)
+            }
+          }
+          
+          setResultados(processos)
+          setTotalEncontrado(total)
+          
+          if (total === 0) {
+            toast.info('Nenhum processo encontrado para este CPF/CNPJ')
+          }
+          
+          // Registrar consulta
+          registrarConsulta({
+            numero_processo: `CPF/CNPJ: ${cpfLimpo}`,
+            tribunal: buscarMultiTribunal ? 'Múltiplos' : tribunal,
+            tipo_busca: 'cpf',
+            sucesso: total > 0
+          }).catch(console.error)
+          
+          setBuscando(false)
+          return
 
         case 'parte':
           if (!nomeParte.trim()) {
@@ -245,24 +315,27 @@ export const DataJudPage = () => {
           break
 
         case 'avancada':
-          resultado = await buscaAvancada(
-            {
-              numeroProcesso: numeroProcesso || undefined,
-              nomeParte: nomeParte || undefined,
-              classe: classe || undefined,
-              orgao: orgao || undefined,
-              dataInicio: dataInicio || undefined,
-              dataFim: dataFim || undefined,
-            },
-            tribunal,
-            50
-          )
+          // Construir query string para busca avançada
+          const queryParts: string[] = []
+          if (numeroProcesso) queryParts.push(`numeroProcesso:${numeroProcesso}`)
+          if (nomeParte) queryParts.push(`parte:${nomeParte}`)
+          if (classe) queryParts.push(`classe:${classe}`)
+          if (orgao) queryParts.push(`orgao:${orgao}`)
+          if (dataInicio) queryParts.push(`dataInicio:${dataInicio}`)
+          if (dataFim) queryParts.push(`dataFim:${dataFim}`)
+          
+          const queryString = queryParts.join(' AND ') || '*'
+          resultado = await buscaAvancada(queryString, tribunal, 50)
           break
       }
 
-      const processos = resultado.hits.hits.map((hit) => hit._source)
+      if (resultado) {
+        processos = resultado.hits?.hits?.map((hit: any) => hit._source) || resultado.processos || []
+        total = resultado.hits?.total?.value || resultado.total || 0
+      }
+      
       setResultados(processos)
-      setTotalEncontrado(resultado.hits.total.value)
+      setTotalEncontrado(total)
 
       // Registrar consulta no histórico
       if (processos.length > 0 && processos[0].numeroProcesso) {
@@ -291,12 +364,33 @@ export const DataJudPage = () => {
   const limparBusca = () => {
     setNumeroProcesso('')
     setNomeParte('')
+    setCpfCnpj('')
     setClasse('')
     setOrgao('')
     setDataInicio('')
     setDataFim('')
     setResultados([])
     setTotalEncontrado(0)
+  }
+
+  // Formatar CPF/CNPJ enquanto digita
+  const formatarCpfCnpj = (valor: string) => {
+    const numeros = valor.replace(/\D/g, '')
+    if (numeros.length <= 11) {
+      // CPF: 000.000.000-00
+      return numeros
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    } else {
+      // CNPJ: 00.000.000/0000-00
+      return numeros
+        .replace(/^(\d{2})(\d)/, '$1.$2')
+        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/\.(\d{3})(\d)/, '.$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+        .substring(0, 18)
+    }
   }
 
   const renderValue = (value: any): string => {
@@ -551,26 +645,99 @@ export const DataJudPage = () => {
   const renderPolos = (processo: ProcessoDataJud) => {
     const polos = processo.dadosBasicos?.polo || []
     if (!polos.length) return null
-    return (
-      <div className="space-y-2">
-        <p className="text-text-muted text-xs mb-1">Partes</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {polos.map((polo, idx) => (
-            <div key={idx} className="rounded-xl border border-border bg-surface-2 p-3">
-              <p className="text-xs text-text-muted">
-                {polo.polo || polo.tipo || 'Parte'}
+    
+    // Separar por tipo de polo
+    const poloAtivo = polos.filter((p: any) => p.polo === 'AT' || p.polo?.toLowerCase().includes('ativo') || p.polo?.toLowerCase().includes('autor') || p.polo?.toLowerCase().includes('requerente'))
+    const poloPassivo = polos.filter((p: any) => p.polo === 'PA' || p.polo?.toLowerCase().includes('passivo') || p.polo?.toLowerCase().includes('réu') || p.polo?.toLowerCase().includes('requerido'))
+    const outrosPolos = polos.filter((p: any) => !poloAtivo.includes(p) && !poloPassivo.includes(p))
+    
+    const renderPolo = (polo: any, idx: number) => (
+      <div key={idx} className="rounded-xl border border-border bg-surface-2 p-3 hover:border-primary/30 transition-colors">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-text">
+              {polo.nome || '-'}
+            </p>
+            {polo.tipoPessoa && (
+              <p className="text-[10px] text-text-muted mt-0.5">
+                {polo.tipoPessoa === 'fisica' ? '👤 Pessoa Física' : '🏢 Pessoa Jurídica'}
               </p>
-              <p className="text-sm font-semibold text-text">
-                {polo.nome || '-'}
+            )}
+            {polo.documento && (
+              <p className="text-[10px] text-text-muted font-mono">
+                Doc: {polo.documento}
               </p>
-              {polo.tipo && (
-                <p className="text-[10px] text-text-muted mt-0.5">
-                  Tipo: {polo.tipo}
-                </p>
-              )}
-            </div>
-          ))}
+            )}
+          </div>
+          <Badge variant={polo.polo === 'AT' ? 'info' : polo.polo === 'PA' ? 'warning' : 'default'} className="text-[10px]">
+            {polo.polo || polo.tipo || 'Parte'}
+          </Badge>
         </div>
+        
+        {/* Advogados da parte */}
+        {polo.advogados && polo.advogados.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-border/50">
+            <p className="text-[10px] text-text-muted mb-1">Advogado(s):</p>
+            {polo.advogados.map((adv: any, advIdx: number) => (
+              <div key={advIdx} className="text-xs text-text flex items-center gap-1">
+                <span>⚖️</span>
+                <span className="font-medium">{adv.nome}</span>
+                {adv.inscricao && <span className="text-text-muted font-mono">OAB {adv.inscricao}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" />
+          <p className="text-text font-semibold text-base">Partes do Processo</p>
+          <Badge variant="info" className="ml-auto">{polos.length} parte(s)</Badge>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Polo Ativo */}
+          {poloAtivo.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-info flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-info"></span>
+                Polo Ativo (Autor/Requerente)
+              </p>
+              <div className="space-y-2">
+                {poloAtivo.map((polo: any, idx: number) => renderPolo(polo, idx))}
+              </div>
+            </div>
+          )}
+          
+          {/* Polo Passivo */}
+          {poloPassivo.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-warning flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-warning"></span>
+                Polo Passivo (Réu/Requerido)
+              </p>
+              <div className="space-y-2">
+                {poloPassivo.map((polo: any, idx: number) => renderPolo(polo, idx))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Outros (terceiros, etc) */}
+        {outrosPolos.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-text-muted flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+              Terceiros / Outros
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {outrosPolos.map((polo: any, idx: number) => renderPolo(polo, idx))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -578,12 +745,12 @@ export const DataJudPage = () => {
   return (
     <div
       className={cn(
-        'min-h-screen pb-12',
+        'min-h-screen pb-12 px-6 lg:px-8',
         'bg-base text-text',
       )}
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
-      <div className="space-y-5">
+      <div className="space-y-5 max-w-6xl mx-auto">
         <header
           className={cn(
             'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]',
@@ -623,15 +790,25 @@ export const DataJudPage = () => {
         <CardHeader>
           <CardTitle className="text-sm flex items-center justify-between">
             <span>Status da Conexão</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTestarConexao}
-              disabled={testando}
-            >
-              <RefreshCw className={cn('h-4 w-4 mr-2', testando && 'animate-spin')} />
-              Testar Conexão
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDebugAuth}
+                title="Debug: Verificar estado da autenticação"
+              >
+                <Bug className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestarConexao}
+                disabled={testando}
+              >
+                <RefreshCw className={cn('h-4 w-4 mr-2', testando && 'animate-spin')} />
+                Testar Conexão
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -697,10 +874,11 @@ export const DataJudPage = () => {
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {[
-              { id: 'numero' as TipoBusca, label: 'Por Número', icon: FileText },
-              { id: 'parte' as TipoBusca, label: 'Por Parte', icon: Users },
-              { id: 'classe' as TipoBusca, label: 'Por Classe', icon: Calendar },
-              { id: 'avancada' as TipoBusca, label: 'Busca Avançada', icon: Search },
+              { id: 'numero' as TipoBusca, label: 'Por Número', icon: FileText, desc: 'Busca por número CNJ' },
+              { id: 'cpf' as TipoBusca, label: 'Por CPF/CNPJ', icon: Users, desc: 'Busca por documento da parte' },
+              { id: 'parte' as TipoBusca, label: 'Por Nome', icon: Users, desc: 'Busca por nome da parte' },
+              { id: 'classe' as TipoBusca, label: 'Por Classe', icon: Calendar, desc: 'Busca por classe processual' },
+              { id: 'avancada' as TipoBusca, label: 'Avançada', icon: Search, desc: 'Busca com múltiplos filtros' },
             ].map((tipo) => {
               const Icon = tipo.icon
               return (
@@ -711,6 +889,7 @@ export const DataJudPage = () => {
                     setTipoBusca(tipo.id)
                     limparBusca()
                   }}
+                  title={tipo.desc}
                   className={cn(
                     'flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition',
                     tipoBusca === tipo.id
@@ -727,25 +906,27 @@ export const DataJudPage = () => {
         </CardContent>
       </Card>
 
-      {/* Tribunal */}
-      <Card className="border border-border bg-surface/90">
-        <CardHeader>
-          <CardTitle className="text-sm">Tribunal</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <select
-            value={tribunal}
-            onChange={(e) => setTribunal(e.target.value)}
-            className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            {tribunais.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
-              </option>
-            ))}
-          </select>
-        </CardContent>
-      </Card>
+      {/* Tribunal - Só mostra para busca por parte, classe ou avançada (ou CPF sem multi-tribunal) */}
+      {(tipoBusca !== 'numero' && !(tipoBusca === 'cpf' && buscarMultiTribunal)) && (
+        <Card className="border border-border bg-surface/90">
+          <CardHeader>
+            <CardTitle className="text-sm">Tribunal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <select
+              value={tribunal}
+              onChange={(e) => setTribunal(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {tribunais.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                </option>
+              ))}
+            </select>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Formulário de Busca */}
       <Card className="border border-border bg-surface/90">
@@ -753,11 +934,55 @@ export const DataJudPage = () => {
           <CardTitle className="text-sm">
             {tipoBusca === 'numero' && 'Buscar por Número do Processo'}
             {tipoBusca === 'parte' && 'Buscar por Nome da Parte'}
+            {tipoBusca === 'cpf' && 'Buscar por CPF/CNPJ'}
             {tipoBusca === 'classe' && 'Buscar por Classe Processual'}
             {tipoBusca === 'avancada' && 'Busca Avançada'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Campo CPF/CNPJ */}
+          {tipoBusca === 'cpf' && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-text-muted mb-1.5 block">
+                  CPF ou CNPJ da Parte
+                </label>
+                <Input
+                  placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                  value={cpfCnpj}
+                  onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
+                  onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
+                  maxLength={18}
+                />
+                <p className="text-[10px] text-text-muted mt-1">
+                  Digite o CPF (11 dígitos) ou CNPJ (14 dígitos) para buscar processos onde a pessoa/empresa é parte
+                </p>
+              </div>
+              
+              {/* Opção de busca multi-tribunal */}
+              <div className="p-4 rounded-xl bg-info/5 border border-info/20">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={buscarMultiTribunal}
+                    onChange={(e) => setBuscarMultiTribunal(e.target.checked)}
+                    className="w-5 h-5 rounded border-2 border-primary text-primary focus:ring-primary"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-text">
+                      🔍 Buscar em múltiplos tribunais
+                    </p>
+                    <p className="text-[10px] text-text-muted">
+                      {buscarMultiTribunal 
+                        ? 'Buscará em TJSP, TJRJ, TJMG, TJRS, TJPR, TJSC e TJBA (pode levar mais tempo)'
+                        : 'Buscará apenas no tribunal selecionado acima'}
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
           {(tipoBusca === 'numero' || tipoBusca === 'avancada') && (
             <div>
               <label className="text-xs text-text-muted mb-1.5 block">
@@ -769,6 +994,34 @@ export const DataJudPage = () => {
                 onChange={(e) => setNumeroProcesso(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
               />
+              {/* Mostrar tribunal detectado automaticamente */}
+              {tipoBusca === 'numero' && numeroProcesso.length >= 18 && (
+                <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+                  {tribunalDetectado.tribunal ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span className="text-primary text-lg">🎯</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-text-muted">Tribunal detectado automaticamente</p>
+                        <p className="text-sm font-semibold text-primary">
+                          {tribunalDetectado.nomeCompleto}
+                        </p>
+                        {tribunalDetectado.segmento && (
+                          <p className="text-[10px] text-text-muted">{tribunalDetectado.segmento}</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <AlertCircle className="w-4 h-4" />
+                      <p className="text-xs">
+                        Não foi possível detectar o tribunal. Verifique o formato do número.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -859,77 +1112,135 @@ export const DataJudPage = () => {
       {totalEncontrado > 0 && (
         <Card className="border border-border bg-surface/90">
           <CardHeader>
-            <CardTitle className="text-sm">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
               Resultados da Busca
               <Badge variant="info" className="ml-2">
                 {totalEncontrado} encontrado(s)
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-6">
             {resultados.map((processo, index) => {
               // Debug: ver estrutura do processo
               if (index === 0) {
-                console.log('🔍 Estrutura do processo:', processo)
-                console.log('📅 dataAjuizamento:', processo.dataAjuizamento, processo.dadosBasicos?.dataAjuizamento)
-                console.log('📋 movimentos:', processo.movimentos?.length)
+                console.log('🔍 Estrutura completa do processo:', JSON.stringify(processo, null, 2))
               }
               
               const info = extrairInfoProcesso(processo)
+              
+              // Formatar data de ajuizamento
+              const formatarData = (data: string | undefined) => {
+                if (!data) return '-'
+                // Formato YYYYMMDDHHMMSS ou ISO
+                if (data.length === 14) {
+                  const ano = data.slice(0, 4)
+                  const mes = data.slice(4, 6)
+                  const dia = data.slice(6, 8)
+                  const hora = data.slice(8, 10)
+                  const min = data.slice(10, 12)
+                  return `${dia}/${mes}/${ano} ${hora}:${min}`
+                }
+                try {
+                  return new Date(data).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                } catch {
+                  return data
+                }
+              }
               
               return (
                 <div
                   key={index}
                   className="rounded-2xl border border-border bg-surface p-6 shadow-soft hover:shadow-md transition-shadow"
                 >
-                  <div className="space-y-4">
-                    {/* Cabeçalho do Processo */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-2 flex-1">
-                        <p className="font-mono text-base font-bold text-primary">
-                          {formatarNumeroProcesso(info.numero)}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="info" className="text-xs">{info.tribunal}</Badge>
-                          <Badge className="text-xs">{renderValue(info.classe)}</Badge>
-                          <Badge variant="default" className="text-xs">{processo.grau}</Badge>
-                          {processo.sistema && (
-                            <Badge variant="default" className="text-xs">
-                              {renderValue(processo.sistema)}
+                  <div className="space-y-6">
+                    {/* ===== CABEÇALHO / CAPA PROCESSUAL ===== */}
+                    <div className="pb-4 border-b border-border">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-3 flex-1">
+                          {/* Número do Processo */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <FileText className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-text-muted">Número Único CNJ</p>
+                              <p className="font-mono text-lg font-bold text-primary">
+                                {formatarNumeroProcesso(info.numero)}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* Badges de classificação */}
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="info" className="text-xs font-semibold">
+                              {info.tribunal || processo.tribunal || 'Tribunal não informado'}
                             </Badge>
-                          )}
-                          {processo.formato && (
-                            <Badge variant="default" className="text-xs">
-                              {renderValue(processo.formato)}
-                            </Badge>
-                          )}
-                          {processo.nivelSigilo !== undefined && (
-                            <Badge variant={processo.nivelSigilo === 0 ? "success" : "warning"} className="text-xs">
-                              {processo.nivelSigilo === 0 ? "Público" : `Sigilo ${processo.nivelSigilo}`}
-                            </Badge>
-                          )}
+                            <Badge className="text-xs">{renderValue(info.classe)}</Badge>
+                            {processo.grau && (
+                              <Badge variant="default" className="text-xs">
+                                {processo.grau === 'G1' ? '1º Grau' : processo.grau === 'G2' ? '2º Grau' : processo.grau === 'SUP' ? 'Superior' : processo.grau}
+                              </Badge>
+                            )}
+                            {processo.sistema && (
+                              <Badge variant="default" className="text-xs">
+                                📱 {renderValue(processo.sistema)}
+                              </Badge>
+                            )}
+                            {processo.formato && (
+                              <Badge variant="default" className="text-xs">
+                                {renderValue(processo.formato) === 'Eletrônico' ? '💻' : '📄'} {renderValue(processo.formato)}
+                              </Badge>
+                            )}
+                            {processo.nivelSigilo !== undefined && (
+                              <Badge variant={processo.nivelSigilo === 0 ? "success" : "warning"} className="text-xs">
+                                {processo.nivelSigilo === 0 ? "🔓 Público" : `🔒 Sigilo ${processo.nivelSigilo}`}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+                        
+                        {/* Botão Favorito */}
+                        <BotaoFavorito processo={processo} />
                       </div>
                     </div>
 
-                    {/* Informações Principais */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                      <div>
-                        <p className="text-text-muted text-xs mb-1">Órgão Julgador</p>
-                        <p className="text-text font-medium">{renderValue(info.orgao)}</p>
+                    {/* ===== INFORMAÇÕES DA CAPA ===== */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Órgão Julgador */}
+                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
+                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">Órgão Julgador</p>
+                        <p className="text-text font-semibold text-sm">{renderValue(info.orgaoJulgador) || '-'}</p>
+                        {processo.orgaoJulgador?.codigo && (
+                          <p className="text-text-muted text-[10px] mt-1 font-mono">
+                            Código: {processo.orgaoJulgador.codigo}
+                          </p>
+                        )}
                         {processo.orgaoJulgador?.codigoMunicipioIBGE && (
-                          <p className="text-text-muted text-[10px] mt-0.5">
-                            IBGE: {processo.orgaoJulgador.codigoMunicipioIBGE}
+                          <p className="text-text-muted text-[10px] font-mono">
+                            Município IBGE: {processo.orgaoJulgador.codigoMunicipioIBGE}
                           </p>
                         )}
                       </div>
-                      <div>
-                        <p className="text-text-muted text-xs mb-1">Data Ajuizamento</p>
-                        <p className="text-text font-medium">{info.dataAjuizamento}</p>
+                      
+                      {/* Data de Ajuizamento */}
+                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
+                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">📅 Data de Ajuizamento</p>
+                        <p className="text-text font-semibold text-sm">
+                          {formatarData(processo.dataAjuizamento || processo.dadosBasicos?.dataAjuizamento)}
+                        </p>
                       </div>
-                      <div>
-                        <p className="text-text-muted text-xs mb-1">Última Atualização</p>
-                        <p className="text-text font-medium">
+                      
+                      {/* Última Atualização */}
+                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
+                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">🔄 Última Atualização</p>
+                        <p className="text-text font-semibold text-sm">
                           {processo.dataHoraUltimaAtualizacao
                             ? new Date(processo.dataHoraUltimaAtualizacao).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
@@ -941,159 +1252,214 @@ export const DataJudPage = () => {
                             : '-'}
                         </p>
                       </div>
+                      
+                      {/* Valor da Causa (se disponível) */}
+                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
+                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">💰 Valor da Causa</p>
+                        <p className="text-text font-semibold text-sm">
+                          {processo.dadosBasicos?.valorCausa 
+                            ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(processo.dadosBasicos.valorCausa)
+                            : processo.valorCausa
+                            ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(processo.valorCausa)
+                            : 'Não informado'}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* ID e Sistema */}
-                    {processo.id && (
-                      <div className="text-xs text-text-muted font-mono bg-surface p-2 rounded border">
-                        <span className="font-semibold">ID:</span> {processo.id}
+                    {/* ===== ASSUNTOS ===== */}
+                    {((processo.assuntos && processo.assuntos.length > 0) || (processo.dadosBasicos?.assunto)) && (
+                      <div className="p-4 rounded-xl bg-info/5 border border-info/20">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg">📋</span>
+                          <p className="text-text font-semibold">Assuntos Processuais</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(processo.assuntos || [processo.dadosBasicos?.assunto]).flat().filter(Boolean).map((assunto: any, idx: number) => (
+                            <div key={idx} className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface rounded-lg border border-border">
+                              <span className="text-sm font-medium text-text">
+                                {typeof assunto === 'string' ? assunto : assunto?.nome || 'Assunto'}
+                              </span>
+                              {assunto?.codigo && (
+                                <span className="text-[10px] text-text-muted font-mono bg-surface-2 px-1.5 py-0.5 rounded">
+                                  #{assunto.codigo}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
-                    <details className="mt-2 rounded-2xl border border-border bg-surface-2">
-                      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors rounded-2xl">
-                        Detalhes do Processo
-                      </summary>
-                      <div className="space-y-4 px-4 pb-4">
-                        {/* Assuntos */}
-                        {processo.assuntos && processo.assuntos.length > 0 && (
+                    {/* ===== CLASSE PROCESSUAL DETALHADA ===== */}
+                    {processo.classe && (
+                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">⚖️</span>
+                          <p className="text-text font-semibold">Classe Processual</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-base font-medium text-text">
+                            {processo.classe?.nome || renderValue(processo.classe)}
+                          </span>
+                          {processo.classe?.codigo && (
+                            <Badge variant="default" className="text-xs font-mono">
+                              Código: {processo.classe.codigo}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ===== ID E METADADOS TÉCNICOS ===== */}
+                    <div className="p-3 rounded-lg bg-surface-2 border border-border">
+                      <p className="text-[10px] text-text-muted uppercase tracking-wider mb-2">Metadados Técnicos</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-xs">
+                        {processo.id && (
                           <div>
-                            <p className="text-text-muted text-xs mb-2">Assuntos</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {processo.assuntos.map((assunto, idx) => (
-                                <Badge key={idx} variant="default" className="text-xs" title={`Código: ${assunto.codigo}`}>
-                                  {assunto.nome}
-                                </Badge>
-                              ))}
-                            </div>
+                            <span className="text-text-muted">ID DataJud:</span>{' '}
+                            <span className="text-text">{processo.id}</span>
                           </div>
                         )}
-
-                        {renderPolos(processo)}
-
-                        {/* Histórico de Movimentações */}
-                        {processo.movimentos && processo.movimentos.length > 0 && (
-                          <div className="pt-3 border-t border-border">
-                            <div className="flex items-center gap-2 mb-3">
-                              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                              </svg>
-                              <p className="text-text font-semibold text-base">
-                                Historico de movimentacoes
-                              </p>
-                              <Badge variant="info" className="ml-auto">
-                                {processo.movimentos.length} movimentacoes
-                              </Badge>
-                            </div>
-                            <div className="max-h-[500px] overflow-y-auto space-y-3 border rounded-lg p-4 bg-surface shadow-inner">
-                              {processo.movimentos
-                                .filter((m: any) => m.nome)
-                                .sort((a: any, b: any) => {
-                                  const dateA = a.dataHora ? new Date(a.dataHora).getTime() : 0
-                                  const dateB = b.dataHora ? new Date(b.dataHora).getTime() : 0
-                                  return dateB - dateA // Mais recente primeiro
-                                })
-                                .map((mov: any, idx: number) => (
-                                  <div
-                                    key={idx}
-                                    className="flex gap-4 p-3 rounded-lg bg-surface-2 border border-border hover:border-primary/30 hover:shadow-sm transition-all"
-                                  >
-                                    <div className="flex-shrink-0 flex flex-col items-center">
-                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <span className="text-xs font-bold text-primary">
-                                          {idx + 1}
-                                        </span>
-                                      </div>
-                                      {idx < (processo.movimentos?.filter((m: any) => m.nome).length || 0) - 1 && (
-                                        <div className="w-px h-full bg-border mt-2"></div>
-                                      )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-start justify-between gap-3 mb-2">
-                                        <div className="flex-1">
-                                          <p className="text-sm font-semibold text-text leading-snug">
-                                            {mov.nome}
-                                          </p>
-                                          {mov.codigo && (
-                                            <p className="text-[10px] text-text-muted mt-0.5 font-mono">
-                                              Código: {mov.codigo}
-                                              {mov.codigoNacional && ` • Nacional: ${mov.codigoNacional}`}
-                                            </p>
-                                          )}
-                                        </div>
-                                        <div className="flex flex-col items-end gap-1">
-                                          <Badge variant="default" className="text-[10px] flex-shrink-0">
-                                            {mov.dataHora
-                                              ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
-                                                  day: '2-digit',
-                                                  month: '2-digit',
-                                                  year: 'numeric',
-                                                })
-                                              : 'Sem data'}
-                                          </Badge>
-                                          {mov.dataHora && (
-                                            <span className="text-[10px] text-text-muted">
-                                              {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                              })}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Complemento em texto */}
-                                      {mov.complemento && (
-                                        <div className="mb-2 p-2 bg-surface rounded text-xs text-text border-l-2 border-primary/30">
-                                          {mov.complemento}
-                                        </div>
-                                      )}
-                                      
-                                      {/* Complementos Tabelados Detalhados */}
-                                      {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
-                                        <div className="mt-2 pt-2 border-t border-border/50">
-                                          <p className="text-xs text-text-muted font-medium mb-2">Detalhes:</p>
-                                          <div className="space-y-1.5">
-                                            {mov.complementosTabelados.map((c: any, cIdx: number) => (
-                                              <div key={cIdx} className="text-xs bg-info/10 p-2 rounded border border-info/20">
-                                                <div className="flex items-start gap-2">
-                                                  <span className="text-info font-semibold">•</span>
-                                                  <div className="flex-1">
-                                                    <p className="text-text font-medium">{c.nome}</p>
-                                                    {c.descricao && (
-                                                      <p className="text-text-muted text-[10px] mt-0.5">
-                                                        {c.descricao.replace(/_/g, ' ')}
-                                                      </p>
-                                                    )}
-                                                    <div className="flex gap-3 mt-1">
-                                                      {c.codigo && (
-                                                        <span className="text-[10px] text-text-muted font-mono">
-                                                          Cod: {c.codigo}
-                                                        </span>
-                                                      )}
-                                                      {c.valor && (
-                                                        <span className="text-[10px] text-text-muted font-mono">
-                                                          Val: {c.valor}
-                                                        </span>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
+                        {processo['@timestamp'] && (
+                          <div>
+                            <span className="text-text-muted">Timestamp:</span>{' '}
+                            <span className="text-text">{processo['@timestamp']}</span>
                           </div>
                         )}
                       </div>
-                    </details>
+                    </div>
 
-                    <div className="flex gap-2 pt-2 border-t">
+                    {/* ===== PARTES DO PROCESSO ===== */}
+                    <div className="pt-4 border-t border-border">
+                      {renderPolos(processo)}
+                    </div>
+
+                    {/* ===== MOVIMENTAÇÕES PROCESSUAIS ===== */}
+                    {processo.movimentos && processo.movimentos.length > 0 && (
+                      <details className="pt-4 border-t border-border">
+                        <summary className="cursor-pointer list-none">
+                          <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+                            <Calendar className="w-5 h-5" />
+                            <span className="font-semibold">Histórico de Movimentações</span>
+                            <Badge variant="default" className="ml-auto bg-white/20 text-white border-0">
+                              {processo.movimentos.length} movimentações
+                            </Badge>
+                            <svg className="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </summary>
+                        
+                        <div className="mt-4 max-h-[600px] overflow-y-auto space-y-3 p-4 border rounded-xl bg-surface-2">
+                          {processo.movimentos
+                            .filter((m: any) => m.nome)
+                            .sort((a: any, b: any) => {
+                              const dateA = a.dataHora ? new Date(a.dataHora).getTime() : 0
+                              const dateB = b.dataHora ? new Date(b.dataHora).getTime() : 0
+                              return dateB - dateA // Mais recente primeiro
+                            })
+                            .map((mov: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className="flex gap-4 p-4 rounded-xl bg-surface border border-border hover:border-primary/30 hover:shadow-sm transition-all"
+                              >
+                                {/* Timeline indicator */}
+                                <div className="flex-shrink-0 flex flex-col items-center">
+                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                                    <span className="text-xs font-bold text-primary">
+                                      {idx + 1}
+                                    </span>
+                                  </div>
+                                  {idx < (processo.movimentos?.filter((m: any) => m.nome).length || 0) - 1 && (
+                                    <div className="w-px flex-1 bg-border mt-2 min-h-[20px]"></div>
+                                  )}
+                                </div>
+                                
+                                {/* Conteúdo da movimentação */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-3 mb-2">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-semibold text-text leading-snug">
+                                        {mov.nome}
+                                      </p>
+                                      {(mov.codigo || mov.codigoNacional) && (
+                                        <p className="text-[10px] text-text-muted mt-1 font-mono flex gap-2">
+                                          {mov.codigo && <span>Código: {mov.codigo}</span>}
+                                          {mov.codigoNacional && <span>• Nacional: {mov.codigoNacional}</span>}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                      <Badge variant="default" className="text-[10px]">
+                                        {mov.dataHora
+                                          ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
+                                              day: '2-digit',
+                                              month: '2-digit',
+                                              year: 'numeric',
+                                            })
+                                          : 'Sem data'}
+                                      </Badge>
+                                      {mov.dataHora && (
+                                        <span className="text-[10px] text-text-muted font-mono">
+                                          {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          })}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Órgão Julgador da movimentação */}
+                                  {mov.orgaoJulgador?.nome && (
+                                    <p className="text-xs text-text-muted mb-2">
+                                      📍 {mov.orgaoJulgador.nome}
+                                    </p>
+                                  )}
+                                  
+                                  {/* Complemento em texto */}
+                                  {mov.complemento && (
+                                    <div className="mb-2 p-2 bg-surface-2 rounded-lg text-xs text-text border-l-3 border-primary/30">
+                                      {mov.complemento}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Complementos Tabelados Detalhados */}
+                                  {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
+                                    <div className="mt-3 pt-3 border-t border-border/50">
+                                      <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wider mb-2">
+                                        Detalhes da Movimentação:
+                                      </p>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {mov.complementosTabelados.map((c: any, cIdx: number) => (
+                                          <div key={cIdx} className="text-xs bg-info/5 p-2 rounded-lg border border-info/10">
+                                            <p className="text-text font-medium">{c.nome}</p>
+                                            {c.descricao && (
+                                              <p className="text-text-muted text-[10px] mt-0.5">
+                                                {c.descricao.replace(/_/g, ' ')}
+                                              </p>
+                                            )}
+                                            {(c.codigo || c.valor) && (
+                                              <p className="text-[10px] text-text-muted font-mono mt-1">
+                                                {c.codigo && `Cód: ${c.codigo}`}
+                                                {c.codigo && c.valor && ' • '}
+                                                {c.valor && `Val: ${c.valor}`}
+                                              </p>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </details>
+                    )}
+
+                    {/* ===== AÇÕES ===== */}
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
                       <Button
                         variant="outline"
                         size="sm"
@@ -1102,10 +1468,19 @@ export const DataJudPage = () => {
                           toast.success('Número copiado!')
                         }}
                       >
-                        Copiar Número
+                        📋 Copiar Número
                       </Button>
                       
-                      <BotaoFavorito processo={processo} />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(processo, null, 2))
+                          toast.success('JSON completo copiado!')
+                        }}
+                      >
+                        📄 Copiar JSON
+                      </Button>
                       
                       <Button
                         size="sm"
@@ -1115,6 +1490,7 @@ export const DataJudPage = () => {
                         <FileDown className="h-4 w-4" />
                         Exportar PDF
                       </Button>
+                      
                       <Button
                         variant="outline"
                         size="sm"
@@ -1122,7 +1498,7 @@ export const DataJudPage = () => {
                           toast.info('Funcionalidade em desenvolvimento')
                         }}
                       >
-                        Importar para Casos
+                        📥 Importar para Casos
                       </Button>
                     </div>
                   </div>

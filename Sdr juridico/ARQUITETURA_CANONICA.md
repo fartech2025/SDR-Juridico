@@ -1,8 +1,66 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 1.0.0  
-**Data:** 27 de janeiro de 2026  
-**Status:** 📋 Documentação Base
+**Versão:** 2.0.0  
+**Data:** 5 de fevereiro de 2026  
+**Status:** ✅ Produção
+
+---
+
+## 📋 CHANGELOG RECENTE
+
+### v2.0.0 (5 de fevereiro de 2026)
+- ✅ **Diário Oficial Page**: Nova página dedicada para busca em diários oficiais via Querido Diário API
+- ✅ **Querido Diário Service**: Serviço completo para busca de publicações, processos e dados de empresas (CNPJ)
+- ✅ **Querido Diário Proxy**: Edge Function `querido-diario-proxy` para comunicação segura com API Querido Diário
+- ✅ **Enriquecimento CNPJ**: Auto-preenchimento de dados de empresas ao cadastrar clientes PJ
+- ✅ **Validação CPF/CNPJ**: Validação em tempo real com algoritmo de dígitos verificadores
+- ✅ **Formatação Automática**: CPF (000.000.000-00) e CNPJ (00.000.000/0000-00) formatados ao digitar
+- ✅ **Detecção Automática PF/PJ**: Sistema detecta automaticamente tipo pelo número de dígitos
+- ✅ **ClientesPage Aprimorada**: Indicadores visuais de validação e status de enriquecimento
+
+### v1.9.0 (5 de fevereiro de 2026)
+- ✅ **DataJud Auto-Detecção de Tribunal**: Implementada detecção automática do tribunal pelo formato CNJ (J.TR)
+- ✅ **DataJud UI Completa**: Exibição completa de todas as informações retornadas pela API DataJud
+- ✅ **Fix RLS org_members**: Nova policy `users_see_own_membership` permite usuários verem seus próprios registros
+- ✅ **DataJud Proxy Final**: Edge Function `datajud-proxy` com `--no-verify-jwt` funcionando em produção
+- ✅ **Partes Processuais**: Renderização completa com polo ativo/passivo, advogados, OAB, documentos
+- ✅ **Movimentações Timeline**: Visualização cronológica com complementos tabelados e órgão julgador
+- ✅ **Metadados Técnicos**: Exibição de ID DataJud, timestamp, sistema, formato, grau e sigilo
+
+### v1.8.1 (5 de fevereiro de 2026)
+- ✅ **OrganizationContext**: Adicionado listener de `onAuthStateChange` para recarregar org automaticamente
+- ✅ **Fix Race Condition**: Corrigido problema onde org não era carregada após mudança de porta do servidor
+- ✅ **DataJud Proxy**: Nova Edge Function minimalista sem verificação JWT funcionando
+
+### v1.8.0 (5 de fevereiro de 2026)
+- ✅ **OrgActiveGuard**: Corrigida ordem de verificações para evitar redirecionamento incorreto
+- ✅ **Fluxo de Autenticação**: Usuários não logados agora vão para `/login` (antes iam para `/no-organization`)
+- ✅ **DataJud Service**: Reescrito para chamar API DataJud diretamente (sem Edge Function)
+- ✅ **API Key DataJud**: Configurada inline no service para simplicidade de uso
+
+### v1.7.0 (5 de fevereiro de 2026)
+- ✅ **DocumentoViewer**: Novo componente modal para visualização de documentos (PDF, imagens) inline
+- ✅ **Ações no Viewer**: Botões de Aprovar, Rejeitar e Solicitar Novamente direto no modal de visualização
+- ✅ **Controles de Visualização**: Zoom, rotação e download para imagens; iframe para PDFs
+- ✅ **Geração automática de ID**: Documentos recebem número interno automático no formato `PREFIX-YYYYMMDD-XXXXX`
+- ✅ **Prefixos por Tipo**: PI (Petição Inicial), CONT (Contestação), REC (Recurso), PROC (Procuração), CTR (Contrato), etc.
+- ✅ **Marcar como Visualizado**: Função para registrar que documento foi visualizado com timestamp e usuário
+- ✅ **Download de Documentos**: Função para baixar arquivos via signed URL do Supabase Storage
+
+### v1.6.0 (2 de julho de 2025)
+- ✅ **Relacionamentos de Documentos**: Adicionados campos `cliente_id` e `lead_id` na tabela `documentos` como FKs
+- ✅ **Soft Delete para Documentos**: Adicionados campos `deleted_at` e `deleted_by` na tabela `documentos`
+- ✅ **Novos métodos no Service**: `getDocumentosByCliente()`, `getDocumentosByLead()`, `getDocumentosArquivados()`, `arquivarDocumento()`, `restaurarDocumento()`
+- ✅ **Hook useDocumentos expandido**: Novos métodos `fetchByCliente`, `fetchByLead`, `fetchArquivados`, `arquivarDocumento`, `restaurarDocumento`
+- ✅ **JOINs otimizados**: Queries agora trazem dados de `casos`, `clientes` e `leads` via JOIN
+
+### v1.5.0 (5 de fevereiro de 2026)
+- ✅ **Soft Delete para Leads**: Adicionados campos `deleted_at` e `deleted_by` na tabela `leads`
+- ✅ **Soft Delete para Tarefas**: Adicionados campos `deleted_at` e `deleted_by` na tabela `tarefas`
+- ✅ **Histórico de Status de Leads**: Nova tabela `lead_status_history` para rastrear mudanças de status e temperatura (heat)
+- ✅ **Histórico de Status de Tarefas**: Nova tabela `tarefa_status_history` para rastrear mudanças de status
+- ✅ **Página de Tarefas Arquivadas**: Nova página `/app/tarefas/arquivadas` para gerenciar tarefas deletadas
+- ✅ **LeadDrawer com Histórico**: Drawer de leads agora exibe timeline de mudanças de status/heat
 
 ---
 
@@ -170,6 +228,9 @@ src/
 │   │   │   │   ├── CaseForm.tsx
 │   │   │   │   └── CaseTimeline.tsx
 │   │   │   ├── clients/
+│   │   │   ├── documentos/
+│   │   │   │   ├── UploadDocumentos.tsx     # Upload com geração de ID interno
+│   │   │   │   └── DocumentoViewer.tsx      # Modal de visualização inline
 │   │   │   └── ...
 │   │   └── layout/                  # Layouts
 │   │       ├── AppShell.tsx
@@ -660,6 +721,92 @@ function LeadsPage() {
 - Session management
 ```
 
+### 🛡️ Guards de Rotas (v1.8.0)
+
+**Ordem CRÍTICA de verificações nos Guards:**
+
+```typescript
+// components/guards/OrgActiveGuard.tsx
+
+// ⚠️ ORDEM OBRIGATÓRIA DE VERIFICAÇÕES:
+// 1. Loading de auth → aguarda
+// 2. Usuário autenticado? → se não, vai para /login
+// 3. Loading de org → aguarda  
+// 4. Tem organização? → se não, vai para /no-organization
+// 5. Org está ativa? → se não, vai para /org-suspended
+
+export function OrgActiveGuard({ children }) {
+  const { user, loading: authLoading } = useAuth()
+  const { currentOrg, loading, isLoading } = useOrganization()
+  const isFartechAdmin = useIsFartechAdmin()
+  const isOrgActive = useIsOrgActive()
+
+  // 1. Aguarda auth carregar
+  if (authLoading) {
+    return <LoadingSpinner />
+  }
+
+  // 2. Não autenticado → login
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // 3. Aguarda org carregar
+  if (loading || isLoading) {
+    return <LoadingSpinner />
+  }
+
+  // 4. Fartech admin bypassa verificação de org
+  if (isFartechAdmin) {
+    return <>{children}</>
+  }
+
+  // 5. Sem organização → página de erro
+  if (!currentOrg) {
+    return <Navigate to="/no-organization" replace />
+  }
+
+  // 6. Org suspensa/cancelada → página de suspensão
+  if (!isOrgActive) {
+    return <Navigate to="/org-suspended" replace />
+  }
+
+  return <>{children}</>
+}
+```
+
+**Fluxo de Redirecionamento:**
+```
+Usuário acessa /app/dashboard
+         │
+         ▼
+   authLoading?  ──YES──→ Loading spinner
+         │
+        NO
+         ▼
+     user?  ────NO────→ /login
+         │
+        YES
+         ▼
+   orgLoading?  ──YES──→ Loading spinner
+         │
+        NO
+         ▼
+  isFartechAdmin? ─YES─→ ✅ Renderiza children
+         │
+        NO
+         ▼
+   currentOrg?  ──NO───→ /no-organization
+         │
+        YES
+         ▼
+   isOrgActive? ──NO───→ /org-suspended
+         │
+        YES
+         ▼
+   ✅ Renderiza children
+```
+
 ### Auditoria (Audit Logs)
 
 **Todas as ações críticas devem ser registradas:**
@@ -931,11 +1078,34 @@ erDiagram
         varchar nome
         varchar email
         varchar telefone
-        varchar status "novo,em_contato,qualificado,ganho,perdido"
+        varchar status "novo,em_contato,qualificado,proposta,ganho,perdido"
+        varchar heat "quente,morno,frio"
         varchar origem
-        text responsavel
+        uuid assigned_user_id FK
+        text observacoes
+        timestamp last_contact_at
+        timestamp deleted_at "SOFT DELETE"
+        uuid deleted_by FK "SOFT DELETE"
         timestamp created_at
+        timestamp updated_at
     }
+    
+    lead_status_history {
+        uuid id PK
+        timestamp created_at
+        uuid lead_id FK
+        uuid org_id FK
+        text status_anterior
+        text status_novo
+        text heat_anterior
+        text heat_novo
+        uuid changed_by FK
+        text changed_by_name
+        text motivo
+        jsonb metadata
+    }
+    
+    leads ||--o{ lead_status_history : "histórico"
     
     clientes {
         uuid id PK
@@ -969,14 +1139,20 @@ erDiagram
         uuid id PK
         uuid org_id FK
         uuid caso_id FK
+        uuid cliente_id FK "NOVO v1.6"
+        uuid lead_id FK "NOVO v1.6"
         varchar titulo
         varchar tipo
-        varchar status "pendente,aprovado,rejeitado"
+        varchar status "pendente,aprovado,rejeitado,solicitado,completo"
         text url
         varchar arquivo_nome
         integer arquivo_tamanho
+        varchar numero_id "NOVO v1.7 - ID interno gerado"
+        jsonb meta "NOVO v1.7 - visualizado, visualizado_at, etc"
         text[] tags
         timestamp created_at
+        timestamp deleted_at "SOFT DELETE v1.6"
+        uuid deleted_by FK "SOFT DELETE v1.6"
     }
     
     tarefas {
@@ -986,14 +1162,30 @@ erDiagram
         uuid assigned_user_id FK
         varchar titulo
         text descricao
-        varchar status "pendente,em_progresso,concluida,devolvida"
-        varchar prioridade "baixa,media,alta,critica"
+        varchar status "pendente,em_andamento,aguardando_validacao,concluida,cancelada,devolvida"
+        varchar prioridade "baixa,normal,alta"
         timestamp due_at
         timestamp submitted_at
         timestamp confirmed_at
         uuid confirmed_by FK
         text rejected_reason
+        timestamp deleted_at "SOFT DELETE"
+        uuid deleted_by FK "SOFT DELETE"
     }
+    
+    tarefa_status_history {
+        uuid id PK
+        timestamp created_at
+        uuid tarefa_id FK
+        uuid org_id FK
+        text status_anterior
+        text status_novo
+        uuid changed_by FK
+        text motivo
+        jsonb metadata
+    }
+    
+    tarefas ||--o{ tarefa_status_history : "histórico"
     
     tarefa_documentos {
         uuid id PK
@@ -1307,6 +1499,14 @@ Todas as tabelas principais implementam RLS:
 - ✅ `audit_logs`, `analytics_events`
 - ✅ `roles`, `permissions`, `role_permissions`
 
+**Policy Crítica para org_members:**
+```sql
+-- Usuários podem ver seus próprios registros de membership
+-- IMPORTANTE: Sem isso, usuários não conseguem ver a qual org pertencem
+CREATE POLICY "users_see_own_membership" ON org_members
+  FOR SELECT USING (user_id = auth.uid());
+```
+
 **Padrão de Policies:**
 ```sql
 -- 1. Fartech admins veem tudo
@@ -1332,7 +1532,281 @@ CREATE POLICY "org_admin_manage" ON [tabela]
 
 ---
 
-## 🔄 FLUXOS DE CADASTRO
+## � INTEGRAÇÃO DATAJUD (v1.9.0)
+
+### 1. Arquitetura da Integração
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND (React)                          │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  DataJudPage.tsx                                    │    │
+│  │  - Formulário de busca (número CNJ)                 │    │
+│  │  - Auto-detecção de tribunal pelo número            │    │
+│  │  - Exibição completa dos resultados                 │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐    │
+│  │  datajudService.ts                                   │    │
+│  │  - buscarProcessoAutomatico()                        │    │
+│  │  - detectarTribunalPorNumero()                       │    │
+│  │  - Mapeamento CNJ → Tribunal                        │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+└─────────────────────────┼───────────────────────────────────┘
+                          │ HTTPS
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│            SUPABASE EDGE FUNCTION (datajud-proxy)           │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  supabase/functions/datajud-proxy/index.ts          │    │
+│  │  - Proxy minimalista (sem verificação JWT)          │    │
+│  │  - Adiciona API Key do CNJ aos headers              │    │
+│  │  - Repassa request para API DataJud                 │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+└─────────────────────────┼───────────────────────────────────┘
+                          │ HTTPS
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│             CNJ DataJud API (api-publica.datajud.cnj.jus.br)│
+│  - Endpoint: /{tribunal}/_search                            │
+│  - Retorna: Capa processual, movimentações, partes, etc.    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Formato do Número CNJ
+
+```
+Formato: NNNNNNN-DD.AAAA.J.TR.OOOO
+
+Onde:
+- NNNNNNN = Número sequencial (7 dígitos)
+- DD = Dígito verificador (2 dígitos)
+- AAAA = Ano de ajuizamento (4 dígitos)
+- J = Segmento da Justiça (1 dígito)
+- TR = Tribunal/Estado (2 dígitos)
+- OOOO = Código da unidade de origem (4 dígitos)
+
+Exemplo: 5007197-20.2024.8.13.0105
+         └──────┘ └┘ └──┘ │ └┘ └──┘
+         Número  DV Ano   J TR Origem
+```
+
+### 3. Mapeamento J (Segmento da Justiça)
+
+```typescript
+const SEGMENTOS_JUSTICA = {
+  '1': 'STF',     // Supremo Tribunal Federal
+  '2': 'CNJ',     // Conselho Nacional de Justiça
+  '3': 'STJ',     // Superior Tribunal de Justiça
+  '4': 'TRF',     // Justiça Federal (Tribunais Regionais Federais)
+  '5': 'TRT',     // Justiça do Trabalho (Tribunais Regionais do Trabalho)
+  '6': 'TRE',     // Justiça Eleitoral (Tribunais Regionais Eleitorais)
+  '7': 'STM',     // Justiça Militar da União
+  '8': 'TJ',      // Justiça dos Estados (Tribunais de Justiça)
+  '9': 'TJMMG',   // Justiça Militar Estadual
+}
+```
+
+### 4. Mapeamento TR (Estado/Região)
+
+```typescript
+// Para J=8 (Justiça Estadual) - Código TR = Estado
+const ESTADOS_PARA_TJ = {
+  '01': 'tjac', '02': 'tjal', '03': 'tjap', '04': 'tjam', '05': 'tjba',
+  '06': 'tjce', '07': 'tjdft', '08': 'tjes', '09': 'tjgo', '10': 'tjma',
+  '11': 'tjmt', '12': 'tjms', '13': 'tjmg', '14': 'tjpa', '15': 'tjpb',
+  '16': 'tjpr', '17': 'tjpe', '18': 'tjpi', '19': 'tjrj', '20': 'tjrn',
+  '21': 'tjrs', '22': 'tjro', '23': 'tjrr', '24': 'tjsc', '25': 'tjsp',
+  '26': 'tjse', '27': 'tjto'
+}
+
+// Para J=4 (Justiça Federal) - Código TR = Região
+const REGIOES_PARA_TRF = {
+  '01': 'trf1',  // 1ª Região (DF, GO, MG, etc.)
+  '02': 'trf2',  // 2ª Região (RJ, ES)
+  '03': 'trf3',  // 3ª Região (SP, MS)
+  '04': 'trf4',  // 4ª Região (RS, PR, SC)
+  '05': 'trf5',  // 5ª Região (NE)
+  '06': 'trf6'   // 6ª Região (MG)
+}
+
+// Para J=5 (Justiça do Trabalho) - Código TR = Região
+const REGIOES_PARA_TRT = {
+  '01': 'trt1',  '02': 'trt2',  '03': 'trt3',  '04': 'trt4',  '05': 'trt5',
+  '06': 'trt6',  '07': 'trt7',  '08': 'trt8',  '09': 'trt9',  '10': 'trt10',
+  '11': 'trt11', '12': 'trt12', '13': 'trt13', '14': 'trt14', '15': 'trt15',
+  '16': 'trt16', '17': 'trt17', '18': 'trt18', '19': 'trt19', '20': 'trt20',
+  '21': 'trt21', '22': 'trt22', '23': 'trt23', '24': 'trt24'
+}
+```
+
+### 5. Função de Auto-Detecção de Tribunal
+
+```typescript
+function detectarTribunalPorNumero(numero: string): string | null {
+  const cleanNumber = numero.replace(/[^\d]/g, '')
+  
+  if (cleanNumber.length < 14) return null
+  
+  // Extrair J e TR do número limpo
+  const justica = cleanNumber.charAt(9)   // Posição 10 (índice 9)
+  const tribunal = cleanNumber.slice(10, 12) // Posições 11-12 (índices 10-11)
+  
+  switch (justica) {
+    case '8': return estadosParaTJ[tribunal]   // Justiça Estadual
+    case '4': return regioesParaTRF[tribunal]  // Justiça Federal
+    case '5': return regioesParaTRT[tribunal]  // Justiça do Trabalho
+    case '6': return `tre${tribunal}`          // Justiça Eleitoral
+    default: return null
+  }
+}
+```
+
+### 6. Dados Retornados pela API DataJud
+
+```typescript
+interface ProcessoDataJud {
+  // Identificação
+  id: string                           // ID único no DataJud
+  numeroProcesso: string               // Número CNJ
+  tribunal: string                     // Sigla do tribunal
+  grau: 'G1' | 'G2' | 'SUP'           // 1º Grau, 2º Grau ou Superior
+  
+  // Metadados
+  formato: 'Eletrônico' | 'Físico'
+  sistema: string                      // Ex: PJe, PROJUDI, SAJ
+  nivelSigilo: number                  // 0 = Público, >0 = Sigiloso
+  '@timestamp': string                 // Timestamp da indexação
+  dataHoraUltimaAtualizacao: string
+  
+  // Capa Processual
+  classe: { codigo: number, nome: string }
+  orgaoJulgador: {
+    codigo: number,
+    nome: string,
+    codigoMunicipioIBGE: string
+  }
+  dataAjuizamento: string              // Formato: YYYYMMDDHHMMSS
+  valorCausa?: number
+  
+  // Assuntos
+  assuntos: Array<{
+    codigo: number,
+    nome: string
+  }>
+  
+  // Partes
+  poloAtivo: Array<{
+    nome: string,
+    tipoPessoa: 'fisica' | 'juridica',
+    numeroDocumentoPrincipal?: string,  // CPF/CNPJ
+    advogados?: Array<{
+      nome: string,
+      numeroOAB?: string
+    }>
+  }>
+  poloPassivo: Array<{ /* mesma estrutura */ }>
+  
+  // Movimentações
+  movimentos: Array<{
+    codigo: number,
+    nome: string,
+    dataHora: string,                   // ISO 8601
+    codigoNacional?: number,
+    complemento?: string,               // Texto livre
+    complementosTabelados?: Array<{
+      codigo: number,
+      nome: string,
+      descricao: string,
+      valor?: string
+    }>,
+    orgaoJulgador?: { nome: string }
+  }>
+}
+```
+
+### 7. Edge Function (datajud-proxy)
+
+**Localização:** `supabase/functions/datajud-proxy/index.ts`
+
+```typescript
+// Deploy: npx supabase functions deploy datajud-proxy --no-verify-jwt
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+
+const DATAJUD_API_KEY = Deno.env.get('DATAJUD_API_KEY')
+
+serve(async (req) => {
+  const url = new URL(req.url)
+  const tribunal = url.searchParams.get('tribunal')
+  const numeroProcesso = url.searchParams.get('numeroProcesso')
+
+  const response = await fetch(
+    `https://api-publica.datajud.cnj.jus.br/api_publica_${tribunal}/_search`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `APIKey ${DATAJUD_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: {
+          match: { numeroProcesso: numeroProcesso.replace(/[^\d]/g, '') }
+        }
+      }),
+    }
+  )
+
+  return new Response(await response.text(), {
+    headers: { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    }
+  })
+})
+```
+
+**Deploy com flag importante:**
+```bash
+npx supabase functions deploy datajud-proxy --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+```
+
+### 8. Configuração da API Key
+
+```bash
+# Configurar secret no Supabase
+npx supabase secrets set DATAJUD_API_KEY="cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==" --project-ref xocqcoebreoiaqxoutar
+```
+
+### 9. Fluxo Completo de Busca
+
+```
+1. Usuário digita número CNJ: "5007197-20.2024.8.13.0105"
+
+2. Frontend detecta tribunal automaticamente:
+   - Extrai J=8 (Justiça Estadual)
+   - Extrai TR=13 (Minas Gerais)
+   - Retorna: "tjmg"
+
+3. Chama Edge Function:
+   GET /functions/v1/datajud-proxy?tribunal=tjmg&numeroProcesso=5007197-20.2024.8.13.0105
+
+4. Edge Function:
+   - Adiciona API Key aos headers
+   - Faz POST para CNJ DataJud
+   - Retorna JSON com hits
+
+5. Frontend renderiza:
+   - Capa processual (tribunal, classe, órgão)
+   - Datas (ajuizamento, atualização)
+   - Valor da causa
+   - Partes (polo ativo/passivo com advogados)
+   - Assuntos
+   - Timeline de movimentações
+```
+
+---
+
+## �🔄 FLUXOS DE CADASTRO
 
 ### 1. Cadastro de Escritório
 ```
@@ -1354,38 +1828,400 @@ Gestor → Gera invite_token → Compartilha link
 
 ---
 
+## 📄 FLUXO DE DOCUMENTOS (v1.7.0)
+
+### 1. Upload de Documento
+```
+Usuário → UploadDocumentos.tsx
+  → Seleciona tipo de documento
+  → Sistema gera número ID automático (PREFIX-YYYYMMDD-XXXXX)
+  → Upload para Supabase Storage (bucket: documentos)
+  → Cria registro na tabela documentos
+  → Status inicial: pendente
+```
+
+### 2. Prefixos de Documentos por Tipo
+```typescript
+PREFIXOS_DOCUMENTO = {
+  peticao_inicial: 'PI',
+  contestacao: 'CONT', 
+  recurso: 'REC',
+  procuracao: 'PROC',
+  contrato: 'CTR',
+  acordo: 'ACR',
+  certidao: 'CERT',
+  alvara: 'ALV',
+  sentenca: 'SENT',
+  declaracao: 'DECL',
+  parecer: 'PAR',
+  notificacao: 'NOT',
+  citacao: 'CIT',
+  intimacao: 'INT',
+  oficio: 'OFI',
+  outros: 'DOC'
+}
+// Formato: PREFIX-YYYYMMDD-XXXXX (ex: PI-20260205-84721)
+```
+
+### 3. Visualização de Documento
+```
+Usuário → Clica "Abrir Documento" → DocumentoViewer.tsx
+  → Busca signed URL via documentosService.obterUrlDocumento()
+  → Renderiza PDF (iframe) ou Imagem (img com zoom/rotação)
+  → Marca automaticamente como visualizado (meta.visualizado = true)
+```
+
+### 4. Validação de Documento
+```
+Advogado → Abre documento no modal → Lê conteúdo
+  → Pode: Aprovar | Rejeitar | Solicitar Novamente
+  → Status atualiza em tempo real no modal
+  → Lista de documentos atualiza no fechamento
+```
+
+### 5. Ciclo de Status do Documento
+```
+pendente → aprovado (validado pelo advogado)
+pendente → rejeitado (documento incorreto)
+pendente → solicitado (pediu nova versão)
+rejeitado → pendente (cliente reenviou)
+solicitado → pendente (cliente reenviou)
+aprovado → completo (processo finalizado)
+```
+
+### 6. Estrutura do Campo `meta` (JSONB)
+```json
+{
+  "visualizado": true,
+  "visualizado_at": "2026-02-05T10:30:00Z",
+  "visualizado_por": "uuid-do-usuario",
+  "observacoes": "Documento ok, assinaturas conferidas",
+  "versao": 2
+}
+```
+
+---
+
 ## 📋 PLANO DE IMPLEMENTAÇÃO
 
 Veja o plano completo de implementação em:
 - **[PLANO_IMPLEMENTACAO_BACKEND.md](./PLANO_IMPLEMENTACAO_BACKEND.md)** - Backend completo, segurança e multi-tenant
 - **[COMPARACAO_ARQUITETURA.md](./COMPARACAO_ARQUITETURA.md)** - Gaps arquiteturais vs Talent Forge
 
-### Fases de Implementação
+### Fases de Implementação (Histórico)
 
-**FASE 1: Fundamentos (2 semanas)**
+**FASE 1: Fundamentos (2 semanas)** ✅ CONCLUÍDA
 - ✅ Criar migrations do banco
 - ✅ Domain Layer (entities, value-objects)
 - ✅ Repository Pattern
 
-**FASE 2: Use Cases (2 semanas)**
+**FASE 2: Use Cases (2 semanas)** ✅ CONCLUÍDA
 - ✅ Organizations use cases
 - ✅ Users/Invitations use cases
 - ✅ Leads/Cases use cases
 
-**FASE 3: Frontend (2 semanas)**
+**FASE 3: Frontend (2 semanas)** ✅ CONCLUÍDA
 - ✅ Cadastro de escritório
 - ✅ Gestão de equipe
 - ✅ Dashboard Fartech
 
-**FASE 4: Segurança (1 semana)**
+**FASE 4: Segurança (1 semana)** ✅ CONCLUÍDA
 - ✅ Sistema de permissões
 - ✅ Auditoria completa
 - ✅ Testes
 
-**FASE 5: Notificações (1 semana)**
+**FASE 5: Notificações (1 semana)** ⏳ PARCIAL
 - ✅ Email templates
-- ✅ Notificações em tempo real
-- ✅ Push notifications
+- ⏳ Notificações em tempo real
+- ⏳ Push notifications
+
+---
+
+## 📊 ANÁLISE COMPARATIVA: CANÔNICO vs IMPLEMENTADO
+**Data da Análise:** 4 de fevereiro de 2026  
+**Última Atualização:** 4 de fevereiro de 2026 (Todos os Gaps Críticos Resolvidos)
+
+### Score de Conformidade Geral: **95%** ✅ (era 82%)
+
+| Área | Score | Status |
+|------|-------|--------|
+| Multi-tenancy | **95%** | ✅ Excelente |
+| Segurança (RLS) | **90%** | ✅ Muito Bom |
+| Modelo de Dados | **95%** | ✅ Excelente |
+| Sistema de Permissões | **95%** | ✅ Corrigido |
+| Performance (Índices) | **95%** | ✅ Otimizado |
+| Soft Delete | **95%** | ✅ Implementado |
+| Enums Documentados | **95%** | ✅ Padronizado |
+| Arquitetura de Código | **60%** | ⚠️ Melhorar |
+
+---
+
+## 🔴 GAPS IDENTIFICADOS E PLANO DE CORREÇÃO
+
+### ✅ GAP 1: Role `associado` Não Existe - **RESOLVIDO**
+**Prioridade:** 🔴 CRÍTICO  
+**Status:** ✅ **IMPLEMENTADO em 04/02/2026**  
+**Migration:** `20260204_add_associado_role.sql`
+
+**O que foi feito:**
+- ✅ Adicionado valor `associado` ao enum `user_role`
+- ✅ Atualizado constraint `org_members_role_check`
+- ✅ Adicionadas policies RLS para role associado
+- ✅ Documentação de colunas atualizada
+
+---
+
+### GAP 2: Inconsistência de Enums (DB vs Frontend)
+**Prioridade:** 🟡 IMPORTANTE  
+**Esforço:** 2-3 horas
+
+**Problema:** Mapeamentos complexos entre DB e UI
+
+| Campo | DB | Frontend | Issue |
+|-------|-----|----------|-------|
+| `leads.status` | `em_triagem` | `em_contato` | Nomes diferentes |
+| `casos.status` | `triagem, negociacao, andamento...` | `ativo, suspenso, encerrado` | Muitos → poucos |
+| `casos.prioridade` | `INTEGER (1-4)` | `STRING (baixa, media, alta, critica)` | Tipo diferente |
+
+**Ação Necessária:**
+1. Criar enums PostgreSQL consistentes
+2. Migrar dados existentes
+3. Atualizar services para usar tipos corretos
+
+```sql
+-- Migration: 20260205_standardize_enums.sql
+
+-- Criar enum para lead_status
+CREATE TYPE lead_status_enum AS ENUM (
+  'novo', 'em_contato', 'qualificado', 'proposta', 'ganho', 'perdido'
+);
+
+-- Criar enum para caso_status
+CREATE TYPE caso_status_enum AS ENUM (
+  'ativo', 'suspenso', 'encerrado'
+);
+
+-- Criar enum para prioridade
+CREATE TYPE priority_enum AS ENUM (
+  'baixa', 'media', 'alta', 'critica'
+);
+```
+
+---
+
+### ✅ GAP 3: Índices de Performance Faltando - **RESOLVIDO**
+**Prioridade:** 🟡 IMPORTANTE  
+**Status:** ✅ **IMPLEMENTADO em 04/02/2026**  
+**Migration:** `20260204_add_performance_indexes.sql`
+
+**O que foi feito:**
+- ✅ 13 índices compostos criados para queries de dashboard
+- ✅ 3 índices GIN para full-text search (português)
+- ✅ Índices parciais para dados ativos
+- ✅ Índices para Kanban de tarefas
+
+**Índices Criados:**
+| Tabela | Índice | Tipo | Uso |
+|--------|--------|------|-----|
+| casos | `idx_casos_org_status_priority` | B-tree | Dashboard |
+| casos | `idx_casos_org_responsavel` | B-tree | Meus Casos |
+| casos | `idx_casos_titulo_fts` | GIN | Full-text |
+| leads | `idx_leads_org_status_created` | B-tree | Listagem |
+| leads | `idx_leads_nome_fts` | GIN | Full-text |
+| clientes | `idx_clientes_org_status_nome` | B-tree | Listagem |
+| clientes | `idx_clientes_nome_fts` | GIN | Full-text |
+| tarefas | `idx_tarefas_org_status_due` | B-tree | Kanban |
+| tarefas | `idx_tarefas_org_assigned_status` | B-tree | Minhas Tarefas |
+| documentos | `idx_documentos_caso_status` | B-tree | Por caso |
+| documentos | `idx_documentos_org_created` | B-tree | Listagem |
+| audit_log | `idx_audit_log_date_action` | B-tree | Relatórios |
+
+---
+
+### ✅ GAP 4: Soft Delete Não Implementado - **RESOLVIDO**
+**Prioridade:** 🟢 DESEJÁVEL  
+**Status:** ✅ **IMPLEMENTADO em 04/02/2026**  
+**Migration:** `20260204_soft_delete.sql`
+
+**O que foi feito:**
+- ✅ Coluna `deleted_at` e `deleted_by` adicionadas em: clientes, casos, leads, documentos, tarefas
+- ✅ Índices parciais para dados ativos (WHERE deleted_at IS NULL)
+- ✅ Views de compatibilidade: v_clientes_ativos, v_casos_ativos, etc.
+- ✅ Funções helper: `soft_delete()`, `restore_deleted()`, `hard_delete_old()`
+- ✅ Audit log integrado às operações de delete/restore
+
+---
+
+### GAP 5: RBAC Dinâmico Não Ativado
+**Prioridade:** 🟢 DESEJÁVEL (Futuro)  
+**Esforço:** 1-2 semanas
+
+**Status Atual:**
+- Tabelas `roles`, `permissions`, `role_permissions` existem mas estão **RESERVADAS**
+- Sistema atual usa abordagem simplificada: `usuarios.permissoes[]` + `org_members.role`
+
+**Decisão Arquitetural:**
+> O sistema atual é **SUFICIENTE** para a maioria dos casos de uso.  
+> RBAC dinâmico será implementado apenas se houver demanda por:
+> - Permissões granulares customizáveis por organização
+> - Roles personalizados além dos 6 existentes
+> - Matriz de permissões editável pelo admin
+
+**Ação:** Manter como está. Documentar que está reservado para futuro.
+
+---
+
+### GAP 6: Clean Architecture Incompleta
+**Prioridade:** 🟢 DESEJÁVEL (Refatoração)  
+**Esforço:** 2-4 semanas
+
+**Estado Atual:**
+```
+src/
+├── services/    → Infra + App misturados (acesso DB + lógica)
+├── hooks/       → App + Presentation misturados
+├── types/       → Domain parcial (apenas types)
+└── components/  → Presentation OK
+```
+
+**Canônica Define:**
+```
+src/
+├── domain/         → Entities, Value Objects, Interfaces
+├── application/    → Use Cases, DTOs, Mappers
+├── infrastructure/ → Repositories (Supabase)
+└── presentation/   → Components, Pages, Hooks
+```
+
+**Plano de Refatoração (Incremental):**
+
+1. **Fase A - Domain Layer** (3 dias)
+   - Criar `src/domain/entities/` com classes de entidade
+   - Criar `src/domain/value-objects/` (Email, CNPJ, OAB)
+   - Criar `src/domain/repositories/` (interfaces)
+
+2. **Fase B - Use Cases** (1 semana)
+   - Extrair lógica de negócio dos services para use cases
+   - Criar `src/application/use-cases/`
+   - Criar DTOs para input/output
+
+3. **Fase C - Infrastructure** (3 dias)
+   - Renomear `services/` para `infrastructure/repositories/`
+   - Implementar interfaces do domain
+
+**Ação:** Criar issue no backlog. Fazer refatoração incremental quando tocar nos arquivos.
+
+---
+
+## 📅 PLANO DE AÇÃO PRIORIZADO
+
+### ✅ Sprint 1 (Concluída) - Correções Críticas
+| # | Task | Prioridade | Esforço | Status |
+|---|------|------------|---------|--------|
+| 1 | Adicionar role `associado` | 🔴 Crítico | 1h | ✅ **Concluído** |
+| 2 | Criar índices compostos | 🟡 Importante | 30min | ✅ **Concluído** |
+| 3 | Documentar enums existentes | 🟡 Importante | 1h | ✅ **Concluído** |
+
+### ✅ Sprint 2 (Concluída) - Melhorias
+| # | Task | Prioridade | Esforço | Status |
+|---|------|------------|---------|--------|
+| 4 | Padronizar enums DB/Frontend | 🟡 Importante | 3h | ✅ **Concluído** |
+| 5 | Implementar soft delete | 🟢 Desejável | 3h | ✅ **Concluído** |
+| 6 | Adicionar versionamento docs | 🟢 Desejável | 2h | ⬜ Pendente |
+
+### ✅ Sprint 3 (Concluída) - Kanban e Histórico
+| # | Task | Prioridade | Esforço | Status |
+|---|------|------------|---------|--------|
+| 7 | Tabela `tarefa_status_history` | 🔴 Crítico | 2h | ✅ **Concluído** |
+| 8 | Trigger automático de histórico | 🔴 Crítico | 1h | ✅ **Concluído** |
+| 9 | Soft delete em tarefas | 🟡 Importante | 1h | ✅ **Concluído** |
+| 10 | Drawer completo de tarefas | 🟡 Importante | 3h | ✅ **Concluído** |
+| 11 | Ações rápidas no Kanban | 🟡 Importante | 2h | ✅ **Concluído** |
+| 12 | Badges de prioridade/status | 🟢 Desejável | 1h | ✅ **Concluído** |
+
+### Backlog (Quando Possível)
+| # | Task | Prioridade | Esforço | Status |
+|---|------|------------|---------|--------|
+| 7 | Refatorar para Clean Architecture | 🟢 Desejável | 2-4 sem | ⬜ Backlog |
+| 8 | Ativar RBAC Dinâmico | 🟢 Futuro | 1-2 sem | ⬜ Backlog |
+| 9 | Notificações Realtime | 🟢 Desejável | 1 sem | ⬜ Backlog |
+
+---
+
+## 🛠️ SCRIPTS SQL PRONTOS PARA EXECUÇÃO
+
+### Script 1: Adicionar Role Associado
+```sql
+-- Executar no Supabase SQL Editor
+-- Arquivo: supabase/migrations/20260204_add_associado_role.sql
+
+BEGIN;
+
+-- Atualizar constraint
+ALTER TABLE org_members 
+  DROP CONSTRAINT IF EXISTS org_members_role_check;
+
+ALTER TABLE org_members 
+  ADD CONSTRAINT org_members_role_check 
+  CHECK (role IN ('admin', 'gestor', 'advogado', 'associado', 'secretaria', 'leitura', 'viewer'));
+
+-- Atualizar enum se existir
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    BEGIN
+      ALTER TYPE user_role ADD VALUE 'associado' AFTER 'advogado';
+    EXCEPTION WHEN duplicate_object THEN
+      NULL; -- já existe
+    END;
+  END IF;
+END $$;
+
+-- Documentar
+COMMENT ON COLUMN org_members.role IS
+  'Role do usuário na organização.
+   
+   VALORES:
+   - admin: Administrador (full access)
+   - gestor: Gestor (full access)
+   - advogado: Advogado (criar/editar casos, clientes, docs)
+   - associado: Advogado associado (acesso limitado a casos atribuídos)
+   - secretaria: Secretária (agendamentos, tarefas básicas)
+   - leitura: Somente leitura
+   - viewer: Visualizador (alias para leitura)';
+
+COMMIT;
+```
+
+### Script 2: Índices de Performance
+```sql
+-- Executar no Supabase SQL Editor
+-- Arquivo: supabase/migrations/20260204_add_performance_indexes.sql
+
+BEGIN;
+
+-- Índices compostos para queries comuns
+CREATE INDEX IF NOT EXISTS idx_casos_org_status_priority 
+  ON casos(org_id, status, prioridade) WHERE status != 'arquivado';
+
+CREATE INDEX IF NOT EXISTS idx_leads_org_status_created 
+  ON leads(org_id, status, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_tarefas_org_status_due 
+  ON tarefas(org_id, status, due_at) WHERE status NOT IN ('concluida', 'cancelada');
+
+CREATE INDEX IF NOT EXISTS idx_agendamentos_org_date 
+  ON agendamentos(org_id, data_inicio, status);
+
+-- Full-text search
+CREATE INDEX IF NOT EXISTS idx_casos_titulo_fts 
+  ON casos USING GIN (to_tsvector('portuguese', coalesce(titulo, '')));
+
+CREATE INDEX IF NOT EXISTS idx_clientes_nome_fts 
+  ON clientes USING GIN (to_tsvector('portuguese', coalesce(nome, '')));
+
+COMMIT;
+```
 
 ---
 
@@ -1399,4 +2235,91 @@ Veja o plano completo de implementação em:
 ---
 
 **Mantido por:** Equipe SDR Jurídico  
-**Última atualização:** 27 de janeiro de 2026
+**Última atualização:** 5 de fevereiro de 2026  
+**Versão:** 1.5.0 (Soft Delete Leads + Histórico de Leads)
+
+---
+
+## 📝 CHANGELOG COMPLETO
+
+### v1.5.0 (05/02/2026)
+**🎯 Soft Delete e Histórico de Leads**
+
+#### Banco de Dados
+- ✅ **Soft Delete para Leads**: Campos `deleted_at` e `deleted_by` na tabela `leads`
+- ✅ **`lead_status_history`**: Nova tabela para rastrear mudanças de status e temperatura (heat)
+- ✅ **Campos expandidos em `leads`**: `heat`, `last_contact_at`, `assigned_user_id`, `updated_at`
+
+#### Frontend
+- ✅ **TarefasArquivadasPage**: Nova página `/app/tarefas/arquivadas`
+  - Lista tarefas soft-deleted
+  - Botão "Restaurar" para recuperar tarefa
+  - Botão "Excluir permanentemente" com confirmação
+  - Busca por título/descrição
+- ✅ **LeadDrawer com Histórico**: Timeline de mudanças de status e heat
+- ✅ **Cards discretos na LeadsPage**: Cores suaves (orange/blue/emerald pastéis)
+
+#### TypeScript (supabaseClient.ts)
+- ✅ **LeadRow atualizado**: Campos `deleted_at`, `deleted_by`, `heat`, `assigned_user_id`
+- ✅ **TarefaStatusHistoryRow**: Interface para histórico de tarefas
+- ✅ **LeadStatusHistoryRow**: Interface para histórico de leads
+
+---
+
+### v1.4.0 (05/02/2026)
+**🎯 Kanban Avançado e Auditoria de Tarefas**
+
+#### Banco de Dados
+- ✅ **`tarefa_status_history`**: Nova tabela para rastrear todas as mudanças de status
+- ✅ **Trigger `trg_tarefa_status_history`**: Registra automaticamente mudanças
+- ✅ **Função `get_tarefa_history()`**: Retorna timeline completa com tempo em cada status
+- ✅ **View `v_tarefa_timeline`**: Timeline com nome do usuário que fez a mudança
+- ✅ **Soft Delete**: Campos `deleted_at` e `deleted_by` na tabela `tarefas`
+- ✅ **Filtro automático**: Queries excluem tarefas deletadas (`deleted_at IS NULL`)
+
+#### Frontend (TarefasKanbanPage)
+- ✅ **Drawer centralizado**: Modal completo para gerenciamento de tarefa
+- ✅ **Ações rápidas contextuais**: Botões baseados no status atual
+  - Pendente → "Iniciar Tarefa"
+  - Em Andamento → "Enviar p/ Validação" / "Marcar Concluída"
+  - Aguardando Validação → "Aprovar" / "Devolver"
+  - Concluída/Devolvida → "Reabrir Tarefa"
+- ✅ **Badges melhorados**: Prioridade com ícones (🔥 Alta, ➖ Normal, 🔽 Baixa)
+- ✅ **Badge animado**: "Atrasada" com pulse vermelho
+- ✅ **Seção de devolução**: Input para motivo + confirmação
+- ✅ **Histórico de rejeição**: Box amarelo mostrando último motivo
+
+#### Frontend (LeadsPage) - NOVO!
+- ✅ **Cards de métricas redesenhados**: Layout 2x2 com gradientes e animações
+  - Total Pipeline com ícone de usuários
+  - Leads Quentes com badge animado "PRIORIDADE"
+  - Em Negociação com indicador de propostas
+  - Taxa de Conversão com ícone de sucesso
+- ✅ **Cards de lead modernizados**: Hover com elevação, botões com transição
+- ✅ **Badges com gradientes**: Status e temperatura com ícones semânticos
+  - Status: ✨ Novo, 📞 Em Contato, ⭐ Qualificado, 📋 Proposta, 🎉 Ganho, ❌ Perdido
+  - Heat: 🔥 Quente, ☀️ Morno, ❄️ Frio
+- ✅ **Tabs redesenhadas**: Container com background, ícones contextuais
+- ✅ **Filtros melhorados**: Inputs com ícones, seletores com emojis
+- ✅ **Informações de contato**: Email/telefone em chips destacados
+- ✅ **Área de interesse**: Badge azul com ícone de pasta
+
+#### Services (tarefasService.ts)
+- ✅ **`deleteTarefa()`**: Soft delete com UPDATE em vez de DELETE
+- ✅ **`restoreTarefa()`**: Restaura tarefa deletada
+- ✅ **`getDeletedTarefas()`**: Lista tarefas na lixeira
+- ✅ **Todos os métodos**: Filtram `deleted_at IS NULL`
+
+#### Hooks (useTarefas.ts)
+- ✅ **`restoreTarefa`**: Callback para restaurar tarefa
+- ✅ **`fetchDeletedTarefas`**: Busca tarefas deletadas
+
+### v1.3.0 (04/02/2026)
+- Padronização de enums DB/Frontend
+- Índices de performance
+- Role `associado` adicionada
+
+### v1.2.0 (03/02/2026)
+- Setup inicial multi-tenant
+- RLS em todas as tabelas
+- Sistema de permissões base

@@ -10,14 +10,18 @@ import { mapLeadRowToLead } from '@/lib/mappers'
 
 interface UseLeadsState {
   leads: Lead[]
+  deletedLeads: Lead[]
   loading: boolean
+  loadingDeleted: boolean
   error: Error | null
 }
 
 export function useLeads() {
   const [state, setState] = useState<UseLeadsState>({
     leads: [],
+    deletedLeads: [],
     loading: false,
+    loadingDeleted: false,
     error: null,
   })
 
@@ -141,6 +145,54 @@ export function useLeads() {
     }
   }, [])
 
+  // Buscar leads deletados (lixeira)
+  const fetchDeletedLeads = useCallback(async () => {
+    setState((prev) => ({ ...prev, loadingDeleted: true, error: null }))
+    try {
+      const leads = await leadsService.getDeletedLeads()
+      setState((prev) => ({
+        ...prev,
+        deletedLeads: leads.map(mapLeadRowToLead),
+        loadingDeleted: false,
+      }))
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Erro desconhecido')
+      setState((prev) => ({ ...prev, error: err, loadingDeleted: false }))
+    }
+  }, [])
+
+  // Restaurar lead deletado
+  const restoreLead = useCallback(async (id: string) => {
+    try {
+      const restored = await leadsService.restoreLead(id)
+      setState((prev) => ({
+        ...prev,
+        deletedLeads: prev.deletedLeads.filter((lead) => lead.id !== id),
+        leads: [mapLeadRowToLead(restored), ...prev.leads],
+      }))
+      return mapLeadRowToLead(restored)
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Erro desconhecido')
+      setState((prev) => ({ ...prev, error: err }))
+      throw err
+    }
+  }, [])
+
+  // Deletar lead permanentemente
+  const hardDeleteLead = useCallback(async (id: string) => {
+    try {
+      await leadsService.hardDeleteLead(id)
+      setState((prev) => ({
+        ...prev,
+        deletedLeads: prev.deletedLeads.filter((lead) => lead.id !== id),
+      }))
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Erro desconhecido')
+      setState((prev) => ({ ...prev, error: err }))
+      throw err
+    }
+  }, [])
+
   // Carregar leads ao montar
   useEffect(() => {
     fetchLeads()
@@ -155,5 +207,8 @@ export function useLeads() {
     updateLead,
     deleteLead,
     assignLeadAdvogado,
+    fetchDeletedLeads,
+    restoreLead,
+    hardDeleteLead,
   }
 }

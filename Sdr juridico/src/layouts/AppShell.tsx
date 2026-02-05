@@ -19,6 +19,7 @@ import {
   UserRound,
   Users,
   Database,
+  Newspaper,
   ShieldCheck,
   Menu,
   X,
@@ -63,6 +64,7 @@ const appNavGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { label: 'Documentos', to: '/app/documentos', icon: FileText },
       { label: 'DataJud', to: '/app/datajud', icon: Database },
+      { label: 'Diário Oficial', to: '/app/diario-oficial', icon: Newspaper },
     ],
   },
   {
