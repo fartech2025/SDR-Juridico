@@ -54,6 +54,8 @@ export interface Caso {
   datajud_sync_status?: DataJudSyncStatus
   datajud_last_sync_at?: string
   datajud_sync_error?: string
+  // DOU monitoring
+  monitorar_dou?: boolean
 }
 
 export type DocumentoStatus = 'pendente' | 'aprovado' | 'rejeitado' | 'solicitado' | 'completo'

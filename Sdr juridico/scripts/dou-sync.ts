@@ -54,13 +54,31 @@ async function main() {
 
     logger.info(`${publicacoes.length} publicações encontradas no DOU Seção 3`)
 
-    // 2. Carregar todas as organizações
-    const { data: orgs, error: orgsError } = await supabase
-      .from('orgs')
-      .select('id')
+    // 2. Carregar organizações com monitoramento DOU ativo
+    // (orgs que têm termos ou casos com monitorar_dou = true)
+    const orgIds = new Set<string>()
 
-    if (orgsError || !orgs?.length) {
-      logger.error('Erro ao carregar orgs:', orgsError)
+    // Orgs com termos monitorados
+    const { data: termoOrgs } = await supabase
+      .from('dou_termos_monitorados')
+      .select('org_id')
+      .eq('ativo', true)
+
+    termoOrgs?.forEach(t => orgIds.add(t.org_id))
+
+    // Orgs com casos monitorados
+    const { data: casoOrgs } = await supabase
+      .from('casos')
+      .select('org_id')
+      .eq('monitorar_dou', true)
+      .not('numero_processo', 'is', null)
+
+    casoOrgs?.forEach(c => orgIds.add(c.org_id))
+
+    const orgs = Array.from(orgIds).map(id => ({ id }))
+
+    if (orgs.length === 0) {
+      logger.info('Nenhuma organização com monitoramento DOU ativo')
       return
     }
 

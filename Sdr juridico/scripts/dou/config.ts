@@ -27,4 +27,5 @@ export const DOU_CONFIG = {
 
   // Logs
   logDir: process.env.DOU_LOG_DIR || './logs/dou',
+  debugDump: process.env.DOU_DEBUG_DUMP === '1' || process.env.DOU_DEBUG_DUMP === 'true',
 }

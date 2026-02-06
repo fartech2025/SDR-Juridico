@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { Search, RefreshCw, AlertCircle, Newspaper, Building2, UserCheck, ExternalLink, Filter, Calendar, MapPin } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Search, RefreshCw, AlertCircle, Newspaper, Building2, UserCheck, ExternalLink, Filter, Calendar, MapPin, Clock, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -170,22 +171,32 @@ export const DiarioOficialPage = () => {
     <div className="min-h-screen bg-background px-6 lg:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-text flex items-center gap-3">
-            <Newspaper className="w-8 h-8 text-info" />
-            Diário Oficial
-          </h1>
-          <p className="text-text-muted">
-            Busque publicações em diários oficiais municipais de todo o Brasil via{' '}
-            <a 
-              href="https://queridodiario.ok.org.br" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Querido Diário
-            </a>
-          </p>
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-text flex items-center gap-3">
+              <Newspaper className="w-8 h-8 text-info" />
+              Diário Oficial
+            </h1>
+            <p className="text-text-muted">
+              Busque publicações em diários oficiais municipais de todo o Brasil via{' '}
+              <a
+                href="https://queridodiario.ok.org.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Querido Diário
+              </a>
+            </p>
+          </div>
+          <Link
+            to="/app/dou-logs"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">Monitoramento DOU</span>
+            <span className="sm:hidden">DOU</span>
+          </Link>
         </div>
 
         {/* Card de Busca */}

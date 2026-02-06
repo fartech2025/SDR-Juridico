@@ -194,6 +194,74 @@ class DOUService {
 
     return (data || []) as DOUSyncLog[]
   }
+
+  /**
+   * Atualiza flag monitorar_dou de um caso
+   */
+  async toggleMonitorarDOU(casoId: string, monitorar: boolean): Promise<void> {
+    const { error } = await supabase
+      .from('casos')
+      .update({ monitorar_dou: monitorar })
+      .eq('id', casoId)
+
+    if (error) {
+      console.error("Error toggling monitorar_dou:", error)
+      throw new Error("Erro ao atualizar monitoramento DOU")
+    }
+  }
+
+  /**
+   * Busca status de monitoramento de um caso
+   */
+  async getMonitorarDOU(casoId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('casos')
+      .select('monitorar_dou')
+      .eq('id', casoId)
+      .single()
+
+    if (error) {
+      console.error("Error getting monitorar_dou:", error)
+      return true // default true
+    }
+
+    return data?.monitorar_dou ?? true
+  }
+
+  /**
+   * Retorna estatísticas DOU da organização
+   */
+  async getOrgDOUStats(): Promise<{
+    casosMonitorados: number
+    termosAtivos: number
+    publicacoes30d: number
+    naoLidas: number
+    ultimoSync: string | null
+  }> {
+    const { data, error } = await supabase
+      .from('dou_stats_por_org')
+      .select('*')
+      .single()
+
+    if (error) {
+      console.error("Error getting DOU stats:", error)
+      return {
+        casosMonitorados: 0,
+        termosAtivos: 0,
+        publicacoes30d: 0,
+        naoLidas: 0,
+        ultimoSync: null,
+      }
+    }
+
+    return {
+      casosMonitorados: data?.casos_monitorados || 0,
+      termosAtivos: data?.termos_ativos || 0,
+      publicacoes30d: data?.publicacoes_30d || 0,
+      naoLidas: data?.publicacoes_nao_lidas || 0,
+      ultimoSync: data?.ultimo_sync_sucesso || null,
+    }
+  }
 }
 
 export const douService = new DOUService()

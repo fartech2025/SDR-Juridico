@@ -10,6 +10,8 @@ export function useDOU(casoId?: string) {
   const [searchLoading, setSearchLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [naoLidas, setNaoLidas] = useState(0)
+  const [monitorarDOU, setMonitorarDOU] = useState(true)
+  const [monitorarLoading, setMonitorarLoading] = useState(false)
 
   const loadPublicacoes = useCallback(async (id: string) => {
     setLoading(true)
@@ -34,12 +36,22 @@ export function useDOU(casoId?: string) {
     }
   }, [])
 
+  const loadMonitorarDOU = useCallback(async (id: string) => {
+    try {
+      const status = await douService.getMonitorarDOU(id)
+      setMonitorarDOU(status)
+    } catch (err) {
+      console.error('Erro ao carregar status monitoramento:', err)
+    }
+  }, [])
+
   useEffect(() => {
     if (casoId) {
       loadPublicacoes(casoId)
       loadTermos(casoId)
+      loadMonitorarDOU(casoId)
     }
-  }, [casoId, loadPublicacoes, loadTermos])
+  }, [casoId, loadPublicacoes, loadTermos, loadMonitorarDOU])
 
   const searchDOU = useCallback(async (params: DOUSearchParams) => {
     setSearchLoading(true)
@@ -100,6 +112,19 @@ export function useDOU(casoId?: string) {
     }
   }, [])
 
+  const toggleMonitorarDOU = useCallback(async (monitorar: boolean) => {
+    if (!casoId) return
+    setMonitorarLoading(true)
+    try {
+      await douService.toggleMonitorarDOU(casoId, monitorar)
+      setMonitorarDOU(monitorar)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao alterar monitoramento')
+    } finally {
+      setMonitorarLoading(false)
+    }
+  }, [casoId])
+
   return {
     publicacoes,
     termos,
@@ -107,11 +132,14 @@ export function useDOU(casoId?: string) {
     searchLoading,
     error,
     naoLidas,
+    monitorarDOU,
+    monitorarLoading,
     searchDOU,
     marcarLida,
     addTermo,
     removeTermo,
     toggleTermo,
+    toggleMonitorarDOU,
     refresh: () => casoId ? loadPublicacoes(casoId) : undefined,
   }
 }

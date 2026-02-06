@@ -139,30 +139,56 @@ export function CasoDouSection({ caso, orgId }: CasoDouSectionProps) {
     loading,
     error,
     naoLidas,
+    monitorarDOU,
+    monitorarLoading,
     marcarLida,
     addTermo,
     removeTermo,
     toggleTermo,
+    toggleMonitorarDOU,
     refresh,
   } = useDOU(caso.id)
 
   return (
     <div className="rounded-lg border border-gray-200 p-6">
-      <div
-        className="mb-4 flex items-center justify-between cursor-pointer"
-        onClick={() => setCollapsed(!collapsed)}
-      >
-        <div className="flex items-center gap-3">
+      <div className="mb-4 flex items-center justify-between">
+        <div
+          className="flex items-center gap-3 cursor-pointer flex-1"
+          onClick={() => setCollapsed(!collapsed)}
+        >
           <h3 className="text-lg font-semibold">Diario Oficial da Uniao</h3>
           {naoLidas > 0 && (
             <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
               {naoLidas} nova{naoLidas > 1 ? 's' : ''}
             </span>
           )}
+          {!monitorarDOU && (
+            <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+              Monitoramento pausado
+            </span>
+          )}
         </div>
-        <span className="text-gray-400 text-sm">
-          {collapsed ? '+' : '-'}
-        </span>
+        <div className="flex items-center gap-3">
+          <label className="relative inline-flex items-center cursor-pointer" title={monitorarDOU ? 'Monitoramento ativo' : 'Monitoramento pausado'}>
+            <input
+              type="checkbox"
+              checked={monitorarDOU}
+              onChange={(e) => toggleMonitorarDOU(e.target.checked)}
+              disabled={monitorarLoading}
+              className="sr-only peer"
+            />
+            <div className={`w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:bg-green-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full ${monitorarLoading ? 'opacity-50' : ''}`} />
+            <span className="ml-2 text-xs text-gray-500">
+              {monitorarLoading ? '...' : (monitorarDOU ? 'Ativo' : 'Pausado')}
+            </span>
+          </label>
+          <span
+            className="text-gray-400 text-sm cursor-pointer"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? '+' : '-'}
+          </span>
+        </div>
       </div>
 
       {!collapsed && (

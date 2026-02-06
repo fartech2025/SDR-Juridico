@@ -1,5 +1,6 @@
 // scripts/dou/dou-search-client.ts
 // Busca na API pública do DOU (sem autenticação)
+import * as https from 'https'
 import { DOU_CONFIG } from './config'
 import { parseSearchHTML, parseLeiturajornalHTML } from './html-parser'
 import { logger } from './logger'
@@ -55,19 +56,48 @@ export async function downloadViaLeiturajornal(data: Date): Promise<DOUHit[]> {
 }
 
 /**
+ * Fetch usando módulo https nativo (mais estável que fetch do Node.js)
+ */
+async function httpsGet(urlStr: string): Promise<{ status: number; text: string }> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlStr)
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname + url.search,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+      },
+    }
+
+    const req = https.request(options, (res) => {
+      let data = ''
+      res.on('data', (chunk) => { data += chunk })
+      res.on('end', () => {
+        resolve({ status: res.statusCode || 0, text: data })
+      })
+    })
+
+    req.on('error', reject)
+    req.setTimeout(30000, () => {
+      req.destroy()
+      reject(new Error('Request timeout'))
+    })
+    req.end()
+  })
+}
+
+/**
  * Fetch com retry e exponential backoff
  */
 async function fetchWithRetry(
   url: string,
   attempt: number = 1
-): Promise<Response> {
+): Promise<{ ok: boolean; status: number; text: () => Promise<string> }> {
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'SDR-Juridico-DOU-Bot/1.0',
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-    })
+    const response = await httpsGet(url)
 
     if (response.status === 429 && attempt < DOU_CONFIG.retryAttempts) {
       const delay = DOU_CONFIG.retryDelayMs * Math.pow(2, attempt - 1)
@@ -76,14 +106,18 @@ async function fetchWithRetry(
       return fetchWithRetry(url, attempt + 1)
     }
 
-    if (!response.ok && attempt < DOU_CONFIG.retryAttempts) {
+    if (response.status >= 400 && attempt < DOU_CONFIG.retryAttempts) {
       const delay = DOU_CONFIG.retryDelayMs * Math.pow(2, attempt - 1)
       logger.warn(`HTTP ${response.status}, retry em ${delay}ms (tentativa ${attempt})`)
       await sleep(delay)
       return fetchWithRetry(url, attempt + 1)
     }
 
-    return response
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
+      text: async () => response.text,
+    }
   } catch (error) {
     if (attempt < DOU_CONFIG.retryAttempts) {
       const delay = DOU_CONFIG.retryDelayMs * Math.pow(2, attempt - 1)
