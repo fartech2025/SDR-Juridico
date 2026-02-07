@@ -1,5 +1,5 @@
 // src/components/CasoDetail/CasoDataJudSection.tsx
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Scale, RefreshCw, Unlink, Link2, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buscarProcessoPorNumero } from '@/services/datajudService'
@@ -29,10 +29,54 @@ export function CasoDataJudSection({
   const [movimentosLoading, setMovimentosLoading] = useState(false)
 
   const hasProcesso = !!caso.numero_processo
+  const loadedRef = useRef(false)
+
+  // Carregar movimentacoes do banco ao montar (para persistir entre navegacoes)
+  useEffect(() => {
+    if (loadedRef.current || !hasProcesso) return
+    loadedRef.current = true
+
+    const loadFromDb = async () => {
+      // Descobrir o processo_id — tenta datajud_processo_id do caso, senao busca por numero_processo
+      let processoId = caso.datajud_processo_id
+      if (!processoId && caso.numero_processo) {
+        const { data } = await supabase
+          .from('datajud_processos')
+          .select('id')
+          .eq('numero_processo', caso.numero_processo)
+          .limit(1)
+          .single()
+        processoId = data?.id || undefined
+      }
+      if (!processoId) return
+
+      const { data: movsDb } = await supabase
+        .from('datajud_movimentacoes')
+        .select('*')
+        .eq('datajud_processo_id', processoId)
+        .order('data_hora', { ascending: false, nullsFirst: false })
+        .limit(50)
+
+      if (movsDb && movsDb.length > 0) {
+        const movs: DataJudMovimento[] = movsDb.map((mov) => ({
+          id: mov.id,
+          datajud_processo_id: mov.datajud_processo_id,
+          codigo: mov.codigo || '',
+          nome: mov.nome || '',
+          data_hora: mov.data_hora || mov.created_at,
+          complemento: mov.complemento || undefined,
+          detected_at: mov.detected_at || mov.created_at,
+          notified: mov.notified ?? false,
+          created_at: mov.created_at,
+        }))
+        setMovimentos(movs)
+      }
+    }
+    loadFromDb().catch(() => null)
+  }, [hasProcesso, caso.datajud_processo_id, caso.numero_processo])
 
   /**
    * Persiste movimentos no banco (datajud_movimentacoes)
-   * Usa upsert por processo_id + codigo + data_movimentacao para evitar duplicatas
    */
   const persistMovimentos = async (
     processoId: string,

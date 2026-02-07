@@ -14,6 +14,7 @@ import {
   Lightbulb,
   Phone,
   Pencil,
+  Trash2,
   Copy,
   Scale,
   Newspaper,
@@ -241,17 +242,19 @@ const TaskItem = ({
     <div className="flex items-center gap-2">
       <button
         type="button"
-        className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-all"
         onClick={onEdit}
+        title="Editar tarefa"
       >
-        Editar
+        <Pencil className="h-3.5 w-3.5" />
       </button>
       <button
         type="button"
-        className="text-xs text-red-600 hover:text-red-700 transition-colors"
+        className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
         onClick={onDelete}
+        title="Excluir tarefa"
       >
-        Excluir
+        <Trash2 className="h-3.5 w-3.5" />
       </button>
       <Badge variant={status === 'PENDENTE' || status === 'pendente' ? 'warning' : 'success'}>
         {status.toUpperCase()}

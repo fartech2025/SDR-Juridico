@@ -23,6 +23,7 @@ type DbCasoRow = {
   responsavel?: string | null
   cliente?: {
     nome: string | null
+    owner_user_id?: string | null
   } | null
 }
 
@@ -100,7 +101,7 @@ const mapUiStatusToDbFilter = (status: CasoRow['status']) => {
   return ['andamento']
 }
 
-const mapDbCasoToCasoRow = (row: DbCasoRow): CasoRow => ({
+const mapDbCasoToCasoRow = (row: DbCasoRow, responsavelNome?: string | null): CasoRow => ({
   id: row.id,
   created_at: row.created_at,
   updated_at: row.encerrado_em || row.created_at,
@@ -118,12 +119,53 @@ const mapDbCasoToCasoRow = (row: DbCasoRow): CasoRow => ({
   valor_estimado: row.valor_estimado || null,
   sla_risk: null,
   tags: null,
-  responsavel: row.responsavel || null,
+  responsavel: responsavelNome || row.responsavel || null,
   data_abertura: row.created_at,
   data_encerramento: row.encerrado_em || null,
   encerrado_em: row.encerrado_em || null,
   cliente: row.cliente || null,
 })
+
+/**
+ * Busca nomes dos usuarios responsaveis a partir dos IDs.
+ * Sem FK entre casos.responsavel_user_id e usuarios.id,
+ * precisamos fazer uma query separada.
+ */
+const resolveResponsavelNames = async (
+  rows: DbCasoRow[],
+): Promise<Map<string, string>> => {
+  const userIds = [...new Set(
+    rows
+      .flatMap((r) => [r.responsavel_user_id, r.cliente?.owner_user_id])
+      .filter((id): id is string => !!id),
+  )]
+  if (!userIds.length) return new Map()
+
+  const { data } = await supabase
+    .from('usuarios')
+    .select('id, nome_completo')
+    .in('id', userIds)
+
+  const map = new Map<string, string>()
+  if (data) {
+    for (const u of data) {
+      if (u.nome_completo) map.set(u.id, u.nome_completo)
+    }
+  }
+  return map
+}
+
+const getResponsavelNome = (row: DbCasoRow, nameMap: Map<string, string>): string | null => {
+  if (row.responsavel_user_id) {
+    const nome = nameMap.get(row.responsavel_user_id)
+    if (nome) return nome
+  }
+  if (row.cliente?.owner_user_id) {
+    const nome = nameMap.get(row.cliente.owner_user_id)
+    if (nome) return nome
+  }
+  return row.responsavel || null
+}
 
 const buildCasoPayload = (caso: Partial<CasoRow>, applyDefaults: boolean) => {
   const payload: Partial<DbCasoRow> = {}
@@ -164,13 +206,15 @@ export const casosService = {
         .from('casos')
         .update({ responsavel_user_id: advogadoId })
         .eq('id', casoId)
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome, owner_user_id)')
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
       if (!data) throw new AppError('Caso nao encontrado', 'not_found')
 
-      return mapDbCasoToCasoRow(data as DbCasoRow)
+      const row = data as DbCasoRow
+      const nameMap = await resolveResponsavelNames([row])
+      return mapDbCasoToCasoRow(row, getResponsavelNome(row, nameMap))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao encaminhar caso', 'database_error')
     }
@@ -185,12 +229,14 @@ export const casosService = {
 
       const query = supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome, owner_user_id)')
         .order('created_at', { ascending: false })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
 
       if (error) throw new AppError(error.message, 'database_error')
-      return (data || []).map((row: DbCasoRow) => mapDbCasoToCasoRow(row))
+      const rows = (data || []) as DbCasoRow[]
+      const nameMap = await resolveResponsavelNames(rows)
+      return rows.map((row) => mapDbCasoToCasoRow(row, getResponsavelNome(row, nameMap)))
     } catch (error) {
       throw error instanceof AppError ? error : new AppError('Erro ao buscar casos', 'database_error')
     }
@@ -208,7 +254,7 @@ export const casosService = {
 
       const query = supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome, owner_user_id)')
         .eq('id', id)
       const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
 
@@ -232,7 +278,7 @@ export const casosService = {
 
       const query = supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome, owner_user_id)')
         .in('status', statusFilter)
         .order('created_at', { ascending: false })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
@@ -254,7 +300,7 @@ export const casosService = {
 
       const query = supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome, owner_user_id)')
         .in('prioridade', [3, 4])
         .order('created_at', { ascending: true })
       const { data, error } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
@@ -276,7 +322,7 @@ export const casosService = {
 
       const query = supabase
         .from('casos')
-        .select('*, cliente:clientes(nome)')
+        .select('*, cliente:clientes(nome, owner_user_id)')
         .eq('cliente_id', clienteId)
       const { data, error } = isFartechAdmin
         ? await query.order('created_at', { ascending: false })
