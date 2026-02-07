@@ -44,6 +44,8 @@ export interface Caso {
   leadId?: string
   tags: string[]
   slaRisk: 'ok' | 'atencao' | 'critico'
+  prioridade?: 'baixa' | 'media' | 'alta' | 'critica'
+  responsavel?: string
   // DataJud fields
   numero_processo?: string
   tribunal?: string

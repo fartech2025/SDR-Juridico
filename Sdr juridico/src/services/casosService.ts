@@ -20,6 +20,7 @@ type DbCasoRow = {
   valor_estimado?: number | null
   fase_atual?: string | null
   encerrado_em?: string | null
+  responsavel?: string | null
   cliente?: {
     nome: string | null
   } | null
@@ -117,7 +118,7 @@ const mapDbCasoToCasoRow = (row: DbCasoRow): CasoRow => ({
   valor_estimado: row.valor_estimado || null,
   sla_risk: null,
   tags: null,
-  responsavel: null,
+  responsavel: row.responsavel || null,
   data_abertura: row.created_at,
   data_encerramento: row.encerrado_em || null,
   encerrado_em: row.encerrado_em || null,

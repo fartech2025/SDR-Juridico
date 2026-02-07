@@ -257,26 +257,28 @@ export interface TimelineEventRow {
 export interface DatajudProcessoRow {
   id: string
   created_at: string
-  org_id?: string | null
+  updated_at: string
+  org_id: string
   numero_processo: string
-  tribunal: string | null
-  classe: string | null
-  area: string | null
-  caso_id: string | null
-  cliente_id: string | null
-  last_sync_at: string | null
-  payload: Record<string, unknown> | null
+  tribunal: string
+  grau?: string | null
+  classe_processual?: string | null
+  assunto?: string | null
+  raw_response?: Record<string, unknown> | null
+  cached_at?: string | null
 }
 
 export interface DatajudMovimentacaoRow {
   id: string
   created_at: string
-  org_id?: string | null
-  processo_id: string
-  data_movimentacao: string | null
-  descricao: string | null
-  codigo: string | null
-  payload: Record<string, unknown> | null
+  datajud_processo_id: string
+  codigo?: string | null
+  nome: string
+  data_hora: string
+  complemento?: string | null
+  raw_response?: Record<string, unknown> | null
+  detected_at?: string | null
+  notified?: boolean
 }
 
 // Histórico de Status de Tarefas

@@ -29,12 +29,12 @@ const resolveStatus = (
 // Badges de status - Visual Corporativo (tons cinza)
 const statusBadge = (status: Lead['status']) => {
   const badges: Record<Lead['status'], string> = {
-    novo: 'bg-slate-100 text-slate-700 border border-slate-200',
-    em_contato: 'bg-slate-100 text-slate-700 border border-slate-200',
-    qualificado: 'bg-slate-200 text-slate-800 border border-slate-300',
-    proposta: 'bg-slate-200 text-slate-800 border border-slate-300',
-    ganho: 'bg-slate-800 text-white border border-slate-700',
-    perdido: 'bg-slate-400 text-white border border-slate-500',
+    novo: 'bg-gray-100 text-gray-700 border border-gray-200',
+    em_contato: 'bg-gray-100 text-gray-700 border border-gray-200',
+    qualificado: 'bg-gray-200 text-gray-800 border border-gray-300',
+    proposta: 'bg-gray-200 text-gray-800 border border-gray-300',
+    ganho: 'bg-gray-800 text-white border border-gray-700',
+    perdido: 'bg-gray-400 text-white border border-gray-500',
   }
   return badges[status] || badges.novo
 }
@@ -515,8 +515,8 @@ export const LeadsPage = () => {
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
           input:focus, select:focus, textarea:focus {
-            --tw-ring-color: #64748b;
-            border-color: #64748b;
+            --tw-ring-color: #721011;
+            border-color: #721011;
           }
         `}</style>
       </div>
@@ -524,29 +524,29 @@ export const LeadsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-5">
         {/* Header */}
-        <div className="bg-white rounded-lg border border-slate-200 p-5">
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-100">
-                  <TrendingUp className="h-5 w-5 text-slate-600" />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
+                  <TrendingUp className="h-5 w-5" style={{ color: '#721011' }} />
                 </div>
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Pipeline de Vendas
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">Gestão de Leads</h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <h1 className="text-2xl font-bold text-gray-900">Gestão de Leads</h1>
+              <p className="text-sm text-gray-500 mt-1">
                 Acompanhe oportunidades e gerencie conversões
               </p>
             </div>
             <div className="flex gap-3">
               <Link
                 to="/app/leads/kanban"
-                className="h-10 px-4 rounded-lg border border-slate-200 font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
+                className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2"
               >
                 <LayoutGrid className="h-4 w-4" />
                 Kanban
@@ -554,7 +554,7 @@ export const LeadsPage = () => {
               <button
                 onClick={() => void fetchLeads()}
                 disabled={loading}
-                className="h-10 px-4 rounded-lg border border-slate-200 font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-50 flex items-center gap-2"
+                className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 flex items-center gap-2"
               >
                 <ArrowUpRight className="h-4 w-4" />
                 Atualizar
@@ -569,7 +569,8 @@ export const LeadsPage = () => {
                   setShowNewLeadForm(true)
                 }}
                 disabled={!canManageLeads}
-                className="h-10 px-5 rounded-lg font-semibold text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:hover:bg-slate-800 flex items-center gap-2"
+                className="h-10 px-5 rounded-lg font-semibold text-white transition-all disabled:opacity-50 flex items-center gap-2"
+                style={{ backgroundColor: '#721011' }}
               >
                 <Zap className="h-4 w-4" />
                 Novo Lead
@@ -581,21 +582,21 @@ export const LeadsPage = () => {
         {/* Métricas - Design Corporativo Discreto */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Pipeline */}
-          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-50 border border-slate-200">
-                <Users className="w-5 h-5 text-slate-500" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
+                <Users className="w-5 h-5" style={{ color: '#721011' }} />
               </div>
-              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Pipeline</span>
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pipeline</span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-slate-800">{metrics.total}</div>
-              <div className="text-sm text-slate-500 mt-1">Total de Leads</div>
+              <div className="text-3xl font-bold text-gray-800">{metrics.total}</div>
+              <div className="text-sm text-gray-500 mt-1">Total de Leads</div>
             </div>
           </div>
 
           {/* Leads Quentes */}
-          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-orange-200 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-orange-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-orange-50 border border-orange-200">
                 <Flame className="w-5 h-5 text-orange-500" />
@@ -605,47 +606,47 @@ export const LeadsPage = () => {
               </span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-slate-800">{metrics.quentes}</div>
-              <div className="text-sm text-slate-500 mt-1">Leads Quentes</div>
+              <div className="text-3xl font-bold text-gray-800">{metrics.quentes}</div>
+              <div className="text-sm text-gray-500 mt-1">Leads Quentes</div>
             </div>
           </div>
 
           {/* Em Negociação */}
-          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-50 border border-blue-200">
                 <Clock className="w-5 h-5 text-blue-500" />
               </div>
-              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Ativos</span>
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Ativos</span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-slate-800">{metrics.emNegociacao}</div>
-              <div className="text-sm text-slate-500 mt-1">Em Negociação</div>
+              <div className="text-3xl font-bold text-gray-800">{metrics.emNegociacao}</div>
+              <div className="text-sm text-gray-500 mt-1">Em Negociação</div>
             </div>
           </div>
 
           {/* Taxa de Conversão */}
-          <div className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-emerald-200 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-emerald-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-50 border border-emerald-200">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
-              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Sucesso</span>
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Sucesso</span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-slate-800">{metrics.taxaConversao}%</div>
-              <div className="text-sm text-slate-500 mt-1">Taxa de Conversão</div>
-              <div className="text-xs text-slate-400 mt-0.5">{metrics.ganhos} fechamentos</div>
+              <div className="text-3xl font-bold text-gray-800">{metrics.taxaConversao}%</div>
+              <div className="text-sm text-gray-500 mt-1">Taxa de Conversão</div>
+              <div className="text-xs text-gray-400 mt-0.5">{metrics.ganhos} fechamentos</div>
             </div>
           </div>
         </div>
         {/* Lista de Leads */}
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           <div className="p-5 space-y-4">
             {/* Tabs e Filtros */}
             <div className="space-y-4">
               {/* Tabs com estilo corporativo */}
-              <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-lg w-fit">
+              <div className="flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg w-fit">
                 {tabs.map((tab) => (
                   <button
                     key={tab}
@@ -654,9 +655,10 @@ export const LeadsPage = () => {
                     className={cn(
                       'px-4 py-2 rounded-md font-medium text-sm transition-all duration-150',
                       activeTab === tab
-                        ? 'bg-slate-800 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                        ? 'text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                     )}
+                    style={activeTab === tab ? { backgroundColor: '#721011' } : undefined}
                   >
                     {tab}
                   </button>
@@ -666,9 +668,9 @@ export const LeadsPage = () => {
               {/* Filtros */}
               <div className="flex flex-wrap gap-3">
                 <div className="relative flex-1 min-w-[300px]">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
-                    className="h-10 w-full rounded-lg border border-slate-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 transition-all bg-white"
+                    className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all bg-white"
                     placeholder="Buscar por nome, telefone ou área..."
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
@@ -676,7 +678,7 @@ export const LeadsPage = () => {
                 </div>
 
                 <select
-                  className="h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 bg-white min-w-[140px]"
+                  className="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 bg-white min-w-[140px]"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
@@ -689,7 +691,7 @@ export const LeadsPage = () => {
                 </select>
 
                 <select
-                  className="h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 bg-white min-w-[140px]"
+                  className="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 bg-white min-w-[140px]"
                   value={heatFilter}
                   onChange={(event) => setHeatFilter(event.target.value)}
                 >
@@ -701,7 +703,7 @@ export const LeadsPage = () => {
 
                 <button
                   onClick={resetFilters}
-                  className="h-10 px-4 rounded-lg border border-slate-200 font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
+                  className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2"
                 >
                   <XCircle className="h-4 w-4" />
                   Limpar
@@ -729,7 +731,7 @@ export const LeadsPage = () => {
                     <div
                       key={lead.id}
                       onClick={() => setSelectedLead(lead)}
-                      className="group cursor-pointer rounded-lg border border-slate-200 p-4 transition-all duration-150 hover:shadow-md hover:border-slate-300 bg-white"
+                      className="group cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-150 hover:shadow-md hover:border-gray-300 bg-white"
                     >
                       <div className="flex flex-wrap items-center gap-4">
                         {/* Avatar */}
@@ -743,7 +745,7 @@ export const LeadsPage = () => {
                         {/* Info Principal */}
                         <div className="flex-1 min-w-[200px]">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-semibold text-slate-900">
+                            <h3 className="text-base font-semibold text-gray-900">
                               {lead.name}
                             </h3>
                             {/* Badge de Temperatura */}
@@ -756,17 +758,17 @@ export const LeadsPage = () => {
                               {heatIcon(lead.heat)} {heatLabel(lead.heat)}
                             </span>
                           </div>
-                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded">
-                              <Mail className="h-3.5 w-3.5 text-slate-400" />
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                            <span className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded">
+                              <Mail className="h-3.5 w-3.5 text-gray-400" />
                               {lead.email}
                             </span>
-                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded">
-                              <Phone className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded">
+                              <Phone className="h-3.5 w-3.5 text-gray-400" />
                               {formatPhone(lead.phone)}
                             </span>
                             {lead.area && (
-                              <span className="flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">
+                              <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 px-2 py-1 rounded font-medium">
                                 <Briefcase className="h-3.5 w-3.5" />
                                 {lead.area}
                               </span>
@@ -786,7 +788,7 @@ export const LeadsPage = () => {
                               {statusLabel(lead.status)}
                             </span>
                             {lead.origin && (
-                              <p className="mt-1.5 text-xs text-slate-400 flex items-center gap-1 justify-end">
+                              <p className="mt-1.5 text-xs text-gray-400 flex items-center gap-1 justify-end">
                                 <MapPin className="h-3 w-3" />
                                 {lead.origin}
                               </p>
@@ -799,7 +801,7 @@ export const LeadsPage = () => {
                               <>
                                 <button
                                   type="button"
-                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700 hover:border-slate-300 transition-all"
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-300 transition-all"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleEditLead(lead.id)
@@ -810,7 +812,7 @@ export const LeadsPage = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700 hover:border-slate-300 transition-all"
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-300 transition-all"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleDeleteLead(lead.id, lead.name)
@@ -828,12 +830,12 @@ export const LeadsPage = () => {
                       {/* Seção de Encaminhar */}
                       {canManageLeads && assigningLeadId === lead.id && (
                         <div
-                          className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
+                          className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <span className="text-xs font-semibold text-slate-700">Encaminhar para:</span>
+                          <span className="text-xs font-semibold text-gray-700">Encaminhar para:</span>
                           <select
-                            className="h-9 rounded-lg border border-slate-200 px-3 text-sm bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                            className="h-9 rounded-lg border border-gray-200 px-3 text-sm bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
                             value={selectedAdvogadoId}
                             onChange={(event) => setSelectedAdvogadoId(event.target.value)}
                           >
@@ -845,7 +847,8 @@ export const LeadsPage = () => {
                             ))}
                           </select>
                           <button
-                            className="h-9 px-4 rounded-lg text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 transition-all"
+                            className="h-9 px-4 rounded-lg text-sm font-semibold text-white transition-all"
+                            style={{ backgroundColor: '#721011' }}
                             onClick={(event) => {
                               event.stopPropagation()
                               void handleEncaminharLead(lead.id)
@@ -901,8 +904,8 @@ export const LeadsPage = () => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
         input:focus, select:focus, textarea:focus {
-          --tw-ring-color: #64748b;
-          border-color: #64748b;
+          --tw-ring-color: #721011;
+          border-color: #721011;
         }
 
         ::-webkit-scrollbar {

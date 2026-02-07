@@ -668,36 +668,49 @@ export const ClientesPage = () => {
     <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">CLIENTES</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Gerencie sua carteira de clientes com indicadores de risco e status.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void fetchClientes()}
-              disabled={loading}
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Atualizar
-            </button>
-            {canManageClientes && (
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                >
+                  <Users className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Gestao de Clientes
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Gerencie sua carteira de clientes com indicadores de risco e status.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  resetClienteForm()
-                  setShowForm(true)
-                }}
-                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
-                style={{ backgroundColor: '#721011' }}
+                onClick={() => void fetchClientes()}
+                disabled={loading}
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                <Plus className="h-4 w-4" />
-                Novo cliente
+                Atualizar
               </button>
-            )}
+              {canManageClientes && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetClienteForm()
+                    setShowForm(true)
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+                  style={{ backgroundColor: '#721011' }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Novo cliente
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -705,8 +718,8 @@ export const ClientesPage = () => {
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
+                <Users className="h-5 w-5" style={{ color: '#721011' }} />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{stats.total}</p>

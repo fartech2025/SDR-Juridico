@@ -125,6 +125,8 @@ export const mapCasoRowToCaso = (row: CasoRow): Caso => {
     leadId: row.lead_id || undefined,
     tags: row.tags || [],
     slaRisk: (row.sla_risk as Caso['slaRisk']) || 'ok',
+    prioridade: (row.prioridade as Caso['prioridade']) || undefined,
+    responsavel: row.responsavel || undefined,
     // DataJud fields
     numero_processo: row.numero_processo || undefined,
     tribunal: row.tribunal || undefined,

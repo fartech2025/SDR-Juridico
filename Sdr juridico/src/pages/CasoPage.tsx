@@ -15,13 +15,22 @@ import {
   Phone,
   Pencil,
   Copy,
+  Scale,
+  Newspaper,
+  RefreshCw,
+  ExternalLink,
+  Link2,
+  Unlink,
+  Eye,
+  Settings2,
+  BookOpen,
 } from 'lucide-react'
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { Timeline } from '@/components/Timeline'
 import { Modal } from '@/components/ui/modal'
-import type { Caso, Tarefa, TimelineCategory, TimelineEvent } from '@/types/domain'
+import type { Caso, Tarefa, TimelineCategory, TimelineEvent, DOUPublicacao } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDate, formatDateTime } from '@/utils/format'
 import { useCasos } from '@/hooks/useCasos'
@@ -34,6 +43,7 @@ import { useTarefas } from '@/hooks/useTarefas'
 import { useDatajudTimeline } from '@/hooks/useDatajudTimeline'
 import { CasoDataJudSection } from '@/components/CasoDetail/CasoDataJudSection'
 import { CasoDouSection } from '@/features/dou'
+import { useDOU } from '@/hooks/useDOU'
 
 const resolveStatus = (
   value: string | null,
@@ -250,6 +260,29 @@ const TaskItem = ({
   </div>
 )
 
+// Helper to build DOU timeline events from publications
+function buildDouTimelineEvents(publicacoes: DOUPublicacao[], casoId: string): TimelineEvent[] {
+  return publicacoes.map((pub) => ({
+    id: `dou-${pub.id}`,
+    casoId,
+    title: pub.titulo || 'Publicacao DOU',
+    category: 'juridico' as TimelineCategory,
+    channel: 'Diario Oficial',
+    date: pub.data_publicacao
+      ? new Date(pub.data_publicacao + 'T12:00:00').toISOString()
+      : new Date().toISOString(),
+    description: [
+      pub.tipo_publicacao ? pub.tipo_publicacao.charAt(0).toUpperCase() + pub.tipo_publicacao.slice(1) : '',
+      pub.orgao_publicador || '',
+      pub.termo_encontrado ? `Termo: ${pub.termo_encontrado}` : '',
+    ]
+      .filter(Boolean)
+      .join(' - '),
+    tags: ['dou', pub.tipo_publicacao || 'publicacao'],
+    author: 'Diario Oficial',
+  }))
+}
+
 export const CasoPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -316,6 +349,12 @@ export const CasoPage = () => {
 
   const caso = selectedCaso
 
+  // DOU hook for timeline integration
+  const {
+    publicacoes: douPublicacoes,
+    naoLidas: douNaoLidas,
+  } = useDOU(caso?.id !== FALLBACK_CASO.id ? caso?.id : undefined)
+
   React.useEffect(() => {
     const resolvedCaso =
       casos.find((item) => item.id === id) ?? casos[0] ?? FALLBACK_CASO
@@ -358,6 +397,13 @@ export const CasoPage = () => {
         })),
     [caseTasks]
   )
+
+  // DOU timeline events
+  const douEvents = React.useMemo<TimelineEvent[]>(
+    () => buildDouTimelineEvents(douPublicacoes, caso.id),
+    [douPublicacoes, caso.id]
+  )
+
   const docEvents = React.useMemo<TimelineEvent[]>(
     () =>
       caseDocs.map((doc) => ({
@@ -388,15 +434,18 @@ export const CasoPage = () => {
       })),
     [caseAgenda, caso.id]
   )
+
+  // Combined events now include DOU publications
   const caseEvents = React.useMemo(() => {
-    const combined = [...caseNotas, ...docEvents, ...agendaEvents, ...datajudEvents]
+    const combined = [...caseNotas, ...docEvents, ...agendaEvents, ...datajudEvents, ...douEvents]
     if (user?.id && displayName) {
       return combined.map((event) =>
         event.author === user.id ? { ...event, author: displayName } : event
       )
     }
     return combined
-  }, [caseNotas, docEvents, agendaEvents, datajudEvents, user?.id, displayName])
+  }, [caseNotas, docEvents, agendaEvents, datajudEvents, douEvents, user?.id, displayName])
+
   const normalizedSearch = searchTerm.trim().toLowerCase()
   const timelineEvents = React.useMemo(() => {
     let events = caseEvents
@@ -684,6 +733,11 @@ export const CasoPage = () => {
     .join('')
     .toUpperCase()
 
+  // Stats for the info bar
+  const totalEvents = timelineEvents.length
+  const datajudCount = datajudEvents.length
+  const douCount = douPublicacoes.length
+
   return (
     <div
       className="min-h-screen bg-gray-50 pb-12"
@@ -749,6 +803,36 @@ export const CasoPage = () => {
               </button>
             </div>
           </div>
+
+          {/* Inline DataJud/DOU status indicators */}
+          {(caso.numero_processo || douCount > 0) && (
+            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+              {caso.numero_processo && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
+                  <Scale className="w-4 h-4 text-blue-600" />
+                  <span className="text-xs font-medium text-blue-700">
+                    Processo: {caso.numero_processo}
+                  </span>
+                  {caso.tribunal && (
+                    <span className="text-xs text-blue-500">({caso.tribunal.toUpperCase()})</span>
+                  )}
+                </div>
+              )}
+              {douCount > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-100">
+                  <Newspaper className="w-4 h-4 text-amber-600" />
+                  <span className="text-xs font-medium text-amber-700">
+                    {douCount} publicacao{douCount !== 1 ? 'es' : ''} DOU
+                  </span>
+                  {douNaoLidas > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+                      {douNaoLidas} nova{douNaoLidas !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <PageState status={pageState}>
@@ -900,21 +984,28 @@ export const CasoPage = () => {
                     </button>
                   </div>
 
-                  {/* DataJud Integration Section */}
-                  <CasoDataJudSection
-                    caso={caso}
-                    clienteName={caso.cliente}
-                    onProcessoLinked={(updatedCaso) => {
-                      // Atualizar o caso local com dados DataJud
-                      setSelectedCaso(updatedCaso)
-                    }}
-                  />
+                  {/* Fontes de Dados - Integrated compact cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* DataJud Card */}
+                    <CasoDataJudSection
+                      caso={caso}
+                      clienteName={caso.cliente}
+                      orgId={orgId}
+                      onProcessoLinked={(updatedCaso) => {
+                        setSelectedCaso(updatedCaso)
+                      }}
+                      onTimelineRefresh={() => {
+                        const targetCaseId = id || caso.id
+                        if (targetCaseId) fetchDatajudByCaso(targetCaseId).catch(() => null)
+                      }}
+                    />
 
-                  {/* DOU Integration Section */}
-                  <CasoDouSection
-                    caso={caso}
-                    orgId={orgId}
-                  />
+                    {/* DOU Card */}
+                    <CasoDouSection
+                      caso={caso}
+                      orgId={orgId}
+                    />
+                  </div>
 
                   {/* Timeline Section */}
                   <div
@@ -929,7 +1020,18 @@ export const CasoPage = () => {
                         >
                           <Clock className="w-5 h-5" />
                         </div>
-                        <h3 className="font-semibold text-gray-900">Linha do Tempo do Caso</h3>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">Linha do Tempo</h3>
+                          <p className="text-xs text-gray-500">
+                            {totalEvents} evento{totalEvents !== 1 ? 's' : ''}
+                            {datajudCount > 0 && (
+                              <span style={{ color: '#721011' }}> · {datajudCount} DataJud</span>
+                            )}
+                            {douCount > 0 && (
+                              <span className="text-amber-600"> · {douCount} DOU</span>
+                            )}
+                          </p>
+                        </div>
                       </div>
                       <button
                         type="button"

@@ -1,11 +1,10 @@
 import * as React from 'react'
-import { ChevronDown, ChevronLeft, Filter, Search, X, Plus, Pencil, Trash2, UserPlus, Briefcase } from 'lucide-react'
+import { ChevronLeft, Search, Plus, Pencil, Trash2, Briefcase, AlertTriangle, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import type { Caso } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useCasos } from '@/hooks/useCasos'
@@ -28,19 +27,13 @@ const resolveStatus = (
 const statusLabel = (status: Caso['status']) => {
   if (status === 'suspenso') return 'Suspenso'
   if (status === 'encerrado') return 'Encerrado'
-  return 'Em andamento'
+  return 'Ativo'
 }
 
-const slaTone = (sla: Caso['slaRisk']) => {
-  if (sla === 'critico') return '#ef4444'
-  if (sla === 'atencao') return '#f59e0b'
-  return '#22c55e'
-}
-
-const slaPercentByRisk = (sla: Caso['slaRisk']) => {
-  if (sla === 'critico') return 85
-  if (sla === 'atencao') return 55
-  return 25
+const statusPill = (status: Caso['status']) => {
+  if (status === 'encerrado') return 'bg-gray-100 text-gray-600'
+  if (status === 'suspenso') return 'bg-amber-50 text-amber-700'
+  return 'bg-green-50 text-green-700'
 }
 
 const areaPill = (area: Caso['area']) => {
@@ -50,10 +43,18 @@ const areaPill = (area: Caso['area']) => {
   return 'bg-gray-50 text-gray-700 border-gray-200'
 }
 
-const heatPill = (heat: Caso['heat']) => {
-  if (heat === 'quente') return 'bg-red-50 text-red-700 border-red-200'
-  if (heat === 'morno') return 'bg-amber-50 text-amber-700 border-amber-200'
-  return 'bg-blue-50 text-blue-700 border-blue-200'
+const prioridadePill = (prioridade?: Caso['prioridade']) => {
+  if (prioridade === 'critica') return 'bg-red-50 text-red-700'
+  if (prioridade === 'alta') return 'bg-orange-50 text-orange-700'
+  if (prioridade === 'media') return 'bg-amber-50 text-amber-700'
+  return 'bg-gray-50 text-gray-600'
+}
+
+const prioridadeLabel = (prioridade?: Caso['prioridade']) => {
+  if (prioridade === 'critica') return 'Critica'
+  if (prioridade === 'alta') return 'Alta'
+  if (prioridade === 'media') return 'Media'
+  return 'Baixa'
 }
 
 export const CasosPage = () => {
@@ -68,7 +69,7 @@ export const CasosPage = () => {
   const status = resolveStatus(params.get('state'))
   const [query, setQuery] = React.useState('')
   const [areaFilter, setAreaFilter] = React.useState('todos')
-  const [heatFilter, setHeatFilter] = React.useState('todos')
+  const [statusFilter, setStatusFilter] = React.useState('todos')
   const [showForm, setShowForm] = React.useState(false)
   const [editingCasoId, setEditingCasoId] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -89,18 +90,27 @@ export const CasosPage = () => {
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingCasoId)
 
+  const stats = React.useMemo(() => ({
+    total: casos.length,
+    ativos: casos.filter(c => c.status === 'ativo').length,
+    criticos: casos.filter(c => c.prioridade === 'critica' || c.prioridade === 'alta').length,
+  }), [casos])
+
   const filtered = React.useMemo(() => {
     const term = query.trim().toLowerCase()
     return casos.filter((caso) => {
       const matchesQuery =
         !term ||
+        caso.title.toLowerCase().includes(term) ||
         caso.cliente.toLowerCase().includes(term) ||
-        caso.area.toLowerCase().includes(term)
+        caso.area.toLowerCase().includes(term) ||
+        (caso.numero_processo && caso.numero_processo.toLowerCase().includes(term)) ||
+        (caso.responsavel && caso.responsavel.toLowerCase().includes(term))
       const matchesArea = areaFilter === 'todos' || caso.area === areaFilter
-      const matchesHeat = heatFilter === 'todos' || caso.heat === heatFilter
-      return matchesQuery && matchesArea && matchesHeat
+      const matchesStatus = statusFilter === 'todos' || caso.status === statusFilter
+      return matchesQuery && matchesArea && matchesStatus
     })
-  }, [query, areaFilter, heatFilter, casos])
+  }, [query, areaFilter, statusFilter, casos])
 
   const resetCasoForm = () => {
     setFormData(initialFormData)
@@ -437,15 +447,53 @@ export const CasosPage = () => {
           </div>
         </div>
 
-        <Card className="border border-gray-100 bg-white">
-          <CardContent className="p-6 space-y-4">
+        {/* Stats Cards */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
+                <Briefcase className="h-5 w-5" style={{ color: '#721011' }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-sm text-gray-500">Total de Casos</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.ativos}</p>
+                <p className="text-sm text-gray-500">Em Andamento</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.criticos}</p>
+                <p className="text-sm text-gray-500">Alta Prioridade</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters + Table */}
+        <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+          <div className="p-6 space-y-4">
             <div className="flex flex-wrap gap-3">
               <div className="relative flex-1 min-w-[300px]">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar casos..."
+                  placeholder="Buscar por titulo, cliente, processo..."
                   className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
                   style={{ '--tw-ring-color': '#721011' } as React.CSSProperties}
                 />
@@ -455,20 +503,20 @@ export const CasosPage = () => {
                 onChange={(e) => setAreaFilter(e.target.value)}
                 className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
               >
-                <option value="todos">Todas as áreas</option>
+                <option value="todos">Todas as areas</option>
                 {Array.from(new Set(casos.map((caso) => caso.area))).map((area) => (
                   <option key={area} value={area}>{area}</option>
                 ))}
               </select>
               <select
-                value={heatFilter}
-                onChange={(e) => setHeatFilter(e.target.value)}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
                 className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
               >
-                <option value="todos">Temperatura</option>
-                {Array.from(new Set(casos.map((caso) => caso.heat))).map((heat) => (
-                  <option key={heat} value={heat}>{heat}</option>
-                ))}
+                <option value="todos">Todos os status</option>
+                <option value="ativo">Ativo</option>
+                <option value="suspenso">Suspenso</option>
+                <option value="encerrado">Encerrado</option>
               </select>
             </div>
 
@@ -483,18 +531,18 @@ export const CasosPage = () => {
                 <table className="w-full border-collapse text-left text-sm">
                   <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                     <tr>
-                      <th className="px-4 py-3">ID</th>
-                      <th className="px-4 py-3">Cliente</th>
-                      <th className="px-4 py-3">Area juridica</th>
+                      <th className="px-4 py-3">Caso</th>
+                      <th className="px-4 py-3">N. Processo</th>
+                      <th className="px-4 py-3">Tribunal</th>
+                      <th className="px-4 py-3">Area</th>
                       <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Calor</th>
-                      <th className="px-4 py-3">SLA</th>
+                      <th className="px-4 py-3">Prioridade</th>
+                      <th className="px-4 py-3">Responsavel</th>
                       <th className="px-4 py-3 text-right">Acoes</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((caso) => {
-                      const percent = slaPercentByRisk(caso.slaRisk)
                       const initials = caso.cliente
                         .split(' ')
                         .map((part) => part[0])
@@ -506,19 +554,35 @@ export const CasosPage = () => {
                             className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
                             onClick={() => navigate(`/app/caso/${caso.id}`)}
                           >
-                            <td className="px-4 py-3 text-xs text-gray-500">
-                              #{caso.id.replace('caso-', '')}
-                            </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white"
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
                                   style={{ backgroundColor: '#721011' }}
                                 >
                                   {initials}
                                 </div>
-                                <span className="text-sm font-semibold text-gray-900">{caso.cliente}</span>
+                                <div className="min-w-0">
+                                  <div className="font-medium text-gray-900 truncate">{caso.title}</div>
+                                  <div className="text-xs text-gray-500 truncate">{caso.cliente}</div>
+                                </div>
                               </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              {caso.numero_processo ? (
+                                <span className="font-mono text-xs text-gray-700">{caso.numero_processo}</span>
+                              ) : (
+                                <span className="text-xs text-gray-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              {caso.tribunal ? (
+                                <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 uppercase">
+                                  {caso.tribunal}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-400">-</span>
+                              )}
                             </td>
                             <td className="px-4 py-3">
                               <span className={cn('inline-flex rounded-full border px-3 py-1 text-xs font-medium', areaPill(caso.area))}>
@@ -526,23 +590,17 @@ export const CasosPage = () => {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-sm text-gray-700">{statusLabel(caso.status)}</span>
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className={cn('inline-flex rounded-full border px-3 py-1 text-xs font-medium', heatPill(caso.heat))}>
-                                {caso.heat}
+                              <span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-medium', statusPill(caso.status))}>
+                                {statusLabel(caso.status)}
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <div className="h-2 w-28 overflow-hidden rounded-full bg-gray-100">
-                                  <div
-                                    className="h-full"
-                                    style={{ width: `${percent}%`, backgroundColor: slaTone(caso.slaRisk) }}
-                                  />
-                                </div>
-                                <span className="text-xs text-gray-500">{percent}%</span>
-                              </div>
+                              <span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-medium', prioridadePill(caso.prioridade))}>
+                                {prioridadeLabel(caso.prioridade)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm text-gray-700">{caso.responsavel || '-'}</span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
@@ -569,7 +627,7 @@ export const CasosPage = () => {
                           </tr>
                           {canManageCasos && assigningCasoId === caso.id && (
                             <tr className="border-t border-gray-100 bg-gray-50">
-                              <td colSpan={7} className="px-4 py-3">
+                              <td colSpan={8} className="px-4 py-3">
                                 <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
                                   <span className="text-xs font-medium text-gray-700">Encaminhar para</span>
                                   <select
@@ -606,8 +664,8 @@ export const CasosPage = () => {
                 </table>
               </div>
             </PageState>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <style>{`

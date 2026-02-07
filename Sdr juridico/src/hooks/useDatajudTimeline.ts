@@ -23,13 +23,13 @@ const buildProcessTitle = (processo: DatajudProcessoRow) => {
 const buildProcessDescription = (processo: DatajudProcessoRow) => {
   const parts: string[] = []
   if (processo.tribunal) parts.push(`Tribunal: ${processo.tribunal}`)
-  if (processo.classe) parts.push(`Classe: ${processo.classe}`)
-  if (processo.area) parts.push(`Area: ${processo.area}`)
+  if (processo.classe_processual) parts.push(`Classe: ${processo.classe_processual}`)
+  if (processo.grau) parts.push(`Grau: ${processo.grau}`)
   return parts.join(' | ') || 'Processo importado do DataJud.'
 }
 
 const buildMovimentacaoTitle = (mov: DatajudMovimentacaoRow) => {
-  const base = mov.descricao?.trim()
+  const base = mov.nome?.trim()
   if (base) return base
   if (mov.codigo) return `Movimentacao ${mov.codigo}`
   return 'Movimentacao registrada'
@@ -62,14 +62,14 @@ export function useDatajudTimeline() {
         title: buildProcessTitle(processo),
         category: 'juridico',
         channel: 'DataJud',
-        date: toIsoDate(processo.last_sync_at || processo.created_at) || new Date().toISOString(),
+        date: toIsoDate(processo.cached_at || processo.created_at) || new Date().toISOString(),
         description: buildProcessDescription(processo),
         tags: ['datajud', 'processo'],
         author: 'Sistema',
       }))
 
       const movimentacaoEvents: TimelineEvent[] = movimentacoes.map((movimentacao) => {
-        const processo = processoMap.get(movimentacao.processo_id)
+        const processo = processoMap.get(movimentacao.datajud_processo_id)
         return {
           id: `datajud-mov-${movimentacao.id}`,
           casoId: casoId,
@@ -77,7 +77,7 @@ export function useDatajudTimeline() {
           category: 'juridico',
           channel: 'DataJud',
           date:
-            toIsoDate(movimentacao.data_movimentacao || movimentacao.created_at) ||
+            toIsoDate(movimentacao.data_hora || movimentacao.created_at) ||
             new Date().toISOString(),
           description: buildMovimentacaoDescription(processo),
           tags: ['datajud', 'movimentacao'],
