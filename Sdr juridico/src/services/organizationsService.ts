@@ -327,7 +327,7 @@ export const organizationsService = {
       }
 
       // Insert with both nome + name columns (remote DB has both)
-      const insertPayload = { nome: orgName, name: orgName, ...basePayload }
+      const insertPayload: Record<string, any> = { nome: orgName, name: orgName, ...basePayload }
 
       const { data, error } = await supabase
         .from('orgs')
