@@ -44,7 +44,7 @@ export default function OrganizationForm() {
     max_users: 5,
     max_storage_gb: 10,
     max_cases: null,
-    primary_color: 'var(--brand-primary-dark)',
+    primary_color: '#721011',
     secondary_color: null,
     address_street: '',
     address_number: '',
@@ -156,9 +156,25 @@ export default function OrganizationForm() {
         return
       }
 
-      const created = await organizationsService.create(formData)
+      // 1. Criar a organização
+      let created
+      try {
+        created = await organizationsService.create(formData)
+      } catch (createErr) {
+        const msg = createErr instanceof Error ? createErr.message : 'Erro desconhecido'
+        setError(`Erro ao criar organização: ${msg}`)
+        console.error('Falha ao criar org:', createErr)
+        return
+      }
 
-      if (formData.admin_email) {
+      if (!created?.id) {
+        setError('Organização criada mas sem ID retornado. Verifique no painel.')
+        return
+      }
+
+      // 2. Convidar o admin (responsável)
+      const adminEmail = formData.admin_email || formData.responsavel_email
+      if (adminEmail) {
         const { data: sessionData } = await supabase.auth.getSession()
         let accessToken = sessionData.session?.access_token
 
@@ -168,26 +184,50 @@ export default function OrganizationForm() {
         }
 
         if (!accessToken) {
-          setError('Sessão expirada. Faça login novamente para convidar o admin.')
+          setError(`Organização "${created.name}" criada com sucesso! Porém a sessão expirou antes de enviar o convite ao admin. Faça login novamente e reenvie.`)
           return
         }
 
-        const { error: inviteError } = await supabase.functions.invoke('invite-org-admin', {
-          body: {
-            orgId: created.id,
-            adminEmail: formData.admin_email,
-            adminName: formData.admin_name,
-            responsavelEmail: formData.responsavel_email,
-          },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-        })
+        try {
+          const response = await supabase.functions.invoke('invite-org-admin', {
+            body: {
+              orgId: created.id,
+              adminEmail: adminEmail,
+              adminName: formData.admin_name || adminEmail,
+              responsavelEmail: formData.responsavel_email,
+            },
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+          })
 
-        if (inviteError) {
-          setError(`Organização criada, mas falhou ao convidar o admin: ${inviteError.message}`)
-          return
+          const inviteData = response.data
+          const inviteError = response.error
+
+          if (inviteError) {
+            // Try to extract the real error message from the response body
+            let detail = inviteError.message
+            try {
+              if (inviteError.context && typeof inviteError.context.json === 'function') {
+                const body = await inviteError.context.json()
+                detail = body?.error || detail
+              }
+            } catch { /* ignore parse error */ }
+            console.error('Erro no convite:', detail)
+            setError(`Organização "${created.name}" criada! Mas falhou ao convidar o admin (${adminEmail}): ${detail}. Você pode reenviar o convite depois.`)
+            return
+          }
+
+          if (inviteData && inviteData.error) {
+            console.error('Edge function retornou erro:', inviteData.error)
+            setError(`Organização "${created.name}" criada! Mas o convite falhou: ${inviteData.error}. Verifique se a edge function está deployada.`)
+            return
+          }
+        } catch (fnErr) {
+          console.error('Exceção ao chamar edge function:', fnErr)
+          // Org was created successfully — don't block navigation
+          console.warn('Convite falhou mas org foi criada. Prosseguindo...')
         }
       }
 
@@ -263,7 +303,7 @@ export default function OrganizationForm() {
                       required
                       value={formData.name}
                       onChange={(e) => handleNameChange(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       placeholder="Ex: Silva & Associados"
                     />
                   </div>
@@ -277,7 +317,7 @@ export default function OrganizationForm() {
                       required
                       value={formData.slug}
                       onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       placeholder="silva-associados"
                     />
                     <p className="mt-1 text-xs text-gray-500">
@@ -294,7 +334,7 @@ export default function OrganizationForm() {
                     type="text"
                     value={formData.cnpj}
                     onChange={(e) => setFormData(prev => ({ ...prev, cnpj: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     placeholder="00.000.000/0000-00"
                   />
                 </div>
@@ -302,31 +342,42 @@ export default function OrganizationForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email do Responsável
+                      Email do Responsável *
                     </label>
                     <input
                       type="email"
+                      required={!isEditMode}
                       value={formData.responsavel_email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, responsavel_email: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      onChange={(e) => {
+                        const email = e.target.value
+                        setFormData(prev => ({
+                          ...prev,
+                          responsavel_email: email,
+                          admin_email: email,
+                        }))
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       placeholder="responsavel@escritorio.com.br"
                     />
+                    <p className="mt-1 text-xs text-brand-primary font-medium">
+                      Este e-mail se tornará o administrador da organização e receberá o convite de acesso.
+                    </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email do Admin da Organização
+                      Email do Admin (auto-preenchido)
                     </label>
                     <input
                       type="email"
                       required={!isEditMode}
                       value={formData.admin_email}
                       onChange={(e) => setFormData(prev => ({ ...prev, admin_email: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:ring-2 focus:ring-brand-primary"
                       placeholder="admin@escritorio.com.br"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      Esse admin receberá o email para cadastrar usuários do escritório.
+                      Preenchido automaticamente. Altere apenas se o admin for diferente do responsável.
                     </p>
                   </div>
                 </div>
@@ -339,7 +390,7 @@ export default function OrganizationForm() {
                     type="text"
                     value={formData.admin_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, admin_name: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     placeholder="Nome completo"
                   />
                 </div>
@@ -367,7 +418,7 @@ export default function OrganizationForm() {
                         onClick={() => handlePlanChange(plan.value)}
                         className={`p-4 border-2 rounded-lg text-left transition-all ${
                           formData.plan === plan.value
-                            ? 'border-emerald-600 bg-emerald-50'
+                            ? 'border-brand-primary bg-brand-primary-subtle'
                             : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
@@ -390,7 +441,7 @@ export default function OrganizationForm() {
                       min="1"
                       value={formData.max_users}
                       onChange={(e) => setFormData(prev => ({ ...prev, max_users: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
@@ -404,7 +455,7 @@ export default function OrganizationForm() {
                       min="1"
                       value={formData.max_storage_gb}
                       onChange={(e) => setFormData(prev => ({ ...prev, max_storage_gb: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
@@ -417,7 +468,7 @@ export default function OrganizationForm() {
                       min="1"
                       value={formData.max_cases || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, max_cases: e.target.value ? parseInt(e.target.value) : null }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       placeholder="Ilimitado"
                     />
                   </div>
@@ -450,7 +501,7 @@ export default function OrganizationForm() {
                         type="text"
                         value={formData.primary_color}
                         onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
                   </div>
@@ -497,7 +548,7 @@ export default function OrganizationForm() {
                       type="text"
                       value={formData.address_street}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_street: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       placeholder="Rua, Avenida, etc."
                     />
                   </div>
@@ -510,7 +561,7 @@ export default function OrganizationForm() {
                       type="text"
                       value={formData.address_number}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_number: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                 </div>
@@ -524,7 +575,7 @@ export default function OrganizationForm() {
                       type="text"
                       value={formData.address_complement}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_complement: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
@@ -536,7 +587,7 @@ export default function OrganizationForm() {
                       type="text"
                       value={formData.address_neighborhood}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_neighborhood: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                 </div>
@@ -550,7 +601,7 @@ export default function OrganizationForm() {
                       type="text"
                       value={formData.address_city}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_city: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
@@ -562,7 +613,7 @@ export default function OrganizationForm() {
                       type="text"
                       value={formData.address_state}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_state: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       maxLength={2}
                       placeholder="SP"
                     />
@@ -576,7 +627,7 @@ export default function OrganizationForm() {
                       type="text"
                       value={formData.address_postal_code}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_postal_code: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
                       placeholder="00000-000"
                     />
                   </div>
@@ -597,7 +648,7 @@ export default function OrganizationForm() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? 'Salvando...' : isEditMode ? 'Atualizar' : 'Criar Organização'}

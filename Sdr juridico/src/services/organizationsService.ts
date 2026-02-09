@@ -21,6 +21,35 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
+/**
+ * Generates a unique slug by appending a numeric suffix if the base slug is taken.
+ */
+const ensureUniqueSlug = async (baseSlug: string): Promise<string> => {
+  // Check if base slug exists
+  const { data: existing } = await supabase
+    .from('orgs')
+    .select('slug')
+    .eq('slug', baseSlug)
+    .maybeSingle()
+
+  if (!existing) return baseSlug
+
+  // Slug taken — try -2, -3, ... up to -20
+  for (let i = 2; i <= 20; i++) {
+    const candidate = `${baseSlug}-${i}`
+    const { data: taken } = await supabase
+      .from('orgs')
+      .select('slug')
+      .eq('slug', candidate)
+      .maybeSingle()
+    if (!taken) return candidate
+  }
+
+  // Fallback: append random suffix
+  const rnd = Math.random().toString(36).slice(2, 7)
+  return `${baseSlug}-${rnd}`
+}
+
 const normalizePlan = (value?: string | null): Organization['plan'] => {
   if (!value) return 'trial'
   const lowered = value.toLowerCase()
@@ -157,9 +186,9 @@ function mapDbToOrg(dbOrg: any): Organization {
     address_postal_code: address?.zip_code || '',
     address_country: address?.country || '',
     plan,
-    max_users: settings.max_users || 5,
-    max_storage_gb: settings.max_storage_gb || 10,
-    max_cases: settings.max_cases ?? null,
+    max_users: dbOrg.max_users || settings.max_users || 5,
+    max_storage_gb: dbOrg.max_storage_gb || settings.max_storage_gb || 10,
+    max_cases: dbOrg.max_cases ?? settings.max_cases ?? null,
     status,
     billing_email: settings.billing_email || null,
     billing_cycle: settings.billing_cycle || 'monthly',
@@ -270,36 +299,64 @@ export const organizationsService = {
       })
 
       const orgName = input.name
-      const orgSlug = input.slug || settings.slug || slugify(orgName)
+      const rawSlug = input.slug || settings.slug || slugify(orgName)
+      const orgSlug = await ensureUniqueSlug(rawSlug)
       const orgPlan = (input as Record<string, any>).plan || settings.plan || 'trial'
       const orgStatus = (settings.status as Organization['status']) || 'active'
       const orgAddress = input.address || settings.address || null
 
+      // Build base payload (without the name/nome key)
+      // IMPORTANT: only include cnpj when non-empty to avoid unique constraint on NULLs
+      const trimmedCnpj = (input.cnpj || '').trim()
+      const basePayload: Record<string, any> = {
+        slug: orgSlug,
+        email: input.email,
+        phone: input.phone || null,
+        address: orgAddress,
+        plan: orgPlan,
+        status: orgStatus,
+        max_users: input.max_users ?? (settings.max_users as number | undefined),
+        max_storage_gb: input.max_storage_gb ?? (settings.max_storage_gb as number | undefined),
+        max_cases: (input as Record<string, any>).max_cases ?? settings.max_cases ?? null,
+        billing_email: input.billing_email ?? settings.billing_email ?? null,
+        billing_cycle: input.billing_cycle ?? settings.billing_cycle ?? 'monthly',
+        settings,
+      }
+      if (trimmedCnpj) {
+        basePayload.cnpj = trimmedCnpj
+      }
+
+      // Insert with both nome + name columns (remote DB has both)
+      const insertPayload = { nome: orgName, name: orgName, ...basePayload }
+
       const { data, error } = await supabase
         .from('orgs')
-        .insert({
-          nome: orgName,
-          name: orgName,
-          cnpj: input.cnpj || null,
-          slug: orgSlug,
-          email: input.email,
-          phone: input.phone || null,
-          address: orgAddress,
-          plano: orgPlan,
-          plan: orgPlan,
-          ativo: true,
-          status: orgStatus,
-          max_users: input.max_users ?? (settings.max_users as number | undefined),
-          max_storage_gb: input.max_storage_gb ?? (settings.max_storage_gb as number | undefined),
-          max_cases: (input as Record<string, any>).max_cases ?? settings.max_cases ?? null,
-          billing_email: input.billing_email ?? settings.billing_email ?? null,
-          billing_cycle: input.billing_cycle ?? settings.billing_cycle ?? 'monthly',
-          settings,
-        })
+        .insert(insertPayload)
         .select()
         .single()
 
-      if (error) throw new AppError(error.message, 'database_error')
+      if (error) {
+        // Handle duplicate CNPJ
+        if (error.message.includes('orgs_cnpj_uq') || error.message.includes('cnpj')) {
+          throw new AppError(
+            `Já existe uma organização com este CNPJ (${trimmedCnpj}). Verifique o CNPJ informado.`,
+            'database_error'
+          )
+        }
+        // Handle duplicate slug (retry with suffix)
+        if (error.message.includes('slug')) {
+          const rnd = Math.random().toString(36).slice(2, 7)
+          insertPayload.slug = `${orgSlug}-${rnd}`
+          const { data: data2, error: error2 } = await supabase
+            .from('orgs')
+            .insert(insertPayload)
+            .select()
+            .single()
+          if (error2) throw new AppError(error2.message, 'database_error')
+          return mapDbToOrg(data2)
+        }
+        throw new AppError(error.message, 'database_error')
+      }
       return mapDbToOrg(data)
     } catch (error) {
       throw new AppError(
@@ -324,26 +381,38 @@ export const organizationsService = {
       const nextPlan = (input as Record<string, any>).plan ?? existing?.plan
       const nextStatus = settings.status || existing?.status || 'active'
 
+      // Build base update payload (without name/nome)
+      const trimmedCnpj = (input.cnpj || existing?.cnpj || '').toString().trim()
+      const updateBase: Record<string, any> = {
+        slug: nextSlug,
+        email: nextEmail,
+        phone: nextPhone,
+        address: nextAddress,
+        plan: nextPlan,
+        status: nextStatus,
+        settings,
+      }
+      if (trimmedCnpj) {
+        updateBase.cnpj = trimmedCnpj
+      }
+
+      // Update with both nome + name columns (remote DB has both)
       const { data, error } = await supabase
         .from('orgs')
-        .update({
-          nome: nextName,
-          name: nextName,
-          slug: nextSlug,
-          email: nextEmail,
-          phone: nextPhone,
-          address: nextAddress,
-          cnpj: input.cnpj ?? existing?.cnpj,
-          plano: nextPlan,
-          plan: nextPlan,
-          status: nextStatus,
-          settings,
-        })
+        .update({ nome: nextName, name: nextName, ...updateBase })
         .eq('id', id)
         .select()
         .single()
 
-      if (error) throw new AppError(error.message, 'database_error')
+      if (error) {
+        if (error.message.includes('orgs_cnpj_uq') || error.message.includes('cnpj')) {
+          throw new AppError(
+            `Já existe outra organização com este CNPJ (${trimmedCnpj}).`,
+            'database_error'
+          )
+        }
+        throw new AppError(error.message, 'database_error')
+      }
       return mapDbToOrg(data)
     } catch (error) {
       throw new AppError(
@@ -364,7 +433,6 @@ export const organizationsService = {
       const { data, error } = await supabase
         .from('orgs')
         .update({
-          plano: input.plan,
           plan: input.plan,
           settings: {
             ...settings,
@@ -411,7 +479,6 @@ export const organizationsService = {
       const { data, error } = await supabase
         .from('orgs')
         .update({
-          ativo: input.status === 'active',
           status: input.status,
           settings: nextSettings,
         })
@@ -438,7 +505,6 @@ export const organizationsService = {
       const { error } = await supabase
         .from('orgs')
         .update({
-          ativo: false,
           status: 'cancelled',
           settings: {
             ...(existing?.settings || {}),

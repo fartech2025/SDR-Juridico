@@ -15,11 +15,13 @@ import {
   Briefcase,
   Database,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from 'lucide-react'
 import { useFartechAdmin } from '@/hooks/useFartechAdmin'
 import { FartechGuard } from '@/components/guards'
 import { organizationsService } from '@/services/organizationsService'
+import { supabase } from '@/lib/supabaseClient'
 import type { Organization, OrganizationStatus, OrganizationPlan } from '@/types/organization'
 
 type SortField = 'name' | 'created_at' | 'plan' | 'status'
@@ -30,6 +32,7 @@ interface OrgWithStats extends Organization {
   adminCount?: number
   caseCount?: number
   storageUsed?: number
+  features?: string[]
 }
 
 export default function OrganizationsList() {
@@ -65,6 +68,7 @@ export default function OrganizationsList() {
               adminCount,
               caseCount,
               storageUsed,
+              features: [],
             } as OrgWithStats
           })
         )
@@ -448,8 +452,23 @@ function OrgCard({ org }: { org: OrgWithStats }) {
 
       {/* Footer Actions */}
       <div className="flex items-center justify-between border-t border-border/70 bg-surface-alt px-6 py-4">
-        <div className="text-xs text-text-muted">
-          Criado em {new Date(org.created_at).toLocaleDateString('pt-BR')}
+        <div className="flex flex-col gap-1">
+          <div className="text-xs text-text-muted">
+            Criado em {new Date(org.created_at).toLocaleDateString('pt-BR')}
+          </div>
+          {org.features && org.features.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              <Zap className="h-3 w-3 text-brand-primary shrink-0" />
+              {org.features.map((feat) => (
+                <span
+                  key={feat}
+                  className="inline-flex items-center rounded-md bg-brand-primary-subtle px-1.5 py-0.5 text-[10px] font-medium text-brand-primary"
+                >
+                  {feat.replace(/_/g, ' ')}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Link

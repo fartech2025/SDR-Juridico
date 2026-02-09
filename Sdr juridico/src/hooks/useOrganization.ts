@@ -68,7 +68,7 @@ export function useOrgBranding() {
   return {
     name: currentOrg?.name || 'Organização',
     logo: currentOrg?.logo_url,
-    primaryColor: currentOrg?.primary_color || '#059669',
+    primaryColor: currentOrg?.primary_color || '#721011',
     secondaryColor: currentOrg?.secondary_color,
     customDomain: currentOrg?.custom_domain,
   }
