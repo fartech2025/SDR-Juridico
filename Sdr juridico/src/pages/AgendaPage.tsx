@@ -494,6 +494,21 @@ export const AgendaPage = () => {
           observacoes: null,
         })
       }
+
+      // Sincronizar com Google Calendar (best-effort, não bloqueia o save)
+      try {
+        await createMeeting({
+          title,
+          startTime: startAt,
+          endTime: endAt,
+          location: formState.location.trim() || undefined,
+          videoConference: false,
+        })
+      } catch (gcErr) {
+        // Google Calendar sync é opcional — não falha o save
+        console.warn('⚠️ Google Calendar sync falhou (não impede o save):', gcErr)
+      }
+
       setEditorOpen(false)
       setEditingItem(null)
     } catch (err) {

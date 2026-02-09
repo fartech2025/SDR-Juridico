@@ -30,10 +30,19 @@ export function useApiHealth() {
   const checkDOU = useCallback(async (): Promise<boolean> => {
     if (!isSupabaseConfigured) return false
     try {
-      const { error } = await supabase.functions.invoke('dou-search', {
+      const { data, error } = await supabase.functions.invoke('dou-search', {
         body: { termo: 'teste', limit: 1 },
       })
-      return !error
+      // Any HTTP response (even 401/403) means the edge function is reachable
+      // Only network errors (fetch failure) should count as "offline"
+      if (data) return true
+      if (error) {
+        // FunctionsHttpError = server responded (online), FunctionsRelayError/FetchError = offline
+        const errName = (error as any)?.name || ''
+        if (errName === 'FunctionsHttpError') return true // server is up, just auth issue
+        return false
+      }
+      return true
     } catch {
       return false
     }
