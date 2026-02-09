@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useOrganization } from '@/contexts/OrganizationContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 /**
  * Interface para dados do meeting
@@ -100,11 +101,18 @@ export function useGoogleCalendarCreate() {
   const [error, setError] = useState<Error | null>(null)
   const [lastCreated, setLastCreated] = useState<CreatedGoogleMeeting | null>(null)
   const { currentOrg } = useOrganization()
+  const { user } = useAuth()
 
   /**
-   * Verifica se Google Calendar está conectado para a org atual
+   * Verifica se Google Calendar está conectado
+   * Checa: 1) token pessoal do user (user_metadata) 2) integração da org
    */
   const isConnected = useCallback(async (): Promise<boolean> => {
+    // Checar se user tem tokens Google no metadata (logou com Google)
+    const userTokens = user?.user_metadata?.google_calendar_tokens
+    if (userTokens?.access_token) return true
+
+    // Checar se a org tem integração
     if (!currentOrg?.id) return false
     try {
       const { data, error } = await supabase
@@ -117,17 +125,13 @@ export function useGoogleCalendarCreate() {
     } catch {
       return false
     }
-  }, [currentOrg?.id])
+  }, [currentOrg?.id, user])
 
   /**
    * Cria um evento no Google Calendar via edge function
    */
   const createMeeting = useCallback(
     async (meeting: GoogleMeetingInput): Promise<CreatedGoogleMeeting> => {
-      if (!currentOrg?.id) {
-        throw new Error('Organização não encontrada. Faça login novamente.')
-      }
-
       setIsLoading(true)
       setError(null)
 
@@ -138,7 +142,8 @@ export function useGoogleCalendarCreate() {
           'google-calendar-create-event',
           {
             body: {
-              org_id: currentOrg.id,
+              user_id: user?.id || null,
+              org_id: currentOrg?.id || null,
               event: eventPayload,
             },
           },
@@ -163,7 +168,7 @@ export function useGoogleCalendarCreate() {
         setIsLoading(false)
       }
     },
-    [currentOrg?.id],
+    [currentOrg?.id, user?.id],
   )
 
   /**

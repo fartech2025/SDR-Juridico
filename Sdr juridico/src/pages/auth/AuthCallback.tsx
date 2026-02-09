@@ -15,8 +15,6 @@ export default function AuthCallback() {
         const code = searchParams.get('code')
 
         if (code) {
-          // Supabase JS v2 automatically handles the PKCE exchange
-          // via the auth listener. Just wait for the session to be set.
           const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
           if (error) {
@@ -27,6 +25,26 @@ export default function AuthCallback() {
 
           if (import.meta.env.DEV) {
             console.log('✅ OAuth sessão definida:', data.user?.email)
+          }
+
+          // Salvar tokens do Google para uso com Calendar API
+          const providerToken = data.session?.provider_token
+          const providerRefreshToken = data.session?.provider_refresh_token
+          if (providerToken && data.user) {
+            try {
+              await supabase.functions.invoke('store-google-tokens', {
+                body: {
+                  user_id: data.user.id,
+                  access_token: providerToken,
+                  refresh_token: providerRefreshToken || null,
+                },
+              })
+              if (import.meta.env.DEV) {
+                console.log('✅ Google tokens salvos para Calendar')
+              }
+            } catch (e) {
+              console.warn('⚠️ Falha ao salvar Google tokens (Calendar pode não funcionar):', e)
+            }
           }
 
           navigate('/app/dashboard', { replace: true })
