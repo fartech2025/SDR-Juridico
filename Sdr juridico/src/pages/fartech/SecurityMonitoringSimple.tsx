@@ -17,6 +17,10 @@ import {
   Clock,
   Search,
   Server,
+  Zap,
+  Globe,
+  BarChart3,
+  Monitor,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { auditLogsService } from '@/services/auditLogsService'
@@ -44,7 +48,35 @@ interface APIStatus {
   icon: React.ComponentType<{ className?: string }>
 }
 
-type TabId = 'overview' | 'inspector' | 'audit' | 'compliance'
+interface ActiveSession {
+  id: string
+  user_id: string
+  org_id: string | null
+  started_at: string
+  last_seen_at: string
+  ip_address?: string
+  user_agent?: string
+}
+
+interface AnalyticsEvent {
+  id: string
+  event_name: string
+  user_id: string | null
+  org_id: string | null
+  metadata: Record<string, any> | null
+  created_at: string
+}
+
+interface DataJudStats {
+  totalCalls: number
+  callsToday: number
+  callsThisMonth: number
+  lastSync: string | null
+  syncJobsActive: number
+  syncJobsFailed: number
+}
+
+type TabId = 'overview' | 'inspector' | 'sessions' | 'audit' | 'compliance'
 
 // ─── Constants ────────────────────────────────────────────────────────
 
@@ -64,6 +96,7 @@ const TABLES_TO_CHECK = [
 const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'overview', label: 'Visao Geral', icon: Eye },
   { id: 'inspector', label: 'Data Inspector', icon: Database },
+  { id: 'sessions', label: 'Sessoes & Analytics', icon: Monitor },
   { id: 'audit', label: 'Auditoria', icon: FileText },
   { id: 'compliance', label: 'Conformidade', icon: CheckCircle2 },
 ]
@@ -104,6 +137,12 @@ export default function SecurityMonitoringSimple() {
   const [auditSearch, setAuditSearch] = useState('')
   const [auditFilter, setAuditFilter] = useState<string>('')
   const [loadingAudit, setLoadingAudit] = useState(false)
+
+  // Sessions & Analytics state
+  const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([])
+  const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([])
+  const [datajudStats, setDatajudStats] = useState<DataJudStats | null>(null)
+  const [loadingSessions, setLoadingSessions] = useState(false)
 
   // ─── Data Loading ─────────────────────────────────────────────────
 
@@ -225,6 +264,62 @@ export default function SecurityMonitoringSimple() {
     setCheckingAPIs(false)
   }, [])
 
+  const loadSessionsAndAnalytics = useCallback(async () => {
+    setLoadingSessions(true)
+    try {
+      // Load active sessions
+      const { data: sessions } = await supabase
+        .from('active_sessions')
+        .select('*')
+        .order('last_seen_at', { ascending: false })
+        .limit(50)
+      setActiveSessions(sessions || [])
+
+      // Load recent analytics events
+      const { data: events } = await supabase
+        .from('analytics_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      setAnalyticsEvents(events || [])
+    } catch (err) {
+      console.warn('Tabelas de sessoes/analytics nao disponiveis:', err)
+      setActiveSessions([])
+      setAnalyticsEvents([])
+    } finally {
+      setLoadingSessions(false)
+    }
+  }, [])
+
+  const loadDatajudStats = useCallback(async () => {
+    try {
+      const now = new Date()
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+      const [totalResult, todayResult, monthResult, lastSyncResult, activeJobsResult, failedJobsResult] = await Promise.all([
+        supabase.from('datajud_api_calls').select('*', { count: 'exact', head: true }),
+        supabase.from('datajud_api_calls').select('*', { count: 'exact', head: true }).gte('created_at', startOfDay),
+        supabase.from('datajud_api_calls').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+        supabase.from('datajud_sync_jobs').select('completed_at').order('completed_at', { ascending: false }).limit(1),
+        supabase.from('datajud_sync_jobs').select('*', { count: 'exact', head: true }).eq('status', 'running'),
+        supabase.from('datajud_sync_jobs').select('*', { count: 'exact', head: true }).eq('status', 'failed'),
+      ])
+
+      setDatajudStats({
+        totalCalls: totalResult.count ?? 0,
+        callsToday: todayResult.count ?? 0,
+        callsThisMonth: monthResult.count ?? 0,
+        lastSync: lastSyncResult.data?.[0]?.completed_at || null,
+        syncJobsActive: activeJobsResult.count ?? 0,
+        syncJobsFailed: failedJobsResult.count ?? 0,
+      })
+    } catch (err) {
+      console.warn('Tabelas DataJud nao disponiveis:', err)
+      setDatajudStats(null)
+    }
+  }, [])
+
   const loadAuditLogs = useCallback(async () => {
     setLoadingAudit(true)
     try {
@@ -251,11 +346,13 @@ export default function SecurityMonitoringSimple() {
         loadTableStats(),
         checkAPIStatuses(),
         loadAuditLogs(),
+        loadSessionsAndAnalytics(),
+        loadDatajudStats(),
       ])
       setLoading(false)
     }
     init()
-  }, [checkConnection, loadOverviewStats, loadTableStats, checkAPIStatuses, loadAuditLogs])
+  }, [checkConnection, loadOverviewStats, loadTableStats, checkAPIStatuses, loadAuditLogs, loadSessionsAndAnalytics, loadDatajudStats])
 
   const refreshAll = async () => {
     setLoading(true)
@@ -265,6 +362,8 @@ export default function SecurityMonitoringSimple() {
       loadTableStats(),
       checkAPIStatuses(),
       loadAuditLogs(),
+      loadSessionsAndAnalytics(),
+      loadDatajudStats(),
     ])
     setLoading(false)
   }
@@ -583,6 +682,47 @@ export default function SecurityMonitoringSimple() {
             </div>
           </div>
 
+          {/* DataJud Integration Stats */}
+          {datajudStats && (
+            <div className="rounded-2xl bg-surface p-6 shadow-soft border border-border">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-text font-display">Integracoes DataJud</h2>
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-brand-primary" />
+                  <span className="text-xs text-text-subtle">CNJ API</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="rounded-xl border border-border bg-surface-2 p-3 text-center">
+                  <p className="text-xs text-text-subtle mb-1">Total Chamadas</p>
+                  <p className="text-xl font-bold text-text">{datajudStats.totalCalls.toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface-2 p-3 text-center">
+                  <p className="text-xs text-text-subtle mb-1">Hoje</p>
+                  <p className="text-xl font-bold text-brand-primary">{datajudStats.callsToday}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface-2 p-3 text-center">
+                  <p className="text-xs text-text-subtle mb-1">Este Mes</p>
+                  <p className="text-xl font-bold text-info">{datajudStats.callsThisMonth}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface-2 p-3 text-center">
+                  <p className="text-xs text-text-subtle mb-1">Jobs Ativos</p>
+                  <p className={cn("text-xl font-bold", datajudStats.syncJobsActive > 0 ? 'text-success' : 'text-text-subtle')}>{datajudStats.syncJobsActive}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface-2 p-3 text-center">
+                  <p className="text-xs text-text-subtle mb-1">Jobs Falhos</p>
+                  <p className={cn("text-xl font-bold", datajudStats.syncJobsFailed > 0 ? 'text-danger' : 'text-success')}>{datajudStats.syncJobsFailed}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface-2 p-3 text-center">
+                  <p className="text-xs text-text-subtle mb-1">Ultimo Sync</p>
+                  <p className="text-sm font-medium text-text">
+                    {datajudStats.lastSync ? new Date(datajudStats.lastSync).toLocaleDateString('pt-BR') : '--'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Table Statistics */}
           <div className="rounded-2xl bg-surface p-6 shadow-soft border border-border">
             <h2 className="text-lg font-semibold text-text font-display mb-4">Estatisticas das Tabelas</h2>
@@ -608,6 +748,161 @@ export default function SecurityMonitoringSimple() {
                 )
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════ SESSIONS & ANALYTICS TAB ═══════════ */}
+      {activeTab === 'sessions' && (
+        <div className="space-y-6">
+          {/* Sessions & Analytics Metrics */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl bg-surface p-6 shadow-soft border border-border">
+              <div className="mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success-bg">
+                  <Zap className="h-5 w-5 text-success" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-success">{activeSessions.length}</p>
+              <p className="text-sm font-medium text-text">Sessoes Ativas</p>
+              <p className="text-xs text-text-subtle">Usuarios conectados agora</p>
+            </div>
+
+            <div className="rounded-2xl bg-surface p-6 shadow-soft border border-border">
+              <div className="mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-bg">
+                  <BarChart3 className="h-5 w-5 text-info" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-text">{analyticsEvents.length}</p>
+              <p className="text-sm font-medium text-text">Eventos Recentes</p>
+              <p className="text-xs text-text-subtle">Ultimos 50 eventos</p>
+            </div>
+
+            <div className="rounded-2xl bg-surface p-6 shadow-soft border border-border">
+              <div className="mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning-bg">
+                  <Globe className="h-5 w-5 text-warning" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-text">{datajudStats?.callsToday ?? '--'}</p>
+              <p className="text-sm font-medium text-text">Chamadas DataJud Hoje</p>
+              <p className="text-xs text-text-subtle">{datajudStats?.callsThisMonth ?? 0} este mes</p>
+            </div>
+
+            <div className="rounded-2xl bg-surface p-6 shadow-soft border border-border">
+              <div className="mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary-subtle">
+                  <Monitor className="h-5 w-5 text-brand-primary" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-text">
+                {new Set(activeSessions.map(s => s.org_id).filter(Boolean)).size}
+              </p>
+              <p className="text-sm font-medium text-text">Orgs com Sessao</p>
+              <p className="text-xs text-text-subtle">Organizacoes ativas agora</p>
+            </div>
+          </div>
+
+          {/* Active Sessions Table */}
+          <div className="rounded-2xl bg-surface shadow-soft border border-border">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-text font-display flex items-center gap-2">
+                <Zap className="h-5 w-5 text-success" />
+                Sessoes Ativas
+              </h2>
+              <button
+                onClick={loadSessionsAndAnalytics}
+                disabled={loadingSessions}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface-2 border border-border rounded-xl hover:bg-surface-alt transition disabled:opacity-50"
+              >
+                {loadingSessions ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Atualizar
+              </button>
+            </div>
+            {activeSessions.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-surface-2">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-text-subtle uppercase">Usuario</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-text-subtle uppercase">Org</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-text-subtle uppercase">Inicio</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-text-subtle uppercase">Ultimo Acesso</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-text-subtle uppercase">IP</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {activeSessions.map((session) => (
+                      <tr key={session.id} className="hover:bg-surface-hover transition">
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-mono text-text">{session.user_id?.substring(0, 12)}...</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-text-subtle">{session.org_id?.substring(0, 8) || '--'}...</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-text-subtle">{new Date(session.started_at).toLocaleString('pt-BR')}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-text-subtle">{new Date(session.last_seen_at).toLocaleString('pt-BR')}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-text-subtle font-mono">{session.ip_address || '--'}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-12 text-center">
+                <Users className="mx-auto h-8 w-8 text-text-subtle mb-3" />
+                <p className="text-sm text-text-subtle">Nenhuma sessao ativa no momento</p>
+              </div>
+            )}
+          </div>
+
+          {/* Analytics Events */}
+          <div className="rounded-2xl bg-surface shadow-soft border border-border">
+            <div className="p-6 border-b border-border">
+              <h2 className="text-lg font-semibold text-text font-display flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-info" />
+                Eventos de Analytics Recentes
+              </h2>
+            </div>
+            {analyticsEvents.length > 0 ? (
+              <div className="divide-y divide-border">
+                {analyticsEvents.map((event) => (
+                  <div key={event.id} className="flex items-center gap-4 p-4 hover:bg-surface-hover transition">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-info-bg">
+                      <BarChart3 className="h-4 w-4 text-info" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-md px-2 py-0.5 text-xs font-medium bg-info-bg text-info-dark">
+                            {event.event_name}
+                          </span>
+                          {event.org_id && (
+                            <span className="text-xs text-text-subtle font-mono">org:{event.org_id.substring(0, 8)}</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-text-subtle flex items-center gap-1 shrink-0">
+                          <Clock className="h-3 w-3" />
+                          {new Date(event.created_at).toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center">
+                <BarChart3 className="mx-auto h-8 w-8 text-text-subtle mb-3" />
+                <p className="text-sm text-text-subtle">Nenhum evento de analytics registrado</p>
+              </div>
+            )}
           </div>
         </div>
       )}
