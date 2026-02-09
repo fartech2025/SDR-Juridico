@@ -1,21 +1,27 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0"
+// Deploy: npx supabase functions deploy google-calendar-create-event --no-verify-jwt --project-ref xocqcoebreoiaqxoutar
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') ?? ''
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') ?? ''
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
+const DEFAULT_ORIGIN = Deno.env.get('APP_URL') || '*'
+const BASE_CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+const getCorsHeaders = (req: Request) => ({
+  ...BASE_CORS_HEADERS,
+  'Access-Control-Allow-Origin': req.headers.get('origin') || DEFAULT_ORIGIN,
+})
+
+const jsonResponse = (body: Record<string, unknown>, status = 200, req?: Request) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    headers: { 'Content-Type': 'application/json', ...(req ? getCorsHeaders(req) : BASE_CORS_HEADERS) },
   })
 
 /**
@@ -130,26 +136,26 @@ const createGoogleCalendarEvent = async (
  */
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return jsonResponse({ error: 'Missing Supabase env vars' }, 500)
+    return jsonResponse({ error: 'Missing Supabase env vars' }, 500, req)
   }
 
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    return jsonResponse({ error: 'Missing Google OAuth env vars' }, 500)
+    return jsonResponse({ error: 'Missing Google OAuth env vars' }, 500, req)
   }
 
   try {
     const { org_id, event: eventData } = await req.json()
 
     if (!org_id) {
-      return jsonResponse({ error: 'org_id é obrigatório' }, 400)
+      return jsonResponse({ error: 'org_id é obrigatório' }, 400, req)
     }
 
     if (!eventData) {
-      return jsonResponse({ error: 'event é obrigatório' }, 400)
+      return jsonResponse({ error: 'event é obrigatório' }, 400, req)
     }
 
     // Criar cliente Supabase
@@ -166,7 +172,8 @@ serve(async (req) => {
     if (integrationError || !integration) {
       return jsonResponse(
         { error: 'Google Calendar não configurado para esta organização' },
-        401
+        401,
+        req
       )
     }
 
@@ -181,14 +188,15 @@ serve(async (req) => {
     return jsonResponse({
       success: true,
       event: createdEvent,
-    })
+    }, 200, req)
   } catch (error) {
     console.error('Erro ao criar evento:', error)
     return jsonResponse(
       {
         error: error instanceof Error ? error.message : 'Erro desconhecido',
       },
-      500
+      500,
+      req
     )
   }
 })

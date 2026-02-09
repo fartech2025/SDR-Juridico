@@ -1,5 +1,7 @@
 // supabase/functions/dou-search/index.ts
 // Edge Function leve - proxy para busca pública do DOU (evita CORS do browser)
+// Deploy: npx supabase functions deploy dou-search --no-verify-jwt --project-ref xocqcoebreoiaqxoutar
+// NOTA: --no-verify-jwt é necessário porque a função faz sua própria validação JWT internamente
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 

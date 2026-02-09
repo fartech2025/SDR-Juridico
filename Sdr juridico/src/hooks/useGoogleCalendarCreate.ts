@@ -1,4 +1,7 @@
 import { useCallback, useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
+import { useOrganization } from '@/contexts/OrganizationContext'
+
 /**
  * Interface para dados do meeting
  */
@@ -50,34 +53,108 @@ export interface CreatedGoogleMeeting {
 }
 
 /**
+ * Converte GoogleMeetingInput para o formato da API Google Calendar
+ */
+function buildGoogleEventPayload(meeting: GoogleMeetingInput): Record<string, unknown> {
+  const event: Record<string, unknown> = {
+    summary: meeting.title,
+    start: {
+      dateTime: meeting.startTime.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+    end: {
+      dateTime: meeting.endTime.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+  }
+
+  if (meeting.description) event.description = meeting.description
+  if (meeting.location) event.location = meeting.location
+
+  if (meeting.guests?.length) {
+    event.attendees = meeting.guests.map((email) => ({ email }))
+  }
+
+  if (meeting.videoConference) {
+    event.conferenceData = {
+      createRequest: {
+        requestId: `meet-${Date.now()}`,
+        conferenceSolutionKey: { type: 'hangoutsMeet' },
+      },
+    }
+  }
+
+  if (meeting.reminders) {
+    event.reminders = meeting.reminders
+  }
+
+  return event
+}
+
+/**
  * Hook para criar e gerenciar meetings no Google Calendar
+ * Conecta ao edge function `google-calendar-create-event`
  */
 export function useGoogleCalendarCreate() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const [lastCreated, setLastCreated] = useState<CreatedGoogleMeeting | null>(null)
+  const { currentOrg } = useOrganization()
 
   /**
-   * Verifica se Google Calendar está conectado
+   * Verifica se Google Calendar está conectado para a org atual
    */
   const isConnected = useCallback(async (): Promise<boolean> => {
+    if (!currentOrg?.id) return false
     try {
-      return false
+      const { data, error } = await supabase
+        .from('integrations')
+        .select('id')
+        .eq('org_id', currentOrg.id)
+        .eq('provider', 'google_calendar')
+        .maybeSingle()
+      return !error && !!data
     } catch {
       return false
     }
-  }, [])
+  }, [currentOrg?.id])
 
   /**
-   * Cria um meeting no Google Calendar
+   * Cria um evento no Google Calendar via edge function
    */
   const createMeeting = useCallback(
     async (meeting: GoogleMeetingInput): Promise<CreatedGoogleMeeting> => {
+      if (!currentOrg?.id) {
+        throw new Error('Organização não encontrada. Faça login novamente.')
+      }
+
+      setIsLoading(true)
+      setError(null)
+
       try {
-        void meeting
-        setIsLoading(true)
-        setError(null)
-        throw new Error('Integração Google Calendar não disponível no schema atual.')
+        const eventPayload = buildGoogleEventPayload(meeting)
+
+        const { data, error: fnError } = await supabase.functions.invoke(
+          'google-calendar-create-event',
+          {
+            body: {
+              org_id: currentOrg.id,
+              event: eventPayload,
+            },
+          },
+        )
+
+        if (fnError) {
+          throw new Error(fnError.message || 'Erro ao chamar edge function do Google Calendar')
+        }
+
+        if (!data?.success) {
+          throw new Error(data?.error || 'Erro ao criar evento no Google Calendar')
+        }
+
+        const createdEvent = data.event as CreatedGoogleMeeting
+        setLastCreated(createdEvent)
+        return createdEvent
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Erro desconhecido')
         setError(error)
@@ -86,7 +163,7 @@ export function useGoogleCalendarCreate() {
         setIsLoading(false)
       }
     },
-    [isConnected]
+    [currentOrg?.id],
   )
 
   /**
@@ -95,23 +172,18 @@ export function useGoogleCalendarCreate() {
   const createMeetingAndSync = useCallback(
     async (
       meeting: GoogleMeetingInput,
-      agendaData?: {
+      _agendaData?: {
         tipo: string
         cliente_id?: string
         caso_id?: string
         responsavel_id?: string
-      }
+      },
     ): Promise<{ googleEvent: CreatedGoogleMeeting; agendaId?: string }> => {
-      try {
-        void agendaData
-        const googleEvent = await createMeeting(meeting)
-        setLastCreated(googleEvent)
-        return { googleEvent }
-      } catch (err) {
-        throw err
-      }
+      const googleEvent = await createMeeting(meeting)
+      setLastCreated(googleEvent)
+      return { googleEvent }
     },
-    [createMeeting]
+    [createMeeting],
   )
 
   return {
