@@ -7,6 +7,7 @@ interface AuthContextValue {
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: Error }>
+  signInWithGoogle: () => Promise<{ error?: Error }>
   signUp: (email: string, password: string) => Promise<{ error?: Error }>
   signOut: () => Promise<{ error?: Error }>
 }
@@ -27,13 +28,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Configuração de auth rápida com fallback imediato
+    // Configuração de auth com tempo suficiente para processar tokens da URL
     const init = async () => {
       try {
-        // Timeout curto para não travar a UI
+        // Timeout maior (5s) para permitir processamento de tokens de convite/email
         const sessionPromise = supabase.auth.getSession().catch(() => ({ data: { session: null } }))
         const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
-          setTimeout(() => resolve({ data: { session: null } }), 500)
+          setTimeout(() => resolve({ data: { session: null } }), 5000)
         )
         
         const result = await Promise.race([sessionPromise, timeoutPromise])
@@ -78,6 +79,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: new Error('Supabase não configurado') }
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password })
+      return { error: error ?? undefined }
+    },
+    async signInWithGoogle() {
+      if (!isSupabaseConfigured) {
+        return { error: new Error('Supabase não configurado') }
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
       return { error: error ?? undefined }
     },
     async signUp(email: string, password: string) {

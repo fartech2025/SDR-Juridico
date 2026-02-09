@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 
 import { AppShell } from '@/layouts/AppShell'
+import { RootRedirect } from '@/components/RootRedirect'
 import { AgendaPage } from '@/pages/AgendaPage'
 import { AuditoriaPage } from '@/pages/AuditoriaPage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
@@ -32,6 +33,7 @@ import OrganizationForm from '@/pages/fartech/OrganizationForm'
 import OrganizationDetails from '@/pages/fartech/OrganizationDetails'
 import OrganizationSettingsPage from '@/pages/fartech/OrganizationSettingsPage'
 import SecurityMonitoringSimple from '@/pages/fartech/SecurityMonitoringSimple'
+import SecurityReportPage from '@/pages/fartech/SecurityReportPage'
 import UserManagement from '@/pages/UserManagement'
 import OrgSettings from '@/pages/OrgSettings'
 import OrgSuspendedPage from '@/pages/OrgSuspendedPage'
@@ -45,7 +47,7 @@ import { OrgActiveGuard } from '@/components/guards/OrgActiveGuard'
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/app/dashboard" replace />,
+    element: <RootRedirect />,
   },
   {
     path: '/login',
@@ -192,6 +194,10 @@ export const router = createBrowserRouter([
       {
         path: 'security',
         element: <SecurityMonitoringSimple />,
+      },
+      {
+        path: 'security/report',
+        element: <SecurityReportPage />,
       },
       {
         path: 'perfil',

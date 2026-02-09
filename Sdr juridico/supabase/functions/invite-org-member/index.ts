@@ -113,11 +113,14 @@ serve(async (req) => {
     const trimmedNome = nome.trim()
 
     // Try invite by email first
+    const appUrl = Deno.env.get('APP_URL') || Deno.env.get('SITE_URL') || 'http://localhost:5173'
     const inviteResult = await supabaseAdmin.auth.admin.inviteUserByEmail(trimmedEmail, {
+      redirectTo: `${appUrl}/auth/callback`,
       data: {
         nome_completo: trimmedNome,
         org_id: orgId,
         role,
+        must_change_password: true,
       },
     })
 

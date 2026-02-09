@@ -6,22 +6,45 @@ export default function AuthCallback() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Capturar o hash da URL e processar o token
     const handleCallback = async () => {
       try {
+        // ── 1. PKCE flow (OAuth providers like Google) ──
+        // Supabase exchanges the code automatically via onAuthStateChange,
+        // but we can also check query params for the code.
+        const searchParams = new URLSearchParams(window.location.search)
+        const code = searchParams.get('code')
+
+        if (code) {
+          // Supabase JS v2 automatically handles the PKCE exchange
+          // via the auth listener. Just wait for the session to be set.
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+          if (error) {
+            console.error('❌ Erro ao trocar código por sessão:', error)
+            navigate('/login?error=oauth_failed')
+            return
+          }
+
+          if (import.meta.env.DEV) {
+            console.log('✅ OAuth sessão definida:', data.user?.email)
+          }
+
+          navigate('/app/dashboard', { replace: true })
+          return
+        }
+
+        // ── 2. Hash-based flow (email confirm, password reset, magic link) ──
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const accessToken = hashParams.get('access_token')
         const refreshToken = hashParams.get('refresh_token')
         const type = hashParams.get('type')
 
-        // Logs apenas em desenvolvimento - NUNCA em produção
         if (import.meta.env.DEV) {
           console.log('🔐 AuthCallback - Type:', type)
           console.log('🔐 AuthCallback - Has tokens:', !!accessToken, !!refreshToken)
         }
 
         if (accessToken && refreshToken) {
-          // Definir a sessão com os tokens recebidos
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -37,13 +60,13 @@ export default function AuthCallback() {
             console.log('✅ Sessão definida com sucesso!', data.user?.email)
           }
 
-          // Verificar se é confirmação de email ou signup
-          if (type === 'signup' || type === 'email_confirmation') {
-            // Redirecionar para página de definir senha
-            navigate('/reset-password')
+          if (type === 'signup' || type === 'email_confirmation' || type === 'invite' || type === 'magiclink') {
+            // Invited users or new signups must set their own password
+            navigate('/reset-password', { replace: true })
+          } else if (type === 'recovery') {
+            navigate('/reset-password', { replace: true })
           } else {
-            // Redirecionar para dashboard
-            navigate('/app/dashboard')
+            navigate('/app/dashboard', { replace: true })
           }
         } else {
           console.warn('⚠️ Tokens não encontrados na URL')

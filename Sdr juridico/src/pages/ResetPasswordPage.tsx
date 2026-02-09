@@ -53,7 +53,12 @@ export const ResetPasswordPage = () => {
         return
       }
 
-      toast.success('Senha atualizada com sucesso.')
+      // Remove flag de primeiro login se existir
+      await supabase.auth.updateUser({
+        data: { must_change_password: false },
+      })
+
+      toast.success('Senha atualizada com sucesso! Faça login com sua nova senha.')
 
       await supabase.auth.signOut()
       navigate('/login', { replace: true })

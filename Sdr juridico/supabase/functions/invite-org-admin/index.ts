@@ -2,8 +2,9 @@ import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const json = (payload: Record<string, unknown>, status = 200) =>
@@ -107,49 +108,84 @@ serve(async (req) => {
     console.log('✅ Organização encontrada')
 
     let userId: string | null = null
+    let inviteLink: string | null = null
     
     console.log('📧 Enviando convite por e-mail para:', adminEmail)
+    const appUrl = Deno.env.get('APP_URL') || Deno.env.get('SITE_URL') || 'http://localhost:5173'
     const inviteResult = await supabaseAdmin.auth.admin.inviteUserByEmail(adminEmail, {
+      redirectTo: `${appUrl}/auth/callback`,
       data: {
         nome_completo: adminName || adminEmail,
         org_id: orgId,
         role: 'org_admin',
+        must_change_password: true,
       },
     })
 
     if (inviteResult.error) {
-      console.log('⚠️ Erro ao enviar convite (usuário pode já existir):', inviteResult.error.message)
+      console.log('⚠️ inviteUserByEmail falhou (usuário pode já existir):', inviteResult.error.message)
       
-      console.log('🔍 Verificando se usuário já existe...')
-      const { data: existingAuth, error: existingAuthError } =
-        await supabaseAdmin.auth.admin.getUserByEmail(adminEmail)
+      // Tentar gerar link de convite via generateLink (funciona para usuários existentes)
+      console.log('🔍 Tentando generateLink para usuário existente...')
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: adminEmail,
+      })
 
-      if (!existingAuthError && existingAuth?.user) {
-        console.log('✅ Usuário já existe, usando ID:', existingAuth.user.id)
-        userId = existingAuth.user.id
+      if (!linkError && linkData?.user) {
+        console.log('✅ Magic link gerado para usuário existente:', linkData.user.id)
+        userId = linkData.user.id
+        // O generateLink com type magiclink envia email automaticamente no Supabase
+        inviteLink = linkData.properties?.action_link || null
+        console.log('📧 Link de acesso gerado:', inviteLink ? 'sim' : 'não disponível')
       } else {
-        console.log('⚠️ Criando novo usuário manualmente...')
-        const { data: createdUser, error: createdUserError } =
-          await supabaseAdmin.auth.admin.createUser({
+        console.log('⚠️ generateLink falhou:', linkError?.message)
+        
+        // Último recurso: buscar usuário existente via listUsers
+        console.log('🔍 Buscando usuário via listUsers...')
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        })
+        const existingUser = listData?.users?.find(
+          (u: { email?: string }) => u.email === adminEmail
+        )
+
+        if (existingUser) {
+          console.log('✅ Usuário encontrado:', existingUser.id)
+          userId = existingUser.id
+        } else {
+          // Criar novo usuário
+          console.log('⚠️ Criando novo usuário manualmente...')
+          const { data: createdUser, error: createdUserError } =
+            await supabaseAdmin.auth.admin.createUser({
+              email: adminEmail,
+              email_confirm: false,
+              user_metadata: {
+                nome_completo: adminName || adminEmail,
+                org_id: orgId,
+                role: 'org_admin',
+              },
+            })
+
+          if (createdUserError) {
+            console.error('❌ Erro ao criar usuário:', createdUserError.message)
+            return json({ error: 'Erro ao criar usuário: ' + createdUserError.message }, 400)
+          }
+
+          console.log('✅ Usuário criado:', createdUser.user?.id)
+          userId = createdUser.user?.id ?? null
+
+          // Gerar link de convite para o novo usuário
+          const { data: newLinkData } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
             email: adminEmail,
-            email_confirm: false,
-            user_metadata: {
-              nome_completo: adminName || adminEmail,
-              org_id: orgId,
-              role: 'org_admin',
-            },
           })
-
-        if (createdUserError) {
-          console.error('❌ Erro ao criar usuário:', createdUserError.message)
-          return json({ error: 'Erro ao criar usuário: ' + createdUserError.message }, 400)
+          inviteLink = newLinkData?.properties?.action_link || null
         }
-
-        console.log('✅ Usuário criado:', createdUser.user?.id)
-        userId = createdUser.user?.id ?? null
       }
     } else {
-      console.log('✅ Convite enviado com sucesso')
+      console.log('✅ Convite enviado com sucesso (email automático)')
       userId = inviteResult.data?.user?.id ?? null
     }
 
@@ -175,14 +211,18 @@ serve(async (req) => {
       usuarioRow?.nome_completo ||
       adminEmail
 
-    console.log('💾 Atualizando usuário na tabela usuarios...')
+    console.log('💾 Atualizando/criando usuário na tabela usuarios...')
     const { error: usuarioError } = await supabaseAdmin
       .from('usuarios')
-      .update({
-        nome_completo: nextNome,
-        permissoes: Array.from(permissoes),
-      })
-      .eq('id', userId)
+      .upsert(
+        {
+          id: userId,
+          email: adminEmail,
+          nome_completo: nextNome,
+          permissoes: Array.from(permissoes),
+        },
+        { onConflict: 'id' }
+      )
 
     if (usuarioError) {
       console.error('❌ Erro ao atualizar usuário:', usuarioError.message)
@@ -231,9 +271,16 @@ serve(async (req) => {
     }
 
     console.log('✅ Organização atualizada')
-    console.log('🎉 Convite enviado com sucesso!')
+    console.log('🎉 Convite processado com sucesso!')
     
-    return json({ ok: true, userId, message: 'Convite enviado com sucesso' })
+    return json({ 
+      ok: true, 
+      userId, 
+      inviteLink: inviteLink || null,
+      message: inviteLink 
+        ? 'Convite processado. Link de acesso gerado.' 
+        : 'Convite enviado com sucesso por email.'
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido'
     console.error('❌ Erro não capturado:', message, error)
