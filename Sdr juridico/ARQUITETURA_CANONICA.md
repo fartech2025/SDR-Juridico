@@ -92,6 +92,81 @@ Sistema de gestão jurídica construído com arquitetura modular, escalável e b
 
 ---
 
+## 🎨 PALETA DE CORES OFICIAL (NON-NEGOTIABLE)
+
+> **Esta é a paleta oficial do SDR Jurídico. Toda nova feature, componente ou página DEVE usar estas cores via CSS variables. Nunca use valores hex hardcoded.**
+
+### Regra de Ouro
+- **As 2 cores SUPERIORES** → para **botões e ações** (CTAs, hover, links ativos)
+- **As 2 cores INFERIORES** → para **textos** (títulos, body, labels, captions)
+
+### Paleta Canônica
+
+| Cor | Hex | Variável CSS | Uso |
+|-----|-----|-------------|-----|
+| 🔴 **Burgundy** | `#721011` | `--brand-primary` | Botões primários, CTAs, links ativos, ícones de ação |
+| 🟠 **Amber** | `#BF6F32` | `--brand-accent` | Botões secundários, destaques, badges, hover alternativo |
+| 🟤 **Warm Gray** | `#6B5E58` | `--brand-secondary` | Texto secundário, labels, captions, ícones inativos |
+| ⚫ **Preto** | `#000000` | `--color-text` | Títulos, headings, texto principal |
+
+### Escala Primary (Burgundy)
+
+```
+--brand-primary-900: #4A0B0C  (hover escuro)
+--brand-primary-800: #5C0D0E  (pressed)
+--brand-primary-700: #721011  ← DEFAULT
+--brand-primary-600: #8A1314  (variante média)
+--brand-primary-500: #A21617  (variante clara)
+--brand-primary-100: #F5E6E6  (bg sutil)
+--brand-primary-50:  #FAF3F3  (bg extra sutil)
+```
+
+### Escala Accent (Amber)
+
+```
+--brand-accent-700: #8F5225  (hover escuro)
+--brand-accent-600: #A66029  (pressed)
+--brand-accent-500: #BF6F32  ← DEFAULT
+--brand-accent-400: #CC8652  (variante média)
+--brand-accent-300: #D99D72  (variante clara)
+--brand-accent-100: #F5E6DA  (bg sutil)
+```
+
+### Escala Neutral (Warm Gray)
+
+```
+--color-gray-900: #000000    (texto principal)
+--color-gray-800: #2A2522    (títulos fortes)
+--color-gray-700: #3D3632    (subtítulos)
+--color-gray-600: #6B5E58    ← SECONDARY DEFAULT  
+--color-gray-500: #8A7E78    (texto sutil)
+--color-gray-400: #A39D98    (disabled)
+--color-gray-300: #C3BFB9    (bordas)
+--color-gray-200: #E2E0DC    (divisores)
+--color-gray-100: #F1F0EE    (bg secundário)
+--color-gray-50:  #F8F7F6    (bg base)
+```
+
+### Cores Semânticas (estados — NÃO são cores de marca)
+
+| Estado | Cor | Hex | Uso |
+|--------|-----|-----|-----|
+| ✅ Success | Verde | `#10b981` | Confirmações, status ativo |
+| ⚠️ Warning | Amarelo | `#f59e0b` | Avisos, pendências |
+| ❌ Danger | Rosa | `#f43f5e` | Erros, ações destrutivas |
+| ℹ️ Info | Ciano | `#06b6d4` | Informações, dicas |
+
+### Regras de Implementação
+
+1. **SEMPRE** use `var(--brand-primary)` em vez de `#721011`
+2. **SEMPRE** use `var(--brand-accent)` em vez de `#BF6F32`
+3. **NUNCA** use `emerald-*`, `green-*` ou `blue-*` do Tailwind para ações de marca
+4. Cores semânticas (`green`, `red`, `yellow`) são APENAS para estados (success, danger, warning)
+5. O arquivo `src/styles/design-tokens.css` é a **fonte da verdade** para tokens CSS
+6. O arquivo `src/styles/force-light.css` NÃO deve sobrescrever cores de marca
+
+---
+
 ## 📁 ESTRUTURA DE DIRETÓRIOS CANÔNICA
 
 ```

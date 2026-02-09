@@ -48,19 +48,19 @@ export const AuthLayout = ({
           {children}
         </div>
         <div
-          className="relative min-h-140 overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-emerald-50 shadow-xl"
+          className="relative min-h-140 overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-brand-primary-subtle via-white to-brand-accent-100 shadow-xl"
         >
           <div className="absolute right-6 top-6 flex items-center gap-3 text-xs text-slate-600">
             <span className="uppercase tracking-[0.18em]">{sideTitle}</span>
             <button
               type="button"
-              className="rounded-full bg-emerald-600 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition"
+              className="rounded-full bg-brand-primary px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white shadow-lg shadow-brand-primary/30 hover:bg-brand-primary-dark transition"
             >
               Cadastrar
             </button>
           </div>
           <div className="absolute inset-0 opacity-30" style={{
-            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(59,130,246,0.2) 0, transparent 38%), radial-gradient(circle at 75% 60%, rgba(16,185,129,0.15) 0, transparent 40%)',
+            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(114,16,17,0.15) 0, transparent 38%), radial-gradient(circle at 75% 60%, rgba(191,111,50,0.12) 0, transparent 40%)',
           }} />
           <div className="relative flex h-full items-center justify-center px-10 py-16">
             <img

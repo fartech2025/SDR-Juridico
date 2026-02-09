@@ -57,34 +57,63 @@ Use **sempre** as variáveis CSS em vez de valores hardcoded:
 
 /* ❌ ERRADO */
 .button {
-  background-color: #10b981;
+  background-color: #721011;
   color: white;
 }
 ```
 
-#### Paleta Principal
+#### Paleta Principal — Direito Jurídico
 
-| Nome | Variável | Valor (Light) | Uso |
-|------|----------|---------------|-----|
-| **Primary** | `--brand-primary` | `#10b981` | Ações principais, CTAs |
-| **Primary Dark** | `--brand-primary-dark` | `#059669` | Hover states |
-| **Primary Light** | `--brand-primary-light` | `#34d399` | Backgrounds sutis |
-| **Secondary** | `--brand-secondary` | `#6366f1` | Ações secundárias |
-| **Accent** | `--brand-accent` | `#8b5cf6` | Destaques especiais |
+> **Regra de ouro**: As duas cores superiores (#721011 e #BF6F32) são para **botões e ações**.
+> As duas inferiores (#6B5E58 e #000000) são para **textos**.
+
+| Nome | Variável | Valor | Uso |
+|------|----------|-------|-----|
+| **Primary (Burgundy)** | `--brand-primary` | `#721011` | Botões primários, CTAs, ações principais |
+| **Primary Dark** | `--brand-primary-dark` | `#4A0B0C` | Hover em botões primários |
+| **Primary Light** | `--brand-primary-light` | `#A21617` | Backgrounds sutis, badges |
+| **Accent (Amber)** | `--brand-accent` | `#BF6F32` | Botões secundários, destaques, ações alternativas |
+| **Secondary (Warm Gray)** | `--brand-secondary` | `#6B5E58` | Texto secundário, labels, captions |
+| **Text Primary** | `--color-text` | `#000000` | Títulos, texto principal, headings |
+
+#### Escala Completa — Primary (Burgundy)
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--brand-primary-900` | `#4A0B0C` | Hover escuro |
+| `--brand-primary-800` | `#5C0D0E` | Pressed state |
+| `--brand-primary-700` | `#721011` | **Cor principal (DEFAULT)** |
+| `--brand-primary-600` | `#8A1314` | Variante média |
+| `--brand-primary-500` | `#A21617` | Variante clara |
+| `--brand-primary-100` | `#F5E6E6` | Background sutil |
+| `--brand-primary-50` | `#FAF3F3` | Background extra sutil |
+
+#### Escala Completa — Accent (Amber)
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--brand-accent-700` | `#8F5225` | Hover escuro |
+| `--brand-accent-600` | `#A66029` | Pressed state |
+| `--brand-accent-500` | `#BF6F32` | **Cor principal (DEFAULT)** |
+| `--brand-accent-400` | `#CC8652` | Variante média |
+| `--brand-accent-300` | `#D99D72` | Variante clara |
+| `--brand-accent-100` | `#F5E6DA` | Background sutil |
 
 #### Classes Tailwind
 
 ```html
 <!-- Background -->
-<div class="bg-brand-primary">Primary</div>
-<div class="bg-brand-secondary">Secondary</div>
+<div class="bg-brand-primary">Primary (Burgundy)</div>
+<div class="bg-brand-accent">Accent (Amber)</div>
+<div class="bg-brand-secondary">Secondary (Warm Gray)</div>
 
 <!-- Text -->
-<p class="text-brand-primary">Texto verde</p>
-<p class="text-brand-secondary">Texto roxo</p>
+<p class="text-brand-primary">Texto burgundy</p>
+<p class="text-brand-accent">Texto amber</p>
+<p class="text-brand-secondary">Texto warm gray</p>
 
 <!-- Border -->
-<div class="border border-brand-primary">Com borda verde</div>
+<div class="border border-brand-primary">Com borda burgundy</div>
 ```
 
 ### Cores Semânticas
@@ -493,8 +522,14 @@ export default function CustomComponent() {
 | `border-gray-300` | `border-border` |
 | `bg-green-500` | `bg-brand-primary` |
 | `bg-emerald-500` | `bg-brand-primary` |
-| `#10b981` | `var(--brand-primary)` |
-| `#059669` | `var(--brand-primary-dark)` |
+| `bg-emerald-600` | `bg-brand-primary` |
+| `bg-blue-600` | `bg-brand-primary` |
+| `#10b981` | `var(--color-success)` |
+| `#059669` | `var(--color-success-dark)` |
+| `#0066cc` | `var(--brand-primary)` |
+| `#721011` | `var(--brand-primary)` |
+| `#BF6F32` | `var(--brand-accent)` |
+| `#6B5E58` | `var(--brand-secondary)` |
 
 ---
 

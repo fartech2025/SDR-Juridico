@@ -5,6 +5,9 @@
 @import "tailwindcss/preflight" layer(base);
 @import "tailwindcss/utilities" layer(utilities);
 
+/* Link Tailwind v4 to legacy config (colors, spacing, etc.) */
+@config "../tailwind.config.ts";
+
 /* Design System */
 @import "./styles/design-tokens.css";
 @import "./styles/components.css";

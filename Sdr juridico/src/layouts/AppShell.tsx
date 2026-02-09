@@ -29,9 +29,9 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useIsFartechAdmin, useIsOrgAdmin } from '@/hooks/usePermissions'
+import { useApiHealth } from '@/hooks/useApiHealth'
 import { usePageTracking } from '@/hooks/usePageTracking'
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
 import { Logo } from '@/components/ui/Logo'
 import { cn } from '@/utils/cn'
 import { auditService, sessionService } from '@/services/auditService'
@@ -80,6 +80,7 @@ const adminNavItems = [
   { label: 'Organizacoes', to: '/admin/organizations', icon: Building2 },
   { label: 'Usuarios', to: '/admin/users', icon: Users },
   { label: 'Seguranca', to: '/admin/security', icon: ShieldCheck },
+  { label: 'Relatorio Seguranca', to: '/admin/security/report', icon: FileText },
 ]
 
 const orgAdminNavItems = [
@@ -107,6 +108,12 @@ export const AppShell = () => {
   const { displayName, shortName, initials } = useCurrentUser()
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin = useIsOrgAdmin()
+  const apiHealth = useApiHealth()
+
+  const apiStatusMap: Record<string, 'checking' | 'online' | 'offline'> = {
+    '/app/datajud': apiHealth.datajud,
+    '/app/diario-oficial': apiHealth.dou,
+  }
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false)
@@ -282,8 +289,27 @@ export const AppShell = () => {
                           color: '#721011'
                         } : {}}
                       >
-                        <div className="flex-shrink-0" style={isActive ? { color: '#721011' } : {}}>
+                        <div className="flex-shrink-0 relative" style={isActive ? { color: '#721011' } : {}}>
                           <item.icon className="h-5 w-5" />
+                          {apiStatusMap[item.to] && (
+                            <span
+                              title={apiStatusMap[item.to] === 'online' ? 'API conectada' : apiStatusMap[item.to] === 'offline' ? 'API desconectada' : 'Verificando...'}
+                              style={{
+                                position: 'absolute',
+                                top: -2,
+                                right: -2,
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                border: '1.5px solid #fff',
+                                backgroundColor:
+                                  apiStatusMap[item.to] === 'online' ? '#22c55e'
+                                  : apiStatusMap[item.to] === 'offline' ? '#ef4444'
+                                  : '#a3a3a3',
+                                animation: apiStatusMap[item.to] === 'checking' ? 'pulse 1.5s infinite' : undefined,
+                              }}
+                            />
+                          )}
                         </div>
                         {!sidebarCollapsed && (
                           <span className="flex-1 text-left">{item.label}</span>
@@ -515,48 +541,104 @@ export const AppShell = () => {
         <Outlet />
       </main>
 
-      {/* Logout Modal */}
-      <Modal
-        open={logoutOpen}
-        onClose={() => setLogoutOpen(false)}
-        className="max-w-md text-center"
-        footer={
-          <>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setLogoutOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              className="flex-1"
-              onClick={handleLogout}
-            >
-              Sair
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3 text-center">
+      {/* Logout Modal — custom overlay for a polished look */}
+      {logoutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
           <div
-            className="mx-auto flex h-12 w-12 items-center justify-center rounded-full"
-            style={{ backgroundColor: 'rgba(220, 38, 38, 0.15)', color: '#dc2626' }}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setLogoutOpen(false)}
+          />
+
+          {/* Card */}
+          <div
+            className="relative z-10 w-full overflow-hidden rounded-2xl bg-white shadow-2xl"
+            style={{ maxWidth: 420, animation: 'logoutPopIn 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}
           >
-            <Power className="h-5 w-5" />
+            {/* Red accent bar */}
+            <div style={{ height: 4, background: 'linear-gradient(90deg, #dc2626 0%, #991b1b 100%)' }} />
+
+            <div style={{ padding: '32px 28px 28px' }}>
+              {/* Icon */}
+              <div className="flex justify-center">
+                <div
+                  className="flex items-center justify-center rounded-full"
+                  style={{
+                    width: 64, height: 64,
+                    background: 'linear-gradient(135deg, rgba(220,38,38,0.12) 0%, rgba(220,38,38,0.05) 100%)',
+                    border: '2px solid rgba(220,38,38,0.15)',
+                  }}
+                >
+                  <Power className="h-6 w-6" style={{ color: '#dc2626' }} />
+                </div>
+              </div>
+
+              {/* Text */}
+              <h3 style={{
+                marginTop: 20, textAlign: 'center',
+                fontSize: 20, fontWeight: 700, color: '#0f172a', lineHeight: 1.3,
+              }}>
+                Deseja sair do sistema?
+              </h3>
+              <p style={{
+                marginTop: 8, textAlign: 'center',
+                fontSize: 14, color: '#64748b', lineHeight: 1.5,
+              }}>
+                Sua sessão será encerrada com segurança. Você precisará fazer login novamente para acessar.
+              </p>
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
+                <button
+                  onClick={() => setLogoutOpen(false)}
+                  style={{
+                    flex: 1, padding: '12px 20px',
+                    fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
+                    color: '#374151', background: '#f9fafb',
+                    border: '1px solid #e5e7eb', borderRadius: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#f3f4f6'; e.currentTarget.style.borderColor = '#d1d5db' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#f9fafb'; e.currentTarget.style.borderColor = '#e5e7eb' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    flex: 1, padding: '12px 20px',
+                    fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
+                    color: '#ffffff',
+                    background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                    border: 'none', borderRadius: 12,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(220,38,38,0.3)',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(220,38,38,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 14px rgba(220,38,38,0.3)'; e.currentTarget.style.transform = 'translateY(0)' }}
+                >
+                  Sair do sistema
+                </button>
+              </div>
+            </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Deseja sair do sistema?
-          </h3>
-          <p className="text-sm text-gray-500">
-            Sua sessao sera encerrada com seguranca.
-          </p>
         </div>
-      </Modal>
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+        @keyframes logoutPopIn {
+          0% { opacity: 0; transform: scale(0.85) translateY(10px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
 
         input:focus {
           --tw-ring-color: #721011;

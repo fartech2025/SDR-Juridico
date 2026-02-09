@@ -18,6 +18,7 @@ const config: Config = {
           'primary-100': 'var(--brand-primary-100)',
           'primary-50': 'var(--brand-primary-50)',
           'primary-dark': 'var(--brand-primary-dark)',
+          'primary-strong': 'var(--brand-primary-900)',
           'primary-light': 'var(--brand-primary-light)',
           'primary-subtle': 'var(--brand-primary-subtle)',
           secondary: 'var(--brand-secondary)',
