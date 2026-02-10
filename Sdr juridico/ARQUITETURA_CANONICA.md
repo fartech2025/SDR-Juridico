@@ -1,12 +1,21 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.0.0  
-**Data:** 5 de fevereiro de 2026  
+**Versão:** 2.1.0  
+**Data:** 10 de fevereiro de 2026  
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.1.0 (10 de fevereiro de 2026)
+- ✅ **Google Calendar Integration**: Fluxo OAuth completo para vincular Google Calendar por organização
+- ✅ **Edge Functions Google Calendar**: 5 funções deployadas — oauth, sync, sync-cron, create-event, store-google-tokens
+- ✅ **UPSERT por org_id+provider**: Edge Function de OAuth cria/atualiza registro na tabela `integrations` automaticamente
+- ✅ **CORS Dinâmico**: Edge Functions usam `req.headers.get('origin')` em vez de APP_URL hardcoded
+- ✅ **Deploy --no-verify-jwt**: Todas as Edge Functions de Google Calendar deployadas sem verificação JWT
+- ✅ **Sync localStorage↔DB**: ConfigPage sincroniza localStorage após OAuth bem-sucedido
+- ✅ **Role Check Corrigido**: Sync aceita role `admin` além de `org_admin` e `gestor`
 
 ### v2.0.0 (5 de fevereiro de 2026)
 - ✅ **Diário Oficial Page**: Nova página dedicada para busca em diários oficiais via Querido Diário API
@@ -1607,7 +1616,183 @@ CREATE POLICY "org_admin_manage" ON [tabela]
 
 ---
 
-## � INTEGRAÇÃO DATAJUD (v1.9.0)
+## 📅 INTEGRAÇÃO GOOGLE CALENDAR (v2.1.0)
+
+### 1. Arquitetura da Integração
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND (React)                          │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  ConfigPage.tsx                                     │    │
+│  │  - Botão "Vincular Google Calendar"                 │    │
+│  │  - Redireciona para Edge Function OAuth             │    │
+│  │  - Recebe callback ?google_calendar=connected       │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐    │
+│  │  useGoogleCalendarCreate.ts                          │    │
+│  │  - Hook para criar eventos no Google Calendar        │    │
+│  │  - Pre-check de tokens antes de chamar Edge Function │    │
+│  │  - Fallback: localStorage → user_metadata → DB       │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+└─────────────────────────┼───────────────────────────────────┘
+                          │ HTTPS
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│         SUPABASE EDGE FUNCTIONS (Google Calendar)           │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  google-calendar-oauth/index.ts                     │    │
+│  │  - Fase 1: Redireciona para Google OAuth            │    │
+│  │  - Fase 2: Troca code por tokens                    │    │
+│  │  - UPSERT: Cria/atualiza registro em `integrations` │    │
+│  │  - Busca por org_id + provider (NÃO por ID)         │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  google-calendar-sync/index.ts                      │    │
+│  │  - Sync manual de eventos (POST com auth)           │    │
+│  │  - Verifica role: admin, org_admin, gestor           │    │
+│  │  - Busca tokens da tabela `integrations`            │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  google-calendar-create-event/index.ts              │    │
+│  │  - Cria evento no Google Calendar                   │    │
+│  │  - Tokens: header → user_metadata → DB integration  │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  google-calendar-sync-cron/index.ts                 │    │
+│  │  - Sync automático periódico (cron)                 │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  store-google-tokens/index.ts                       │    │
+│  │  - Salva tokens OAuth no user_metadata (backup)     │    │
+│  └─────────────────────────────────────────────────────┘    │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTPS
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Google Calendar API (googleapis.com)            │
+│  - OAuth 2.0 com refresh_token (access_type=offline)        │
+│  - Scopes: calendar, calendar.events                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Fluxo OAuth Completo
+
+```
+1. Usuário clica "Vincular Google Calendar" em /app/config
+
+2. Frontend redireciona para Edge Function:
+   GET /functions/v1/google-calendar-oauth
+     ?integration_id=<localStorage_id>  (opcional, compatibilidade)
+     &org_id=<uuid>                     (OBRIGATÓRIO)
+     &return_to=https://sdr-juridico.vercel.app/app/config
+
+3. Edge Function redireciona para Google OAuth:
+   → accounts.google.com/o/oauth2/v2/auth
+   → Scopes: calendar + calendar.events
+   → access_type=offline (refresh_token)
+   → state={org_id, return_to} (base64)
+
+4. Usuário autoriza no Google → callback com code
+
+5. Edge Function troca code por tokens:
+   POST https://oauth2.googleapis.com/token
+
+6. Edge Function faz UPSERT no banco:
+   - SELECT FROM integrations WHERE org_id=? AND provider='google_calendar'
+   - Se existe → UPDATE (secrets, enabled=true)
+   - Se não existe → INSERT (cria registro novo)
+
+7. Redireciona de volta:
+   → https://sdr-juridico.vercel.app/app/config?google_calendar=connected
+
+8. ConfigPage detecta ?google_calendar=connected:
+   - Exibe toast de sucesso
+   - Marca integração no localStorage como enabled=true
+```
+
+### 3. Armazenamento de Tokens (Estratégia Multi-Camada)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  CAMADA 1: Tabela `integrations` (fonte principal)      │
+│  - org_id + provider='google_calendar'                  │
+│  - secrets: {access_token, refresh_token, expires_at}   │
+│  - Usada por: Edge Functions (sync, create-event)       │
+│  - RLS: membros da org podem ler, admins podem escrever │
+└─────────────────────────────────────────────────────────┘
+                       │
+┌─────────────────────────────────────────────────────────┐
+│  CAMADA 2: user_metadata (backup por usuário)           │
+│  - Salvo via store-google-tokens Edge Function          │
+│  - Fallback se integração org não encontrada            │
+└─────────────────────────────────────────────────────────┘
+                       │
+┌─────────────────────────────────────────────────────────┐
+│  CAMADA 3: localStorage (frontend only)                 │
+│  - google_calendar_token: {access_token, refresh_token} │
+│  - Usado por: useGoogleCalendarCreate hook              │
+│  - Compatibilidade com integrationsService (localStorage)│
+└─────────────────────────────────────────────────────────┘
+```
+
+### 4. Configuração Google Cloud Console
+
+```
+Google Cloud Project:
+  - Client ID: <GOOGLE_CLIENT_ID> (ver Supabase Secrets)
+  - Authorized Redirect URIs:
+    • https://xocqcoebreoiaqxoutar.supabase.co/functions/v1/google-calendar-oauth
+  - Authorized JavaScript Origins:
+    • https://sdr-juridico.vercel.app
+    • http://localhost:5173
+  - OAuth Consent Screen: External (em verificação)
+  - Test Users: configurados no Google Cloud Console
+```
+
+### 5. Edge Functions Deploy
+
+```bash
+# Todas deployadas com --no-verify-jwt (auth manual dentro das funções)
+npx supabase functions deploy google-calendar-oauth --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+npx supabase functions deploy google-calendar-sync --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+npx supabase functions deploy google-calendar-sync-cron --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+npx supabase functions deploy google-calendar-create-event --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+npx supabase functions deploy store-google-tokens --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+```
+
+### 6. Secrets Configurados no Supabase
+
+```bash
+npx supabase secrets set \
+  GOOGLE_CLIENT_ID="<valor do Google Cloud Console>" \
+  GOOGLE_CLIENT_SECRET="<valor do Google Cloud Console>" \
+  GOOGLE_REDIRECT_URI="https://xocqcoebreoiaqxoutar.supabase.co/functions/v1/google-calendar-oauth" \
+  APP_URL="https://sdr-juridico.vercel.app" \
+  --project-ref xocqcoebreoiaqxoutar
+```
+
+### 7. Decisão Arquitetural: localStorage vs DB
+
+> **Contexto**: O `integrationsService.ts` armazena integrações em **localStorage** (não no banco).
+> Os Edge Functions leem/escrevem na tabela **`integrations`** do Supabase.
+>
+> **Solução adotada**: O fluxo OAuth cria/atualiza o registro diretamente no banco via UPSERT
+> (org_id + provider), independente do ID gerado pelo localStorage. Após o OAuth bem-sucedido,
+> o frontend sincroniza o estado do localStorage para manter a UI consistente.
+>
+> **Futuro**: Migrar `integrationsService.ts` para usar Supabase em vez de localStorage,
+> seguindo o padrão da Camada 3 (Dados e Integrações) da arquitetura canônica.
+
+---
+
+## 🔍 INTEGRAÇÃO DATAJUD (v1.9.0)
 
 ### 1. Arquitetura da Integração
 
@@ -2310,8 +2495,8 @@ COMMIT;
 ---
 
 **Mantido por:** Equipe SDR Jurídico  
-**Última atualização:** 5 de fevereiro de 2026  
-**Versão:** 1.5.0 (Soft Delete Leads + Histórico de Leads)
+**Última atualização:** 10 de fevereiro de 2026  
+**Versão:** 2.1.0 (Google Calendar Integration)
 
 ---
 
