@@ -11,17 +11,17 @@ const SUPABASE_SERVICE_ROLE_KEY =
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') ?? ''
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') ?? ''
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
+const getCorsHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': req.headers.get('origin') || '*',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+})
 
-const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+const jsonResponse = (body: Record<string, unknown>, status = 200, req?: Request) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    headers: { 'Content-Type': 'application/json', ...(req ? getCorsHeaders(req) : {}) },
   })
 
 const createLogger = (runId: string): SyncLogger => {
@@ -42,27 +42,27 @@ const createLogger = (runId: string): SyncLogger => {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   const runId = crypto.randomUUID()
   const log = createLogger(runId)
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return jsonResponse({ error: 'Missing Supabase env vars' }, 500)
+    return jsonResponse({ error: 'Missing Supabase env vars' }, 500, req)
   }
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    return jsonResponse({ error: 'Missing Google OAuth env vars' }, 500)
+    return jsonResponse({ error: 'Missing Google OAuth env vars' }, 500, req)
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405)
+    return jsonResponse({ error: 'Method not allowed' }, 405, req)
   }
 
   const authHeader = req.headers.get('Authorization') || ''
   const jwt = authHeader.replace('Bearer ', '')
   if (!jwt) {
-    return jsonResponse({ error: 'Missing auth token' }, 401)
+    return jsonResponse({ error: 'Missing auth token' }, 401, req)
   }
 
   const supabase = createSupabaseAdminClient(
@@ -71,7 +71,7 @@ serve(async (req) => {
   )
   const { data: authData, error: authError } = await supabase.auth.getUser(jwt)
   if (authError || !authData?.user) {
-    return jsonResponse({ error: 'Unauthorized' }, 401)
+    return jsonResponse({ error: 'Unauthorized' }, 401, req)
   }
 
   const payload = await req.json().catch(() => ({}))
@@ -89,7 +89,7 @@ serve(async (req) => {
       .maybeSingle()
 
     if (membershipError || !membership?.org_id) {
-      return jsonResponse({ error: 'Org not found' }, 403)
+      return jsonResponse({ error: 'Org not found' }, 403, req)
     }
     orgId = membership.org_id
   }
@@ -104,7 +104,7 @@ serve(async (req) => {
     .single()
 
   if (userOrgError || !userOrg || !['org_admin', 'gestor'].includes(userOrg.role || '')) {
-    return jsonResponse({ error: 'Permission denied. Only org admin or gestor can sync calendar' }, 403)
+    return jsonResponse({ error: 'Permission denied. Only org admin or gestor can sync calendar' }, 403, req)
   }
 
   log('info', 'Starting manual sync', {
@@ -121,7 +121,7 @@ serve(async (req) => {
     .maybeSingle()
 
   if (integrationError || !integration) {
-    return jsonResponse({ error: 'Integration not found' }, 404)
+    return jsonResponse({ error: 'Integration not found' }, 404, req)
   }
 
   try {
@@ -140,12 +140,12 @@ serve(async (req) => {
     })
 
     log('info', 'Sync completed', result)
-    return jsonResponse(result)
+    return jsonResponse(result, 200, req)
   } catch (error) {
     log('error', 'Sync failed', {
       orgId,
       error: error instanceof Error ? error.message : 'Unknown error',
     })
-    return jsonResponse({ error: 'Sync failed' }, 500)
+    return jsonResponse({ error: 'Sync failed' }, 500, req)
   }
 })
