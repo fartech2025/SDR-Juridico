@@ -177,7 +177,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { user_id, org_id, event: eventData } = body
+    const { user_id, org_id, access_token: directToken, event: eventData } = body
 
     if (!eventData) {
       return jsonResponse({ error: 'event é obrigatório' }, 400, req)
@@ -188,10 +188,17 @@ serve(async (req) => {
     let accessToken: string | null = null
     let tokenSource = 'none'
 
-    // 1) Tentar token pessoal do usuário
-    if (user_id) {
+    // 0) Token direto enviado pelo frontend (localStorage)
+    if (directToken) {
+      accessToken = directToken
+      tokenSource = 'direct'
+      console.log('Usando token direto do frontend')
+    }
+
+    // 1) Tentar token pessoal do usuário (user_metadata)
+    if (!accessToken && user_id) {
       accessToken = await getUserToken(supabase, user_id)
-      if (accessToken) tokenSource = 'user'
+      if (accessToken) tokenSource = 'user_metadata'
     }
 
     // 2) Fallback: token da organização
@@ -203,10 +210,10 @@ serve(async (req) => {
     if (!accessToken) {
       return jsonResponse(
         {
-          error: 'Google Calendar não conectado. Faça login com Google para sincronizar sua agenda.',
+          error: 'Google Calendar não conectado. Vincule sua conta Google em Configurações → Integrações.',
           code: 'NO_GOOGLE_TOKEN',
         },
-        401,
+        422,
         req,
       )
     }

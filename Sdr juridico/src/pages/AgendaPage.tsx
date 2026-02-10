@@ -497,16 +497,21 @@ export const AgendaPage = () => {
 
       // Sincronizar com Google Calendar (best-effort, não bloqueia o save)
       try {
-        await createMeeting({
+        console.log('📅 Tentando sync com Google Calendar...')
+        const gcResult = await createMeeting({
           title,
           startTime: startAt,
           endTime: endAt,
           location: formState.location.trim() || undefined,
           videoConference: false,
         })
+        console.log('✅ Google Calendar sync OK:', gcResult)
+        alert('✅ Compromisso sincronizado com Google Calendar!')
       } catch (gcErr) {
         // Google Calendar sync é opcional — não falha o save
-        console.warn('⚠️ Google Calendar sync falhou (não impede o save):', gcErr)
+        const gcMsg = gcErr instanceof Error ? gcErr.message : String(gcErr)
+        console.warn('⚠️ Google Calendar sync falhou:', gcMsg)
+        alert('⚠️ Compromisso salvo localmente, mas NÃO sincronizou com Google Calendar:\n' + gcMsg)
       }
 
       setEditorOpen(false)

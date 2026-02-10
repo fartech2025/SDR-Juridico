@@ -55,10 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Listener de mudanças de auth
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (mounted) {
         setSession(newSession)
         setUser(newSession?.user ?? null)
+
+        // Capturar Google provider_token quando o user faz login com Google
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.provider_token) {
+          console.log('🔑 [AuthContext] provider_token capturado via onAuthStateChange!')
+          try {
+            localStorage.setItem('google_calendar_token', JSON.stringify({
+              access_token: newSession.provider_token,
+              refresh_token: newSession.provider_refresh_token || null,
+              saved_at: new Date().toISOString(),
+            }))
+            console.log('✅ [AuthContext] Google token salvo no localStorage')
+          } catch (e) {
+            console.warn('⚠️ [AuthContext] Falha ao salvar token:', e)
+          }
+        }
       }
     })
 
