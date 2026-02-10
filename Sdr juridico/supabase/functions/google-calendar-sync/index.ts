@@ -103,8 +103,8 @@ serve(async (req) => {
     .eq('ativo', true)
     .single()
 
-  if (userOrgError || !userOrg || !['org_admin', 'gestor'].includes(userOrg.role || '')) {
-    return jsonResponse({ error: 'Permission denied. Only org admin or gestor can sync calendar' }, 403, req)
+  if (userOrgError || !userOrg || !['admin', 'org_admin', 'gestor'].includes(userOrg.role || '')) {
+    return jsonResponse({ error: 'Permission denied. Only admin or gestor can sync calendar' }, 403, req)
   }
 
   log('info', 'Starting manual sync', {
