@@ -59,13 +59,13 @@ serve(async (req) => {
     const orgId = url.searchParams.get('org_id') ?? ''
     const returnTo = url.searchParams.get('return_to') || APP_URL
 
-    if (!integrationId) {
-      return new Response('Missing integration_id', { status: 400 })
+    if (!orgId) {
+      return new Response('Missing org_id', { status: 400 })
     }
 
     const state = encodeState(
       JSON.stringify({
-        integration_id: integrationId,
+        integration_id: integrationId || '',
         org_id: orgId,
         return_to: returnTo,
       }),
@@ -107,7 +107,7 @@ serve(async (req) => {
     )
   }
 
-  if (!code || !decodedState.integration_id) {
+  if (!code || !decodedState.org_id) {
     return Response.redirect(
       appendParams(returnTo, { google_calendar: 'error' }),
       302,
@@ -141,34 +141,22 @@ serve(async (req) => {
     : null
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-  const baseQuery = supabase
+
+  // UPSERT: buscar integração existente por org_id + provider (não por ID do localStorage)
+  const { data: existing } = await supabase
     .from('integrations')
-    .select('id, org_id, secrets, settings')
-    .eq('id', decodedState.integration_id)
+    .select('id, secrets, settings')
+    .eq('org_id', decodedState.org_id)
+    .eq('provider', 'google_calendar')
     .maybeSingle()
 
-  const { data: integration, error: fetchError } = await baseQuery
-  if (fetchError || !integration) {
-    return Response.redirect(
-      appendParams(returnTo, { google_calendar: 'error' }),
-      302,
-    )
-  }
-
-  if (decodedState.org_id && integration.org_id !== decodedState.org_id) {
-    return Response.redirect(
-      appendParams(returnTo, { google_calendar: 'error' }),
-      302,
-    )
-  }
-
   const existingSecrets =
-    integration.secrets && typeof integration.secrets === 'object'
-      ? (integration.secrets as Record<string, unknown>)
+    existing?.secrets && typeof existing.secrets === 'object'
+      ? (existing.secrets as Record<string, unknown>)
       : {}
   const existingSettings =
-    integration.settings && typeof integration.settings === 'object'
-      ? (integration.settings as Record<string, unknown>)
+    existing?.settings && typeof existing.settings === 'object'
+      ? (existing.settings as Record<string, unknown>)
       : {}
 
   const nextSecrets: Record<string, unknown> = {
@@ -186,25 +174,42 @@ serve(async (req) => {
     connected_at: new Date().toISOString(),
   }
 
-  let updateQuery = supabase
-    .from('integrations')
-    .update({
-      enabled: true,
-      secrets: nextSecrets,
-      settings: nextSettings,
-    })
-    .eq('id', decodedState.integration_id)
+  if (existing) {
+    // UPDATE registro existente
+    const { error: updateError } = await supabase
+      .from('integrations')
+      .update({
+        enabled: true,
+        secrets: nextSecrets,
+        settings: nextSettings,
+      })
+      .eq('id', existing.id)
 
-  if (decodedState.org_id) {
-    updateQuery = updateQuery.eq('org_id', decodedState.org_id)
-  }
+    if (updateError) {
+      return Response.redirect(
+        appendParams(returnTo, { google_calendar: 'error' }),
+        302,
+      )
+    }
+  } else {
+    // INSERT novo registro no banco
+    const { error: insertError } = await supabase
+      .from('integrations')
+      .insert({
+        org_id: decodedState.org_id,
+        provider: 'google_calendar',
+        name: 'Google Calendar',
+        enabled: true,
+        secrets: nextSecrets,
+        settings: nextSettings,
+      })
 
-  const { error: updateError } = await updateQuery
-  if (updateError) {
-    return Response.redirect(
-      appendParams(returnTo, { google_calendar: 'error' }),
-      302,
-    )
+    if (insertError) {
+      return Response.redirect(
+        appendParams(returnTo, { google_calendar: 'error' }),
+        302,
+      )
+    }
   }
 
   return Response.redirect(
