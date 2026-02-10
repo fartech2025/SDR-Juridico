@@ -23,28 +23,42 @@ export default function AuthCallback() {
             return
           }
 
-          if (import.meta.env.DEV) {
-            console.log('✅ OAuth sessão definida:', data.user?.email)
-          }
+          console.log('✅ OAuth sessão definida:', data.user?.email)
 
           // Salvar tokens do Google para uso com Calendar API
           const providerToken = data.session?.provider_token
           const providerRefreshToken = data.session?.provider_refresh_token
-          if (providerToken && data.user) {
+          console.log('🔑 Provider token recebido?', !!providerToken, 'Refresh token?', !!providerRefreshToken)
+
+          if (providerToken) {
+            // Salvar no localStorage como fonte confiável (sempre funciona)
             try {
-              await supabase.functions.invoke('store-google-tokens', {
+              localStorage.setItem('google_calendar_token', JSON.stringify({
+                access_token: providerToken,
+                refresh_token: providerRefreshToken || null,
+                saved_at: new Date().toISOString(),
+              }))
+              console.log('✅ Google tokens salvos no localStorage')
+            } catch (e) {
+              console.warn('⚠️ Falha ao salvar tokens no localStorage:', e)
+            }
+
+            // Também tentar salvar no user_metadata (backup servidor)
+            if (data.user) {
+              supabase.functions.invoke('store-google-tokens', {
                 body: {
                   user_id: data.user.id,
                   access_token: providerToken,
                   refresh_token: providerRefreshToken || null,
                 },
+              }).then(res => {
+                console.log('✅ Google tokens salvos no user_metadata:', res.data)
+              }).catch(e => {
+                console.warn('⚠️ Falha ao salvar no user_metadata (localStorage funciona):', e)
               })
-              if (import.meta.env.DEV) {
-                console.log('✅ Google tokens salvos para Calendar')
-              }
-            } catch (e) {
-              console.warn('⚠️ Falha ao salvar Google tokens (Calendar pode não funcionar):', e)
             }
+          } else {
+            console.warn('⚠️ Nenhum provider_token recebido do Google OAuth — Calendar não vai funcionar')
           }
 
           navigate('/app/dashboard', { replace: true })

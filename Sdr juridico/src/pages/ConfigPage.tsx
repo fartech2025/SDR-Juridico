@@ -259,10 +259,20 @@ export const ConfigPage = () => {
     if (!googleCalendarStatus) return
     if (googleCalendarStatus === 'connected') {
       toast.success('Google Calendar conectado.')
+      // Sincronizar localStorage: marcar integração como enabled
+      const gcIntegration = integrations.find((i) =>
+        matchesKey(i.name, 'google_calendar'),
+      )
+      if (gcIntegration && gcIntegration.status !== 'connected') {
+        updateIntegration(gcIntegration.id, {
+          enabled: true,
+          settings: { connected_at: new Date().toISOString() },
+        }).catch(() => {})
+      }
     } else if (googleCalendarStatus === 'error') {
       toast.error('Falha ao conectar Google Calendar.')
     }
-  }, [googleCalendarStatus])
+  }, [googleCalendarStatus, integrations, updateIntegration])
 
   return (
     <div

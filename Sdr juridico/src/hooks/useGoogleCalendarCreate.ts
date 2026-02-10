@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useOrganization } from '@/contexts/OrganizationContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 
 /**
  * Interface para dados do meeting
@@ -137,6 +138,32 @@ export function useGoogleCalendarCreate() {
 
       try {
         const eventPayload = buildGoogleEventPayload(meeting)
+        
+        // Ler token do localStorage (salvo no login com Google)
+        let directToken: string | null = null
+        try {
+          const stored = localStorage.getItem('google_calendar_token')
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            directToken = parsed.access_token || null
+          }
+        } catch {
+          // ignore
+        }
+
+        // Verificar se há algum token disponível antes de chamar a edge function
+        const hasUserMetadataTokens = !!user?.user_metadata?.google_calendar_tokens?.access_token
+        if (!directToken && !hasUserMetadataTokens && !currentOrg?.id) {
+          throw new Error('Google Calendar não conectado. Vincule sua conta Google em Configurações → Integrações.')
+        }
+
+        console.log('📅 Google Calendar - Enviando:', {
+          user_id: user?.id || null,
+          org_id: currentOrg?.id || null,
+          hasDirectToken: !!directToken,
+          hasUserMetadataTokens,
+          event: eventPayload,
+        })
 
         const { data, error: fnError } = await supabase.functions.invoke(
           'google-calendar-create-event',
@@ -144,13 +171,27 @@ export function useGoogleCalendarCreate() {
             body: {
               user_id: user?.id || null,
               org_id: currentOrg?.id || null,
+              access_token: directToken,
               event: eventPayload,
             },
           },
         )
 
+        console.log('📅 Google Calendar - Resposta:', { data, fnError })
+
         if (fnError) {
-          throw new Error(fnError.message || 'Erro ao chamar edge function do Google Calendar')
+          // Extrair o erro real da edge function (não a mensagem genérica do Supabase client)
+          let realError = fnError.message
+          if (fnError instanceof FunctionsHttpError) {
+            try {
+              const errBody = await fnError.context.json()
+              console.error('📅 Google Calendar - Erro detalhado:', errBody)
+              realError = errBody?.error || errBody?.message || realError
+            } catch {
+              // se não conseguir parsear, usa a mensagem genérica
+            }
+          }
+          throw new Error(realError)
         }
 
         if (!data?.success) {
