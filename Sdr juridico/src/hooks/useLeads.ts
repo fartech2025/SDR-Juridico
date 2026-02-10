@@ -178,6 +178,48 @@ export function useLeads() {
     }
   }, [])
 
+  // Converter lead em caso
+  const convertToCaso = useCallback(
+    async (
+      leadId: string,
+      overrides?: { titulo?: string; area?: string; valor?: number; descricao?: string }
+    ) => {
+      try {
+        const result = await leadsService.convertLeadToCaso(leadId, overrides)
+        setState((prev) => ({
+          ...prev,
+          leads: prev.leads.map((lead) =>
+            lead.id === leadId ? mapLeadRowToLead(result.lead) : lead
+          ),
+        }))
+        return result
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error('Erro desconhecido')
+        setState((prev) => ({ ...prev, error: err }))
+        throw err
+      }
+    },
+    []
+  )
+
+  // Re-score um lead
+  const rescoreLead = useCallback(async (id: string) => {
+    try {
+      const rescored = await leadsService.rescoreLead(id)
+      setState((prev) => ({
+        ...prev,
+        leads: prev.leads.map((lead) =>
+          lead.id === id ? mapLeadRowToLead(rescored) : lead
+        ),
+      }))
+      return mapLeadRowToLead(rescored)
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Erro desconhecido')
+      setState((prev) => ({ ...prev, error: err }))
+      throw err
+    }
+  }, [])
+
   // Deletar lead permanentemente
   const hardDeleteLead = useCallback(async (id: string) => {
     try {
@@ -207,6 +249,8 @@ export function useLeads() {
     updateLead,
     deleteLead,
     assignLeadAdvogado,
+    convertToCaso,
+    rescoreLead,
     fetchDeletedLeads,
     restoreLead,
     hardDeleteLead,

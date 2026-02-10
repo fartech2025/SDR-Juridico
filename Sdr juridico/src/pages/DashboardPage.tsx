@@ -1,11 +1,8 @@
 import * as React from 'react'
-import { CalendarDays, ChevronRight, Flag, Sparkles, TrendingUp, TrendingDown, Minus, Clock, Briefcase, AlertTriangle, FileText, Users, Flame } from 'lucide-react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { CalendarDays, ChevronRight, Sparkles, TrendingUp, TrendingDown, Minus, Clock, Briefcase, AlertTriangle, FileText, Flame } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { formatDateTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useCasos } from '@/hooks/useCasos'
@@ -13,6 +10,8 @@ import { useDocumentos } from '@/hooks/useDocumentos'
 import { useLeads } from '@/hooks/useLeads'
 import { useNotas } from '@/hooks/useNotas'
 import { useTarefas } from '@/hooks/useTarefas'
+import { useAlertas } from '@/hooks/useAlertas'
+import { NotificationCenter } from '@/components/NotificationCenter'
 import type { KPI, Notification } from '@/types/domain'
 
 const resolveStatus = (
@@ -274,24 +273,6 @@ const QuickActionButton = ({ icon: Icon, label, onClick }: {
   </button>
 )
 
-// Notification Item Component
-const NotificationItem = ({ title, time, isNew }: {
-  title: string
-  time: string
-  isNew?: boolean
-}) => (
-  <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
-    {isNew && (
-      <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#721011' }} />
-    )}
-    {!isNew && <div className="w-2" />}
-    <div className="flex-1 min-w-0">
-      <p className="text-sm text-gray-900 truncate">{title}</p>
-      <p className="text-xs text-gray-400 mt-1">{time}</p>
-    </div>
-  </div>
-)
-
 export const DashboardPage = () => {
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -307,6 +288,7 @@ export const DashboardPage = () => {
     fetchEventos,
   } = useAgenda()
   const { notas, loading: notasLoading, error: notasError, fetchNotas } = useNotas()
+  const { alertas, naoLidas: alertasNaoLidas, marcarLida: marcarAlertaLida, marcarTodasLidas } = useAlertas()
   const [loadTimeoutReached, setLoadTimeoutReached] = React.useState(false)
 
   const anyLoading =
@@ -396,7 +378,21 @@ export const DashboardPage = () => {
     ]
   }, [casos, tarefas, leads, criticalEvents])
 
-  const notifications = React.useMemo(() => {
+  const notifications: Notification[] = React.useMemo(() => {
+    // Prefer real DB alerts when available
+    if (alertas.length > 0) {
+      return alertas.slice(0, 10).map((a) => ({
+        id: a.id,
+        title: a.titulo,
+        description: a.descricao || '',
+        priority: a.prioridade as Notification['priority'],
+        date: a.created_at,
+        actionLabel: a.action_href ? 'Ver detalhes' : undefined,
+        actionHref: a.action_href || undefined,
+        read: a.lida,
+      }))
+    }
+    // Fallback to computed notifications when no DB alerts exist yet
     const pendingDocs = documentos.filter((doc) => doc.status === 'pendente').length
     const criticalCases = casos.filter((caso) => caso.slaRisk === 'critico').length
     const leadActiveCount = leads.filter(
@@ -404,7 +400,7 @@ export const DashboardPage = () => {
     ).length
     const agendaCount = agendaItems.filter((item) => item.date === todayIso).length
     return buildNotifications(leadActiveCount, pendingDocs, criticalCases, agendaCount)
-  }, [agendaItems, casos, documentos, leads, todayIso])
+  }, [alertas, agendaItems, casos, documentos, leads, todayIso])
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -559,34 +555,11 @@ export const DashboardPage = () => {
               </div>
 
               {/* Notifications */}
-              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">Notificações</h3>
-                  <span
-                    className="px-2 py-0.5 text-xs font-medium rounded-full text-white"
-                    style={{ backgroundColor: '#721011' }}
-                  >
-                    {notifications.filter(n => !n.read).length} novos
-                  </span>
-                </div>
-                <div className="divide-y divide-gray-100">
-                  {notifications.slice(0, 4).map((notif) => (
-                    <NotificationItem
-                      key={notif.id}
-                      title={notif.title}
-                      time={formatDateTime(notif.date)}
-                      isNew={!notif.read}
-                    />
-                  ))}
-                </div>
-                <Link
-                  to="/app/notificacoes"
-                  className="w-full py-3 text-sm font-medium border-t border-gray-100 hover:bg-gray-50 transition-colors block text-center"
-                  style={{ color: '#721011' }}
-                >
-                  Ver todas notificações
-                </Link>
-              </div>
+              <NotificationCenter
+                notifications={notifications.slice(0, 6)}
+                onMarkRead={alertas.length > 0 ? marcarAlertaLida : undefined}
+                onMarkAllRead={alertas.length > 0 ? marcarTodasLidas : undefined}
+              />
             </div>
           </div>
         </div>

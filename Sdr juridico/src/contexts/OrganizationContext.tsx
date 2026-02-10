@@ -75,7 +75,7 @@ const createFallbackOrganization = (orgId: string | null): Organization => ({
   billing_cycle: 'monthly',
   next_billing_date: null,
   logo_url: null,
-  primary_color: '#721011',
+  primary_color: '#059669',
   secondary_color: null,
   custom_domain: null,
   settings: { ...DEFAULT_ORGANIZATION_SETTINGS },

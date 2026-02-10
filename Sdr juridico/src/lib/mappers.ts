@@ -34,8 +34,19 @@ const toLocalTime = (value: string) => {
 }
 
 const resolveHeat = (row: LeadRow): LeadHeat => {
+  // Prefer score-based heat from scoring engine (stored in qualificacao)
+  const q = (row as any).qualificacao || {}
+  if (q.score != null && q.scoredAt) {
+    const scoredAge = Date.now() - new Date(q.scoredAt).getTime()
+    const ONE_HOUR = 60 * 60 * 1000
+    // Use scored heat if scored within the last hour
+    if (scoredAge < ONE_HOUR && q.heat && ['quente', 'morno', 'frio'].includes(q.heat)) {
+      return q.heat as LeadHeat
+    }
+  }
+  // Fallback: explicit heat field
   if (row.heat && ['quente', 'morno', 'frio'].includes(row.heat)) return row.heat as LeadHeat
-  // Usa o campo correto: last_contact_at (ou legado ultimo_contato)
+  // Fallback: time-based heuristic
   const base = row.last_contact_at || row.ultimo_contato || row.created_at
   if (!base) return 'morno'
   const diffMs = Date.now() - new Date(base).getTime()
@@ -85,22 +96,29 @@ const resolveTaskLinks = (row: TarefaRow) => {
   return { leadId: null, clienteId: null, casoId: null }
 }
 
-export const mapLeadRowToLead = (row: LeadRow): Lead => ({
-  id: row.id,
-  name: row.nome || 'Sem nome',
-  email: row.email || '',
-  phone: row.telefone || '',
-  area: row.area || 'Sem area',
-  origin: row.origem || 'Outro',
-  status: row.status,
-  heat: resolveHeat(row),
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-  lastContactAt: row.last_contact_at || row.ultimo_contato || undefined,
-  owner: row.assigned_user_id || row.responsavel || 'Nao atribuido',
-  company: row.empresa || undefined,
-  notes: row.observacoes || undefined,
-})
+export const mapLeadRowToLead = (row: LeadRow): Lead => {
+  const q = (row as any).qualificacao || {}
+  return {
+    id: row.id,
+    name: row.nome || 'Sem nome',
+    email: row.email || '',
+    phone: row.telefone || '',
+    area: row.area || 'Sem area',
+    origin: row.origem || 'Outro',
+    status: row.status,
+    heat: resolveHeat(row),
+    score: typeof q.score === 'number' ? q.score : undefined,
+    scoreFactors: Array.isArray(q.scoreFactors) ? q.scoreFactors : undefined,
+    scoredAt: typeof q.scoredAt === 'string' ? q.scoredAt : undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    lastContactAt: row.last_contact_at || row.ultimo_contato || undefined,
+    owner: row.assigned_user_id || row.responsavel || 'Nao atribuido',
+    company: row.empresa || undefined,
+    notes: row.observacoes || undefined,
+    estimatedValue: typeof q.estimatedValue === 'number' ? q.estimatedValue : undefined,
+  }
+}
 
 export const mapCasoRowToCaso = (row: CasoRow): Caso => {
   // Resolve heat com validação

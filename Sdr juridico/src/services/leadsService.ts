@@ -7,6 +7,8 @@ import { supabase, type LeadRow } from '@/lib/supabaseClient'
 import { AppError } from '@/utils/errors'
 import { resolveOrgScope } from '@/services/orgScope'
 import { logAuditChange } from '@/services/auditLogService'
+import { calculateLeadScore, leadRowToScoringInput, type LeadScoreConfig } from '@/services/leadScoringService'
+import { casosService } from '@/services/casosService'
 
 type DbLeadRow = {
   id: string
@@ -104,6 +106,49 @@ const buildLeadPayload = (lead: Partial<LeadRow>, applyDefaults: boolean) => {
   }
 
   return payload
+}
+
+/**
+ * Applies lead scoring to a DbLeadRow and returns updated qualificacao with score data.
+ */
+const applyScoring = async (row: DbLeadRow, orgId: string | null): Promise<Record<string, any>> => {
+  // Count interactions from lead_status_history
+  let interactionCount = 0
+  try {
+    const { count } = await supabase
+      .from('lead_status_history')
+      .select('id', { count: 'exact', head: true })
+      .eq('lead_id', row.id)
+    interactionCount = count || 0
+  } catch {
+    // Non-critical — continue with 0
+  }
+
+  // Load org-specific scoring config if available
+  let config: LeadScoreConfig | undefined
+  if (orgId) {
+    try {
+      const { data } = await supabase
+        .from('lead_scoring_configs')
+        .select('config')
+        .eq('org_id', orgId)
+        .maybeSingle()
+      if (data?.config) config = data.config as LeadScoreConfig
+    } catch {
+      // Use default config
+    }
+  }
+
+  const scoringInput = leadRowToScoringInput(row, interactionCount)
+  const result = calculateLeadScore(scoringInput, config)
+
+  return {
+    ...(row.qualificacao || {}),
+    score: result.score,
+    heat: result.heat,
+    scoreFactors: result.factors,
+    scoredAt: result.scoredAt,
+  }
 }
 
 export const leadsService = {
@@ -275,7 +320,8 @@ export const leadsService = {
         .single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      const auditOrgId = orgId || (data as DbLeadRow).org_id || null
+      const createdRow = data as DbLeadRow
+      const auditOrgId = orgId || createdRow.org_id || null
       void logAuditChange({
         orgId: auditOrgId,
         action: 'create',
@@ -283,7 +329,22 @@ export const leadsService = {
         entityId: data.id,
         details: { fields: Object.keys(payload) },
       })
-      return mapDbLeadToLeadRow(data as DbLeadRow)
+
+      // Apply scoring to the newly created lead
+      try {
+        const scoredQualificacao = await applyScoring(createdRow, auditOrgId)
+        const { data: scored } = await supabase
+          .from('leads')
+          .update({ qualificacao: scoredQualificacao })
+          .eq('id', createdRow.id)
+          .select('id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at')
+          .single()
+        if (scored) return mapDbLeadToLeadRow(scored as DbLeadRow)
+      } catch {
+        // Scoring failure is non-critical
+      }
+
+      return mapDbLeadToLeadRow(createdRow)
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao criar lead',
@@ -316,7 +377,8 @@ export const leadsService = {
         : await query.eq('org_id', orgId).single()
 
       if (error) throw new AppError(error.message, 'database_error')
-      const auditOrgId = orgId || (data as DbLeadRow).org_id || null
+      const updatedRow = data as DbLeadRow
+      const auditOrgId = orgId || updatedRow.org_id || null
       void logAuditChange({
         orgId: auditOrgId,
         action: 'update',
@@ -324,7 +386,22 @@ export const leadsService = {
         entityId: data.id,
         details: { fields: Object.keys(payload) },
       })
-      return mapDbLeadToLeadRow(data as DbLeadRow)
+
+      // Re-score the lead after update
+      try {
+        const scoredQualificacao = await applyScoring(updatedRow, auditOrgId)
+        const { data: scored } = await supabase
+          .from('leads')
+          .update({ qualificacao: scoredQualificacao })
+          .eq('id', updatedRow.id)
+          .select('id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at')
+          .single()
+        if (scored) return mapDbLeadToLeadRow(scored as DbLeadRow)
+      } catch {
+        // Scoring failure is non-critical
+      }
+
+      return mapDbLeadToLeadRow(updatedRow)
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao atualizar lead',
@@ -426,6 +503,121 @@ export const leadsService = {
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : 'Erro ao buscar leads deletados',
+        'database_error'
+      )
+    }
+  },
+
+  // Converter lead em caso
+  async convertLeadToCaso(
+    leadId: string,
+    casoOverrides?: { titulo?: string; area?: string; valor?: number; descricao?: string }
+  ) {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      // 1. Fetch the lead
+      const query = supabase
+        .from('leads')
+        .select('id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at')
+        .eq('id', leadId)
+      const { data: leadData, error: leadError } = isFartechAdmin
+        ? await query.single()
+        : await query.eq('org_id', orgId).single()
+
+      if (leadError) throw new AppError(leadError.message, 'database_error')
+      const lead = leadData as DbLeadRow
+      const qualificacao = lead.qualificacao || {}
+
+      // 2. Create caso from lead data
+      const caso = await casosService.createCaso({
+        titulo: casoOverrides?.titulo || `Caso - ${lead.nome || 'Sem nome'}`,
+        area: casoOverrides?.area || qualificacao.area || lead.assunto || '',
+        valor: casoOverrides?.valor ?? qualificacao.estimatedValue ?? null,
+        descricao: casoOverrides?.descricao || lead.resumo || null,
+        lead_id: leadId,
+        cliente_id: lead.cliente_id || null,
+        status: 'ativo',
+        stage: 'triagem',
+        prioridade: 'media',
+      } as any)
+
+      // 3. Update lead to convertido + store caso_id
+      const updatedQualificacao = {
+        ...qualificacao,
+        caso_id: caso.id,
+        converted_at: new Date().toISOString(),
+      }
+      const updateQuery = supabase
+        .from('leads')
+        .update({
+          status: 'convertido',
+          qualificacao: updatedQualificacao,
+        })
+        .eq('id', leadId)
+        .select('id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at')
+      const { data: updatedLead, error: updateError } = isFartechAdmin
+        ? await updateQuery.single()
+        : await updateQuery.eq('org_id', orgId).single()
+
+      if (updateError) throw new AppError(updateError.message, 'database_error')
+
+      // 4. Audit log
+      void logAuditChange({
+        orgId: orgId || lead.org_id || null,
+        action: 'convert',
+        entity: 'leads',
+        entityId: leadId,
+        details: { caso_id: caso.id },
+      })
+
+      return {
+        lead: mapDbLeadToLeadRow(updatedLead as DbLeadRow),
+        caso,
+      }
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : 'Erro ao converter lead em caso',
+        'database_error'
+      )
+    }
+  },
+
+  // Re-score um lead manualmente
+  async rescoreLead(id: string) {
+    try {
+      const { orgId, isFartechAdmin } = await resolveOrgScope()
+      if (!isFartechAdmin && !orgId) {
+        throw new AppError('Organizacao nao encontrada para o usuario atual', 'auth_error')
+      }
+
+      const query = supabase
+        .from('leads')
+        .select('id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at')
+        .eq('id', id)
+      const { data, error } = isFartechAdmin ? await query.single() : await query.eq('org_id', orgId).single()
+
+      if (error) throw new AppError(error.message, 'database_error')
+      const row = data as DbLeadRow
+
+      const scoredQualificacao = await applyScoring(row, orgId || row.org_id || null)
+      const updateQuery = supabase
+        .from('leads')
+        .update({ qualificacao: scoredQualificacao })
+        .eq('id', id)
+        .select('id, created_at, org_id, status, canal, nome, telefone, email, origem, assunto, resumo, qualificacao, assigned_user_id, cliente_id, remote_id, last_contact_at')
+      const { data: scored, error: scoreError } = isFartechAdmin
+        ? await updateQuery.single()
+        : await updateQuery.eq('org_id', orgId).single()
+
+      if (scoreError) throw new AppError(scoreError.message, 'database_error')
+      return mapDbLeadToLeadRow(scored as DbLeadRow)
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : 'Erro ao re-pontuar lead',
         'database_error'
       )
     }

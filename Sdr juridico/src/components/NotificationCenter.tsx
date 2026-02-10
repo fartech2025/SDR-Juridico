@@ -1,4 +1,4 @@
-import { BellRing, ChevronRight } from 'lucide-react'
+import { BellRing, Check, CheckCheck, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
@@ -15,98 +15,83 @@ const priorityOrder: Record<NotificationPriority, number> = {
 }
 
 const priorityBadgeClass: Record<NotificationPriority, string> = {
-  P0: 'border-danger-border bg-danger-bg text-danger',
-  P1: 'border-warning-border bg-warning-bg text-warning',
-  P2: 'border-success-border bg-success-bg text-success',
+  P0: 'border-red-200 bg-red-50 text-red-700',
+  P1: 'border-amber-200 bg-amber-50 text-amber-700',
+  P2: 'border-green-200 bg-green-50 text-green-700',
 }
 
 export interface NotificationCenterProps {
   notifications: Notification[]
   className?: string
+  onMarkRead?: (id: string) => void
+  onMarkAllRead?: () => void
 }
 
-export const NotificationCenter = ({ notifications, className }: NotificationCenterProps) => {
+export const NotificationCenter = ({
+  notifications,
+  className,
+  onMarkRead,
+  onMarkAllRead,
+}: NotificationCenterProps) => {
   const navigate = useNavigate()
   const sorted = [...notifications].sort((a, b) => {
     const priority = priorityOrder[a.priority] - priorityOrder[b.priority]
     if (priority !== 0) return priority
     return new Date(b.date).getTime() - new Date(a.date).getTime()
   })
-  const miniSlots = sorted.slice(0, 6).map((item) => {
-    const date = new Date(item.date)
-    return {
-      id: item.id,
-      day: `${date.getDate()}`.padStart(2, '0'),
-      time: date.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    }
-  })
-  const highlightSlot = miniSlots[1]?.id ?? miniSlots[0]?.id
+  const unreadCount = sorted.filter((n) => !n.read).length
 
   return (
-    <Card className={cn('border-[#f0d9b8] bg-white/85', className)}>
-      <CardHeader className="flex-row items-center justify-between space-y-0 px-6 pt-6 pb-2">
+    <Card className={cn('bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm', className)}>
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
-          <BellRing className="h-4 w-4 text-text-subtle" />
-          <CardTitle className="text-sm">Notificacoes</CardTitle>
-        </div>
-        <span className="text-[11px] text-text-subtle">{sorted.length} itens</span>
-      </CardHeader>
-      <CardContent className="space-y-3 px-6 pb-6">
-        {sorted.length === 0 && (
-          <div className="rounded-2xl border border-[#f0d9b8] bg-white px-4 py-4 text-sm text-text-muted shadow-soft">
-            Sem notificacoes por enquanto.
-          </div>
-        )}
-        {sorted.length > 0 && (
-          <div
-            className={cn(
-              'flex items-center gap-2 rounded-2xl border px-3 py-2 text-[11px] shadow-[0_8px_20px_rgba(18,38,63,0.06)]','border-[#f0d9b8] bg-white text-[#7a4a1a]',
-            )}
-          >
-            <div
-              className={cn(
-                'flex min-w-[56px] flex-col items-start rounded-xl px-3 py-2 text-xs font-semibold',
-                'bg-[#fff3e0] text-[#2a1400]',
-              )}
+          <BellRing className="h-4 w-4 text-gray-400" />
+          <CardTitle className="text-sm font-semibold text-gray-900">Notificacoes</CardTitle>
+          {unreadCount > 0 && (
+            <span
+              className="px-2 py-0.5 text-[10px] font-bold rounded-full text-white"
+              style={{ backgroundColor: '#721011' }}
             >
-              <span className="text-sm">{sorted.length}</span>
-              <span className={cn('text-[10px]', 'text-[#9a5b1e]')}>
-                itens
-              </span>
-            </div>
-            <div className="flex flex-1 items-center gap-2 overflow-hidden">
-              {miniSlots.map((slot) => (
-                <div
-                  key={slot.id}
-                  className={cn(
-                    'flex min-w-[52px] flex-col items-center rounded-xl border px-2 py-2 text-[10px] shadow-soft',
-                    slot.id === highlightSlot
-                      ?'border-[#f0d9b8] bg-[#fff3e0] text-[#2a1400]'
-                      :'border-[#f0d9b8] bg-white text-[#7a4a1a]',
-                  )}
-                >
-                  <span className={cn('text-[11px] font-semibold', 'text-text')}>
-                    {slot.day}
-                  </span>
-                  <span>{slot.time}</span>
-                </div>
-              ))}
-            </div>
+              {unreadCount}
+            </span>
+          )}
+        </div>
+        {onMarkAllRead && unreadCount > 0 && (
+          <button
+            onClick={onMarkAllRead}
+            className="flex items-center gap-1 text-xs font-medium transition-colors hover:opacity-80"
+            style={{ color: '#721011' }}
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            Marcar todas lidas
+          </button>
+        )}
+      </CardHeader>
+      <CardContent className="px-5 pb-5 space-y-2">
+        {sorted.length === 0 && (
+          <div className="text-center py-6 text-sm text-gray-400">
+            Sem notificacoes por enquanto.
           </div>
         )}
         {sorted.map((item) => (
           <div
             key={item.id}
             className={cn(
-              'rounded-2xl border px-4 py-4 text-xs shadow-[0_8px_20px_rgba(18,38,63,0.06)]','border-[#f0d9b8] !bg-white !text-[#2a1400]',
+              'rounded-lg border px-4 py-3 text-xs transition-all',
+              item.read
+                ? 'border-gray-100 bg-gray-50/50 opacity-70'
+                : 'border-gray-200 bg-white shadow-sm',
             )}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="space-y-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
+                  {!item.read && (
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: '#721011' }}
+                    />
+                  )}
                   <Badge
                     variant={
                       item.priority === 'P0'
@@ -115,32 +100,47 @@ export const NotificationCenter = ({ notifications, className }: NotificationCen
                           ? 'warning'
                           : 'success'
                     }
-                    className={priorityBadgeClass[item.priority]}
+                    className={cn('text-[10px] px-1.5 py-0', priorityBadgeClass[item.priority])}
                   >
                     {item.priority}
                   </Badge>
-                  <span className={cn('text-sm font-semibold', 'text-text')}>
+                  <span className="text-sm font-medium text-gray-900">
                     {item.title}
                   </span>
                 </div>
-                <p className={cn('text-xs', 'text-text-muted')}>
+                <p className="text-xs text-gray-500 pl-4">
                   {item.description}
                 </p>
               </div>
-              <div className={cn('text-[10px]', 'text-[#9a5b1e]')}>
-                {formatDateTime(item.date)}
+              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                  {formatDateTime(item.date)}
+                </span>
+                {onMarkRead && !item.read && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onMarkRead(item.id)
+                    }}
+                    className="p-1 rounded hover:bg-gray-100 transition-colors"
+                    title="Marcar como lida"
+                  >
+                    <Check className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                )}
               </div>
             </div>
             {item.actionLabel && item.actionHref && (
-              <div className="mt-3 flex justify-end">
+              <div className="mt-2 flex justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(item.actionHref!)}
-                  className="px-0 text-primary hover:text-primary"
+                  className="px-0 text-xs hover:opacity-80"
+                  style={{ color: '#721011' }}
                 >
                   {item.actionLabel}
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                 </Button>
               </div>
             )}

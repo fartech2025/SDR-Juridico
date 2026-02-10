@@ -8,6 +8,14 @@ export type LeadStatus =
 
 export type LeadHeat = 'frio' | 'morno' | 'quente'
 
+export interface LeadScoreFactorView {
+  name: string
+  label: string
+  rawValue: number
+  weight: number
+  contribution: number
+}
+
 export interface Lead {
   id: string
   name: string
@@ -17,6 +25,9 @@ export interface Lead {
   origin: string
   status: LeadStatus
   heat: LeadHeat
+  score?: number
+  scoreFactors?: LeadScoreFactorView[]
+  scoredAt?: string
   createdAt: string
   updatedAt?: string
   lastContactAt?: string

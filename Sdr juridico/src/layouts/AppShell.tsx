@@ -34,7 +34,9 @@ import { usePageTracking } from '@/hooks/usePageTracking'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/ui/Logo'
 import { cn } from '@/utils/cn'
-import { auditService, sessionService } from '@/services/auditService'
+import { logLogout } from '@/services/auditLogService'
+import { supabase } from '@/lib/supabaseClient'
+import { resolveOrgScope } from '@/services/orgScope'
 
 type NavItem = {
   label: string
@@ -114,6 +116,30 @@ export const AppShell = () => {
     '/app/datajud': apiHealth.datajud,
     '/app/diario-oficial': apiHealth.dou,
   }
+  const [douUnreadCount, setDouUnreadCount] = React.useState(0)
+
+  // Fetch DOU unread count periodically
+  React.useEffect(() => {
+    let cancelled = false
+    const fetchUnread = async () => {
+      try {
+        const { orgId, isFartechAdmin } = await resolveOrgScope()
+        if (!orgId && !isFartechAdmin) return
+        const query = supabase
+          .from('dou_publicacoes')
+          .select('id', { count: 'exact', head: true })
+          .eq('lida', false)
+        const { count } = isFartechAdmin ? await query : await query.eq('org_id', orgId)
+        if (!cancelled) setDouUnreadCount(count || 0)
+      } catch {
+        // Non-critical
+      }
+    }
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 120_000) // Every 2 minutes
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [])
+
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false)
@@ -192,8 +218,7 @@ export const AppShell = () => {
 
   const handleLogout = async () => {
     setLogoutOpen(false)
-    await auditService.logLogout()
-    sessionService.end()
+    await logLogout()
     await signOut()
     navigate('/login', { replace: true })
   }
@@ -205,8 +230,7 @@ export const AppShell = () => {
 
   const handleSwitchUser = async () => {
     setProfileMenuOpen(false)
-    await auditService.logLogout()
-    sessionService.end()
+    await logLogout()
     await signOut()
     navigate('/login', { replace: true })
   }
@@ -313,6 +337,18 @@ export const AppShell = () => {
                         </div>
                         {!sidebarCollapsed && (
                           <span className="flex-1 text-left">{item.label}</span>
+                        )}
+                        {/* DOU unread badge */}
+                        {item.to === '/app/diario-oficial' && douUnreadCount > 0 && (
+                          <span
+                            className={cn(
+                              'inline-flex items-center justify-center text-[10px] font-bold text-white rounded-full',
+                              sidebarCollapsed ? 'absolute -top-1 -right-1 min-w-[16px] h-4 px-1' : 'min-w-[20px] h-5 px-1.5'
+                            )}
+                            style={{ backgroundColor: '#721011' }}
+                          >
+                            {douUnreadCount > 99 ? '99+' : douUnreadCount}
+                          </span>
                         )}
                         {isActive && !sidebarCollapsed && (
                           <div

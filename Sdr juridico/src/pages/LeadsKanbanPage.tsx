@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { Plus, Search, MoreVertical, X, User, Phone, Mail, DollarSign, Flame, Sun, Snowflake, Trash2, RotateCcw, History, MessageSquare, Calendar, Building2, List } from 'lucide-react'
+import { Plus, Search, MoreVertical, X, User, Phone, Mail, DollarSign, Flame, Sun, Snowflake, Trash2, RotateCcw, History, MessageSquare, Calendar, Building2, List, ArrowRightCircle, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import {
   DndContext,
@@ -186,7 +186,7 @@ const DraggableLeadCard = ({
           </div>
         </div>
 
-        {/* Badge de temperatura */}
+        {/* Badge de temperatura + score */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className={cn(
             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold border transition-all',
@@ -195,6 +195,18 @@ const DraggableLeadCard = ({
             {heatIcon(lead.heat)}
             <span className="hidden sm:inline">{HEAT_LABELS[lead.heat]}</span>
           </span>
+
+          {/* Score numérico */}
+          {lead.score != null && (
+            <span className={cn(
+              'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-bold border',
+              lead.score >= 67 ? 'bg-red-50 text-red-700 border-red-200' :
+              lead.score >= 34 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+              'bg-gray-50 text-gray-600 border-gray-200'
+            )}>
+              {lead.score}
+            </span>
+          )}
 
           {/* Valor estimado */}
           {lead.estimatedValue && (
@@ -229,19 +241,21 @@ const DraggableLeadCard = ({
 }
 
 export const LeadsKanbanPage = () => {
-  const { 
-    leads, 
+  const {
+    leads,
     deletedLeads,
-    loading, 
+    loading,
     loadingDeleted,
-    error, 
-    fetchLeads, 
-    updateLead, 
+    error,
+    fetchLeads,
+    updateLead,
     deleteLead,
+    convertToCaso,
     fetchDeletedLeads,
     restoreLead,
     hardDeleteLead
   } = useLeads()
+  const navigate = useNavigate()
 
   const [query, setQuery] = React.useState('')
   const [heatFilter, setHeatFilter] = React.useState<'todos' | HeatKey>('todos')
@@ -249,6 +263,12 @@ export const LeadsKanbanPage = () => {
   const [activeLead, setActiveLead] = React.useState<Lead | null>(null)
   const [showDeleted, setShowDeleted] = React.useState(false)
   
+  // Estados para modal de conversão Lead → Caso
+  const [conversionModalOpen, setConversionModalOpen] = React.useState(false)
+  const [conversionLead, setConversionLead] = React.useState<Lead | null>(null)
+  const [conversionForm, setConversionForm] = React.useState({ titulo: '', area: '', valor: '', descricao: '' })
+  const [converting, setConverting] = React.useState(false)
+
   // Estados para drawer/histórico
   const [drawerTab, setDrawerTab] = React.useState<'detalhes' | 'historico'>('detalhes')
   const [leadHistory, setLeadHistory] = React.useState<Array<{
@@ -297,6 +317,24 @@ export const LeadsKanbanPage = () => {
     void fetchLeads()
   }, [fetchLeads])
 
+  // Supabase Realtime: atualizar Kanban automaticamente quando leads mudam
+  React.useEffect(() => {
+    const channel = supabase
+      .channel('leads-kanban-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leads' },
+        () => {
+          fetchLeads()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchLeads])
+
   // Buscar leads deletados quando ativar filtro
   React.useEffect(() => {
     if (showDeleted) {
@@ -338,15 +376,28 @@ export const LeadsKanbanPage = () => {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     if (!over) return
-    
+
     const leadId = active.id as string
     const newStatus = over.id as StatusKey
-    
+
     if (!isStatusKey(newStatus)) return
-    
+
     const lead = leads.find((l) => l.id === leadId)
     if (!lead || lead.status === newStatus) return
-    
+
+    // Intercept drag to "ganho" → open conversion modal
+    if (newStatus === 'ganho') {
+      setConversionLead(lead)
+      setConversionForm({
+        titulo: `Caso - ${lead.name}`,
+        area: lead.area !== 'Sem area' ? lead.area : '',
+        valor: lead.estimatedValue ? String(lead.estimatedValue) : '',
+        descricao: lead.notes || '',
+      })
+      setConversionModalOpen(true)
+      return
+    }
+
     // Atualizar otimisticamente
     try {
       await updateLead(leadId, { status: newStatus })
@@ -354,6 +405,32 @@ export const LeadsKanbanPage = () => {
     } catch (err) {
       toast.error('Erro ao mover lead')
       fetchLeads() // Reverter
+    }
+  }
+
+  // Handler de conversão Lead → Caso
+  const handleConvertLead = async () => {
+    if (!conversionLead) return
+    setConverting(true)
+    try {
+      const result = await convertToCaso(conversionLead.id, {
+        titulo: conversionForm.titulo || `Caso - ${conversionLead.name}`,
+        area: conversionForm.area || undefined,
+        valor: conversionForm.valor ? Number(conversionForm.valor) : undefined,
+        descricao: conversionForm.descricao || undefined,
+      })
+      setConversionModalOpen(false)
+      setConversionLead(null)
+      toast.success('Lead convertido em caso!', {
+        action: {
+          label: 'Abrir caso',
+          onClick: () => navigate(`/app/caso/${result.caso.id}`),
+        },
+      })
+    } catch (err) {
+      toast.error('Erro ao converter lead em caso')
+    } finally {
+      setConverting(false)
     }
   }
 
@@ -694,6 +771,64 @@ export const LeadsKanbanPage = () => {
                     )}
                   </div>
 
+                  {/* Score Detalhado */}
+                  {activeLead.score != null && activeLead.scoreFactors && activeLead.scoreFactors.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" style={{ color: '#721011' }} />
+                        Score de Qualificação
+                      </h3>
+                      <div className="p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+                        {/* Score geral */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                              style={{
+                                backgroundColor: activeLead.score >= 67 ? '#dc2626' : activeLead.score >= 34 ? '#d97706' : '#6b7280',
+                              }}
+                            >
+                              {activeLead.score}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {activeLead.score >= 67 ? 'Lead Quente' : activeLead.score >= 34 ? 'Lead Morno' : 'Lead Frio'}
+                              </p>
+                              {activeLead.scoredAt && (
+                                <p className="text-[10px] text-gray-400">
+                                  Calculado em {formatDateTime(activeLead.scoredAt)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {/* Fatores individuais */}
+                        <div className="space-y-2.5">
+                          {activeLead.scoreFactors.map((factor) => (
+                            <div key={factor.name}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-600">{factor.label}</span>
+                                <span className="text-xs font-medium text-gray-900">
+                                  {Math.round(factor.rawValue)}/100
+                                  <span className="text-gray-400 ml-1">({factor.weight}%)</span>
+                                </span>
+                              </div>
+                              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${factor.rawValue}%`,
+                                    backgroundColor: factor.rawValue >= 67 ? '#dc2626' : factor.rawValue >= 34 ? '#d97706' : '#9ca3af',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Observações */}
                   {activeLead.notes && (
                     <div className="space-y-2">
@@ -845,11 +980,137 @@ export const LeadsKanbanPage = () => {
                 <Trash2 className="h-4 w-4" />
                 Excluir
               </button>
+              <div className="flex items-center gap-2">
+                {activeLead.status !== 'ganho' && (
+                  <button
+                    onClick={() => {
+                      setModalOpen(false)
+                      setConversionLead(activeLead)
+                      setConversionForm({
+                        titulo: `Caso - ${activeLead.name}`,
+                        area: activeLead.area !== 'Sem area' ? activeLead.area : '',
+                        valor: activeLead.estimatedValue ? String(activeLead.estimatedValue) : '',
+                        descricao: activeLead.notes || '',
+                      })
+                      setConversionModalOpen(true)
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                    style={{ backgroundColor: '#721011' }}
+                  >
+                    <ArrowRightCircle className="h-4 w-4" />
+                    Converter em Caso
+                  </button>
+                )}
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal de Conversão Lead → Caso */}
+      {conversionModalOpen && conversionLead && (
+        <Modal open={conversionModalOpen} onClose={() => setConversionModalOpen(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200" style={{ background: 'linear-gradient(135deg, #721011, #8b1415)' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <ArrowRightCircle className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Converter Lead em Caso</h2>
+                  <p className="text-sm text-white/80">{conversionLead.name}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                  Título do Caso
+                </label>
+                <input
+                  type="text"
+                  value={conversionForm.titulo}
+                  onChange={(e) => setConversionForm((f) => ({ ...f, titulo: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all"
+                  style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
+                  placeholder="Caso - Nome do Lead"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                  Área Jurídica
+                </label>
+                <input
+                  type="text"
+                  value={conversionForm.area}
+                  onChange={(e) => setConversionForm((f) => ({ ...f, area: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all"
+                  style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
+                  placeholder="Ex: Trabalhista, Civil, Tributário..."
+                />
+              </div>
+
+              <div>
+                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                  Valor Estimado (R$)
+                </label>
+                <input
+                  type="number"
+                  value={conversionForm.valor}
+                  onChange={(e) => setConversionForm((f) => ({ ...f, valor: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all"
+                  style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                  Descrição
+                </label>
+                <textarea
+                  value={conversionForm.descricao}
+                  onChange={(e) => setConversionForm((f) => ({ ...f, descricao: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all resize-none"
+                  style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
+                  rows={3}
+                  placeholder="Descrição do caso (opcional)"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
               <button
-                onClick={() => setModalOpen(false)}
+                onClick={() => setConversionModalOpen(false)}
+                disabled={converting}
                 className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                Fechar
+                Cancelar
+              </button>
+              <button
+                onClick={handleConvertLead}
+                disabled={converting || !conversionForm.titulo.trim()}
+                className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
+                style={{ backgroundColor: '#721011' }}
+              >
+                {converting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                ) : (
+                  <ArrowRightCircle className="h-4 w-4" />
+                )}
+                {converting ? 'Convertendo...' : 'Converter'}
               </button>
             </div>
           </div>

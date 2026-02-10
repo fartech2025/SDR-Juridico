@@ -54,6 +54,116 @@ export interface ResultadoBuscaDataJud {
   tempo_resposta_ms?: number
 }
 
+// Mapas compartilhados de código CNJ → tribunal ID
+const ESTADOS_PARA_TJ: Record<string, string> = {
+  '01': 'tjac', '02': 'tjal', '03': 'tjap', '04': 'tjam', '05': 'tjba',
+  '06': 'tjce', '07': 'tjdft', '08': 'tjes', '09': 'tjgo', '10': 'tjma',
+  '11': 'tjmt', '12': 'tjms', '13': 'tjmg', '14': 'tjpa', '15': 'tjpb',
+  '16': 'tjpe', '17': 'tjpi', '18': 'tjpr', '19': 'tjrj', '20': 'tjrn',
+  '21': 'tjrs', '22': 'tjro', '23': 'tjrr', '24': 'tjsc', '25': 'tjsp',
+  '26': 'tjse', '27': 'tjto',
+}
+
+const REGIOES_PARA_TRF: Record<string, string> = {
+  '01': 'trf1', '02': 'trf2', '03': 'trf3', '04': 'trf4', '05': 'trf5', '06': 'trf6',
+}
+
+const REGIOES_PARA_TRT: Record<string, string> = {
+  '01': 'trt1', '02': 'trt2', '03': 'trt3', '04': 'trt4', '05': 'trt5',
+  '06': 'trt6', '07': 'trt7', '08': 'trt8', '09': 'trt9', '10': 'trt10',
+  '11': 'trt11', '12': 'trt12', '13': 'trt13', '14': 'trt14', '15': 'trt15',
+  '16': 'trt16', '17': 'trt17', '18': 'trt18', '19': 'trt19', '20': 'trt20',
+  '21': 'trt21', '22': 'trt22', '23': 'trt23', '24': 'trt24',
+}
+
+const NOMES_TJ: Record<string, string> = {
+  '01': 'TJAC - Tribunal de Justiça do Acre',
+  '02': 'TJAL - Tribunal de Justiça de Alagoas',
+  '03': 'TJAP - Tribunal de Justiça do Amapá',
+  '04': 'TJAM - Tribunal de Justiça do Amazonas',
+  '05': 'TJBA - Tribunal de Justiça da Bahia',
+  '06': 'TJCE - Tribunal de Justiça do Ceará',
+  '07': 'TJDFT - Tribunal de Justiça do DF',
+  '08': 'TJES - Tribunal de Justiça do Espírito Santo',
+  '09': 'TJGO - Tribunal de Justiça de Goiás',
+  '10': 'TJMA - Tribunal de Justiça do Maranhão',
+  '11': 'TJMT - Tribunal de Justiça de Mato Grosso',
+  '12': 'TJMS - Tribunal de Justiça de Mato Grosso do Sul',
+  '13': 'TJMG - Tribunal de Justiça de Minas Gerais',
+  '14': 'TJPA - Tribunal de Justiça do Pará',
+  '15': 'TJPB - Tribunal de Justiça da Paraíba',
+  '16': 'TJPE - Tribunal de Justiça de Pernambuco',
+  '17': 'TJPI - Tribunal de Justiça do Piauí',
+  '18': 'TJPR - Tribunal de Justiça do Paraná',
+  '19': 'TJRJ - Tribunal de Justiça do Rio de Janeiro',
+  '20': 'TJRN - Tribunal de Justiça do Rio Grande do Norte',
+  '21': 'TJRS - Tribunal de Justiça do Rio Grande do Sul',
+  '22': 'TJRO - Tribunal de Justiça de Rondônia',
+  '23': 'TJRR - Tribunal de Justiça de Roraima',
+  '24': 'TJSC - Tribunal de Justiça de Santa Catarina',
+  '25': 'TJSP - Tribunal de Justiça de São Paulo',
+  '26': 'TJSE - Tribunal de Justiça de Sergipe',
+  '27': 'TJTO - Tribunal de Justiça do Tocantins',
+}
+
+const NOMES_TRF: Record<string, string> = {
+  '01': 'TRF1 - Tribunal Regional Federal 1ª Região',
+  '02': 'TRF2 - Tribunal Regional Federal 2ª Região',
+  '03': 'TRF3 - Tribunal Regional Federal 3ª Região',
+  '04': 'TRF4 - Tribunal Regional Federal 4ª Região',
+  '05': 'TRF5 - Tribunal Regional Federal 5ª Região',
+  '06': 'TRF6 - Tribunal Regional Federal 6ª Região',
+}
+
+const NOMES_TRT: Record<string, string> = {
+  '01': 'TRT1 - Tribunal Regional do Trabalho 1ª Região',
+  '02': 'TRT2 - Tribunal Regional do Trabalho 2ª Região',
+  '03': 'TRT3 - Tribunal Regional do Trabalho 3ª Região',
+  '04': 'TRT4 - Tribunal Regional do Trabalho 4ª Região',
+  '05': 'TRT5 - Tribunal Regional do Trabalho 5ª Região',
+  '06': 'TRT6 - Tribunal Regional do Trabalho 6ª Região',
+  '07': 'TRT7 - Tribunal Regional do Trabalho 7ª Região',
+  '08': 'TRT8 - Tribunal Regional do Trabalho 8ª Região',
+  '09': 'TRT9 - Tribunal Regional do Trabalho 9ª Região',
+  '10': 'TRT10 - Tribunal Regional do Trabalho 10ª Região',
+  '11': 'TRT11 - Tribunal Regional do Trabalho 11ª Região',
+  '12': 'TRT12 - Tribunal Regional do Trabalho 12ª Região',
+  '13': 'TRT13 - Tribunal Regional do Trabalho 13ª Região',
+  '14': 'TRT14 - Tribunal Regional do Trabalho 14ª Região',
+  '15': 'TRT15 - Tribunal Regional do Trabalho 15ª Região',
+  '16': 'TRT16 - Tribunal Regional do Trabalho 16ª Região',
+  '17': 'TRT17 - Tribunal Regional do Trabalho 17ª Região',
+  '18': 'TRT18 - Tribunal Regional do Trabalho 18ª Região',
+  '19': 'TRT19 - Tribunal Regional do Trabalho 19ª Região',
+  '20': 'TRT20 - Tribunal Regional do Trabalho 20ª Região',
+  '21': 'TRT21 - Tribunal Regional do Trabalho 21ª Região',
+  '22': 'TRT22 - Tribunal Regional do Trabalho 22ª Região',
+  '23': 'TRT23 - Tribunal Regional do Trabalho 23ª Região',
+  '24': 'TRT24 - Tribunal Regional do Trabalho 24ª Região',
+}
+
+const SEGMENTOS: Record<string, string> = {
+  '1': 'Supremo Tribunal Federal',
+  '2': 'Conselho Nacional de Justiça',
+  '3': 'Superior Tribunal de Justiça',
+  '4': 'Justiça Federal',
+  '5': 'Justiça do Trabalho',
+  '6': 'Justiça Eleitoral',
+  '7': 'Justiça Militar da União',
+  '8': 'Justiça Estadual',
+  '9': 'Justiça Militar Estadual',
+}
+
+/**
+ * Detecta tribunal ID a partir do segmento de justiça e código TR do número CNJ
+ */
+function detectarTribunalId(justica: string, codigoTR: string): string | null {
+  if (justica === '8') return ESTADOS_PARA_TJ[codigoTR] || null
+  if (justica === '4') return REGIOES_PARA_TRF[codigoTR] || null
+  if (justica === '5') return REGIOES_PARA_TRT[codigoTR] || null
+  return null
+}
+
 // Lista de tribunais válidos
 const TRIBUNAIS_VALIDOS = [
   'stf', 'stj', 'tst', 'tse', 'stm',
@@ -312,109 +422,25 @@ export function detectarTribunalPorNumero(numeroProcesso: string): {
   segmento: string | null
 } {
   const numeroLimpo = numeroProcesso.replace(/\D/g, '')
-  
+
   if (numeroLimpo.length < 16) {
     return { tribunal: null, nomeCompleto: null, segmento: null }
   }
-  
+
   const justica = numeroLimpo[13]
   const codigoTR = numeroLimpo.substring(14, 16)
-  
-  // Mapa de estados para tribunais estaduais (J=8)
-  const estadosParaTJ: Record<string, { id: string; nome: string }> = {
-    '01': { id: 'tjac', nome: 'TJAC - Tribunal de Justiça do Acre' },
-    '02': { id: 'tjal', nome: 'TJAL - Tribunal de Justiça de Alagoas' },
-    '03': { id: 'tjap', nome: 'TJAP - Tribunal de Justiça do Amapá' },
-    '04': { id: 'tjam', nome: 'TJAM - Tribunal de Justiça do Amazonas' },
-    '05': { id: 'tjba', nome: 'TJBA - Tribunal de Justiça da Bahia' },
-    '06': { id: 'tjce', nome: 'TJCE - Tribunal de Justiça do Ceará' },
-    '07': { id: 'tjdft', nome: 'TJDFT - Tribunal de Justiça do DF' },
-    '08': { id: 'tjes', nome: 'TJES - Tribunal de Justiça do Espírito Santo' },
-    '09': { id: 'tjgo', nome: 'TJGO - Tribunal de Justiça de Goiás' },
-    '10': { id: 'tjma', nome: 'TJMA - Tribunal de Justiça do Maranhão' },
-    '11': { id: 'tjmt', nome: 'TJMT - Tribunal de Justiça de Mato Grosso' },
-    '12': { id: 'tjms', nome: 'TJMS - Tribunal de Justiça de Mato Grosso do Sul' },
-    '13': { id: 'tjmg', nome: 'TJMG - Tribunal de Justiça de Minas Gerais' },
-    '14': { id: 'tjpa', nome: 'TJPA - Tribunal de Justiça do Pará' },
-    '15': { id: 'tjpb', nome: 'TJPB - Tribunal de Justiça da Paraíba' },
-    '16': { id: 'tjpe', nome: 'TJPE - Tribunal de Justiça de Pernambuco' },
-    '17': { id: 'tjpi', nome: 'TJPI - Tribunal de Justiça do Piauí' },
-    '18': { id: 'tjpr', nome: 'TJPR - Tribunal de Justiça do Paraná' },
-    '19': { id: 'tjrj', nome: 'TJRJ - Tribunal de Justiça do Rio de Janeiro' },
-    '20': { id: 'tjrn', nome: 'TJRN - Tribunal de Justiça do Rio Grande do Norte' },
-    '21': { id: 'tjrs', nome: 'TJRS - Tribunal de Justiça do Rio Grande do Sul' },
-    '22': { id: 'tjro', nome: 'TJRO - Tribunal de Justiça de Rondônia' },
-    '23': { id: 'tjrr', nome: 'TJRR - Tribunal de Justiça de Roraima' },
-    '24': { id: 'tjsc', nome: 'TJSC - Tribunal de Justiça de Santa Catarina' },
-    '25': { id: 'tjsp', nome: 'TJSP - Tribunal de Justiça de São Paulo' },
-    '26': { id: 'tjse', nome: 'TJSE - Tribunal de Justiça de Sergipe' },
-    '27': { id: 'tjto', nome: 'TJTO - Tribunal de Justiça do Tocantins' },
-  }
-  
-  // Mapa de regiões para TRFs (J=4)
-  const regioesParaTRF: Record<string, { id: string; nome: string }> = {
-    '01': { id: 'trf1', nome: 'TRF1 - Tribunal Regional Federal 1ª Região' },
-    '02': { id: 'trf2', nome: 'TRF2 - Tribunal Regional Federal 2ª Região' },
-    '03': { id: 'trf3', nome: 'TRF3 - Tribunal Regional Federal 3ª Região' },
-    '04': { id: 'trf4', nome: 'TRF4 - Tribunal Regional Federal 4ª Região' },
-    '05': { id: 'trf5', nome: 'TRF5 - Tribunal Regional Federal 5ª Região' },
-    '06': { id: 'trf6', nome: 'TRF6 - Tribunal Regional Federal 6ª Região' },
-  }
-  
-  // Mapa de regiões para TRTs (J=5)
-  const regioesParaTRT: Record<string, { id: string; nome: string }> = {
-    '01': { id: 'trt1', nome: 'TRT1 - Tribunal Regional do Trabalho 1ª Região' },
-    '02': { id: 'trt2', nome: 'TRT2 - Tribunal Regional do Trabalho 2ª Região' },
-    '03': { id: 'trt3', nome: 'TRT3 - Tribunal Regional do Trabalho 3ª Região' },
-    '04': { id: 'trt4', nome: 'TRT4 - Tribunal Regional do Trabalho 4ª Região' },
-    '05': { id: 'trt5', nome: 'TRT5 - Tribunal Regional do Trabalho 5ª Região' },
-    '06': { id: 'trt6', nome: 'TRT6 - Tribunal Regional do Trabalho 6ª Região' },
-    '07': { id: 'trt7', nome: 'TRT7 - Tribunal Regional do Trabalho 7ª Região' },
-    '08': { id: 'trt8', nome: 'TRT8 - Tribunal Regional do Trabalho 8ª Região' },
-    '09': { id: 'trt9', nome: 'TRT9 - Tribunal Regional do Trabalho 9ª Região' },
-    '10': { id: 'trt10', nome: 'TRT10 - Tribunal Regional do Trabalho 10ª Região' },
-    '11': { id: 'trt11', nome: 'TRT11 - Tribunal Regional do Trabalho 11ª Região' },
-    '12': { id: 'trt12', nome: 'TRT12 - Tribunal Regional do Trabalho 12ª Região' },
-    '13': { id: 'trt13', nome: 'TRT13 - Tribunal Regional do Trabalho 13ª Região' },
-    '14': { id: 'trt14', nome: 'TRT14 - Tribunal Regional do Trabalho 14ª Região' },
-    '15': { id: 'trt15', nome: 'TRT15 - Tribunal Regional do Trabalho 15ª Região' },
-    '16': { id: 'trt16', nome: 'TRT16 - Tribunal Regional do Trabalho 16ª Região' },
-    '17': { id: 'trt17', nome: 'TRT17 - Tribunal Regional do Trabalho 17ª Região' },
-    '18': { id: 'trt18', nome: 'TRT18 - Tribunal Regional do Trabalho 18ª Região' },
-    '19': { id: 'trt19', nome: 'TRT19 - Tribunal Regional do Trabalho 19ª Região' },
-    '20': { id: 'trt20', nome: 'TRT20 - Tribunal Regional do Trabalho 20ª Região' },
-    '21': { id: 'trt21', nome: 'TRT21 - Tribunal Regional do Trabalho 21ª Região' },
-    '22': { id: 'trt22', nome: 'TRT22 - Tribunal Regional do Trabalho 22ª Região' },
-    '23': { id: 'trt23', nome: 'TRT23 - Tribunal Regional do Trabalho 23ª Região' },
-    '24': { id: 'trt24', nome: 'TRT24 - Tribunal Regional do Trabalho 24ª Região' },
-  }
-  
-  const segmentos: Record<string, string> = {
-    '1': 'Supremo Tribunal Federal',
-    '2': 'Conselho Nacional de Justiça',
-    '3': 'Superior Tribunal de Justiça',
-    '4': 'Justiça Federal',
-    '5': 'Justiça do Trabalho',
-    '6': 'Justiça Eleitoral',
-    '7': 'Justiça Militar da União',
-    '8': 'Justiça Estadual',
-    '9': 'Justiça Militar Estadual',
-  }
-  
-  let resultado: { id: string; nome: string } | null = null
-  
-  if (justica === '8') {
-    resultado = estadosParaTJ[codigoTR] || null
-  } else if (justica === '4') {
-    resultado = regioesParaTRF[codigoTR] || null
-  } else if (justica === '5') {
-    resultado = regioesParaTRT[codigoTR] || null
-  }
-  
+
+  const tribunalId = detectarTribunalId(justica, codigoTR)
+
+  let nomeCompleto: string | null = null
+  if (justica === '8') nomeCompleto = NOMES_TJ[codigoTR] || null
+  else if (justica === '4') nomeCompleto = NOMES_TRF[codigoTR] || null
+  else if (justica === '5') nomeCompleto = NOMES_TRT[codigoTR] || null
+
   return {
-    tribunal: resultado?.id || null,
-    nomeCompleto: resultado?.nome || null,
-    segmento: segmentos[justica] || null,
+    tribunal: tribunalId,
+    nomeCompleto,
+    segmento: SEGMENTOS[justica] || null,
   }
 }
 
@@ -435,49 +461,15 @@ export async function buscarProcessoAutomatico(numeroProcesso: string): Promise<
   // Posição 14-15 = TR (Tribunal/Estado)
   
   let tribunalDetectado: string | null = null
-  
+
   if (numeroLimpo.length >= 16) {
     const justica = numeroLimpo[13]
-    const estado = numeroLimpo.substring(14, 16)
-    
-    console.log(`🔍 [DataJud] Detectando tribunal: Justiça=${justica}, Estado=${estado}`)
-    
-    // Mapa de estados para tribunais estaduais (J=8)
-    // Código IBGE: 01=AC, 02=AL, 03=AP, 04=AM, 05=BA, 06=CE, 07=DF, 08=ES, 09=GO...
-    const estadosParaTJ: Record<string, string> = {
-      '01': 'tjac', '02': 'tjal', '03': 'tjap', '04': 'tjam', '05': 'tjba',
-      '06': 'tjce', '07': 'tjdft', '08': 'tjes', '09': 'tjgo', '10': 'tjma',
-      '11': 'tjmt', '12': 'tjms', '13': 'tjmg', '14': 'tjpa', '15': 'tjpb',
-      '16': 'tjpe', '17': 'tjpi', '18': 'tjpr', '19': 'tjrj', '20': 'tjrn',
-      '21': 'tjrs', '22': 'tjro', '23': 'tjrr', '24': 'tjsc', '25': 'tjsp',
-      '26': 'tjse', '27': 'tjto'
-    }
-    
-    // Mapa de regiões para TRFs (J=4)
-    const regioesParaTRF: Record<string, string> = {
-      '01': 'trf1', '02': 'trf2', '03': 'trf3', '04': 'trf4', '05': 'trf5', '06': 'trf6'
-    }
-    
-    // Mapa de regiões para TRTs (J=5)
-    const regioesParaTRT: Record<string, string> = {
-      '01': 'trt1', '02': 'trt2', '03': 'trt3', '04': 'trt4', '05': 'trt5',
-      '06': 'trt6', '07': 'trt7', '08': 'trt8', '09': 'trt9', '10': 'trt10',
-      '11': 'trt11', '12': 'trt12', '13': 'trt13', '14': 'trt14', '15': 'trt15',
-      '16': 'trt16', '17': 'trt17', '18': 'trt18', '19': 'trt19', '20': 'trt20',
-      '21': 'trt21', '22': 'trt22', '23': 'trt23', '24': 'trt24'
-    }
-    
-    if (justica === '8') {
-      // Justiça Estadual
-      tribunalDetectado = estadosParaTJ[estado] || null
-    } else if (justica === '4') {
-      // Justiça Federal
-      tribunalDetectado = regioesParaTRF[estado] || null
-    } else if (justica === '5') {
-      // Justiça do Trabalho
-      tribunalDetectado = regioesParaTRT[estado] || null
-    }
-    
+    const codigoTR = numeroLimpo.substring(14, 16)
+
+    console.log(`🔍 [DataJud] Detectando tribunal: Justiça=${justica}, TR=${codigoTR}`)
+
+    tribunalDetectado = detectarTribunalId(justica, codigoTR)
+
     console.log(`🎯 [DataJud] Tribunal detectado: ${tribunalDetectado || 'não identificado'}`)
   }
   

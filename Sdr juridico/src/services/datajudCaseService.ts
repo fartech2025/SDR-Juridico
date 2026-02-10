@@ -1,5 +1,4 @@
 // src/services/datajudCaseService.ts
-import { apiClient } from "./apiClient"
 import { supabase } from "@/lib/supabaseClient"
 import type {
   DataJudProcesso,
@@ -9,8 +8,6 @@ import type {
 } from "@/types/domain"
 
 class DataJudCaseService {
-  private readonly edgeFunctionUrl = "/functions/v1/datajud-enhanced"
-
   /**
    * Busca processos no DataJud
    */
@@ -21,7 +18,6 @@ class DataJudCaseService {
   }> {
     try {
       const requestStart = Date.now()
-      // Usa Supabase Functions para enviar Authorization + apikey automaticamente
       const { data, error } = await supabase.functions.invoke<{ data?: DataJudSearchResponse; success?: boolean; latency_ms?: number; error?: string }>('datajud-enhanced', {
         body: {
           tribunal: params.tribunal,
@@ -39,14 +35,12 @@ class DataJudCaseService {
         )
       }
 
-      // A função pode retornar { error } mesmo com 2xx
       if ((data as any)?.error) {
         console.error("datajud-enhanced returned error payload:", data)
         throw new Error(String((data as any).error))
       }
 
       const latency_ms = Date.now() - requestStart
-      // A edge function responde { success, data, latency_ms }
       const payload: DataJudSearchResponse | undefined = (data as any)?.data ?? (data as any)
 
       if (!payload?.hits) {
@@ -88,7 +82,6 @@ class DataJudCaseService {
     total: number
   }> {
     try {
-      // Detectar tribunal by default or search multiple
       const tribunals = ["stj", "tst", "trf", "trt", "tre"]
       const allProcessos: DataJudProcesso[] = []
       let totalCount = 0
@@ -106,7 +99,6 @@ class DataJudCaseService {
           totalCount += result.total
         } catch (error) {
           console.warn(`Error searching tribunal ${tribunal}:`, error)
-          // Continue to next tribunal
         }
       }
 
@@ -131,19 +123,26 @@ class DataJudCaseService {
     caso: Record<string, unknown>
   }> {
     try {
-      const updatedCaso = await apiClient.patch<Record<string, unknown>>(`/casos/${casoId}`, {
-        numero_processo: processo.numero_processo,
-        tribunal: processo.tribunal,
-        grau: processo.grau,
-        classe_processual: processo.classe_processual,
-        assunto_principal: processo.assunto,
-        datajud_sync_status: "sincronizado",
-        datajud_last_sync_at: new Date().toISOString(),
-      })
+      const { data, error } = await supabase
+        .from('casos')
+        .update({
+          numero_processo: processo.numero_processo,
+          tribunal: processo.tribunal,
+          grau: processo.grau,
+          classe_processual: processo.classe_processual,
+          assunto_principal: processo.assunto,
+          datajud_sync_status: 'sincronizado',
+          datajud_last_sync_at: new Date().toISOString(),
+        })
+        .eq('id', casoId)
+        .select()
+        .single()
+
+      if (error) throw error
 
       return {
         sucesso: true,
-        caso: updatedCaso,
+        caso: data as Record<string, unknown>,
       }
     } catch (error) {
       console.error("Error linking processo to caso:", error)
@@ -158,15 +157,20 @@ class DataJudCaseService {
     sucesso: boolean
   }> {
     try {
-      await apiClient.patch(`/casos/${casoId}`, {
-        numero_processo: null,
-        tribunal: null,
-        grau: null,
-        classe_processual: null,
-        assunto_principal: null,
-        datajud_processo_id: null,
-        datajud_sync_status: "nunca_sincronizado",
-      })
+      const { error } = await supabase
+        .from('casos')
+        .update({
+          numero_processo: null,
+          tribunal: null,
+          grau: null,
+          classe_processual: null,
+          assunto_principal: null,
+          datajud_processo_id: null,
+          datajud_sync_status: 'nunca_sincronizado',
+        })
+        .eq('id', casoId)
+
+      if (error) throw error
 
       return { sucesso: true }
     } catch (error) {
@@ -202,17 +206,19 @@ class DataJudCaseService {
       const processData = searchResult.processos[0]
       const movimentos = (processData.raw_response?.movimentos as unknown[]) || []
 
-      // Filtrar movimentos já sincronizados
-      const existingMovimentacoes =
-        (await apiClient.get<DataJudMovimento[]>(
-          `/datajud_movimentacoes?datajud_processo_id=eq.${processId}`
-        )) || []
+      // Buscar movimentações existentes via Supabase
+      const { data: existingMovimentacoes } = await supabase
+        .from('datajud_movimentacoes')
+        .select('*')
+        .eq('datajud_processo_id', processId)
+
+      const existing = existingMovimentacoes || []
 
       const novasMovimentacoes = movimentos.filter(
         (mov: any) =>
-          !existingMovimentacoes.find(
-            (existing: any) =>
-              existing.codigo === mov.codigo && existing.data_hora === mov.dataHora
+          !existing.find(
+            (e: any) =>
+              e.codigo === mov.codigo && e.data_hora === mov.dataHora
           )
       )
 
@@ -229,14 +235,24 @@ class DataJudCaseService {
           notified: false,
         }))
 
-        await apiClient.post("/datajud_movimentacoes", movimentacoesToInsert)
+        const { error: insertError } = await supabase
+          .from('datajud_movimentacoes')
+          .insert(movimentacoesToInsert)
+
+        if (insertError) {
+          console.error("Error inserting movimentações:", insertError)
+        }
       }
 
       // Atualizar timestamp de sync
-      await apiClient.patch(`/datajud_processos/${processId}`, {
-        dataAtualizacao: new Date().toISOString(),
-        cached_at: new Date().toISOString(),
-      })
+      const { error: updateError } = await supabase
+        .from('datajud_processos')
+        .update({ cached_at: new Date().toISOString() })
+        .eq('id', processId)
+
+      if (updateError) {
+        console.error("Error updating cached_at:", updateError)
+      }
 
       return {
         sucesso: true,
@@ -283,7 +299,6 @@ class DataJudCaseService {
 
       const processo = searchResult.processos[0]
 
-      // Get movimentos from raw response
       const movimentos = (processo.raw_response?.movimentos as any[])?.map((mov, idx) => ({
         id: `${processo.id}-${idx}`,
         datajud_processo_id: processo.id,
@@ -312,10 +327,18 @@ class DataJudCaseService {
    */
   async getHistoricoConsultas(limit: number = 50): Promise<any[]> {
     try {
-      const response = await apiClient.get<any[]>(
-        `/datajud_api_calls?order=created_at.desc&limit=${limit}`
-      )
-      return response || []
+      const { data, error } = await supabase
+        .from('datajud_api_calls')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (error) {
+        console.error("Error getting histórico:", error)
+        return []
+      }
+
+      return data || []
     } catch (error) {
       console.error("Error getting histórico:", error)
       return []
