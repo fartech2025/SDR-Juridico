@@ -1,41 +1,30 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0"
 // Deploy: npx supabase functions deploy google-calendar-create-event --no-verify-jwt --project-ref xocqcoebreoiaqxoutar
+// Cria eventos no Google Calendar do USUÁRIO (via token pessoal) ou da ORG (fallback)
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') ?? ''
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') ?? ''
 
-const DEFAULT_ORIGIN = Deno.env.get('APP_URL') || '*'
-const BASE_CORS_HEADERS = {
+const getCorsHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': req.headers.get('origin') || '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-
-const getCorsHeaders = (req: Request) => ({
-  ...BASE_CORS_HEADERS,
-  'Access-Control-Allow-Origin': req.headers.get('origin') || DEFAULT_ORIGIN,
 })
 
-const jsonResponse = (body: Record<string, unknown>, status = 200, req?: Request) =>
+const jsonResponse = (body: Record<string, unknown>, status: number, req: Request) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...(req ? getCorsHeaders(req) : BASE_CORS_HEADERS) },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
   })
 
 /**
- * Renovar access token do Google
+ * Renovar access token do Google usando refresh_token
  */
-const refreshAccessToken = async (
-  refreshToken: string,
-): Promise<{
-  accessToken: string
-  expiresAt: string | null
-  scope?: string
-  tokenType?: string
-}> => {
-  const response = await fetch('https://oauth2.googleapis.com/token', {
+const refreshGoogleToken = async (refreshToken: string) => {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -45,59 +34,101 @@ const refreshAccessToken = async (
       grant_type: 'refresh_token',
     }),
   })
-
-  if (!response.ok) {
-    const errorData = await response.text()
-    throw new Error(`Falha ao renovar token: ${errorData}`)
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Falha ao renovar token Google: ${text}`)
   }
-
-  const data = await response.json()
+  const data = await res.json()
   return {
-    accessToken: data.access_token as string,
-    expiresAt: data.expires_in
-      ? new Date(Date.now() + data.expires_in * 1000).toISOString()
-      : null,
-    scope: data.scope as string | undefined,
-    tokenType: data.token_type as string | undefined,
+    access_token: data.access_token as string,
+    expires_at: new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString(),
   }
 }
 
 /**
- * Verificar e renovar token se necessário
+ * Obter token válido do USUÁRIO (user_metadata.google_calendar_tokens)
+ * Renova se expirado e atualiza o user_metadata
  */
-const ensureValidToken = async (
+const getUserToken = async (
   supabase: ReturnType<typeof createClient>,
-  integrationId: string,
-  secrets: Record<string, unknown>,
-) => {
+  userId: string,
+): Promise<string | null> => {
+  const { data: userData, error } = await supabase.auth.admin.getUserById(userId)
+  if (error || !userData?.user) return null
+
+  const tokens = userData.user.user_metadata?.google_calendar_tokens
+  if (!tokens?.access_token) return null
+
+  const expiresAt = tokens.expires_at ? new Date(tokens.expires_at).getTime() : 0
+  const isExpired = Date.now() > expiresAt - 60_000 // 1 min buffer
+
+  if (!isExpired) return tokens.access_token
+
+  // Token expirado — tentar renovar
+  if (!tokens.refresh_token) return null
+
+  try {
+    const refreshed = await refreshGoogleToken(tokens.refresh_token)
+    // Atualizar user_metadata com novo token
+    await supabase.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        google_calendar_tokens: {
+          ...tokens,
+          access_token: refreshed.access_token,
+          expires_at: refreshed.expires_at,
+          updated_at: new Date().toISOString(),
+        },
+      },
+    })
+    return refreshed.access_token
+  } catch (e) {
+    console.error('Erro ao renovar token do usuário:', e)
+    return null
+  }
+}
+
+/**
+ * Obter token da ORG (tabela integrations) — fallback
+ */
+const getOrgToken = async (
+  supabase: ReturnType<typeof createClient>,
+  orgId: string,
+): Promise<string | null> => {
+  const { data: integration, error } = await supabase
+    .from('integrations')
+    .select('id, secrets')
+    .eq('org_id', orgId)
+    .eq('provider', 'google_calendar')
+    .maybeSingle()
+
+  if (error || !integration) return null
+
+  const secrets = (integration.secrets || {}) as Record<string, unknown>
   const accessToken = secrets.access_token as string | undefined
   const expiresAt = secrets.expires_at as string | undefined
   const refreshToken = secrets.refresh_token as string | undefined
 
-  // Verificar se token expirou ou vai expirar em menos de 1 minuto
-  if (!expiresAt || new Date(expiresAt).getTime() - Date.now() < 60_000) {
-    if (!refreshToken) {
-      throw new Error('Token expirado e sem refresh token disponível')
-    }
+  const isExpired = !expiresAt || new Date(expiresAt).getTime() - Date.now() < 60_000
 
-    const refreshed = await refreshAccessToken(refreshToken)
+  if (!isExpired && accessToken) return accessToken
 
-    // Atualizar secrets no banco
-    const updatedSecrets = {
-      ...secrets,
-      access_token: refreshed.accessToken,
-      expires_at: refreshed.expiresAt,
-      scope: refreshed.scope || secrets.scope,
-      token_type: refreshed.tokenType || secrets.token_type,
-      updated_at: new Date().toISOString(),
-    }
+  if (!refreshToken) return null
 
-    await supabase.from('integrations').update({ secrets: updatedSecrets }).eq('id', integrationId)
-
-    return refreshed.accessToken
+  try {
+    const refreshed = await refreshGoogleToken(refreshToken)
+    await supabase.from('integrations').update({
+      secrets: {
+        ...secrets,
+        access_token: refreshed.access_token,
+        expires_at: refreshed.expires_at,
+        updated_at: new Date().toISOString(),
+      },
+    }).eq('id', integration.id)
+    return refreshed.access_token
+  } catch (e) {
+    console.error('Erro ao renovar token da org:', e)
+    return null
   }
-
-  return accessToken
 }
 
 /**
@@ -106,33 +137,34 @@ const ensureValidToken = async (
 const createGoogleCalendarEvent = async (
   accessToken: string,
   eventData: Record<string, unknown>,
-): Promise<Record<string, unknown>> => {
-  const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+) => {
+  const url = eventData.conferenceData
+    ? 'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1'
+    : 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      ...eventData,
-      conferenceDataVersion: eventData.conferenceData ? 1 : 0,
-    }),
+    body: JSON.stringify(eventData),
   })
 
-  if (!response.ok) {
-    const errorData = await response.json()
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
     throw new Error(
-      `Erro ao criar evento no Google Calendar: ${
-        (errorData as Record<string, unknown>).message || response.statusText
-      }`
+      `Erro ao criar evento: ${(errorData as any)?.error?.message || res.statusText}`,
     )
   }
 
-  return await response.json()
+  return await res.json()
 }
 
 /**
  * Handler principal
+ * Aceita: { user_id?, org_id?, event }
+ * Prioridade: token do user > token da org
  */
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -143,60 +175,53 @@ serve(async (req) => {
     return jsonResponse({ error: 'Missing Supabase env vars' }, 500, req)
   }
 
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    return jsonResponse({ error: 'Missing Google OAuth env vars' }, 500, req)
-  }
-
   try {
-    const { org_id, event: eventData } = await req.json()
-
-    if (!org_id) {
-      return jsonResponse({ error: 'org_id é obrigatório' }, 400, req)
-    }
+    const body = await req.json()
+    const { user_id, org_id, event: eventData } = body
 
     if (!eventData) {
       return jsonResponse({ error: 'event é obrigatório' }, 400, req)
     }
 
-    // Criar cliente Supabase
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // Buscar integração do Google Calendar
-    const { data: integration, error: integrationError } = await supabase
-      .from('integrations')
-      .select('id, secrets')
-      .eq('org_id', org_id)
-      .eq('provider', 'google_calendar')
-      .single()
+    let accessToken: string | null = null
+    let tokenSource = 'none'
 
-    if (integrationError || !integration) {
+    // 1) Tentar token pessoal do usuário
+    if (user_id) {
+      accessToken = await getUserToken(supabase, user_id)
+      if (accessToken) tokenSource = 'user'
+    }
+
+    // 2) Fallback: token da organização
+    if (!accessToken && org_id) {
+      accessToken = await getOrgToken(supabase, org_id)
+      if (accessToken) tokenSource = 'org'
+    }
+
+    if (!accessToken) {
       return jsonResponse(
-        { error: 'Google Calendar não configurado para esta organização' },
+        {
+          error: 'Google Calendar não conectado. Faça login com Google para sincronizar sua agenda.',
+          code: 'NO_GOOGLE_TOKEN',
+        },
         401,
-        req
+        req,
       )
     }
 
-    const secrets = integration.secrets || {}
+    console.log(`Criando evento via token: ${tokenSource} (user_id: ${user_id || 'N/A'})`)
 
-    // Garantir token válido
-    const accessToken = await ensureValidToken(supabase, integration.id, secrets)
-
-    // Criar evento no Google Calendar
     const createdEvent = await createGoogleCalendarEvent(accessToken, eventData)
 
-    return jsonResponse({
-      success: true,
-      event: createdEvent,
-    }, 200, req)
+    return jsonResponse({ success: true, event: createdEvent, source: tokenSource }, 200, req)
   } catch (error) {
     console.error('Erro ao criar evento:', error)
     return jsonResponse(
-      {
-        error: error instanceof Error ? error.message : 'Erro desconhecido',
-      },
+      { error: error instanceof Error ? error.message : 'Erro desconhecido' },
       500,
-      req
+      req,
     )
   }
 })
