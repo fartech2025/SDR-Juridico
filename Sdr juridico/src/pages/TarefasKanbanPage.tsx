@@ -516,7 +516,7 @@ export const TarefasKanbanPage = () => {
       {/* Kanban Board - só mostra quando NÃO estiver na lixeira */}
       {!showDeleted && (
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory lg:grid lg:grid-cols-5 lg:overflow-x-visible lg:pb-0">
+        <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory lg:grid lg:grid-cols-6 lg:overflow-x-visible lg:pb-0">
           <style>{`
             .snap-x > div { scroll-snap-align: start; }
             @media (max-width: 1023px) {
