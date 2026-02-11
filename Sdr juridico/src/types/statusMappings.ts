@@ -51,7 +51,7 @@ export type ClienteStatus = 'ativo' | 'em_risco' | 'inativo';
  * - novo → novo
  * - em_contato → em_triagem
  * - qualificado → qualificado
- * - proposta → qualificado (não existe no DB, usa qualificado)
+ * - proposta → proposta
  * - ganho → convertido
  * - perdido → perdido
  */
@@ -60,7 +60,7 @@ export function mapLeadStatusToDb(frontendStatus: LegacyLeadStatus): DbLeadStatu
     novo: 'novo',
     em_contato: 'em_triagem',
     qualificado: 'qualificado',
-    proposta: 'qualificado', // Aproximação - DB não tem 'proposta'
+    proposta: 'proposta',
     ganho: 'convertido',
     perdido: 'perdido',
   };
@@ -83,7 +83,8 @@ export function mapLeadStatusToFrontend(dbStatus: DbLeadStatus): LegacyLeadStatu
     novo: 'novo',
     em_triagem: 'em_contato',
     qualificado: 'qualificado',
-    nao_qualificado: 'perdido', // Aproximação
+    proposta: 'proposta',
+    nao_qualificado: 'perdido',
     convertido: 'ganho',
     perdido: 'perdido',
   };
@@ -173,7 +174,7 @@ export function calculateClienteStatus(
  */
 export function isValidDbLeadStatus(value: string): value is DbLeadStatus {
   const validStatuses: DbLeadStatus[] = [
-    'novo', 'em_triagem', 'qualificado', 'nao_qualificado', 'convertido', 'perdido'
+    'novo', 'em_triagem', 'qualificado', 'proposta', 'nao_qualificado', 'convertido', 'perdido'
   ];
   return validStatuses.includes(value as DbLeadStatus);
 }

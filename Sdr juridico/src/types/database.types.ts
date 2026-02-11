@@ -2734,6 +2734,7 @@ export type Database = {
         | "novo"
         | "em_triagem"
         | "qualificado"
+        | "proposta"
         | "nao_qualificado"
         | "convertido"
         | "perdido"
@@ -2893,6 +2894,7 @@ export const Constants = {
         "novo",
         "em_triagem",
         "qualificado",
+        "proposta",
         "nao_qualificado",
         "convertido",
         "perdido",
