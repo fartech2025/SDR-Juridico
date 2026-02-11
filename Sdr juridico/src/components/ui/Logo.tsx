@@ -19,11 +19,11 @@ const imgDimensions = {
 export const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
   ({ size = 'md', collapsed = false, className }, ref) => {
     return (
-      <div ref={ref} className={cn('flex items-center gap-3', className)}>
+      <div ref={ref} className={cn('flex items-center gap-3 overflow-visible', className)}>
         <img
           src={LOGO_IMG}
           alt="TalentJUD Logo"
-          style={{ height: imgDimensions[size].height, width: 'auto', objectFit: 'contain' }}
+          style={{ height: imgDimensions[size].height, width: 'auto', objectFit: 'contain', transform: 'scale(4)', transformOrigin: 'left center' }}
         />
       </div>
     )

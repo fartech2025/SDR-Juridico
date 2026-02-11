@@ -255,7 +255,7 @@ export default function OrganizationSettingsPage() {
     return (
       <FartechGuard>
         <div className="min-h-screen bg-[#f7f8fc] flex items-center justify-center">
-          <div className="text-gray-600">Carregando...</div>
+          <div className="text-text-muted">Carregando...</div>
         </div>
       </FartechGuard>
     )
@@ -275,21 +275,21 @@ export default function OrganizationSettingsPage() {
     <FartechGuard>
       <div className="min-h-screen bg-[#f7f8fc]">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Link
                   to="/admin/organizations"
-                  className="mr-4 p-2 text-gray-400 hover:text-gray-600:text-gray-200"
+                  className="mr-4 p-2 text-text-subtle hover:text-text-muted:text-gray-200"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-text">
                     Configurações - {organization.name}
                   </h1>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-text-muted mt-1">
                     APIs, Integrações e Configurações da Organização
                   </p>
                 </div>
@@ -323,14 +323,14 @@ export default function OrganizationSettingsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Tabs */}
           <div className="bg-white rounded-lg shadow mb-6">
-            <div className="border-b border-gray-200">
+            <div className="border-b border-border">
               <nav className="flex -mb-px">
                 <button
                   onClick={() => setActiveTab('basic')}
                   className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === 'basic'
                       ? 'border-emerald-500 text-emerald-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700:text-gray-300'
+                      : 'border-transparent text-text-muted hover:text-text:text-text-subtle'
                   }`}
                 >
                   <Building2 className="w-4 h-4" />
@@ -341,7 +341,7 @@ export default function OrganizationSettingsPage() {
                   className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === 'address'
                       ? 'border-emerald-500 text-emerald-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700:text-gray-300'
+                      : 'border-transparent text-text-muted hover:text-text:text-text-subtle'
                   }`}
                 >
                   <MapPin className="w-4 h-4" />
@@ -352,7 +352,7 @@ export default function OrganizationSettingsPage() {
                   className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === 'monitoring'
                       ? 'border-emerald-500 text-emerald-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700:text-gray-300'
+                      : 'border-transparent text-text-muted hover:text-text:text-text-subtle'
                   }`}
                 >
                   <Activity className="w-4 h-4" />
@@ -363,7 +363,7 @@ export default function OrganizationSettingsPage() {
                   className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === 'apis'
                       ? 'border-emerald-500 text-emerald-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700:text-gray-300'
+                      : 'border-transparent text-text-muted hover:text-text:text-text-subtle'
                   }`}
                 >
                   <Key className="w-4 h-4" />
@@ -374,7 +374,7 @@ export default function OrganizationSettingsPage() {
                   className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === 'integrations'
                       ? 'border-emerald-500 text-emerald-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700:text-gray-300'
+                      : 'border-transparent text-text-muted hover:text-text:text-text-subtle'
                   }`}
                 >
                   <Globe className="w-4 h-4" />
@@ -389,31 +389,31 @@ export default function OrganizationSettingsPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Nome da Organização *
                       </label>
                       <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Slug (URL amigável)
                       </label>
                       <input
                         type="text"
                         value={slug}
                         onChange={(e) => setSlug(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         CNPJ
                       </label>
                       <input
@@ -421,14 +421,14 @@ export default function OrganizationSettingsPage() {
                         value={cnpj}
                         onChange={(e) => setCnpj(e.target.value)}
                         placeholder="00.000.000/0000-00"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Cor Primária
                       </label>
                       <div className="flex items-center gap-3">
@@ -436,19 +436,19 @@ export default function OrganizationSettingsPage() {
                           type="color"
                           value={primaryColor}
                           onChange={(e) => setPrimaryColor(e.target.value)}
-                          className="h-10 w-20 rounded border border-gray-300"
+                          className="h-10 w-20 rounded border border-border-strong"
                         />
                         <input
                           type="text"
                           value={primaryColor}
                           onChange={(e) => setPrimaryColor(e.target.value)}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                          className="flex-1 px-4 py-2 border border-border-strong rounded-lg bg-white text-text"
                         />
                       </div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Cor Secundária
                       </label>
                       <div className="flex items-center gap-3">
@@ -456,13 +456,13 @@ export default function OrganizationSettingsPage() {
                           type="color"
                           value={secondaryColor}
                           onChange={(e) => setSecondaryColor(e.target.value)}
-                          className="h-10 w-20 rounded border border-gray-300"
+                          className="h-10 w-20 rounded border border-border-strong"
                         />
                         <input
                           type="text"
                           value={secondaryColor}
                           onChange={(e) => setSecondaryColor(e.target.value)}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                          className="flex-1 px-4 py-2 border border-border-strong rounded-lg bg-white text-text"
                         />
                       </div>
                     </div>
@@ -475,71 +475,71 @@ export default function OrganizationSettingsPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Logradouro
                       </label>
                       <input
                         type="text"
                         value={addressStreet}
                         onChange={(e) => setAddressStreet(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Número
                       </label>
                       <input
                         type="text"
                         value={addressNumber}
                         onChange={(e) => setAddressNumber(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Complemento
                       </label>
                       <input
                         type="text"
                         value={addressComplement}
                         onChange={(e) => setAddressComplement(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Bairro
                       </label>
                       <input
                         type="text"
                         value={addressNeighborhood}
                         onChange={(e) => setAddressNeighborhood(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Cidade
                       </label>
                       <input
                         type="text"
                         value={addressCity}
                         onChange={(e) => setAddressCity(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Estado
                       </label>
                       <input
@@ -548,12 +548,12 @@ export default function OrganizationSettingsPage() {
                         onChange={(e) => setAddressState(e.target.value)}
                         maxLength={2}
                         placeholder="UF"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         CEP
                       </label>
                       <input
@@ -561,7 +561,7 @@ export default function OrganizationSettingsPage() {
                         value={addressPostalCode}
                         onChange={(e) => setAddressPostalCode(e.target.value)}
                         placeholder="00000-000"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   </div>
@@ -573,10 +573,10 @@ export default function OrganizationSettingsPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-text">
                         Configuração de APIs
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-text-muted mt-1">
                         Gerencie as APIs externas que esta organização utiliza
                       </p>
                     </div>
@@ -590,7 +590,7 @@ export default function OrganizationSettingsPage() {
                   </div>
                   
                   {apis.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-12 text-text-muted">
                       <Database className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>Nenhuma API configurada</p>
                       <p className="text-sm mt-1">Clique em "Nova API" para adicionar</p>
@@ -598,7 +598,7 @@ export default function OrganizationSettingsPage() {
                   ) : (
                     <div className="space-y-4">
                       {apis.map((api) => (
-                        <div key={api.id} className="p-4 border border-gray-200 rounded-lg">
+                        <div key={api.id} className="p-4 border border-border rounded-lg">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
                               <input
@@ -612,9 +612,9 @@ export default function OrganizationSettingsPage() {
                                   type="text"
                                   value={api.name}
                                   onChange={(e) => updateAPI(api.id, { name: e.target.value })}
-                                  className="text-lg font-medium bg-transparent border-b border-transparent hover:border-gray-300:border-gray-600 focus:border-emerald-500 outline-none text-gray-900"
+                                  className="text-lg font-medium bg-transparent border-b border-transparent hover:border-border-strong:border-gray-600 focus:border-emerald-500 outline-none text-text"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-text-muted mt-1">
                                   {api.enabled ? 'Ativa' : 'Inativa'}
                                 </p>
                               </div>
@@ -629,7 +629,7 @@ export default function OrganizationSettingsPage() {
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-text mb-2">
                                 API URL
                               </label>
                               <input
@@ -637,12 +637,12 @@ export default function OrganizationSettingsPage() {
                                 value={api.apiUrl || ''}
                                 onChange={(e) => updateAPI(api.id, { apiUrl: e.target.value })}
                                 placeholder="https://api.exemplo.com"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm"
+                                className="w-full px-3 py-2 border border-border-strong rounded-lg bg-white text-text text-sm"
                               />
                             </div>
                             
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-text mb-2">
                                 API Key
                               </label>
                               <div className="relative">
@@ -651,12 +651,12 @@ export default function OrganizationSettingsPage() {
                                   value={api.apiKey || ''}
                                   onChange={(e) => updateAPI(api.id, { apiKey: e.target.value })}
                                   placeholder="sk_live_..."
-                                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm"
+                                  className="w-full px-3 py-2 pr-10 border border-border-strong rounded-lg bg-white text-text text-sm"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => toggleShowApiKey(api.id)}
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600:text-gray-200"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-text-subtle hover:text-text-muted:text-gray-200"
                                 >
                                   {showApiKeys[api.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -675,10 +675,10 @@ export default function OrganizationSettingsPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-text">
                         Integrações
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-text-muted mt-1">
                         Gerencie integrações com serviços externos (Google Calendar, Email, Storage, etc)
                       </p>
                     </div>
@@ -692,7 +692,7 @@ export default function OrganizationSettingsPage() {
                   </div>
                   
                   {integrations.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-12 text-text-muted">
                       <Cloud className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>Nenhuma integração configurada</p>
                       <p className="text-sm mt-1">Clique em "Nova Integração" para adicionar</p>
@@ -700,7 +700,7 @@ export default function OrganizationSettingsPage() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {integrations.map((integration) => (
-                        <div key={integration.id} className="p-4 border border-gray-200 rounded-lg">
+                        <div key={integration.id} className="p-4 border border-border rounded-lg">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3 flex-1">
                               <input
@@ -714,12 +714,12 @@ export default function OrganizationSettingsPage() {
                                   type="text"
                                   value={integration.name}
                                   onChange={(e) => updateIntegration(integration.id, { name: e.target.value })}
-                                  className="font-medium bg-transparent border-b border-transparent hover:border-gray-300:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 w-full"
+                                  className="font-medium bg-transparent border-b border-transparent hover:border-border-strong:border-gray-600 focus:border-emerald-500 outline-none text-text w-full"
                                 />
                                 <select
                                   value={integration.type}
                                   onChange={(e) => updateIntegration(integration.id, { type: e.target.value as any })}
-                                  className="text-xs text-gray-500 mt-1 bg-transparent border-none outline-none"
+                                  className="text-xs text-text-muted mt-1 bg-transparent border-none outline-none"
                                 >
                                   <option value="calendar">Calendar</option>
                                   <option value="email">Email</option>
@@ -746,8 +746,8 @@ export default function OrganizationSettingsPage() {
                               </>
                             ) : (
                               <>
-                                <XCircle className="w-4 h-4 text-gray-400" />
-                                <span className="text-gray-500">Inativa</span>
+                                <XCircle className="w-4 h-4 text-text-subtle" />
+                                <span className="text-text-muted">Inativa</span>
                               </>
                             )}
                           </div>
@@ -762,10 +762,10 @@ export default function OrganizationSettingsPage() {
               {activeTab === 'monitoring' && (
                 <div className="space-y-6">
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-text">
                       Monitor de Acessos e Atividade
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-text-muted mt-1">
                       Acompanhe em tempo real os acessos simultâneos e cliques dos usuários
                     </p>
                   </div>
@@ -784,15 +784,15 @@ export default function OrganizationSettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                           <div className="bg-white rounded px-3 py-2 text-xs">
                             <span className="font-semibold text-blue-900">📊 Google Analytics</span>
-                            <p className="text-gray-600 mt-0.5">Tracking completo de acessos</p>
+                            <p className="text-text-muted mt-0.5">Tracking completo de acessos</p>
                           </div>
                           <div className="bg-white rounded px-3 py-2 text-xs">
                             <span className="font-semibold text-blue-900">🔥 Hotjar</span>
-                            <p className="text-gray-600 mt-0.5">Heatmaps e gravações</p>
+                            <p className="text-text-muted mt-0.5">Heatmaps e gravações</p>
                           </div>
                           <div className="bg-white rounded px-3 py-2 text-xs">
                             <span className="font-semibold text-blue-900">⚡ Sistema Próprio</span>
-                            <p className="text-gray-600 mt-0.5">API customizada de tracking</p>
+                            <p className="text-text-muted mt-0.5">API customizada de tracking</p>
                           </div>
                         </div>
                       </div>
@@ -833,12 +833,12 @@ export default function OrganizationSettingsPage() {
                   </div>
                   
                   {/* Concurrent Users Timeline */}
-                  <div className="bg-white rounded-lg p-6 border border-gray-200">
+                  <div className="bg-white rounded-lg p-6 border border-border">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-gray-900">
+                      <h4 className="font-semibold text-text">
                         Acessos Simultâneos (últimas 24h)
                       </h4>
-                      <BarChart3 className="w-5 h-5 text-gray-400" />
+                      <BarChart3 className="w-5 h-5 text-text-subtle" />
                     </div>
                     
                     {/* Simple bar chart */}
@@ -853,10 +853,10 @@ export default function OrganizationSettingsPage() {
                         { time: 'Agora', users: onlineUsers }
                       ].map((data, idx) => (
                         <div key={idx} className="flex items-center gap-3">
-                          <span className="text-xs text-gray-500 w-12">
+                          <span className="text-xs text-text-muted w-12">
                             {data.time}
                           </span>
-                          <div className="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                          <div className="flex-1 bg-surface-alt rounded-full h-6 relative overflow-hidden">
                             <div 
                               className={`h-full rounded-full transition-all duration-500 ${
                                 data.time === 'Agora' 
@@ -866,7 +866,7 @@ export default function OrganizationSettingsPage() {
                               style={{ width: `${(data.users / 15) * 100}%` }}
                             />
                           </div>
-                          <span className="text-sm font-medium text-gray-900 w-8">
+                          <span className="text-sm font-medium text-text w-8">
                             {data.users}
                           </span>
                         </div>
@@ -877,8 +877,8 @@ export default function OrganizationSettingsPage() {
                   {/* Click Heatmap & Top Actions */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Top Pages */}
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
-                      <h4 className="font-semibold text-gray-900 mb-4">
+                    <div className="bg-white rounded-lg p-6 border border-border">
+                      <h4 className="font-semibold text-text mb-4">
                         Páginas Mais Acessadas
                       </h4>
                       <div className="space-y-3">
@@ -892,11 +892,11 @@ export default function OrganizationSettingsPage() {
                           <div key={idx} className="flex items-center justify-between">
                             <div className="flex items-center gap-3 flex-1">
                               <span className={`w-2 h-2 rounded-full bg-${item.color}-500`}></span>
-                              <span className="text-sm text-gray-700">
+                              <span className="text-sm text-text">
                                 {item.page}
                               </span>
                             </div>
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm font-semibold text-text">
                               {item.visits}
                             </span>
                           </div>
@@ -905,8 +905,8 @@ export default function OrganizationSettingsPage() {
                     </div>
                     
                     {/* Top Actions */}
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
-                      <h4 className="font-semibold text-gray-900 mb-4">
+                    <div className="bg-white rounded-lg p-6 border border-border">
+                      <h4 className="font-semibold text-text mb-4">
                         Ações Mais Realizadas
                       </h4>
                       <div className="space-y-3">
@@ -920,11 +920,11 @@ export default function OrganizationSettingsPage() {
                           <div key={idx} className="flex items-center justify-between">
                             <div className="flex items-center gap-3 flex-1">
                               <span className="text-lg">{item.icon}</span>
-                              <span className="text-sm text-gray-700">
+                              <span className="text-sm text-text">
                                 {item.action}
                               </span>
                             </div>
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm font-semibold text-text">
                               {item.clicks}
                             </span>
                           </div>
@@ -934,12 +934,12 @@ export default function OrganizationSettingsPage() {
                   </div>
                   
                   {/* Session Details */}
-                  <div className="bg-white rounded-lg p-6 border border-gray-200">
-                    <h4 className="font-semibold text-gray-900 mb-4">
+                  <div className="bg-white rounded-lg p-6 border border-border">
+                    <h4 className="font-semibold text-text mb-4">
                       Usuários Online Neste Momento
                     </h4>
                     {onlineUsers === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-4">
+                      <p className="text-sm text-text-muted text-center py-4">
                         Nenhum usuário online no momento
                       </p>
                     ) : (
@@ -947,24 +947,24 @@ export default function OrganizationSettingsPage() {
                         {Array.from({ length: onlineUsers }).map((_, idx) => (
                           <div 
                             key={idx} 
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            className="flex items-center justify-between p-3 bg-surface-alt rounded-lg"
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-sm font-bold">
                                 {String.fromCharCode(65 + idx)}
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm font-medium text-text">
                                   Usuário {idx + 1}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-text-muted">
                                   {['Dashboard', 'Casos', 'Clientes', 'Agenda'][idx % 4]}
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-text-muted">
                                 {Math.floor(Math.random() * 30) + 1}min
                               </span>
                             </div>

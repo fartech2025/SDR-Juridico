@@ -316,7 +316,7 @@ export function CasoDataJudSection({
           className="w-8 h-8 rounded-lg flex items-center justify-center"
           style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}
         >
-          <Scale className="w-5 h-5" style={{ color: '#721011' }} />
+          <Scale className="w-5 h-5" style={{ color: 'var(--brand-primary)' }} />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 text-sm">Processo Judicial</h3>
@@ -336,12 +336,12 @@ export function CasoDataJudSection({
             <div className="rounded-xl bg-gray-50/80 border border-gray-200/60 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-sm font-semibold" style={{ color: '#721011' }}>
+                  <p className="font-mono text-sm font-semibold" style={{ color: 'var(--brand-primary)' }}>
                     {caso.numero_processo}
                   </p>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                     {caso.tribunal && (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" style={{ backgroundColor: '#721011' }}>
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" style={{ backgroundColor: 'var(--brand-primary)' }}>
                         {caso.tribunal.toUpperCase()}
                       </span>
                     )}
@@ -377,7 +377,7 @@ export function CasoDataJudSection({
                 onClick={handleSyncMovimentos}
                 disabled={isSyncing}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-50"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
                 {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
@@ -419,7 +419,7 @@ export function CasoDataJudSection({
                       <div
                         key={idx}
                         className="border-l-2 bg-gray-50 rounded-r-lg px-3 py-2"
-                        style={{ borderLeftColor: '#721011' }}
+                        style={{ borderLeftColor: 'var(--brand-primary)' }}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-xs font-medium text-gray-800">
@@ -453,7 +453,7 @@ export function CasoDataJudSection({
             <button
               onClick={() => setIsSearchOpen(true)}
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
-              style={{ backgroundColor: '#721011' }}
+              style={{ backgroundColor: 'var(--brand-primary)' }}
             >
               <Link2 className="w-4 h-4" />
               Vincular Processo

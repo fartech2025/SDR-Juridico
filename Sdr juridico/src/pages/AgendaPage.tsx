@@ -550,13 +550,13 @@ export const AgendaPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">AGENDA</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-text">AGENDA</h1>
+            <p className="mt-1 text-sm text-text-muted">
               Bom dia, {displayName}. Gerencie seus compromissos e eventos.
             </p>
           </div>
@@ -564,7 +564,7 @@ export const AgendaPage = () => {
             type="button"
             onClick={() => openEditor('create')}
             className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
-            style={{ backgroundColor: '#721011' }}
+            style={{ backgroundColor: 'var(--brand-primary)' }}
           >
             <Plus className="h-4 w-4" />
             Novo Evento
@@ -573,64 +573,64 @@ export const AgendaPage = () => {
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                <Calendar className="h-5 w-5 text-blue-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info-bg">
+                <Calendar className="h-5 w-5 text-info" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{metrics.eventsThisWeek}</p>
-                <p className="text-sm text-gray-500">Eventos semana</p>
+                <p className="text-2xl font-bold text-text">{metrics.eventsThisWeek}</p>
+                <p className="text-sm text-text-muted">Eventos semana</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                <ListTodo className="h-5 w-5 text-purple-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-accent-100">
+                <ListTodo className="h-5 w-5 text-brand-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{metrics.tarefasCount}</p>
-                <p className="text-sm text-gray-500">Tarefas</p>
+                <p className="text-2xl font-bold text-text">{metrics.tarefasCount}</p>
+                <p className="text-sm text-text-muted">Tarefas</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-                <Gavel className="h-5 w-5 text-amber-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-bg">
+                <Gavel className="h-5 w-5 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{metrics.audienciasCount}</p>
-                <p className="text-sm text-gray-500">Audiências</p>
+                <p className="text-2xl font-bold text-text">{metrics.audienciasCount}</p>
+                <p className="text-sm text-text-muted">Audiências</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-bg">
+                <TrendingUp className="h-5 w-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{metrics.confirmationRate}%</p>
-                <p className="text-sm text-gray-500">Taxa confirmação</p>
+                <p className="text-2xl font-bold text-text">{metrics.confirmationRate}%</p>
+                <p className="text-sm text-text-muted">Taxa confirmação</p>
               </div>
             </div>
           </div>
         </div>
 
         <PageState status={pageState} emptyTitle="Nenhum compromisso encontrado">
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <Filter className="h-4 w-4 text-gray-500" />
+              <Filter className="h-4 w-4 text-text-muted" />
               <button
                 onClick={() => setActiveFilter('all')}
                 className={cn(
                   'rounded-full border px-3 py-1 text-xs font-medium transition-all',
                   activeFilter === 'all'
-                    ? 'border-[#721011] bg-[#721011] text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-brand-primary bg-brand-primary text-white'
+                    : 'border-border bg-surface text-text hover:bg-surface-alt'
                 )}
               >
                 Todos
@@ -640,8 +640,8 @@ export const AgendaPage = () => {
                 className={cn(
                   'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                   activeFilter === 'reuniao'
-                    ? 'border-[#721011] bg-[#721011] text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-brand-primary bg-brand-primary text-white'
+                    : 'border-border bg-surface text-text hover:bg-surface-alt'
                 )}
               >
                 <Users className="h-3 w-3" />
@@ -652,8 +652,8 @@ export const AgendaPage = () => {
                 className={cn(
                   'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                   activeFilter === 'ligacao'
-                    ? 'border-[#721011] bg-[#721011] text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-brand-primary bg-brand-primary text-white'
+                    : 'border-border bg-surface text-text hover:bg-surface-alt'
                 )}
               >
                 <Phone className="h-3 w-3" />
@@ -664,8 +664,8 @@ export const AgendaPage = () => {
                 className={cn(
                   'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                   activeFilter === 'audiencia'
-                    ? 'border-[#721011] bg-[#721011] text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-brand-primary bg-brand-primary text-white'
+                    : 'border-border bg-surface text-text hover:bg-surface-alt'
                 )}
               >
                 <Gavel className="h-3 w-3" />
@@ -676,8 +676,8 @@ export const AgendaPage = () => {
                 className={cn(
                   'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                   activeFilter === 'tarefa'
-                    ? 'border-purple-600 bg-purple-600 text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-brand-primary bg-brand-primary text-white'
+                    : 'border-border bg-surface text-text hover:bg-surface-alt'
                 )}
               >
                 <ListTodo className="h-3 w-3" />
@@ -686,14 +686,14 @@ export const AgendaPage = () => {
             </div>
 
             {/* Agenda Controls */}
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 mb-4">
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-alt p-3 mb-4">
               <button
                 onClick={() => setAgendaAberta(!agendaAberta)}
                 className={cn(
                   'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-all',
                   agendaAberta
-                    ? 'border-green-300 bg-green-100 text-green-700'
-                    : 'border-red-300 bg-red-100 text-red-700'
+                    ? 'border-success-border bg-success-bg text-success'
+                    : 'border-danger-border bg-danger-bg text-danger'
                 )}
               >
                 {agendaAberta ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
@@ -701,22 +701,22 @@ export const AgendaPage = () => {
               </button>
 
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span className="text-xs text-gray-700">Almoço:</span>
+                <Clock className="h-4 w-4 text-text-muted" />
+                <span className="text-xs text-text">Almoço:</span>
                 <select
                   value={horariosAlmoco.inicio}
                   onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, inicio: e.target.value }))}
-                  className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700"
+                  className="rounded-lg border border-border bg-surface px-2 py-1 text-xs text-text"
                 >
                   <option value="12:00">12:00</option>
                   <option value="12:30">12:30</option>
                   <option value="13:00">13:00</option>
                 </select>
-                <span className="text-xs text-gray-700">até</span>
+                <span className="text-xs text-text">até</span>
                 <select
                   value={horariosAlmoco.fim}
                   onChange={(e) => setHorariosAlmoco(prev => ({ ...prev, fim: e.target.value }))}
-                  className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700"
+                  className="rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text"
                 >
                   <option value="13:00">13:00</option>
                   <option value="13:30">13:30</option>
@@ -738,29 +738,29 @@ export const AgendaPage = () => {
                 <button
                   type="button"
                   onClick={() => handleNavigate('prev')}
-                  className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-50"
+                  className="rounded-lg border border-border bg-surface p-2 text-text-muted hover:bg-surface-alt"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleNavigate('next')}
-                  className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-50"
+                  className="rounded-lg border border-border bg-surface p-2 text-text-muted hover:bg-surface-alt"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <span className="text-sm font-semibold text-gray-900">
+                <span className="text-sm font-semibold text-text">
                   {viewMode === 'week' ? weekLabel : monthLabel}
                 </span>
               </div>
-              <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 text-xs">
+              <div className="inline-flex rounded-lg border border-border bg-surface-alt p-1 text-xs">
                 <button
                   type="button"
                   className={cn(
                     'rounded-md px-3 py-1.5 font-medium transition-all',
                     viewMode === 'week'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-surface text-text shadow-sm'
+                      : 'text-text-muted hover:text-text'
                   )}
                   onClick={() => setViewMode('week')}
                 >
@@ -771,8 +771,8 @@ export const AgendaPage = () => {
                   className={cn(
                     'rounded-md px-3 py-1.5 font-medium transition-all',
                     viewMode === 'month'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-surface text-text shadow-sm'
+                      : 'text-text-muted hover:text-text'
                   )}
                   onClick={() => setViewMode('month')}
                 >
@@ -783,7 +783,7 @@ export const AgendaPage = () => {
 
             <div className="grid gap-4 xl:grid-cols-[2.3fr_1fr]">
               {/* Calendar Grid */}
-              <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="rounded-xl border border-border bg-surface p-4">
                 {viewMode === 'week' ? (
                   <div className="space-y-2">
                     {/* Week header */}
@@ -794,7 +794,7 @@ export const AgendaPage = () => {
                           key={day.iso}
                           className={cn(
                             'rounded-lg py-2 text-center text-sm font-semibold',
-                            day.isToday ? 'bg-[#721011] text-white' : 'bg-gray-100 text-gray-900'
+                            day.isToday ? 'bg-brand-primary text-white' : 'bg-surface-alt text-text'
                           )}
                         >
                           <div className="text-xs opacity-80">{day.label}</div>
@@ -807,7 +807,7 @@ export const AgendaPage = () => {
                     <div className="space-y-1">
                       {timeSlots.map((slot) => (
                         <div key={slot} className="grid grid-cols-[60px_repeat(5,1fr)] gap-2">
-                          <div className="text-right pr-3 pt-2 text-sm font-bold text-gray-700" style={{ height: '6rem' }}>
+                          <div className="text-right pr-3 pt-2 text-sm font-bold text-text" style={{ height: '6rem' }}>
                             {slot}
                           </div>
                           {weekDays.map((day) => {
@@ -820,10 +820,10 @@ export const AgendaPage = () => {
                               <div key={`${day.iso}-${slot}`} className="relative" style={{ height: '6rem' }}>
                                 <button
                                   type="button"
-                                  className="absolute inset-0 rounded-lg border border-gray-200 bg-gray-50 transition hover:bg-gray-100 group"
+                                  className="absolute inset-0 rounded-lg border border-border bg-surface-alt transition hover:bg-surface-alt group"
                                   onClick={() => handleSlotCreate(day.iso, slot)}
                                 >
-                                  <span className="absolute inset-0 flex items-center justify-center text-2xl font-light text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <span className="absolute inset-0 flex items-center justify-center text-2xl font-light text-text-subtle opacity-0 group-hover:opacity-100 transition-opacity">
                                     +
                                   </span>
                                 </button>
@@ -865,11 +865,11 @@ export const AgendaPage = () => {
                                           <span>{event.item.time}</span>
                                         </div>
                                         {isTarefa ? (
-                                          <span className="rounded-full bg-white/50 px-1.5 py-0.5 text-[0.5625rem]">
+                                          <span className="rounded-full bg-surface/50 px-1.5 py-0.5 text-[0.5625rem]">
                                             Tarefa
                                           </span>
                                         ) : (
-                                          <span className="rounded-full bg-white/50 px-1.5 py-0.5 text-[0.5625rem]">
+                                          <span className="rounded-full bg-surface/50 px-1.5 py-0.5 text-[0.5625rem]">
                                             {event.item.durationMinutes || 30}min
                                           </span>
                                         )}
@@ -898,7 +898,7 @@ export const AgendaPage = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-gray-700">
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-text">
                       {monthDayLabels.map((label, index) => (
                         <span key={`${label}-${index}`}>{label}</span>
                       ))}
@@ -915,8 +915,8 @@ export const AgendaPage = () => {
                           <div
                             key={day.iso}
                             className={cn(
-                              'min-h-[110px] rounded-lg border border-gray-200 bg-white p-2 transition hover:bg-gray-50 cursor-pointer',
-                              isSelected && 'border-[#721011]/40',
+                              'min-h-[110px] rounded-lg border border-border bg-surface p-2 transition hover:bg-surface-alt cursor-pointer',
+                              isSelected && 'border-brand-primary/40',
                             )}
                             onClick={() => handleSlotCreate(day.iso)}
                             role="button"
@@ -929,14 +929,14 @@ export const AgendaPage = () => {
                               <span
                                 className={cn(
                                   'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                                  isToday && 'bg-[#721011]/15 text-[#721011]',
-                                  isSelected && 'bg-[#721011] text-white',
+                                  isToday && 'bg-brand-primary/15 text-brand-primary',
+                                  isSelected && 'bg-brand-primary text-white',
                                 )}
                               >
                                 {day.number}
                               </span>
                               {dayEvents.length > 0 && (
-                                <span className="text-[10px] font-medium text-gray-500">
+                                <span className="text-[10px] font-medium text-text-muted">
                                   {dayEvents.length} eventos
                                 </span>
                               )}
@@ -954,7 +954,7 @@ export const AgendaPage = () => {
                                         ? "border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100"
                                         : event.tipo === 'audiencia'
                                           ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                                          : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                                          : "border-border bg-surface-alt text-text hover:bg-surface-alt"
                                     )}
                                     onClick={(e) => {
                                       e.stopPropagation()
@@ -975,7 +975,7 @@ export const AgendaPage = () => {
                                 )
                               })}
                               {dayEvents.length > 3 && (
-                                <div className="text-[10px] font-medium text-gray-500">
+                                <div className="text-[10px] font-medium text-text-muted">
                                   +{dayEvents.length - 3} compromissos
                                 </div>
                               )}
@@ -991,12 +991,12 @@ export const AgendaPage = () => {
               {/* Sidebar */}
               <div className="space-y-4">
                 {/* Mini Calendar */}
-                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="flex items-center justify-between text-sm text-gray-900 mb-3">
+                <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-sm text-text mb-3">
                     <span className="font-semibold">Calendário</span>
-                    <span className="text-xs text-gray-500">{monthLabel}</span>
+                    <span className="text-xs text-text-muted">{monthLabel}</span>
                   </div>
-                  <div className="grid grid-cols-7 gap-2 text-center text-xs text-gray-500">
+                  <div className="grid grid-cols-7 gap-2 text-center text-xs text-text-muted">
                     {monthDayLabels.map((label, index) => (
                       <span key={`${label}-${index}`}>{label}</span>
                     ))}
@@ -1012,11 +1012,11 @@ export const AgendaPage = () => {
                           key={day.iso}
                           type="button"
                           className={cn(
-                            'relative rounded-full py-1 text-xs font-medium transition hover:bg-gray-100',
-                            isSelected && 'bg-[#721011] text-white font-bold',
-                            !isSelected && isToday && 'bg-[#721011]/10 text-[#721011] font-bold ring-2 ring-[#721011]/30',
-                            hasEvents && !isSelected && !isToday && 'font-semibold text-gray-900',
-                            !hasEvents && !isSelected && !isToday && 'text-gray-600',
+                            'relative rounded-full py-1 text-xs font-medium transition hover:bg-surface-alt',
+                            isSelected && 'bg-brand-primary text-white font-bold',
+                            !isSelected && isToday && 'bg-brand-primary/10 text-brand-primary font-bold ring-2 ring-brand-primary/30',
+                            hasEvents && !isSelected && !isToday && 'font-semibold text-text',
+                            !hasEvents && !isSelected && !isToday && 'text-text-muted',
                           )}
                           onClick={() => setCurrentDate(day.date)}
                         >
@@ -1024,7 +1024,7 @@ export const AgendaPage = () => {
                           {hasEvents && (
                             <span className={cn(
                               "absolute -bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full",
-                              isSelected ? "bg-white" : "bg-[#721011]"
+                              isSelected ? "bg-surface" : "bg-brand-primary"
                             )} />
                           )}
                         </button>
@@ -1032,19 +1032,19 @@ export const AgendaPage = () => {
                     })}
                   </div>
                   <div className="mt-3 space-y-2 text-xs">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-text-muted">
                       <div className="flex h-3 w-3 items-center justify-center rounded-full bg-blue-500">
                         <CheckCircle2 className="h-2 w-2 text-white" />
                       </div>
                       <span>Evento confirmado</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-text-muted">
                       <div className="flex h-3 w-3 items-center justify-center rounded-full bg-purple-500">
                         <ListTodo className="h-2 w-2 text-white" />
                       </div>
                       <span>Tarefa</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-text-muted">
                       <div className="flex h-3 w-3 items-center justify-center rounded-full bg-amber-500">
                         <Gavel className="h-2 w-2 text-white" />
                       </div>
@@ -1054,19 +1054,19 @@ export const AgendaPage = () => {
                 </div>
 
                 {/* Upcoming Events */}
-                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="flex items-center justify-between text-sm text-gray-900 mb-3">
+                <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-sm text-text mb-3">
                     <span className="font-semibold">Próximos compromissos</span>
                     <button
                       type="button"
-                      className="text-xs font-medium text-[#721011] hover:underline"
+                      className="text-xs font-medium text-brand-primary hover:underline"
                       onClick={() => navigate('/app/tarefas')}
                     >
                       Ver tarefas
                     </button>
                   </div>
                   {upcomingItems.length === 0 ? (
-                    <p className="text-xs text-gray-500">Nenhum compromisso agendado.</p>
+                    <p className="text-xs text-text-muted">Nenhum compromisso agendado.</p>
                   ) : (
                     <div className="space-y-2">
                       {upcomingItems.slice(0, 4).map((item) => {
@@ -1126,36 +1126,36 @@ export const AgendaPage = () => {
                 </div>
 
                 {/* Tasks without due date */}
-                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="flex items-center justify-between text-sm text-gray-900 mb-3">
+                <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-sm text-text mb-3">
                     <span className="font-semibold">Tarefas sem prazo</span>
                     <button
                       type="button"
-                      className="text-xs font-medium text-[#721011] hover:underline"
+                      className="text-xs font-medium text-brand-primary hover:underline"
                       onClick={() => navigate('/app/tarefas')}
                     >
                       Ver todas
                     </button>
                   </div>
                   {tarefasSemPrazo.length === 0 ? (
-                    <p className="text-xs text-gray-500">Nenhuma tarefa sem prazo.</p>
+                    <p className="text-xs text-text-muted">Nenhuma tarefa sem prazo.</p>
                   ) : (
                     <div className="space-y-2">
                       {tarefasSemPrazo.slice(0, 4).map((item) => {
                         const priorityColor = {
                           alta: 'border-red-200 bg-red-50 text-red-700',
-                          normal: 'border-gray-200 bg-gray-50 text-gray-700',
+                          normal: 'border-border bg-surface-alt text-text',
                           baixa: 'border-blue-200 bg-blue-50 text-blue-700',
-                        }[item.priority] || 'border-gray-200 bg-gray-50 text-gray-700'
+                        }[item.priority] || 'border-border bg-surface-alt text-text'
 
                         const statusColor = {
                           pendente: 'bg-amber-100 text-amber-700',
                           em_andamento: 'bg-blue-100 text-blue-700',
                           aguardando_validacao: 'bg-purple-100 text-purple-700',
-                          devolvida: 'bg-gray-100 text-gray-700',
+                          devolvida: 'bg-surface-alt text-text',
                           cancelada: 'bg-red-100 text-red-700',
                           concluida: 'bg-green-100 text-green-700',
-                        }[item.status] || 'bg-gray-100 text-gray-700'
+                        }[item.status] || 'bg-surface-alt text-text'
 
                         return (
                           <button
@@ -1206,7 +1206,7 @@ export const AgendaPage = () => {
                 type="button"
                 onClick={closeEditor}
                 disabled={editorBusy}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50"
               >
                 Fechar
               </button>
@@ -1225,7 +1225,7 @@ export const AgendaPage = () => {
                 onClick={handleSave}
                 disabled={editorBusy}
                 className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 {editorMode === 'edit' ? 'Salvar' : 'Criar'}
               </button>
@@ -1240,49 +1240,49 @@ export const AgendaPage = () => {
             )}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-gray-700">Título</label>
+                <label className="text-xs font-semibold text-text">Título</label>
                 <input
                   value={formState.title}
                   onChange={(e) => setFormState((prev) => ({ ...prev, title: e.target.value }))}
-                  className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Nome do compromisso"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">Data</label>
+                <label className="text-xs font-semibold text-text">Data</label>
                 <input
                   type="date"
                   value={formState.date}
                   onChange={(e) => setFormState((prev) => ({ ...prev, date: e.target.value }))}
-                  className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">Hora</label>
+                <label className="text-xs font-semibold text-text">Hora</label>
                 <input
                   type="time"
                   value={formState.time}
                   onChange={(e) => setFormState((prev) => ({ ...prev, time: e.target.value }))}
-                  className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">Duração (min)</label>
+                <label className="text-xs font-semibold text-text">Duração (min)</label>
                 <input
                   type="number"
                   min={15}
                   step={15}
                   value={formState.durationMinutes}
                   onChange={(e) => setFormState((prev) => ({ ...prev, durationMinutes: Number(e.target.value) || 0 }))}
-                  className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">Status</label>
+                <label className="text-xs font-semibold text-text">Status</label>
                 <select
                   value={formState.status}
                   onChange={(e) => setFormState((prev) => ({ ...prev, status: e.target.value as AgendaStatus }))}
-                  className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 >
                   <option value="confirmado">Confirmada</option>
                   <option value="pendente">Pendente</option>
@@ -1291,7 +1291,7 @@ export const AgendaPage = () => {
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold text-gray-700">Local</label>
+                  <label className="text-xs font-semibold text-text">Local</label>
                   {formState.title && formState.date && formState.time && (
                     <button
                       type="button"
@@ -1321,7 +1321,7 @@ export const AgendaPage = () => {
                         }
                       }}
                       disabled={isCreatingGoogleMeet}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-alt disabled:opacity-50"
                     >
                       {isCreatingGoogleMeet ? (
                         <>
@@ -1340,7 +1340,7 @@ export const AgendaPage = () => {
                 <input
                   value={formState.location}
                   onChange={(e) => setFormState((prev) => ({ ...prev, location: e.target.value }))}
-                  className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Clique em 'Gerar Google Meet' ou digite um local"
                 />
                 {meetError && (

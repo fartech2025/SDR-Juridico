@@ -38,7 +38,7 @@ const COLUMN_BG: Record<ColumnKey, string> = {
   aguardando_validacao: 'bg-purple-50',
   concluida: 'bg-green-50',
   cancelada: 'bg-red-50',
-  devolvida: 'bg-gray-50',
+  devolvida: 'bg-surface-alt',
 }
 
 const priorityBadge = (priority: Tarefa['priority']) => {
@@ -79,7 +79,7 @@ const COLUMN_HEADER_COLORS: Record<ColumnKey, string> = {
   aguardando_validacao: 'bg-purple-100 text-purple-800 border-purple-200',
   concluida: 'bg-green-100 text-green-800 border-green-200',
   cancelada: 'bg-red-100 text-red-800 border-red-200',
-  devolvida: 'bg-gray-100 text-gray-800 border-gray-200',
+  devolvida: 'bg-surface-alt text-text border-border',
 }
 
 const DroppableColumn = ({
@@ -99,10 +99,10 @@ const DroppableColumn = ({
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-xl transition-all duration-200 border border-gray-200 bg-gray-50/50',
+        'rounded-xl transition-all duration-200 border border-border bg-surface-alt/50',
         isOver ? 'ring-2 ring-offset-2 shadow-lg' : 'shadow-sm',
       )}
-      style={isOver ? { '--tw-ring-color': '#721011' } as React.CSSProperties : {}}
+      style={isOver ? { '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties : {}}
     >
       <div className="p-2 sm:p-3">
         {/* Header da coluna com visual corporativo */}
@@ -150,14 +150,14 @@ const DraggableTaskCard = ({
         onClick={onOpen}
         className={cn(
           'w-full text-left rounded-lg border bg-white p-2 sm:p-3 shadow-sm hover:shadow-md transition-all group',
-          isOverdue(task) ? 'border-l-4 border-l-red-500' : 'border-gray-200 hover:border-gray-300',
+          isOverdue(task) ? 'border-l-4 border-l-red-500' : 'border-border hover:border-border-strong',
         )}
       >
         {/* Header com título e controles */}
         <div className="flex items-start gap-1 sm:gap-2">
           {/* Drag handle - sempre visível em mobile, hover em desktop */}
           <span
-            className="flex-shrink-0 inline-flex cursor-grab items-center rounded border border-gray-200 bg-gray-50 p-0.5 sm:p-1 text-gray-400 active:cursor-grabbing hover:bg-gray-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+            className="flex-shrink-0 inline-flex cursor-grab items-center rounded border border-border bg-surface-alt p-0.5 sm:p-1 text-text-subtle active:cursor-grabbing hover:bg-surface-alt sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -172,7 +172,7 @@ const DraggableTaskCard = ({
           
           {/* Título com truncamento adequado */}
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="text-xs sm:text-sm font-semibold text-gray-900 line-clamp-2 break-words">
+            <p className="text-xs sm:text-sm font-semibold text-text line-clamp-2 break-words">
               {task.title}
             </p>
           </div>
@@ -204,7 +204,7 @@ const DraggableTaskCard = ({
 
         {/* Data de vencimento */}
         {task.dueDate && (
-          <div className="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-gray-500">
+          <div className="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-text-muted">
             <Clock className="h-3 w-3 flex-shrink-0" />
             <span className="truncate">{formatDate(task.dueDate)}</span>
           </div>
@@ -387,26 +387,26 @@ export const TarefasKanbanPage = () => {
   return (
     <div className="space-y-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-xl border border-border p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Quadro de Tarefas</h1>
-            <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
+            <h1 className="text-lg font-bold text-text">Quadro de Tarefas</h1>
+            <div className="mt-2 flex flex-wrap gap-4 text-sm text-text-muted">
               <span>
                 Atrasadas: <span className="font-semibold text-red-600">{kpi.overdue}</span>
               </span>
               <span>
-                Aguardando confirmação: <span className="font-semibold text-gray-900">{kpi.awaiting}</span>
+                Aguardando confirmação: <span className="font-semibold text-text">{kpi.awaiting}</span>
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
               <input
-                className="h-10 w-[260px] rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
-                style={{ '--tw-ring-color': '#721011' } as React.CSSProperties}
+                className="h-10 w-[260px] rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                style={{ '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
                 placeholder="Buscar tarefas..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -420,7 +420,7 @@ export const TarefasKanbanPage = () => {
                 "h-10 px-4 rounded-lg font-medium transition-all flex items-center gap-2 border",
                 showDeleted 
                   ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" 
-                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  : "bg-white text-text-muted border-border hover:bg-surface-alt"
               )}
               title={showDeleted ? "Mostrar tarefas ativas" : "Ver tarefas arquivadas"}
             >
@@ -439,7 +439,7 @@ export const TarefasKanbanPage = () => {
                   setCreateModalOpen(true)
                 }}
                 className="h-10 px-4 rounded-lg font-medium text-white transition-all hover:shadow-lg flex items-center gap-2"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 <Plus className="h-4 w-4" />
                 Nova tarefa
@@ -451,11 +451,11 @@ export const TarefasKanbanPage = () => {
 
       {/* Visualização: Lixeira de Tarefas Arquivadas */}
       {showDeleted && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="bg-white rounded-xl border border-border p-6">
           <div className="flex items-center gap-3 mb-4">
             <Trash2 className="h-5 w-5 text-red-500" />
-            <h2 className="text-lg font-bold text-gray-900">Tarefas Arquivadas</h2>
-            <span className="text-sm text-gray-500">({deletedTarefas.length} itens)</span>
+            <h2 className="text-lg font-bold text-text">Tarefas Arquivadas</h2>
+            <span className="text-sm text-text-muted">({deletedTarefas.length} itens)</span>
           </div>
           
           {loadingDeleted ? (
@@ -464,19 +464,19 @@ export const TarefasKanbanPage = () => {
             </div>
           ) : deletedTarefas.length === 0 ? (
             <div className="text-center py-12">
-              <Trash2 className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-500">Nenhuma tarefa arquivada</p>
-              <p className="text-sm text-gray-400 mt-1">Tarefas excluídas aparecerão aqui</p>
+              <Trash2 className="h-12 w-12 text-border mx-auto mb-3" />
+              <p className="text-text-muted">Nenhuma tarefa arquivada</p>
+              <p className="text-sm text-text-subtle mt-1">Tarefas excluídas aparecerão aqui</p>
             </div>
           ) : (
             <div className="space-y-2">
               {deletedTarefas.map((t) => (
                 <div
                   key={t.id}
-                  className="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 rounded-lg border border-border bg-surface-alt hover:bg-surface-alt transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-700 truncate">{t.title}</h3>
+                    <h3 className="text-sm font-semibold text-text truncate">{t.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={cn(
                         "text-xs px-2 py-0.5 rounded-full font-medium",
@@ -484,7 +484,7 @@ export const TarefasKanbanPage = () => {
                       )}>
                         {COLUMN_LABELS[t.status]}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-text-subtle">
                         {t.dueDate ? `Prazo: ${formatDate(t.dueDate)}` : 'Sem prazo'}
                       </span>
                     </div>
@@ -529,7 +529,7 @@ export const TarefasKanbanPage = () => {
               <DroppableColumn columnKey={key} title={COLUMN_LABELS[key]} count={items.length} key={key}>
                 {items.map((t) => (
                   <DraggableTaskCard key={t.id} task={t} onOpen={() => openTask(t)}>
-                    <div className="mt-2.5 pt-2 border-t border-gray-100 flex flex-wrap gap-1.5">
+                    <div className="mt-2.5 pt-2 border-t border-border flex flex-wrap gap-1.5">
                       {/* Botões para ADVOGADO */}
                       {role === 'ADVOGADO' && key === 'pendente' && (
                         <button
@@ -625,7 +625,7 @@ export const TarefasKanbanPage = () => {
                             <span>Aprovar</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-border bg-white text-text hover:bg-surface-alt hover:border-border-strong transition-all shadow-sm"
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
@@ -666,7 +666,7 @@ export const TarefasKanbanPage = () => {
                       )}
                       {canApprove && key === 'concluida' && (
                         <button
-                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-border bg-white text-text-muted hover:bg-surface-alt hover:border-border-strong transition-all shadow-sm"
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
@@ -681,7 +681,7 @@ export const TarefasKanbanPage = () => {
                   </DraggableTaskCard>
                 ))}
                 {items.length === 0 && (
-                  <div className="text-xs sm:text-sm text-gray-400 text-center py-6 sm:py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                  <div className="text-xs sm:text-sm text-text-subtle text-center py-6 sm:py-8 border-2 border-dashed border-border rounded-lg">
                     Sem tarefas
                   </div>
                 )}
@@ -708,18 +708,18 @@ export const TarefasKanbanPage = () => {
             style={{ animation: 'scaleIn 0.25s ease-out' }}
           >
             {/* Header do Drawer */}
-            <div className="flex-shrink-0 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
+            <div className="flex-shrink-0 border-b border-border bg-gradient-to-r from-white to-gray-50">
               <div className="flex items-start justify-between p-5">
                 <div className="flex-1 min-w-0 pr-4">
                   {editMode ? (
                     <input
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
-                      className="w-full text-xl font-bold text-gray-900 bg-transparent border-b-2 border-brand-primary focus:outline-none pb-1"
+                      className="w-full text-xl font-bold text-text bg-transparent border-b-2 border-brand-primary focus:outline-none pb-1"
                       placeholder="Título da tarefa"
                     />
                   ) : (
-                    <h2 className="text-xl font-bold text-gray-900 truncate">{active.title}</h2>
+                    <h2 className="text-xl font-bold text-text truncate">{active.title}</h2>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {/* Badge de Status */}
@@ -748,9 +748,9 @@ export const TarefasKanbanPage = () => {
                 </div>
                 <button
                   onClick={() => setModalOpen(false)}
-                  className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex-shrink-0 p-2 rounded-lg hover:bg-surface-alt transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5 text-text-muted" />
                 </button>
               </div>
               
@@ -762,7 +762,7 @@ export const TarefasKanbanPage = () => {
                     "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors",
                     drawerTab === 'detalhes'
                       ? "text-brand-primary border-b-2 border-brand-primary bg-brand-primary-50/50"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      : "text-text-muted hover:text-text hover:bg-surface-alt"
                   )}
                 >
                   <FileText className="w-4 h-4 inline mr-1.5" />
@@ -774,7 +774,7 @@ export const TarefasKanbanPage = () => {
                     "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors",
                     drawerTab === 'historico'
                       ? "text-brand-primary border-b-2 border-brand-primary bg-brand-primary-50/50"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      : "text-text-muted hover:text-text hover:bg-surface-alt"
                   )}
                 >
                   <History className="w-4 h-4 inline mr-1.5" />
@@ -786,7 +786,7 @@ export const TarefasKanbanPage = () => {
                     "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors",
                     drawerTab === 'comentarios'
                       ? "text-brand-primary border-b-2 border-brand-primary bg-brand-primary-50/50"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      : "text-text-muted hover:text-text hover:bg-surface-alt"
                   )}
                 >
                   <MessageSquare className="w-4 h-4 inline mr-1.5" />
@@ -803,8 +803,8 @@ export const TarefasKanbanPage = () => {
                 {drawerTab === 'detalhes' && (
                   <>
                 {/* Seção: Informações Principais */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                <div className="bg-surface-alt rounded-xl p-4 space-y-4">
+                  <h3 className="text-sm font-semibold text-text uppercase tracking-wide flex items-center gap-2">
                     <FileText className="w-4 h-4 text-brand-primary" />
                     Informações da Tarefa
                   </h3>
@@ -812,7 +812,7 @@ export const TarefasKanbanPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Responsável */}
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                      <label className="text-xs text-text-muted font-medium flex items-center gap-1">
                         <User className="w-3.5 h-3.5" /> Responsável
                       </label>
                       {editMode ? (
@@ -820,10 +820,10 @@ export const TarefasKanbanPage = () => {
                           value={assignedDraft}
                           onChange={(e) => setAssignedDraft(e.target.value)}
                           placeholder="ID do usuário"
-                          className="h-9 w-full rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
+                          className="h-9 w-full rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
                         />
                       ) : (
-                        <p className="text-sm font-medium text-gray-900 bg-white rounded-lg px-3 py-2 border border-gray-100">
+                        <p className="text-sm font-medium text-text bg-white rounded-lg px-3 py-2 border border-border">
                           {active.ownerId ? active.ownerId.slice(0, 8) + '...' : 'Não atribuído'}
                         </p>
                       )}
@@ -831,7 +831,7 @@ export const TarefasKanbanPage = () => {
                     
                     {/* Prazo */}
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                      <label className="text-xs text-text-muted font-medium flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" /> Prazo
                       </label>
                       {editMode ? (
@@ -839,14 +839,14 @@ export const TarefasKanbanPage = () => {
                           type="date"
                           value={formDueDate}
                           onChange={(e) => setFormDueDate(e.target.value)}
-                          className="h-9 w-full rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
+                          className="h-9 w-full rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
                         />
                       ) : (
                         <p className={cn(
                           "text-sm font-medium rounded-lg px-3 py-2 border",
                           isOverdue(active) 
                             ? "text-red-700 bg-red-50 border-red-200" 
-                            : "text-gray-900 bg-white border-gray-100"
+                            : "text-text bg-white border-border"
                         )}>
                           {active.dueDate ? formatDate(active.dueDate) : 'Sem prazo definido'}
                         </p>
@@ -855,21 +855,21 @@ export const TarefasKanbanPage = () => {
                     
                     {/* Prioridade */}
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                      <label className="text-xs text-text-muted font-medium flex items-center gap-1">
                         <Flag className="w-3.5 h-3.5" /> Prioridade
                       </label>
                       {editMode ? (
                         <select
                           value={formPriority}
                           onChange={(e) => setFormPriority(e.target.value as Tarefa['priority'])}
-                          className="h-9 w-full rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
+                          className="h-9 w-full rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
                         >
                           <option value="baixa">🔽 Baixa</option>
                           <option value="normal">➖ Normal</option>
                           <option value="alta">🔥 Alta</option>
                         </select>
                       ) : (
-                        <p className="text-sm font-medium text-gray-900 bg-white rounded-lg px-3 py-2 border border-gray-100 capitalize">
+                        <p className="text-sm font-medium text-text bg-white rounded-lg px-3 py-2 border border-border capitalize">
                           {priorityIcon(active.priority)} {priorityLabel(active.priority)}
                         </p>
                       )}
@@ -877,10 +877,10 @@ export const TarefasKanbanPage = () => {
                     
                     {/* Criado em */}
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                      <label className="text-xs text-text-muted font-medium flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" /> Criado em
                       </label>
-                      <p className="text-sm font-medium text-gray-900 bg-white rounded-lg px-3 py-2 border border-gray-100">
+                      <p className="text-sm font-medium text-text bg-white rounded-lg px-3 py-2 border border-border">
                         {formatDate(active.createdAt)}
                       </p>
                     </div>
@@ -889,7 +889,7 @@ export const TarefasKanbanPage = () => {
                 
                 {/* Seção: Descrição */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-text uppercase tracking-wide flex items-center gap-2">
                     <FileText className="w-4 h-4 text-brand-primary" />
                     Descrição
                   </h3>
@@ -898,14 +898,14 @@ export const TarefasKanbanPage = () => {
                       value={formDescription}
                       onChange={(e) => setFormDescription(e.target.value)}
                       rows={4}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary resize-none"
+                      className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary resize-none"
                       placeholder="Descreva os detalhes da tarefa..."
                     />
                   ) : (
-                    <div className="bg-gray-50 rounded-xl p-4 min-h-[100px]">
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <div className="bg-surface-alt rounded-xl p-4 min-h-[100px]">
+                      <p className="text-sm text-text whitespace-pre-wrap">
                         {active.description || (
-                          <span className="text-gray-400 italic">Nenhuma descrição adicionada</span>
+                          <span className="text-text-subtle italic">Nenhuma descrição adicionada</span>
                         )}
                       </p>
                     </div>
@@ -914,7 +914,7 @@ export const TarefasKanbanPage = () => {
                 
                 {/* Seção: Ações Rápidas */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-text uppercase tracking-wide flex items-center gap-2">
                     <ArrowRight className="w-4 h-4 text-brand-primary" />
                     Ações Rápidas
                   </h3>
@@ -982,7 +982,7 @@ export const TarefasKanbanPage = () => {
                               setModalOpen(false)
                             }
                           }}
-                          className="flex items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                          className="flex items-center gap-2 p-3 rounded-xl border border-border bg-white text-text hover:bg-surface-alt transition-colors text-sm font-medium"
                         >
                           <XCircle className="w-4 h-4" />
                           Devolver
@@ -1008,8 +1008,8 @@ export const TarefasKanbanPage = () => {
                 
                 {/* Seção: Devolução (se aguardando validação) */}
                 {!editMode && canApprove && active.status === 'aguardando_validacao' && (
-                  <div className="space-y-3 border-t border-gray-100 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                  <div className="space-y-3 border-t border-border pt-4">
+                    <h3 className="text-sm font-semibold text-text uppercase tracking-wide flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-brand-primary" />
                       Devolver com Comentário
                     </h3>
@@ -1017,7 +1017,7 @@ export const TarefasKanbanPage = () => {
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}
                       placeholder="Ex.: faltou RG/CPF, revisar tese, etc."
-                      className="h-10 w-full rounded-xl border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                      className="h-10 w-full rounded-xl border border-border px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                     />
                     <button
                       disabled={!rejectReason.trim()}
@@ -1027,7 +1027,7 @@ export const TarefasKanbanPage = () => {
                         await rejectTarefa(active.id, reason)
                         setModalOpen(false)
                       }}
-                      className="w-full h-10 rounded-xl border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-10 rounded-xl border border-border font-medium text-text hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Confirmar Devolução
                     </button>
@@ -1050,7 +1050,7 @@ export const TarefasKanbanPage = () => {
                 {/* === ABA HISTÓRICO === */}
                 {drawerTab === 'historico' && (
                   <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-text uppercase tracking-wide flex items-center gap-2">
                       <History className="w-4 h-4 text-brand-primary" />
                       Timeline de Mudanças
                     </h3>
@@ -1060,14 +1060,14 @@ export const TarefasKanbanPage = () => {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
                       </div>
                     ) : taskHistory.length === 0 ? (
-                      <div className="bg-gray-50 rounded-xl p-6 text-center">
-                        <History className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Nenhum histórico de mudanças registrado</p>
+                      <div className="bg-surface-alt rounded-xl p-6 text-center">
+                        <History className="w-8 h-8 text-text-subtle mx-auto mb-2" />
+                        <p className="text-sm text-text-muted">Nenhum histórico de mudanças registrado</p>
                       </div>
                     ) : (
                       <div className="relative">
                         {/* Linha vertical da timeline */}
-                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-surface-alt" />
                         
                         <div className="space-y-4">
                           {taskHistory.map((entry, index) => (
@@ -1077,7 +1077,7 @@ export const TarefasKanbanPage = () => {
                                 "absolute left-2 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center",
                                 index === taskHistory.length - 1
                                   ? "bg-brand-primary border-brand-primary"
-                                  : "bg-white border-gray-300"
+                                  : "bg-white border-border-strong"
                               )}>
                                 {index === taskHistory.length - 1 && (
                                   <div className="w-2 h-2 bg-white rounded-full" />
@@ -1085,42 +1085,42 @@ export const TarefasKanbanPage = () => {
                               </div>
                               
                               {/* Card do evento */}
-                              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                              <div className="bg-surface-alt rounded-lg p-3 border border-border">
                                 <div className="flex items-center justify-between gap-2 mb-1">
                                   <div className="flex items-center gap-2">
                                     {entry.status_anterior ? (
                                       <>
                                         <span className={cn(
                                           "text-xs px-2 py-0.5 rounded-full font-medium",
-                                          COLUMN_HEADER_COLORS[entry.status_anterior as ColumnKey] || 'bg-gray-100 text-gray-600'
+                                          COLUMN_HEADER_COLORS[entry.status_anterior as ColumnKey] || 'bg-surface-alt text-text-muted'
                                         )}>
                                           {COLUMN_LABELS[entry.status_anterior as ColumnKey] || entry.status_anterior}
                                         </span>
-                                        <ArrowRight className="w-3 h-3 text-gray-400" />
+                                        <ArrowRight className="w-3 h-3 text-text-subtle" />
                                       </>
                                     ) : (
-                                      <span className="text-xs text-gray-500">Criação:</span>
+                                      <span className="text-xs text-text-muted">Criação:</span>
                                     )}
                                     <span className={cn(
                                       "text-xs px-2 py-0.5 rounded-full font-medium",
-                                      COLUMN_HEADER_COLORS[entry.status_novo as ColumnKey] || 'bg-gray-100 text-gray-600'
+                                      COLUMN_HEADER_COLORS[entry.status_novo as ColumnKey] || 'bg-surface-alt text-text-muted'
                                     )}>
                                       {COLUMN_LABELS[entry.status_novo as ColumnKey] || entry.status_novo}
                                     </span>
                                   </div>
-                                  <span className="text-[10px] text-gray-400">
+                                  <span className="text-[10px] text-text-subtle">
                                     {formatDateTime(entry.created_at)}
                                   </span>
                                 </div>
                                 
                                 {entry.motivo && (
-                                  <p className="text-xs text-gray-600 mt-1 bg-white rounded px-2 py-1 border border-gray-100">
+                                  <p className="text-xs text-text-muted mt-1 bg-white rounded px-2 py-1 border border-border">
                                     💬 {entry.motivo}
                                   </p>
                                 )}
                                 
                                 {entry.changed_by_name && (
-                                  <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                  <p className="text-[10px] text-text-subtle mt-1 flex items-center gap-1">
                                     <User className="w-3 h-3" />
                                     {entry.changed_by_name}
                                   </p>
@@ -1137,14 +1137,14 @@ export const TarefasKanbanPage = () => {
                 {/* === ABA COMENTÁRIOS === */}
                 {drawerTab === 'comentarios' && (
                   <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-text uppercase tracking-wide flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-brand-primary" />
                       Comentários
                     </h3>
-                    <div className="bg-gray-50 rounded-xl p-6 text-center">
-                      <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">Funcionalidade em desenvolvimento</p>
-                      <p className="text-xs text-gray-400 mt-1">Em breve você poderá adicionar comentários às tarefas</p>
+                    <div className="bg-surface-alt rounded-xl p-6 text-center">
+                      <MessageSquare className="w-8 h-8 text-text-subtle mx-auto mb-2" />
+                      <p className="text-sm text-text-muted">Funcionalidade em desenvolvimento</p>
+                      <p className="text-xs text-text-subtle mt-1">Em breve você poderá adicionar comentários às tarefas</p>
                     </div>
                   </div>
                 )}
@@ -1153,7 +1153,7 @@ export const TarefasKanbanPage = () => {
             </div>
             
             {/* Footer do Drawer */}
-            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50 p-4">
+            <div className="flex-shrink-0 border-t border-border bg-surface-alt p-4">
               <div className="flex items-center justify-between gap-3">
                 {canApprove && !editMode && (
                   <button
@@ -1165,7 +1165,7 @@ export const TarefasKanbanPage = () => {
                       setAssignedDraft(active.ownerId || '')
                       setEditMode(true)
                     }}
-                    className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                    className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-border bg-white font-medium text-text hover:bg-surface-alt transition-colors text-sm"
                   >
                     <Edit3 className="w-4 h-4" />
                     Editar Tarefa
@@ -1176,7 +1176,7 @@ export const TarefasKanbanPage = () => {
                   <>
                     <button
                       onClick={() => setEditMode(false)}
-                      className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                      className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-border bg-white font-medium text-text hover:bg-surface-alt transition-colors text-sm"
                     >
                       <X className="w-4 h-4" />
                       Cancelar
@@ -1219,31 +1219,31 @@ export const TarefasKanbanPage = () => {
       <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Nova Tarefa">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-gray-500">Título *</label>
+            <label className="text-sm text-text-muted">Título *</label>
             <input
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
-              className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
               placeholder="Título da tarefa"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-gray-500">Descrição</label>
+            <label className="text-sm text-text-muted">Descrição</label>
             <textarea
               value={formDescription}
               onChange={(e) => setFormDescription(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2"
+              className="w-full rounded-lg border border-border px-4 py-2 text-sm focus:outline-none focus:ring-2"
               placeholder="Descrição da tarefa"
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm text-gray-500">Prioridade</label>
+              <label className="text-sm text-text-muted">Prioridade</label>
               <select
                 value={formPriority}
                 onChange={(e) => setFormPriority(e.target.value as Tarefa['priority'])}
-                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
               >
                 <option value="baixa">Baixa</option>
                 <option value="normal">Normal</option>
@@ -1251,34 +1251,34 @@ export const TarefasKanbanPage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-gray-500">Prazo</label>
+              <label className="text-sm text-text-muted">Prazo</label>
               <input
                 type="date"
                 value={formDueDate}
                 onChange={(e) => setFormDueDate(e.target.value)}
-                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
               />
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-gray-500">Atribuir para (ID do usuário)</label>
+            <label className="text-sm text-text-muted">Atribuir para (ID do usuário)</label>
             <input
               value={assignedDraft}
               onChange={(e) => setAssignedDraft(e.target.value)}
               placeholder="Deixe vazio para atribuir a você mesmo"
-              className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
             />
           </div>
           <div className="flex gap-2 pt-2">
             <button
-              className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="h-10 px-4 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors"
               onClick={() => setCreateModalOpen(false)}
             >
               Cancelar
             </button>
             <button
               className="h-10 px-4 rounded-lg font-medium text-white transition-colors"
-              style={{ backgroundColor: '#721011' }}
+              style={{ backgroundColor: 'var(--brand-primary)' }}
               onClick={async () => {
                 if (!formTitle.trim()) return
                 await createTarefa({

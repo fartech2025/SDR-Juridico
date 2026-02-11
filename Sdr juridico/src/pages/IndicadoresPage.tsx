@@ -168,9 +168,10 @@ export const IndicadoresPage = () => {
   return (
     <div
       className={cn(
-        'min-h-screen pb-12',
+        'min-h-screen',
         'bg-base text-text',
       )}
+      style={{ padding: '20px' }}
     >
       <div className="space-y-5">
         <header
@@ -236,9 +237,9 @@ export const IndicadoresPage = () => {
                   />
                   <Tooltip
                     contentStyle={{
-                      background: '#ffffff',
-                      border: '1px solid #e9ecf5',
-                      color: '#23263b',
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text)',
                       borderRadius: '12px',
                       boxShadow: '0 10px 30px rgba(18, 38, 63, 0.08)',
                       fontSize: '12px',
@@ -246,7 +247,7 @@ export const IndicadoresPage = () => {
                   />
                   <Legend
                     iconType="circle"
-                    wrapperStyle={{ fontSize: '12px', color: '#6b7280' }}
+                    wrapperStyle={{ fontSize: '12px', color: 'var(--color-text-muted)' }}
                   />
                   <Line type="monotone" dataKey="leads" stroke="var(--color-primary)" strokeWidth={2} />
                   <Line type="monotone" dataKey="closed" stroke="var(--color-accent)" strokeWidth={2} />
@@ -284,9 +285,9 @@ export const IndicadoresPage = () => {
                   />
                   <Tooltip
                     contentStyle={{
-                      background: '#ffffff',
-                      border: '1px solid #e9ecf5',
-                      color: '#23263b',
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text)',
                       borderRadius: '12px',
                       boxShadow: '0 10px 30px rgba(18, 38, 63, 0.08)',
                       fontSize: '12px',

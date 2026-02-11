@@ -122,30 +122,30 @@ const StatsCard = ({
   changeType?: 'up' | 'down' | 'neutral'
   color: string
 }) => (
-  <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+  <div className="bg-surface rounded-xl p-5 border border-border hover:shadow-md transition-shadow">
     <div className="flex items-start justify-between">
       <div
         className="w-10 h-10 rounded-lg flex items-center justify-center"
         style={{ backgroundColor: `${color}15`, color }}
       >
-        <Icon className="w-5 h-5" />
+        <Icon className="h-5 w-5" />
       </div>
       {change && (
         <span className={cn(
           'text-xs font-medium px-2 py-1 rounded-full',
-          changeType === 'up' ? 'bg-green-50 text-green-700' :
-          changeType === 'down' ? 'bg-red-50 text-red-700' :
-          'bg-gray-50 text-gray-600'
+          changeType === 'up' ? 'bg-success-bg text-success' :
+          changeType === 'down' ? 'bg-danger-bg text-danger' :
+          'bg-surface-alt text-text-muted'
         )}>
-          {changeType === 'up' ? <TrendingUp className="w-3 h-3 inline" /> :
-           changeType === 'down' ? <TrendingDown className="w-3 h-3 inline" /> :
-           <Minus className="w-3 h-3 inline" />} {change}
+          {changeType === 'up' ? <TrendingUp className="h-3.5 w-3.5 inline" /> :
+           changeType === 'down' ? <TrendingDown className="h-3.5 w-3.5 inline" /> :
+           <Minus className="h-3.5 w-3.5 inline" />} {change}
         </span>
       )}
     </div>
     <div className="mt-4">
-      <div className="text-2xl font-bold text-gray-900">{value}</div>
-      <div className="text-sm text-gray-500 mt-1">{label}</div>
+      <div className="text-2xl font-bold text-text">{value}</div>
+      <div className="text-sm text-text-muted mt-1">{label}</div>
     </div>
   </div>
 )
@@ -168,19 +168,19 @@ const ActionCard = ({
   area: string
   onAction: () => void
 }) => (
-  <div className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all">
+  <div className="bg-surface rounded-xl border border-border overflow-hidden hover:shadow-md transition-all">
     <div className="p-5">
       <div className="flex items-start justify-between mb-3">
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(191, 111, 50, 0.1)', color: '#BF6F32' }}
+          className="w-10 h-10 rounded-lg flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(191, 111, 50, 0.1)', color: 'var(--brand-accent)' }}
         >
-          <Sparkles className="w-5 h-5" />
+          <Sparkles className="h-5 w-5" />
         </div>
-        <span className="text-xs font-medium text-gray-400">Próxima ação</span>
+        <span className="text-xs font-medium text-text-subtle">Próxima ação</span>
       </div>
-      <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-      <p className="text-sm text-gray-500 mb-4">Cliente: {client}</p>
+      <h3 className="font-semibold text-text mb-1">{title}</h3>
+      <p className="text-sm text-text-muted mb-4">Cliente: {client}</p>
       <div className="flex items-center gap-2 mb-4">
         <span
           className="px-2.5 py-1 text-xs font-medium rounded-full"
@@ -191,19 +191,18 @@ const ActionCard = ({
         >
           {status}
         </span>
-        <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+        <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-surface-alt text-text-muted">
           {area}
         </span>
       </div>
-      <p className="text-xs text-gray-400 mb-4">{subtitle}</p>
+      <p className="text-xs text-text-subtle mb-4">{subtitle}</p>
     </div>
     <button
       onClick={onAction}
-      className="w-full py-3 px-5 flex items-center justify-between text-sm font-medium border-t border-gray-100 hover:bg-gray-50 transition-colors"
-      style={{ color: '#721011' }}
+      className="w-full py-3 px-5 flex items-center justify-between text-sm font-medium border-t border-border hover:bg-surface-alt transition-colors text-brand-primary"
     >
       <span>Abrir dossiê</span>
-      <ChevronRight className="w-4 h-4" />
+      <ChevronRight className="h-4 w-4" />
     </button>
   </div>
 )
@@ -226,28 +225,27 @@ const TaskCard = ({
   color: string
   onClick: () => void
 }) => (
-  <div className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-all">
+  <div className="bg-surface rounded-xl border border-border p-5 hover:shadow-md transition-all">
     <div className="flex items-start gap-4">
       <div
         className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: `${color}15`, color }}
       >
-        <Icon className="w-5 h-5" />
+        <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-        <p className="text-sm text-gray-500 mb-3">{description}</p>
+        <h3 className="font-semibold text-text mb-1">{title}</h3>
+        <p className="text-sm text-text-muted mb-3">{description}</p>
         <div className="flex items-center justify-between">
-          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-surface-alt text-text-muted">
             {status}
           </span>
           <button
             onClick={onClick}
-            className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
-            style={{ color: '#721011' }}
+            className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all text-brand-primary"
           >
             {buttonText}
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -263,13 +261,13 @@ const QuickActionButton = ({ icon: Icon, label, onClick }: {
 }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all text-left"
+    className="w-full flex items-center gap-3 px-4 py-3 bg-surface border border-border rounded-xl hover:border-border-strong hover:shadow-sm transition-all text-left"
   >
-    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50">
-      <Icon className="w-5 h-5 text-gray-600" />
+    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-alt">
+      <Icon className="h-5 w-5 text-text-muted" />
     </div>
-    <span className="text-sm font-medium text-gray-700">{label}</span>
-    <ChevronRight className="w-4 h-4 ml-auto text-gray-400" />
+    <span className="text-sm font-medium text-text">{label}</span>
+    <ChevronRight className="h-4 w-4 ml-auto text-text-subtle" />
   </button>
 )
 
@@ -403,7 +401,7 @@ export const DashboardPage = () => {
   }, [alertas, agendaItems, casos, documentos, leads, todayIso])
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-surface-alt" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <PageState
         status={pageState}
         errorDescription={errorMessage}
@@ -493,33 +491,31 @@ export const DashboardPage = () => {
               />
 
               {/* Agenda */}
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
+              <div className="bg-surface rounded-xl border border-border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Agenda do dia</h3>
+                  <h3 className="font-semibold text-text">Agenda do dia</h3>
                   <button
                     onClick={() => navigate('/app/agenda')}
-                    className="text-sm font-medium"
-                    style={{ color: '#721011' }}
+                    className="text-sm font-medium text-brand-primary"
                   >
                     Ver todos
                   </button>
                 </div>
                 <div className="space-y-3">
                   {agendaToday.length === 0 && (
-                    <div className="text-center py-8 text-sm text-gray-400">
+                    <div className="text-center py-8 text-sm text-text-subtle">
                       Nenhum compromisso agendado para hoje.
                     </div>
                   )}
                   {agendaToday.map((item) => (
-                    <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <span className="text-sm font-mono text-gray-400 w-12">{item.time}</span>
+                    <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-surface-alt transition-colors">
+                      <span className="text-sm font-mono text-text-subtle w-12">{item.time}</span>
                       <div
-                        className="w-1 h-8 rounded-full"
-                        style={{ backgroundColor: '#721011' }}
+                        className="w-1 h-8 rounded-full bg-brand-primary"
                       />
                       <div className="flex-1">
-                        <span className="text-sm text-gray-700">{item.title}</span>
-                        <p className="text-xs text-gray-400">{item.cliente}</p>
+                        <span className="text-sm text-text">{item.title}</span>
+                        <p className="text-xs text-text-subtle">{item.cliente}</p>
                       </div>
                     </div>
                   ))}
@@ -543,8 +539,8 @@ export const DashboardPage = () => {
               )}
 
               {/* Quick Actions */}
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 className="font-semibold text-gray-900 mb-4">Ações rápidas</h3>
+              <div className="bg-white rounded-xl border border-border p-5">
+                <h3 className="font-semibold text-text mb-4">Ações rápidas</h3>
                 <div className="space-y-3">
                   <QuickActionButton icon={Flame} label="Novo lead" onClick={() => navigate('/app/leads')} />
                   <QuickActionButton icon={Briefcase} label="Novo caso" onClick={() => navigate('/app/casos')} />

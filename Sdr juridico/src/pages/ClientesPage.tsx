@@ -98,7 +98,7 @@ const resolveStatus = (
 
 const statusBadge = (status: Cliente['status']) => {
   if (status === 'inativo') {
-    return 'bg-gray-100 text-gray-600'
+    return 'bg-surface-alt text-text-muted'
   }
   if (status === 'em_risco') {
     return 'bg-red-100 text-red-700'
@@ -204,7 +204,7 @@ export const ClientesPage = () => {
     <button
       type="button"
       className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
-      style={{ backgroundColor: '#721011' }}
+      style={{ backgroundColor: 'var(--brand-primary)' }}
       onClick={() => {
         resetClienteForm()
         setShowForm(true)
@@ -438,18 +438,18 @@ export const ClientesPage = () => {
   // Form view
   if (showForm) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
         <div className="mx-auto max-w-4xl space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+              <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
                 {isEditing ? 'Editar cliente' : 'Novo cliente'}
               </p>
-              <h1 className="mt-1 text-2xl font-bold text-gray-900">
+              <h1 className="mt-1 text-2xl font-bold text-text">
                 {isEditing ? 'Atualizar cadastro' : 'Cadastrar cliente'}
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-text-muted">
                 {isEditing ? 'Atualize os dados e salve as alterações.' : 'Preencha os dados para criar um novo cliente.'}
               </p>
             </div>
@@ -459,56 +459,56 @@ export const ClientesPage = () => {
                 resetClienteForm()
                 setShowForm(false)
               }}
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt"
             >
               Voltar
             </button>
           </div>
 
           {/* Form Card */}
-          <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+          <div className="rounded-xl border border-border bg-white p-8 shadow-sm">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Nome *</label>
+                <label className="text-sm font-medium text-text">Nome *</label>
                 <input
                   value={formData.nome}
                   onChange={(event) => setFormData({ ...formData, nome: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Nome do cliente"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email</label>
+                <label className="text-sm font-medium text-text">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(event) => setFormData({ ...formData, email: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="email@exemplo.com"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Telefone</label>
+                <label className="text-sm font-medium text-text">Telefone</label>
                 <input
                   value={formData.telefone}
                   onChange={(event) => setFormData({ ...formData, telefone: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="(00) 00000-0000"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Tipo</label>
+                <label className="text-sm font-medium text-text">Tipo</label>
                 <select
                   value={formData.tipo}
                   onChange={(event) => setFormData({ ...formData, tipo: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 >
                   <option value="pf">Pessoa física</option>
                   <option value="pj">Pessoa jurídica</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <label className="text-sm font-medium text-text flex items-center gap-2">
                   {formData.tipo === 'pj' ? 'CNPJ' : 'CPF'}
                   {buscandoDados && (
                     <span className="flex items-center gap-1 text-xs text-blue-600">
@@ -528,13 +528,13 @@ export const ClientesPage = () => {
                     value={formData.documento}
                     onChange={(event) => handleDocumentoChange(event.target.value)}
                     disabled={buscandoDados}
-                    className={`h-11 w-full rounded-lg border bg-white px-4 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
+                    className={`h-11 w-full rounded-lg border bg-white px-4 pr-10 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 ${
                       documentoValido === true
                         ? 'border-green-400 focus:border-green-500 focus:ring-green-200'
                         : documentoValido === false
                         ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                        : 'border-gray-200 focus:border-[#721011] focus:ring-[#721011]/20'
-                    } ${buscandoDados ? 'bg-gray-50' : ''}`}
+                        : 'border-border focus:border-brand-primary focus:ring-brand-primary/20'
+                    } ${buscandoDados ? 'bg-surface-alt' : ''}`}
                     placeholder={formData.tipo === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
                     maxLength={18}
                   />
@@ -549,27 +549,27 @@ export const ClientesPage = () => {
                     ) : null}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-text-muted">
                   {formData.tipo === 'pj' 
                     ? 'Digite o CNPJ para buscar dados automaticamente da Receita Federal'
                     : 'Digite o CPF para validação automática'}
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Área de atuação</label>
+                <label className="text-sm font-medium text-text">Área de atuação</label>
                 <input
                   value={formData.area_atuacao}
                   onChange={(event) => setFormData({ ...formData, area_atuacao: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Ex: Empresarial, Trabalhista"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Status</label>
+                <label className="text-sm font-medium text-text">Status</label>
                 <select
                   value={formData.status}
                   onChange={(event) => setFormData({ ...formData, status: event.target.value as ClienteRow['status'] })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 >
                   <option value="ativo">Ativo</option>
                   <option value="em_risco">Em risco</option>
@@ -577,11 +577,11 @@ export const ClientesPage = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Saúde</label>
+                <label className="text-sm font-medium text-text">Saúde</label>
                 <select
                   value={formData.health || 'ok'}
                   onChange={(event) => setFormData({ ...formData, health: event.target.value as ClienteRow['health'] })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 >
                   <option value="ok">Ok</option>
                   <option value="atencao">Atenção</option>
@@ -589,48 +589,48 @@ export const ClientesPage = () => {
                 </select>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Endereço</label>
+                <label className="text-sm font-medium text-text">Endereço</label>
                 <input
                   value={formData.endereco}
                   onChange={(event) => setFormData({ ...formData, endereco: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Rua, número, bairro"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Cidade</label>
+                <label className="text-sm font-medium text-text">Cidade</label>
                 <input
                   value={formData.cidade}
                   onChange={(event) => setFormData({ ...formData, cidade: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Cidade"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Estado</label>
+                <label className="text-sm font-medium text-text">Estado</label>
                 <input
                   value={formData.estado}
                   onChange={(event) => setFormData({ ...formData, estado: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="UF"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">CEP</label>
+                <label className="text-sm font-medium text-text">CEP</label>
                 <input
                   value={formData.cep}
                   onChange={(event) => setFormData({ ...formData, cep: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="00000-000"
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Observações</label>
+                <label className="text-sm font-medium text-text">Observações</label>
                 <textarea
                   value={formData.observacoes}
                   onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })}
                   rows={4}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                  className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Observações adicionais"
                 />
               </div>
@@ -643,7 +643,7 @@ export const ClientesPage = () => {
                   resetClienteForm()
                   setShowForm(false)
                 }}
-                className="rounded-lg border border-gray-200 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-border bg-white px-6 py-2.5 text-sm font-medium text-text hover:bg-surface-alt"
               >
                 Cancelar
               </button>
@@ -652,7 +652,7 @@ export const ClientesPage = () => {
                 onClick={handleSaveCliente}
                 disabled={saving}
                 className="rounded-lg px-6 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar cliente'}
               </button>
@@ -665,25 +665,25 @@ export const ClientesPage = () => {
 
   // List view
   return (
-    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="bg-white rounded-xl border border-border p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: 'var(--brand-primary)' }}
                 >
                   <Users className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
                   Gestao de Clientes
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <h1 className="text-2xl font-bold text-text">Clientes</h1>
+              <p className="mt-1 text-sm text-text-muted">
                 Gerencie sua carteira de clientes com indicadores de risco e status.
               </p>
             </div>
@@ -692,7 +692,7 @@ export const ClientesPage = () => {
                 type="button"
                 onClick={() => void fetchClientes()}
                 disabled={loading}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50"
               >
                 Atualizar
               </button>
@@ -704,7 +704,7 @@ export const ClientesPage = () => {
                     setShowForm(true)
                   }}
                   className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
-                  style={{ backgroundColor: '#721011' }}
+                  style={{ backgroundColor: 'var(--brand-primary)' }}
                 >
                   <Plus className="h-4 w-4" />
                   Novo cliente
@@ -716,55 +716,55 @@ export const ClientesPage = () => {
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
-                <Users className="h-5 w-5" style={{ color: '#721011' }} />
+                <Users className="h-5 w-5" style={{ color: 'var(--brand-primary)' }} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-sm text-gray-500">Total de Clientes</p>
+                <p className="text-2xl font-bold text-text">{stats.total}</p>
+                <p className="text-sm text-text-muted">Total de Clientes</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.ativos}</p>
-                <p className="text-sm text-gray-500">Ativos</p>
+                <p className="text-2xl font-bold text-text">{stats.ativos}</p>
+                <p className="text-sm text-text-muted">Ativos</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.emRisco}</p>
-                <p className="text-sm text-gray-500">Em Risco</p>
+                <p className="text-2xl font-bold text-text">{stats.emRisco}</p>
+                <p className="text-sm text-text-muted">Em Risco</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
               <input
-                className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                className="h-10 w-full rounded-lg border border-border bg-white pl-10 pr-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 placeholder="Buscar cliente..."
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
             </div>
             <select
-              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+              className="h-10 rounded-lg border border-border bg-white px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
             >
@@ -776,7 +776,7 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+              className="h-10 rounded-lg border border-border bg-white px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               value={healthFilter}
               onChange={(event) => setHealthFilter(event.target.value)}
             >
@@ -788,7 +788,7 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+              className="h-10 rounded-lg border border-border bg-white px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               value={areaFilter}
               onChange={(event) => setAreaFilter(event.target.value)}
             >
@@ -800,7 +800,7 @@ export const ClientesPage = () => {
               ))}
             </select>
             <select
-              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+              className="h-10 rounded-lg border border-border bg-white px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               value={ownerFilter}
               onChange={(event) => setOwnerFilter(event.target.value)}
             >
@@ -813,13 +813,13 @@ export const ClientesPage = () => {
             </select>
             <button
               type="button"
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-text-muted hover:text-text"
               onClick={resetFilters}
             >
               Limpar filtros
             </button>
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+          <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
             <span>Total: {clientes.length}</span>
             <span>·</span>
             <span>Exibindo: {filteredClientes.length}</span>
@@ -834,9 +834,9 @@ export const ClientesPage = () => {
           emptyAction={emptyAction}
           onRetry={error ? fetchClientes : undefined}
         >
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
             <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
+              <thead className="bg-surface-alt text-xs font-medium uppercase tracking-wider text-text-muted">
                 <tr>
                   <th className="px-4 py-3 w-10" />
                   <th className="px-4 py-3">Cliente</th>
@@ -858,13 +858,13 @@ export const ClientesPage = () => {
                   return (
                     <React.Fragment key={cliente.id}>
                       <tr
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-surface-alt"
                         onClick={() => setSelectedCliente(cliente)}
                       >
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300"
+                            className="h-4 w-4 rounded border-border-strong"
                             onClick={(event) => event.stopPropagation()}
                           />
                         </td>
@@ -872,15 +872,15 @@ export const ClientesPage = () => {
                           <div className="flex items-center gap-3">
                             <div
                               className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white"
-                              style={{ backgroundColor: '#721011' }}
+                              style={{ backgroundColor: 'var(--brand-primary)' }}
                             >
                               {initials}
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-text">
                                 {cliente.name}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-text-muted">
                                 {cliente.area}
                               </div>
                             </div>
@@ -906,13 +906,13 @@ export const ClientesPage = () => {
                             {cliente.health}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-700">
+                        <td className="px-4 py-3 text-text">
                           {cliente.caseCount}
                         </td>
-                        <td className="px-4 py-3 text-gray-700">
+                        <td className="px-4 py-3 text-text">
                           {cliente.owner}
                         </td>
-                        <td className="px-4 py-3 text-right text-xs text-gray-500">
+                        <td className="px-4 py-3 text-right text-xs text-text-muted">
                           {formatDateTime(cliente.lastUpdate)}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -921,7 +921,7 @@ export const ClientesPage = () => {
                               <button
                                 type="button"
                                 title="Encaminhar"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-subtle hover:bg-surface-alt hover:text-text-muted"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   setAssigningClienteId((current) => (current === cliente.id ? null : cliente.id))
@@ -933,7 +933,7 @@ export const ClientesPage = () => {
                               <button
                                 type="button"
                                 title="Editar"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-subtle hover:bg-surface-alt hover:text-text-muted"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   handleEditCliente(cliente.id)
@@ -944,7 +944,7 @@ export const ClientesPage = () => {
                               <button
                                 type="button"
                                 title="Excluir"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-red-600"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-subtle hover:bg-surface-alt hover:text-red-600"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   handleDeleteCliente(cliente.id, cliente.name)
@@ -954,17 +954,17 @@ export const ClientesPage = () => {
                               </button>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">Sem permissão</span>
+                            <span className="text-xs text-text-subtle">Sem permissão</span>
                           )}
                         </td>
                       </tr>
                       {canManageClientes && assigningClienteId === cliente.id && (
-                        <tr className="bg-gray-50">
+                        <tr className="bg-surface-alt">
                           <td colSpan={8} className="px-4 py-3">
-                            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
-                              <span className="text-sm font-medium text-gray-700">Encaminhar para:</span>
+                            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white px-4 py-3">
+                              <span className="text-sm font-medium text-text">Encaminhar para:</span>
                               <select
-                                className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#721011] focus:outline-none focus:ring-2 focus:ring-[#721011]/20"
+                                className="h-9 rounded-lg border border-border bg-white px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                                 value={selectedClienteAdvogadoId}
                                 onChange={(event) => setSelectedClienteAdvogadoId(event.target.value)}
                               >
@@ -978,7 +978,7 @@ export const ClientesPage = () => {
                               <button
                                 type="button"
                                 className="rounded-lg px-4 py-2 text-sm font-medium text-white"
-                                style={{ backgroundColor: '#721011' }}
+                                style={{ backgroundColor: 'var(--brand-primary)' }}
                                 onClick={() => {
                                   void handleEncaminharCliente(cliente.id)
                                 }}
@@ -987,7 +987,7 @@ export const ClientesPage = () => {
                               </button>
                               <button
                                 type="button"
-                                className="text-sm text-gray-500 hover:text-gray-700"
+                                className="text-sm text-text-muted hover:text-text"
                                 onClick={() => {
                                   setAssigningClienteId(null)
                                   setSelectedClienteAdvogadoId('')
@@ -996,7 +996,7 @@ export const ClientesPage = () => {
                                 Cancelar
                               </button>
                               {advogados.length === 0 && (
-                                <span className="text-xs text-gray-500">Nenhum advogado cadastrado</span>
+                                <span className="text-xs text-text-muted">Nenhum advogado cadastrado</span>
                               )}
                             </div>
                           </td>

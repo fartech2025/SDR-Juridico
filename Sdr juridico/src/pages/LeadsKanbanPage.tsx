@@ -106,10 +106,10 @@ const DroppableColumn = ({
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-xl transition-all duration-200 border border-gray-200 bg-gray-50/50',
+        'rounded-xl transition-all duration-200 border border-border bg-surface-alt/50',
         isOver ? 'ring-2 ring-offset-2 shadow-lg' : 'shadow-sm',
       )}
-      style={isOver ? { '--tw-ring-color': '#721011' } as React.CSSProperties : {}}
+      style={isOver ? { '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties : {}}
     >
       <div className="p-2 sm:p-3">
         {/* Header da coluna */}
@@ -158,14 +158,14 @@ const DraggableLeadCard = ({
         onClick={onOpen}
         className={cn(
           'w-full text-left rounded-lg border bg-white p-2 sm:p-3 shadow-sm hover:shadow-md transition-all group',
-          'border-gray-200 hover:border-gray-300',
+          'border-border hover:border-border-strong',
         )}
       >
         {/* Header com nome e drag handle */}
         <div className="flex items-start gap-1 sm:gap-2">
           {/* Drag handle */}
           <span
-            className="flex-shrink-0 inline-flex cursor-grab items-center rounded border border-gray-200 bg-gray-50 p-0.5 sm:p-1 text-gray-400 active:cursor-grabbing hover:bg-gray-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+            className="flex-shrink-0 inline-flex cursor-grab items-center rounded border border-border bg-surface-alt p-0.5 sm:p-1 text-text-subtle active:cursor-grabbing hover:bg-surface-alt sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -180,7 +180,7 @@ const DraggableLeadCard = ({
           
           {/* Nome do lead */}
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="text-xs sm:text-sm font-semibold text-gray-900 line-clamp-2 break-words">
+            <p className="text-xs sm:text-sm font-semibold text-text line-clamp-2 break-words">
               {lead.name}
             </p>
           </div>
@@ -202,7 +202,7 @@ const DraggableLeadCard = ({
               'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-bold border',
               lead.score >= 67 ? 'bg-red-50 text-red-700 border-red-200' :
               lead.score >= 34 ? 'bg-amber-50 text-amber-700 border-amber-200' :
-              'bg-gray-50 text-gray-600 border-gray-200'
+              'bg-surface-alt text-text-muted border-border'
             )}>
               {lead.score}
             </span>
@@ -220,13 +220,13 @@ const DraggableLeadCard = ({
         {/* Info de contato */}
         <div className="mt-2 space-y-1">
           {lead.phone && (
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-500">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-text-muted">
               <Phone className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{formatPhone(lead.phone)}</span>
             </div>
           )}
           {lead.email && (
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-500">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-text-muted">
               <Mail className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{lead.email}</span>
             </div>
@@ -486,14 +486,14 @@ export const LeadsKanbanPage = () => {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-slate-100">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+      <div className="bg-white border-b border-border shadow-sm sticky top-0 z-10">
         <div className="px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-text">
                 Kanban de Leads
               </h1>
-              <span className="px-2 py-1 bg-[#721011] text-white text-xs font-semibold rounded-full">
+              <span className="px-2 py-1 bg-brand-primary text-white text-xs font-semibold rounded-full">
                 {filteredLeads.length} leads
               </span>
             </div>
@@ -502,7 +502,7 @@ export const LeadsKanbanPage = () => {
               {/* Botão de voltar para lista */}
               <Link
                 to="/app/leads"
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-border-strong bg-white text-text hover:bg-surface-alt transition-all"
               >
                 <List className="h-4 w-4" />
                 <span className="hidden sm:inline">Lista</span>
@@ -510,13 +510,13 @@ export const LeadsKanbanPage = () => {
 
               {/* Busca */}
               <div className="relative flex-1 min-w-[150px] sm:w-auto">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-text-subtle" />
                 <input
                   type="text"
                   placeholder="Buscar..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full sm:w-48 pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#721011]/20 focus:border-[#721011] transition-all"
+                  className="w-full sm:w-48 pl-8 pr-3 py-1.5 text-sm rounded-lg border border-border-strong focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
                 />
               </div>
 
@@ -524,7 +524,7 @@ export const LeadsKanbanPage = () => {
               <select
                 value={heatFilter}
                 onChange={(e) => setHeatFilter(e.target.value as 'todos' | HeatKey)}
-                className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-[#721011]/20 focus:border-[#721011]"
+                className="px-3 py-1.5 text-sm rounded-lg border border-border-strong bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
               >
                 <option value="todos">Todas temperaturas</option>
                 <option value="quente">🔥 Quente</option>
@@ -539,7 +539,7 @@ export const LeadsKanbanPage = () => {
                   'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all',
                   showDeleted
                     ? 'bg-red-100 text-red-700 border-red-300'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    : 'bg-white text-text border-border-strong hover:bg-surface-alt'
                 )}
               >
                 <Trash2 className="h-4 w-4" />
@@ -554,7 +554,7 @@ export const LeadsKanbanPage = () => {
       <div className="flex-1 overflow-hidden p-3 sm:p-4">
         {/* Vista de Lixeira */}
         {showDeleted ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
             <div className="px-4 py-3 bg-red-50 border-b border-red-200">
               <h2 className="text-lg font-semibold text-red-800 flex items-center gap-2">
                 <Trash2 className="h-5 w-5" />
@@ -566,22 +566,22 @@ export const LeadsKanbanPage = () => {
             </div>
             
             {loadingDeleted ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-text-muted">
                 Carregando...
               </div>
             ) : deletedLeads.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <Trash2 className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+              <div className="p-8 text-center text-text-muted">
+                <Trash2 className="h-12 w-12 mx-auto text-text-subtle mb-3" />
                 <p>Nenhum lead na lixeira</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
                 {deletedLeads.map((lead) => (
-                  <div key={lead.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                  <div key={lead.id} className="p-4 flex items-center justify-between hover:bg-surface-alt">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900">{lead.name}</p>
-                      <p className="text-sm text-gray-500">{lead.email || lead.phone}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="font-medium text-text">{lead.name}</p>
+                      <p className="text-sm text-text-muted">{lead.email || lead.phone}</p>
+                      <p className="text-xs text-text-subtle mt-1">
                         Status: {STATUS_LABELS[lead.status]} | Temp: {HEAT_LABELS[lead.heat]}
                       </p>
                     </div>
@@ -620,7 +620,7 @@ export const LeadsKanbanPage = () => {
                     count={leadsInColumn.length}
                   >
                     {leadsInColumn.length === 0 ? (
-                      <p className="text-center text-xs text-gray-400 py-4">
+                      <p className="text-center text-xs text-text-subtle py-4">
                         Nenhum lead
                       </p>
                     ) : (
@@ -645,7 +645,7 @@ export const LeadsKanbanPage = () => {
         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header do modal */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#721011] to-[#8b1415]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-gradient-to-r from-brand-primary to-brand-primary/90">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                   <User className="h-5 w-5 text-white" />
@@ -679,14 +679,14 @@ export const LeadsKanbanPage = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200">
+            <div className="flex border-b border-border">
               <button
                 onClick={() => setDrawerTab('detalhes')}
                 className={cn(
                   'flex-1 px-4 py-3 text-sm font-medium transition-colors',
                   drawerTab === 'detalhes'
-                    ? 'text-[#721011] border-b-2 border-[#721011] bg-red-50/50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'text-brand-primary border-b-2 border-brand-primary bg-red-50/50'
+                    : 'text-text-muted hover:text-text hover:bg-surface-alt'
                 )}
               >
                 <User className="h-4 w-4 inline mr-2" />
@@ -697,8 +697,8 @@ export const LeadsKanbanPage = () => {
                 className={cn(
                   'flex-1 px-4 py-3 text-sm font-medium transition-colors',
                   drawerTab === 'historico'
-                    ? 'text-[#721011] border-b-2 border-[#721011] bg-red-50/50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'text-brand-primary border-b-2 border-brand-primary bg-red-50/50'
+                    : 'text-text-muted hover:text-text hover:bg-surface-alt'
                 )}
               >
                 <History className="h-4 w-4 inline mr-2" />
@@ -712,32 +712,32 @@ export const LeadsKanbanPage = () => {
                 <div className="space-y-6">
                   {/* Informações de contato */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                    <h3 className="text-sm font-semibold text-text uppercase tracking-wide">
                       Contato
                     </h3>
                     {activeLead.email && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Mail className="h-5 w-5 text-gray-400" />
+                      <div className="flex items-center gap-3 p-3 bg-surface-alt rounded-lg">
+                        <Mail className="h-5 w-5 text-text-subtle" />
                         <div>
-                          <p className="text-xs text-gray-500">E-mail</p>
+                          <p className="text-xs text-text-muted">E-mail</p>
                           <p className="text-sm font-medium">{activeLead.email}</p>
                         </div>
                       </div>
                     )}
                     {activeLead.phone && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Phone className="h-5 w-5 text-gray-400" />
+                      <div className="flex items-center gap-3 p-3 bg-surface-alt rounded-lg">
+                        <Phone className="h-5 w-5 text-text-subtle" />
                         <div>
-                          <p className="text-xs text-gray-500">Telefone</p>
+                          <p className="text-xs text-text-muted">Telefone</p>
                           <p className="text-sm font-medium">{formatPhone(activeLead.phone)}</p>
                         </div>
                       </div>
                     )}
                     {activeLead.company && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Building2 className="h-5 w-5 text-gray-400" />
+                      <div className="flex items-center gap-3 p-3 bg-surface-alt rounded-lg">
+                        <Building2 className="h-5 w-5 text-text-subtle" />
                         <div>
-                          <p className="text-xs text-gray-500">Empresa</p>
+                          <p className="text-xs text-text-muted">Empresa</p>
                           <p className="text-sm font-medium">{activeLead.company}</p>
                         </div>
                       </div>
@@ -746,14 +746,14 @@ export const LeadsKanbanPage = () => {
 
                   {/* Informações comerciais */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                    <h3 className="text-sm font-semibold text-text uppercase tracking-wide">
                       Informações Comerciais
                     </h3>
                     {activeLead.estimatedValue && (
                       <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
                         <DollarSign className="h-5 w-5 text-emerald-500" />
                         <div>
-                          <p className="text-xs text-gray-500">Valor Estimado</p>
+                          <p className="text-xs text-text-muted">Valor Estimado</p>
                           <p className="text-sm font-bold text-emerald-700">
                             {formatCurrency(activeLead.estimatedValue)}
                           </p>
@@ -761,10 +761,10 @@ export const LeadsKanbanPage = () => {
                       </div>
                     )}
                     {activeLead.origin && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <MessageSquare className="h-5 w-5 text-gray-400" />
+                      <div className="flex items-center gap-3 p-3 bg-surface-alt rounded-lg">
+                        <MessageSquare className="h-5 w-5 text-text-subtle" />
                         <div>
-                          <p className="text-xs text-gray-500">Origem</p>
+                          <p className="text-xs text-text-muted">Origem</p>
                           <p className="text-sm font-medium capitalize">{activeLead.origin}</p>
                         </div>
                       </div>
@@ -774,11 +774,11 @@ export const LeadsKanbanPage = () => {
                   {/* Score Detalhado */}
                   {activeLead.score != null && activeLead.scoreFactors && activeLead.scoreFactors.length > 0 && (
                     <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide flex items-center gap-2">
-                        <BarChart3 className="h-4 w-4" style={{ color: '#721011' }} />
+                      <h3 className="text-sm font-semibold text-text uppercase tracking-wide flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" style={{ color: 'var(--brand-primary)' }} />
                         Score de Qualificação
                       </h3>
-                      <div className="p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+                      <div className="p-4 rounded-lg border border-border bg-surface-alt/50">
                         {/* Score geral */}
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
@@ -791,11 +791,11 @@ export const LeadsKanbanPage = () => {
                               {activeLead.score}
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-sm font-semibold text-text">
                                 {activeLead.score >= 67 ? 'Lead Quente' : activeLead.score >= 34 ? 'Lead Morno' : 'Lead Frio'}
                               </p>
                               {activeLead.scoredAt && (
-                                <p className="text-[10px] text-gray-400">
+                                <p className="text-[10px] text-text-subtle">
                                   Calculado em {formatDateTime(activeLead.scoredAt)}
                                 </p>
                               )}
@@ -807,13 +807,13 @@ export const LeadsKanbanPage = () => {
                           {activeLead.scoreFactors.map((factor) => (
                             <div key={factor.name}>
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-gray-600">{factor.label}</span>
-                                <span className="text-xs font-medium text-gray-900">
+                                <span className="text-xs text-text-muted">{factor.label}</span>
+                                <span className="text-xs font-medium text-text">
                                   {Math.round(factor.rawValue)}/100
-                                  <span className="text-gray-400 ml-1">({factor.weight}%)</span>
+                                  <span className="text-text-subtle ml-1">({factor.weight}%)</span>
                                 </span>
                               </div>
-                              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="w-full h-2 bg-surface-alt rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
                                   style={{
@@ -832,11 +832,11 @@ export const LeadsKanbanPage = () => {
                   {/* Observações */}
                   {activeLead.notes && (
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                      <h3 className="text-sm font-semibold text-text uppercase tracking-wide">
                         Observações
                       </h3>
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      <div className="p-3 bg-surface-alt rounded-lg">
+                        <p className="text-sm text-text whitespace-pre-wrap">
                           {activeLead.notes}
                         </p>
                       </div>
@@ -844,13 +844,13 @@ export const LeadsKanbanPage = () => {
                   )}
 
                   {/* Datas */}
-                  <div className="space-y-2 pt-4 border-t border-gray-100">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <div className="space-y-2 pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 text-xs text-text-muted">
                       <Calendar className="h-4 w-4" />
                       <span>Criado em: {formatDateTime(activeLead.createdAt)}</span>
                     </div>
                     {activeLead.updatedAt && (
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-text-muted">
                         <Calendar className="h-4 w-4" />
                         <span>Atualizado em: {formatDateTime(activeLead.updatedAt)}</span>
                       </div>
@@ -861,24 +861,24 @@ export const LeadsKanbanPage = () => {
 
               {drawerTab === 'historico' && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  <h3 className="text-sm font-semibold text-text uppercase tracking-wide">
                     Timeline de Alterações
                   </h3>
                   
                   {historyLoading ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#721011] border-t-transparent"></div>
+                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-primary border-t-transparent"></div>
                     </div>
                   ) : leadHistory.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <History className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                    <div className="text-center py-8 text-text-muted">
+                      <History className="h-12 w-12 mx-auto text-text-subtle mb-3" />
                       <p>Nenhum histórico registrado</p>
                       <p className="text-xs mt-1">Alterações de status e temperatura aparecerão aqui</p>
                     </div>
                   ) : (
                     <div className="relative">
                       {/* Linha vertical */}
-                      <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200" />
+                      <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-surface-alt" />
                       
                       <div className="space-y-4">
                         {leadHistory.map((entry, index) => (
@@ -886,22 +886,22 @@ export const LeadsKanbanPage = () => {
                             {/* Círculo na timeline */}
                             <div className={cn(
                               'absolute left-0 w-6 h-6 rounded-full border-2 flex items-center justify-center bg-white',
-                              index === leadHistory.length - 1 ? 'border-[#721011]' : 'border-gray-300'
+                              index === leadHistory.length - 1 ? 'border-brand-primary' : 'border-border-strong'
                             )}>
                               <div className={cn(
                                 'w-2 h-2 rounded-full',
-                                index === leadHistory.length - 1 ? 'bg-[#721011]' : 'bg-gray-400'
+                                index === leadHistory.length - 1 ? 'bg-brand-primary' : 'bg-text-subtle'
                               )} />
                             </div>
                             
                             {/* Conteúdo */}
-                            <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                            <div className="bg-surface-alt rounded-lg p-3 border border-border">
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-text-muted">
                                   {formatDateTime(entry.created_at)}
                                 </span>
                                 {entry.changed_by_name && (
-                                  <span className="text-xs text-gray-400">
+                                  <span className="text-xs text-text-subtle">
                                     por {entry.changed_by_name}
                                   </span>
                                 )}
@@ -910,21 +910,21 @@ export const LeadsKanbanPage = () => {
                               {/* Mudança de status */}
                               {entry.status_novo && (
                                 <div className="flex items-center gap-2 text-sm">
-                                  <span className="text-gray-600">Status:</span>
+                                  <span className="text-text-muted">Status:</span>
                                   {entry.status_anterior && (
                                     <>
                                       <span className={cn(
                                         'px-2 py-0.5 rounded text-xs',
-                                        STATUS_COLORS[entry.status_anterior as StatusKey] || 'bg-gray-100'
+                                        STATUS_COLORS[entry.status_anterior as StatusKey] || 'bg-surface-alt'
                                       )}>
                                         {STATUS_LABELS[entry.status_anterior as StatusKey] || entry.status_anterior}
                                       </span>
-                                      <span className="text-gray-400">→</span>
+                                      <span className="text-text-subtle">→</span>
                                     </>
                                   )}
                                   <span className={cn(
                                     'px-2 py-0.5 rounded text-xs font-medium',
-                                    STATUS_COLORS[entry.status_novo as StatusKey] || 'bg-gray-100'
+                                    STATUS_COLORS[entry.status_novo as StatusKey] || 'bg-surface-alt'
                                   )}>
                                     {STATUS_LABELS[entry.status_novo as StatusKey] || entry.status_novo}
                                   </span>
@@ -934,21 +934,21 @@ export const LeadsKanbanPage = () => {
                               {/* Mudança de temperatura */}
                               {entry.heat_novo && (
                                 <div className="flex items-center gap-2 text-sm mt-1">
-                                  <span className="text-gray-600">Temperatura:</span>
+                                  <span className="text-text-muted">Temperatura:</span>
                                   {entry.heat_anterior && (
                                     <>
                                       <span className={cn(
                                         'px-2 py-0.5 rounded text-xs border',
-                                        HEAT_BADGES[entry.heat_anterior as HeatKey] || 'bg-gray-100'
+                                        HEAT_BADGES[entry.heat_anterior as HeatKey] || 'bg-surface-alt'
                                       )}>
                                         {HEAT_LABELS[entry.heat_anterior as HeatKey] || entry.heat_anterior}
                                       </span>
-                                      <span className="text-gray-400">→</span>
+                                      <span className="text-text-subtle">→</span>
                                     </>
                                   )}
                                   <span className={cn(
                                     'px-2 py-0.5 rounded text-xs font-medium border',
-                                    HEAT_BADGES[entry.heat_novo as HeatKey] || 'bg-gray-100'
+                                    HEAT_BADGES[entry.heat_novo as HeatKey] || 'bg-surface-alt'
                                   )}>
                                     {HEAT_LABELS[entry.heat_novo as HeatKey] || entry.heat_novo}
                                   </span>
@@ -957,7 +957,7 @@ export const LeadsKanbanPage = () => {
                               
                               {/* Motivo */}
                               {entry.motivo && (
-                                <p className="text-xs text-gray-500 mt-2 italic">
+                                <p className="text-xs text-text-muted mt-2 italic">
                                   "{entry.motivo}"
                                 </p>
                               )}
@@ -972,7 +972,7 @@ export const LeadsKanbanPage = () => {
             </div>
 
             {/* Footer do modal */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface-alt">
               <button
                 onClick={() => handleSoftDelete(activeLead.id)}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -995,7 +995,7 @@ export const LeadsKanbanPage = () => {
                       setConversionModalOpen(true)
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-                    style={{ backgroundColor: '#721011' }}
+                    style={{ backgroundColor: 'var(--brand-primary)' }}
                   >
                     <ArrowRightCircle className="h-4 w-4" />
                     Converter em Caso
@@ -1003,7 +1003,7 @@ export const LeadsKanbanPage = () => {
                 )}
                 <button
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt rounded-lg transition-colors"
                 >
                   Fechar
                 </button>
@@ -1018,7 +1018,7 @@ export const LeadsKanbanPage = () => {
         <Modal open={conversionModalOpen} onClose={() => setConversionModalOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200" style={{ background: 'linear-gradient(135deg, #721011, #8b1415)' }}>
+            <div className="px-6 py-4 border-b border-border" style={{ background: 'linear-gradient(135deg, #721011, #8b1415)' }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                   <ArrowRightCircle className="h-5 w-5 text-white" />
@@ -1033,42 +1033,42 @@ export const LeadsKanbanPage = () => {
             {/* Form */}
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                <label className="text-xs uppercase tracking-wide text-text-muted mb-1 block">
                   Título do Caso
                 </label>
                 <input
                   type="text"
                   value={conversionForm.titulo}
                   onChange={(e) => setConversionForm((f) => ({ ...f, titulo: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border-strong focus:ring-2 focus:border-transparent transition-all"
                   style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                   placeholder="Caso - Nome do Lead"
                 />
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                <label className="text-xs uppercase tracking-wide text-text-muted mb-1 block">
                   Área Jurídica
                 </label>
                 <input
                   type="text"
                   value={conversionForm.area}
                   onChange={(e) => setConversionForm((f) => ({ ...f, area: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border-strong focus:ring-2 focus:border-transparent transition-all"
                   style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                   placeholder="Ex: Trabalhista, Civil, Tributário..."
                 />
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                <label className="text-xs uppercase tracking-wide text-text-muted mb-1 block">
                   Valor Estimado (R$)
                 </label>
                 <input
                   type="number"
                   value={conversionForm.valor}
                   onChange={(e) => setConversionForm((f) => ({ ...f, valor: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border-strong focus:ring-2 focus:border-transparent transition-all"
                   style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                   placeholder="0"
                   min="0"
@@ -1076,13 +1076,13 @@ export const LeadsKanbanPage = () => {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-wide text-gray-500 mb-1 block">
+                <label className="text-xs uppercase tracking-wide text-text-muted mb-1 block">
                   Descrição
                 </label>
                 <textarea
                   value={conversionForm.descricao}
                   onChange={(e) => setConversionForm((f) => ({ ...f, descricao: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent transition-all resize-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border-strong focus:ring-2 focus:border-transparent transition-all resize-none"
                   style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                   rows={3}
                   placeholder="Descrição do caso (opcional)"
@@ -1091,11 +1091,11 @@ export const LeadsKanbanPage = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-surface-alt">
               <button
                 onClick={() => setConversionModalOpen(false)}
                 disabled={converting}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt rounded-lg transition-colors"
               >
                 Cancelar
               </button>
@@ -1103,7 +1103,7 @@ export const LeadsKanbanPage = () => {
                 onClick={handleConvertLead}
                 disabled={converting || !conversionForm.titulo.trim()}
                 className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 {converting ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />

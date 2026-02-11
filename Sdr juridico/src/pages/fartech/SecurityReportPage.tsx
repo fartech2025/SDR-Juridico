@@ -666,7 +666,7 @@ export default function SecurityReportPage() {
                     {item.score}%
                   </p>
                 </div>
-                <div className="h-2 rounded-full overflow-hidden bg-gray-200">
+                <div className="h-2 rounded-full overflow-hidden bg-surface-alt">
                   <div
                     className={cn("h-full rounded-full transition-all", item.score >= 95 ? 'bg-green-500' : item.score >= 80 ? 'bg-yellow-500' : 'bg-red-500')}
                     style={{ width: `${item.score}%` }}
@@ -787,7 +787,7 @@ export default function SecurityReportPage() {
                           log.action.includes('update') ? 'bg-blue-100 text-blue-700' :
                           log.action.includes('delete') ? 'bg-red-100 text-red-700' :
                           log.action.includes('login') || log.action.includes('logout') ? 'bg-purple-100 text-purple-700' :
-                          'bg-gray-100 text-gray-700',
+                          'bg-surface-alt text-text',
                         )}>
                           {log.action}
                         </span>

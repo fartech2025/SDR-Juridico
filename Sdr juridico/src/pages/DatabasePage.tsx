@@ -239,7 +239,7 @@ export function DatabasePage() {
       case 'not-configured':
         return 'text-orange-600'
       default:
-        return 'text-gray-600'
+        return 'text-text-muted'
     }
   }
 
@@ -252,7 +252,7 @@ export function DatabasePage() {
       case 'not-configured':
         return <AlertCircle className="h-5 w-5 text-orange-600" />
       default:
-        return <AlertCircle className="h-5 w-5 text-gray-600" />
+        return <AlertCircle className="h-5 w-5 text-text-muted" />
     }
   }
 
@@ -265,7 +265,7 @@ export function DatabasePage() {
       case 'not-configured':
         return 'bg-orange-100 text-orange-700'
       default:
-        return 'bg-gray-100 text-gray-700'
+        return 'bg-surface-alt text-text'
     }
   }
 

@@ -162,7 +162,7 @@ export function CasoDataJudSearchModal({
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}
               >
-                <Scale className="w-5 h-5" style={{ color: '#721011' }} />
+                <Scale className="w-5 h-5" style={{ color: 'var(--brand-primary)' }} />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Buscar Processos</h2>
@@ -203,7 +203,7 @@ export function CasoDataJudSearchModal({
                   className="flex-1 h-9 rounded-lg text-xs font-medium transition-colors border"
                   style={
                     tipoBusca === tipo.id
-                      ? { backgroundColor: 'rgba(114, 16, 17, 0.08)', borderColor: 'rgba(114, 16, 17, 0.3)', color: '#721011' }
+                      ? { backgroundColor: 'rgba(114, 16, 17, 0.08)', borderColor: 'rgba(114, 16, 17, 0.3)', color: 'var(--brand-primary)' }
                       : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
                   }
                 >
@@ -275,10 +275,10 @@ export function CasoDataJudSearchModal({
             >
               {tribunalDetectado.tribunal ? (
                 <div className="flex items-center gap-2">
-                  <Scale className="w-4 h-4 shrink-0" style={{ color: '#721011' }} />
+                  <Scale className="w-4 h-4 shrink-0" style={{ color: 'var(--brand-primary)' }} />
                   <div>
                     <p className="text-[10px] text-gray-500">Tribunal detectado automaticamente</p>
-                    <p className="text-xs font-semibold" style={{ color: '#721011' }}>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--brand-primary)' }}>
                       {tribunalDetectado.nomeCompleto}
                     </p>
                   </div>
@@ -300,7 +300,7 @@ export function CasoDataJudSearchModal({
               onClick={handleSearch}
               disabled={loading || !searchTerm.trim()}
               className="flex-1 h-10 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50"
-              style={{ backgroundColor: '#721011' }}
+              style={{ backgroundColor: 'var(--brand-primary)' }}
             >
               {loading ? 'Buscando...' : 'Buscar no DataJud'}
             </button>
@@ -343,13 +343,13 @@ export function CasoDataJudSearchModal({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="font-mono text-sm font-semibold" style={{ color: '#721011' }}>
+                        <p className="font-mono text-sm font-semibold" style={{ color: 'var(--brand-primary)' }}>
                           {formatarNumeroProcesso(info.numero)}
                         </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <span
                             className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
-                            style={{ backgroundColor: '#721011' }}
+                            style={{ backgroundColor: 'var(--brand-primary)' }}
                           >
                             {(info.tribunal || tribunalId).toUpperCase()}
                           </span>
@@ -370,7 +370,7 @@ export function CasoDataJudSearchModal({
                             {info.dataAjuizamento}
                           </span>
                         )}
-                        <p className="text-[10px] font-medium mt-1" style={{ color: '#721011' }}>
+                        <p className="text-[10px] font-medium mt-1" style={{ color: 'var(--brand-primary)' }}>
                           Vincular
                         </p>
                       </div>

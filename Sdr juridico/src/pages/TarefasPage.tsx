@@ -20,12 +20,12 @@ const statusBadge = (status: Tarefa['status']) => {
   if (status === 'aguardando_validacao') return 'bg-purple-50 text-purple-700 border-purple-200'
   if (status === 'devolvida') return 'bg-red-50 text-red-700 border-red-200'
   if (status === 'em_andamento') return 'bg-blue-50 text-blue-700 border-blue-200'
-  return 'bg-gray-100 text-gray-700 border-gray-200'
+  return 'bg-surface-alt text-text border-border'
 }
 
 const priorityBadge = (priority: Tarefa['priority']) => {
   if (priority === 'alta') return 'bg-red-50 text-red-700 border-red-200'
-  if (priority === 'normal') return 'bg-gray-100 text-gray-700 border-gray-200'
+  if (priority === 'normal') return 'bg-surface-alt text-text border-border'
   return 'bg-blue-50 text-blue-700 border-blue-200'
 }
 
@@ -259,7 +259,7 @@ export const TarefasPage = () => {
     <button
       onClick={openCreateModal}
       className="h-10 px-4 rounded-lg font-medium text-white flex items-center gap-2"
-      style={{ backgroundColor: '#721011' }}
+      style={{ backgroundColor: 'var(--brand-primary)' }}
     >
       <Plus className="h-4 w-4" />
       Nova tarefa
@@ -269,11 +269,11 @@ export const TarefasPage = () => {
   return (
     <div className="space-y-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-xl border border-border p-6">
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">T A R E F A S</p>
-          <h2 className="text-lg font-bold text-gray-900">Rotinas e lembretes internos</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs font-semibold text-text-subtle uppercase tracking-wider">T A R E F A S</p>
+          <h2 className="text-lg font-bold text-text">Rotinas e lembretes internos</h2>
+          <p className="text-sm text-text-muted">
             Planeje atividades por lead, cliente ou caso. Lembretes somente no app.
           </p>
         </div>
@@ -281,28 +281,28 @@ export const TarefasPage = () => {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-border p-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500">Pendentes</p>
-            <p className="text-2xl font-bold text-gray-900">{summary.pending}</p>
+            <p className="text-sm text-text-muted">Pendentes</p>
+            <p className="text-2xl font-bold text-text">{summary.pending}</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
             <Clock className="h-5 w-5" />
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-border p-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500">Atrasadas</p>
-            <p className="text-2xl font-bold text-gray-900">{summary.overdue}</p>
+            <p className="text-sm text-text-muted">Atrasadas</p>
+            <p className="text-2xl font-bold text-text">{summary.overdue}</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
             <Clock className="h-5 w-5" />
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-border p-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500">Concluídas</p>
-            <p className="text-2xl font-bold text-gray-900">{summary.done}</p>
+            <p className="text-sm text-text-muted">Concluídas</p>
+            <p className="text-2xl font-bold text-text">{summary.done}</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-600">
             <CheckCircle className="h-5 w-5" />
@@ -311,24 +311,24 @@ export const TarefasPage = () => {
       </div>
 
       {/* Tasks List Card */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-xl border border-border p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Lista de tarefas</h3>
-            <p className="text-sm text-gray-500">Organize por prioridade e vencimento.</p>
+            <h3 className="text-base font-semibold text-text">Lista de tarefas</h3>
+            <p className="text-sm text-text-muted">Organize por prioridade e vencimento.</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => void fetchTarefas()}
               disabled={loading}
-              className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="h-10 px-4 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors disabled:opacity-50"
             >
               Atualizar
             </button>
             <button
               onClick={openCreateModal}
               className="h-10 px-4 rounded-lg font-medium text-white flex items-center gap-2"
-              style={{ backgroundColor: '#721011' }}
+              style={{ backgroundColor: 'var(--brand-primary)' }}
             >
               <Plus className="h-4 w-4" />
               Nova tarefa
@@ -339,17 +339,17 @@ export const TarefasPage = () => {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <div className="relative flex-1 min-w-[260px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
             <input
-              className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
-              style={{ '--tw-ring-color': '#721011' } as React.CSSProperties}
+              className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
               placeholder="Buscar tarefas..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
           <select
-            className="h-10 rounded-lg border border-gray-200 px-4 text-sm text-gray-700 focus:outline-none focus:ring-2"
+            className="h-10 rounded-lg border border-border px-4 text-sm text-text focus:outline-none focus:ring-2"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
           >
@@ -359,7 +359,7 @@ export const TarefasPage = () => {
             <option value="concluida">Concluida</option>
           </select>
           <select
-            className="h-10 rounded-lg border border-gray-200 px-4 text-sm text-gray-700 focus:outline-none focus:ring-2"
+            className="h-10 rounded-lg border border-border px-4 text-sm text-text focus:outline-none focus:ring-2"
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
           >
@@ -369,7 +369,7 @@ export const TarefasPage = () => {
             <option value="alta">Alta</option>
           </select>
           <select
-            className="h-10 rounded-lg border border-gray-200 px-4 text-sm text-gray-700 focus:outline-none focus:ring-2"
+            className="h-10 rounded-lg border border-border px-4 text-sm text-text focus:outline-none focus:ring-2"
             value={linkFilter}
             onChange={(event) => setLinkFilter(event.target.value as typeof linkFilter)}
           >
@@ -395,17 +395,17 @@ export const TarefasPage = () => {
               return (
                 <div
                   key={task.id}
-                  className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
+                  className="flex flex-wrap items-center gap-4 rounded-xl border border-border p-4 hover:shadow-md transition-shadow"
                 >
                   <div
                     className="flex h-10 w-10 items-center justify-center rounded-lg"
-                    style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                    style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: 'var(--brand-primary)' }}
                   >
                     <ListTodo className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-[200px]">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-gray-900">{displayTitle}</p>
+                      <p className="text-sm font-semibold text-text">{displayTitle}</p>
                       <span
                         className={cn(
                           'inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase',
@@ -429,9 +429,9 @@ export const TarefasPage = () => {
                       )}
                     </div>
                     {task.description && (
-                      <p className="mt-1 text-xs text-gray-500">{task.description}</p>
+                      <p className="mt-1 text-xs text-text-muted">{task.description}</p>
                     )}
-                    <div className="mt-2 text-xs text-gray-500">
+                    <div className="mt-2 text-xs text-text-muted">
                       {resolveLinkLabel(task)}
                       {task.dueDate && (
                         <span className="ml-3">Vence em {formatDate(task.dueDate)}</span>
@@ -441,20 +441,20 @@ export const TarefasPage = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleStatus(task)}
-                      className="h-9 px-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-text hover:bg-surface-alt transition-colors"
                     >
                       {task.status === 'concluida' ? 'Reabrir' : 'Concluir'}
                     </button>
                     <button
                       type="button"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-muted hover:text-text hover:bg-surface-alt transition-colors"
                       onClick={() => openEditModal(task)}
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
                       onClick={() => handleDelete(task)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -478,7 +478,7 @@ export const TarefasPage = () => {
             <button
               onClick={closeModal}
               disabled={saving}
-              className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="h-10 px-4 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -486,7 +486,7 @@ export const TarefasPage = () => {
               onClick={handleSave}
               disabled={saving}
               className="h-10 px-4 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
-              style={{ backgroundColor: '#721011' }}
+              style={{ backgroundColor: 'var(--brand-primary)' }}
             >
               {saving ? 'Salvando...' : 'Salvar tarefa'}
             </button>
@@ -500,18 +500,18 @@ export const TarefasPage = () => {
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Titulo</label>
+            <label className="text-sm font-medium text-text">Titulo</label>
             <input
               value={formState.title}
               onChange={(event) => setFormState((prev) => ({ ...prev, title: event.target.value }))}
               placeholder="Ex: Checar prazos do projeto"
-              className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Descricao</label>
+            <label className="text-sm font-medium text-text">Descricao</label>
             <textarea
-              className="min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
+              className="min-h-[100px] w-full rounded-lg border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2"
               value={formState.description}
               onChange={(event) =>
                 setFormState((prev) => ({ ...prev, description: event.target.value }))
@@ -521,9 +521,9 @@ export const TarefasPage = () => {
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Prioridade</label>
+              <label className="text-sm font-medium text-text">Prioridade</label>
               <select
-                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.priority}
                 onChange={(event) =>
                   setFormState((prev) => ({
@@ -538,9 +538,9 @@ export const TarefasPage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Status</label>
+              <label className="text-sm font-medium text-text">Status</label>
               <select
-                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.status}
                 onChange={(event) =>
                   setFormState((prev) => ({
@@ -555,20 +555,20 @@ export const TarefasPage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Vencimento</label>
+              <label className="text-sm font-medium text-text">Vencimento</label>
               <input
                 type="date"
                 value={formState.dueDate}
                 onChange={(event) => setFormState((prev) => ({ ...prev, dueDate: event.target.value }))}
-                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
               />
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Vinculo</label>
+              <label className="text-sm font-medium text-text">Vinculo</label>
               <select
-                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.linkType}
                 onChange={(event) =>
                   setFormState((prev) => ({
@@ -585,9 +585,9 @@ export const TarefasPage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Selecionar</label>
+              <label className="text-sm font-medium text-text">Selecionar</label>
               <select
-                className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                 value={formState.linkId}
                 onChange={(event) =>
                   setFormState((prev) => ({ ...prev, linkId: event.target.value }))

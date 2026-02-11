@@ -29,12 +29,12 @@ const resolveStatus = (
 // Badges de status - Visual Corporativo (tons cinza)
 const statusBadge = (status: Lead['status']) => {
   const badges: Record<Lead['status'], string> = {
-    novo: 'bg-gray-100 text-gray-700 border border-gray-200',
-    em_contato: 'bg-gray-100 text-gray-700 border border-gray-200',
-    qualificado: 'bg-gray-200 text-gray-800 border border-gray-300',
-    proposta: 'bg-gray-200 text-gray-800 border border-gray-300',
-    ganho: 'bg-gray-800 text-white border border-gray-700',
-    perdido: 'bg-gray-400 text-white border border-gray-500',
+    novo: 'bg-surface-alt text-text border border-border',
+    em_contato: 'bg-surface-alt text-text border border-border',
+    qualificado: 'bg-surface-alt text-text border border-border-strong',
+    proposta: 'bg-surface-alt text-text border border-border-strong',
+    ganho: 'bg-brand-primary text-white border border-border-strong',
+    perdido: 'bg-text-subtle text-white border border-border-strong',
   }
   return badges[status] || badges.novo
 }
@@ -306,15 +306,15 @@ export const LeadsPage = () => {
 
   if (showNewLeadForm) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-text">
                 {isEditing ? 'Editar Lead' : 'Novo Lead'}
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-text-muted mt-1">
                 {isEditing ? 'Ajuste os dados do lead' : 'Preencha os dados do novo lead'}
               </p>
             </div>
@@ -331,119 +331,119 @@ export const LeadsPage = () => {
           </div>
 
           {/* Formulário */}
-          <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="bg-white rounded-xl border border-border p-6">
             <form className="space-y-6">
               {/* Informações Pessoais */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-text mb-4">
                   Informações do Lead
                 </h3>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Nome Completo *
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
                       <input
                         type="text"
                         required
                         value={formData.nome}
                         onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-opacity-50"
-                        style={{ focusRingColor: '#721011' } as React.CSSProperties}
+                        className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                        style={{ focusRingColor: 'var(--brand-primary)' } as React.CSSProperties}
                         placeholder="Digite o nome completo"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Email *
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
                       <input
                         type="email"
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
                         placeholder="email@exemplo.com"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Telefone *
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
                       <input
                         type="tel"
                         required
                         value={formData.telefone}
                         onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
                         placeholder="(00) 00000-0000"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Empresa
                     </label>
                     <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <Briefcase className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
                       <input
                         type="text"
                         value={formData.empresa}
                         onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
-                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
                         placeholder="Nome da empresa"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Área de Interesse
                     </label>
                     <input
                       type="text"
                       value={formData.area}
                       onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                      className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                       placeholder="Ex: Família, Trabalhista"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Origem
                     </label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                      <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
                       <input
                         type="text"
                         value={formData.origem}
                         onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
-                        className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
                         placeholder="Ex: Website, Indicação"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Status
                     </label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as LeadRow['status'] })}
-                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                      className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                     >
                       <option value="novo">Novo</option>
                       <option value="em_contato">Em Contato</option>
@@ -455,13 +455,13 @@ export const LeadsPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Temperatura
                     </label>
                     <select
                       value={formData.heat}
                       onChange={(e) => setFormData({ ...formData, heat: e.target.value as LeadRow['heat'] })}
-                      className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                      className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                     >
                       <option value="frio">Frio</option>
                       <option value="morno">Morno</option>
@@ -470,14 +470,14 @@ export const LeadsPage = () => {
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-text">
                       Observações
                     </label>
                     <textarea
                       value={formData.observacoes}
                       onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                       rows={4}
-                      className="w-full rounded-lg border border-gray-200 p-4 text-sm focus:outline-none focus:ring-2"
+                      className="w-full rounded-lg border border-border p-4 text-sm focus:outline-none focus:ring-2"
                       placeholder="Descreva informações adicionais sobre o lead..."
                     />
                   </div>
@@ -491,7 +491,7 @@ export const LeadsPage = () => {
                   onClick={handleSaveLead}
                   disabled={saving}
                   className="flex-1 h-10 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: '#721011' }}
+                  style={{ backgroundColor: 'var(--brand-primary)' }}
                 >
                   <Save className="inline mr-2 h-4 w-4" />
                   {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar Lead'}
@@ -502,7 +502,7 @@ export const LeadsPage = () => {
                     resetLeadForm()
                     setShowNewLeadForm(false)
                   }}
-                  className="px-6 h-10 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-6 h-10 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors"
                 >
                   Cancelar
                 </button>
@@ -515,8 +515,8 @@ export const LeadsPage = () => {
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
           input:focus, select:focus, textarea:focus {
-            --tw-ring-color: #721011;
-            border-color: #721011;
+            --tw-ring-color: 'var(--brand-primary)';
+            border-color: 'var(--brand-primary)';
           }
         `}</style>
       </div>
@@ -524,29 +524,29 @@ export const LeadsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-5">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="bg-white rounded-xl border border-border p-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
-                  <TrendingUp className="h-5 w-5" style={{ color: '#721011' }} />
+                  <TrendingUp className="h-5 w-5" style={{ color: 'var(--brand-primary)' }} />
                 </div>
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
                   Pipeline de Vendas
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestão de Leads</h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <h1 className="text-2xl font-bold text-text">Gestão de Leads</h1>
+              <p className="text-sm text-text-muted mt-1">
                 Acompanhe oportunidades e gerencie conversões
               </p>
             </div>
             <div className="flex gap-3">
               <Link
                 to="/app/leads/kanban"
-                className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2"
+                className="h-10 px-4 rounded-lg border border-border font-medium text-text-muted hover:bg-surface-alt hover:border-border-strong transition-all flex items-center gap-2"
               >
                 <LayoutGrid className="h-4 w-4" />
                 Kanban
@@ -554,7 +554,7 @@ export const LeadsPage = () => {
               <button
                 onClick={() => void fetchLeads()}
                 disabled={loading}
-                className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 flex items-center gap-2"
+                className="h-10 px-4 rounded-lg border border-border font-medium text-text-muted hover:bg-surface-alt hover:border-border-strong transition-all disabled:opacity-50 flex items-center gap-2"
               >
                 <ArrowUpRight className="h-4 w-4" />
                 Atualizar
@@ -570,7 +570,7 @@ export const LeadsPage = () => {
                 }}
                 disabled={!canManageLeads}
                 className="h-10 px-5 rounded-lg font-semibold text-white transition-all disabled:opacity-50 flex items-center gap-2"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 <Zap className="h-4 w-4" />
                 Novo Lead
@@ -582,21 +582,21 @@ export const LeadsPage = () => {
         {/* Métricas - Design Corporativo Discreto */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Pipeline */}
-          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-border hover:border-border hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
-                <Users className="w-5 h-5" style={{ color: '#721011' }} />
+                <Users className="w-5 h-5" style={{ color: 'var(--brand-primary)' }} />
               </div>
-              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pipeline</span>
+              <span className="text-[10px] font-medium text-text-subtle uppercase tracking-wider">Pipeline</span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-gray-800">{metrics.total}</div>
-              <div className="text-sm text-gray-500 mt-1">Total de Leads</div>
+              <div className="text-3xl font-bold text-text">{metrics.total}</div>
+              <div className="text-sm text-text-muted mt-1">Total de Leads</div>
             </div>
           </div>
 
           {/* Leads Quentes */}
-          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-orange-200 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-border hover:border-orange-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-orange-50 border border-orange-200">
                 <Flame className="w-5 h-5 text-orange-500" />
@@ -606,47 +606,47 @@ export const LeadsPage = () => {
               </span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-gray-800">{metrics.quentes}</div>
-              <div className="text-sm text-gray-500 mt-1">Leads Quentes</div>
+              <div className="text-3xl font-bold text-text">{metrics.quentes}</div>
+              <div className="text-sm text-text-muted mt-1">Leads Quentes</div>
             </div>
           </div>
 
           {/* Em Negociação */}
-          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-border hover:border-blue-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-50 border border-blue-200">
                 <Clock className="w-5 h-5 text-blue-500" />
               </div>
-              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Ativos</span>
+              <span className="text-[10px] font-medium text-text-subtle uppercase tracking-wider">Ativos</span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-gray-800">{metrics.emNegociacao}</div>
-              <div className="text-sm text-gray-500 mt-1">Em Negociação</div>
+              <div className="text-3xl font-bold text-text">{metrics.emNegociacao}</div>
+              <div className="text-sm text-text-muted mt-1">Em Negociação</div>
             </div>
           </div>
 
           {/* Taxa de Conversão */}
-          <div className="group bg-white rounded-xl p-5 border border-gray-100 hover:border-emerald-200 hover:shadow-sm transition-all duration-200">
+          <div className="group bg-white rounded-xl p-5 border border-border hover:border-emerald-200 hover:shadow-sm transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-50 border border-emerald-200">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
-              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Sucesso</span>
+              <span className="text-[10px] font-medium text-text-subtle uppercase tracking-wider">Sucesso</span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-bold text-gray-800">{metrics.taxaConversao}%</div>
-              <div className="text-sm text-gray-500 mt-1">Taxa de Conversão</div>
-              <div className="text-xs text-gray-400 mt-0.5">{metrics.ganhos} fechamentos</div>
+              <div className="text-3xl font-bold text-text">{metrics.taxaConversao}%</div>
+              <div className="text-sm text-text-muted mt-1">Taxa de Conversão</div>
+              <div className="text-xs text-text-subtle mt-0.5">{metrics.ganhos} fechamentos</div>
             </div>
           </div>
         </div>
         {/* Lista de Leads */}
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl border border-border overflow-hidden">
           <div className="p-5 space-y-4">
             {/* Tabs e Filtros */}
             <div className="space-y-4">
               {/* Tabs com estilo corporativo */}
-              <div className="flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+              <div className="flex flex-wrap gap-1 p-1 bg-surface-alt rounded-lg w-fit">
                 {tabs.map((tab) => (
                   <button
                     key={tab}
@@ -656,9 +656,9 @@ export const LeadsPage = () => {
                       'px-4 py-2 rounded-md font-medium text-sm transition-all duration-150',
                       activeTab === tab
                         ? 'text-white shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                        : 'text-text-muted hover:text-text hover:bg-surface-alt'
                     )}
-                    style={activeTab === tab ? { backgroundColor: '#721011' } : undefined}
+                    style={activeTab === tab ? { backgroundColor: 'var(--brand-primary)' } : undefined}
                   >
                     {tab}
                   </button>
@@ -668,9 +668,9 @@ export const LeadsPage = () => {
               {/* Filtros */}
               <div className="flex flex-wrap gap-3">
                 <div className="relative flex-1 min-w-[300px]">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
                   <input
-                    className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all bg-white"
+                    className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong transition-all bg-white"
                     placeholder="Buscar por nome, telefone ou área..."
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
@@ -678,7 +678,7 @@ export const LeadsPage = () => {
                 </div>
 
                 <select
-                  className="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 bg-white min-w-[140px]"
+                  className="h-10 rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong bg-white min-w-[140px]"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
@@ -691,7 +691,7 @@ export const LeadsPage = () => {
                 </select>
 
                 <select
-                  className="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 bg-white min-w-[140px]"
+                  className="h-10 rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong bg-white min-w-[140px]"
                   value={heatFilter}
                   onChange={(event) => setHeatFilter(event.target.value)}
                 >
@@ -703,7 +703,7 @@ export const LeadsPage = () => {
 
                 <button
                   onClick={resetFilters}
-                  className="h-10 px-4 rounded-lg border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2"
+                  className="h-10 px-4 rounded-lg border border-border font-medium text-text-muted hover:bg-surface-alt hover:border-border-strong transition-all flex items-center gap-2"
                 >
                   <XCircle className="h-4 w-4" />
                   Limpar
@@ -731,13 +731,13 @@ export const LeadsPage = () => {
                     <div
                       key={lead.id}
                       onClick={() => setSelectedLead(lead)}
-                      className="group cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-150 hover:shadow-md hover:border-gray-300 bg-white"
+                      className="group cursor-pointer rounded-lg border border-border p-4 transition-all duration-150 hover:shadow-md hover:border-border-strong bg-white"
                     >
                       <div className="flex flex-wrap items-center gap-4">
                         {/* Avatar */}
                         <div
                           className="flex h-12 w-12 items-center justify-center rounded-lg text-sm font-bold text-white shadow-md transition-transform group-hover:scale-105"
-                          style={{ backgroundColor: '#721011' }}
+                          style={{ backgroundColor: 'var(--brand-primary)' }}
                         >
                           {initials}
                         </div>
@@ -745,7 +745,7 @@ export const LeadsPage = () => {
                         {/* Info Principal */}
                         <div className="flex-1 min-w-[200px]">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-semibold text-gray-900">
+                            <h3 className="text-base font-semibold text-text">
                               {lead.name}
                             </h3>
                             {/* Badge de Temperatura */}
@@ -758,17 +758,17 @@ export const LeadsPage = () => {
                               {heatIcon(lead.heat)} {heatLabel(lead.heat)}
                             </span>
                           </div>
-                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                            <span className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded">
-                              <Mail className="h-3.5 w-3.5 text-gray-400" />
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                            <span className="flex items-center gap-1.5 bg-surface-alt px-2 py-1 rounded">
+                              <Mail className="h-3.5 w-3.5 text-text-subtle" />
                               {lead.email}
                             </span>
-                            <span className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded">
-                              <Phone className="h-3.5 w-3.5 text-gray-400" />
+                            <span className="flex items-center gap-1.5 bg-surface-alt px-2 py-1 rounded">
+                              <Phone className="h-3.5 w-3.5 text-text-subtle" />
                               {formatPhone(lead.phone)}
                             </span>
                             {lead.area && (
-                              <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 px-2 py-1 rounded font-medium">
+                              <span className="flex items-center gap-1.5 bg-surface-alt text-text-muted px-2 py-1 rounded font-medium">
                                 <Briefcase className="h-3.5 w-3.5" />
                                 {lead.area}
                               </span>
@@ -788,7 +788,7 @@ export const LeadsPage = () => {
                               {statusLabel(lead.status)}
                             </span>
                             {lead.origin && (
-                              <p className="mt-1.5 text-xs text-gray-400 flex items-center gap-1 justify-end">
+                              <p className="mt-1.5 text-xs text-text-subtle flex items-center gap-1 justify-end">
                                 <MapPin className="h-3 w-3" />
                                 {lead.origin}
                               </p>
@@ -801,7 +801,7 @@ export const LeadsPage = () => {
                               <>
                                 <button
                                   type="button"
-                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-300 transition-all"
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-white text-text-muted hover:bg-surface-alt hover:text-text hover:border-border-strong transition-all"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleEditLead(lead.id)
@@ -812,7 +812,7 @@ export const LeadsPage = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-300 transition-all"
+                                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-white text-text-muted hover:bg-surface-alt hover:text-text hover:border-border-strong transition-all"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     void handleDeleteLead(lead.id, lead.name)
@@ -830,12 +830,12 @@ export const LeadsPage = () => {
                       {/* Seção de Encaminhar */}
                       {canManageLeads && assigningLeadId === lead.id && (
                         <div
-                          className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3"
+                          className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-border-strong bg-surface-alt px-4 py-3"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <span className="text-xs font-semibold text-gray-700">Encaminhar para:</span>
+                          <span className="text-xs font-semibold text-text">Encaminhar para:</span>
                           <select
-                            className="h-9 rounded-lg border border-gray-200 px-3 text-sm bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                            className="h-9 rounded-lg border border-border px-3 text-sm bg-white focus:border-border-strong focus:ring-2 focus:ring-gray-200"
                             value={selectedAdvogadoId}
                             onChange={(event) => setSelectedAdvogadoId(event.target.value)}
                           >
@@ -848,7 +848,7 @@ export const LeadsPage = () => {
                           </select>
                           <button
                             className="h-9 px-4 rounded-lg text-sm font-semibold text-white transition-all"
-                            style={{ backgroundColor: '#721011' }}
+                            style={{ backgroundColor: 'var(--brand-primary)' }}
                             onClick={(event) => {
                               event.stopPropagation()
                               void handleEncaminharLead(lead.id)
@@ -858,7 +858,7 @@ export const LeadsPage = () => {
                             Encaminhar
                           </button>
                           <button
-                            className="h-9 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-white transition-colors"
+                            className="h-9 px-4 rounded-xl border border-border text-sm font-medium text-text hover:bg-white transition-colors"
                             onClick={(event) => {
                               event.stopPropagation()
                               setAssigningLeadId(null)
@@ -872,13 +872,13 @@ export const LeadsPage = () => {
 
                       {/* Último Contato */}
                       {lead.lastContactAt && (
-                        <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
-                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                        <div className="mt-3 flex items-center gap-2 border-t border-border pt-3 text-xs text-text-muted">
+                          <Clock className="h-3.5 w-3.5 text-text-subtle" />
                           <span>Último contato: <strong>{formatDateTime(lead.lastContactAt)}</strong></span>
                           {lead.owner && (
                             <>
-                              <span className="mx-1 text-gray-300">•</span>
-                              <User className="h-3.5 w-3.5 text-gray-400" />
+                              <span className="mx-1 text-text-subtle">•</span>
+                              <User className="h-3.5 w-3.5 text-text-subtle" />
                               <span>Responsável: <strong>{lead.owner}</strong></span>
                             </>
                           )}
@@ -904,8 +904,8 @@ export const LeadsPage = () => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
         input:focus, select:focus, textarea:focus {
-          --tw-ring-color: #721011;
-          border-color: #721011;
+          --tw-ring-color: 'var(--brand-primary)';
+          border-color: 'var(--brand-primary)';
         }
 
         ::-webkit-scrollbar {

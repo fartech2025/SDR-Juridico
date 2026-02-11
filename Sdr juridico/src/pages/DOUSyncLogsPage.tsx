@@ -92,22 +92,22 @@ export default function DOUSyncLogsPage() {
   const totalPublicacoes = logs.reduce((acc, l) => acc + (l.publicacoes_encontradas || 0), 0)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-alt">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-text">
               Monitoramento DOU
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-text-muted mt-1">
               Historico de sincronizacoes e estatisticas
             </p>
           </div>
           <button
             onClick={loadData}
             disabled={loading}
-            className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center px-4 py-2 bg-white border border-border-strong rounded-lg text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
@@ -116,74 +116,74 @@ export default function DOUSyncLogsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-xl border border-border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-50 rounded-lg">
                 <FileText className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.casosMonitorados}</p>
-                <p className="text-xs text-gray-500">Casos monitorados</p>
+                <p className="text-2xl font-bold text-text">{stats.casosMonitorados}</p>
+                <p className="text-xs text-text-muted">Casos monitorados</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-xl border border-border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-50 rounded-lg">
                 <Search className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.termosAtivos}</p>
-                <p className="text-xs text-gray-500">Termos ativos</p>
+                <p className="text-2xl font-bold text-text">{stats.termosAtivos}</p>
+                <p className="text-xs text-text-muted">Termos ativos</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-xl border border-border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-50 rounded-lg">
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.publicacoes30d}</p>
-                <p className="text-xs text-gray-500">Publicacoes (30d)</p>
+                <p className="text-2xl font-bold text-text">{stats.publicacoes30d}</p>
+                <p className="text-xs text-text-muted">Publicacoes (30d)</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-xl border border-border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-50 rounded-lg">
                 <Clock className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.naoLidas}</p>
-                <p className="text-xs text-gray-500">Nao lidas</p>
+                <p className="text-2xl font-bold text-text">{stats.naoLidas}</p>
+                <p className="text-xs text-text-muted">Nao lidas</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Summary */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-xl border border-border p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-gray-600">{totalSucessos} sucessos</span>
+                <span className="text-sm text-text-muted">{totalSucessos} sucessos</span>
               </div>
               <div className="flex items-center gap-2">
                 <XCircle className="w-4 h-4 text-red-600" />
-                <span className="text-sm text-gray-600">{totalErros} erros</span>
+                <span className="text-sm text-text-muted">{totalErros} erros</span>
               </div>
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-gray-600">{totalPublicacoes} publicacoes encontradas</span>
+                <span className="text-sm text-text-muted">{totalPublicacoes} publicacoes encontradas</span>
               </div>
             </div>
             {stats.ultimoSync && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-text-subtle">
                 Ultimo sync: {formatDate(stats.ultimoSync)}
               </p>
             )}
@@ -191,21 +191,21 @@ export default function DOUSyncLogsPage() {
         </div>
 
         {/* Logs Table */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h2 className="font-semibold text-gray-900">Historico de Sincronizacoes</h2>
+        <div className="bg-white rounded-xl border border-border overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <h2 className="font-semibold text-text">Historico de Sincronizacoes</h2>
           </div>
 
           {loading ? (
             <div className="p-8 text-center">
-              <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Carregando...</p>
+              <RefreshCw className="w-8 h-8 text-text-subtle animate-spin mx-auto mb-2" />
+              <p className="text-sm text-text-muted">Carregando...</p>
             </div>
           ) : logs.length === 0 ? (
             <div className="p-8 text-center">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">Nenhuma sincronizacao encontrada</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <FileText className="w-12 h-12 text-text-subtle mx-auto mb-3" />
+              <p className="text-sm text-text-muted">Nenhuma sincronizacao encontrada</p>
+              <p className="text-xs text-text-subtle mt-1">
                 O bot roda automaticamente de segunda a sexta as 9h
               </p>
             </div>
@@ -218,7 +218,7 @@ export default function DOUSyncLogsPage() {
                 return (
                   <div
                     key={log.id}
-                    className={`px-4 py-3 hover:bg-gray-50 ${log.status === 'erro' ? 'bg-red-50/50' : ''}`}
+                    className={`px-4 py-3 hover:bg-surface-alt ${log.status === 'erro' ? 'bg-red-50/50' : ''}`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -226,18 +226,18 @@ export default function DOUSyncLogsPage() {
                           <StatusIcon className={`w-4 h-4 ${config.color}`} />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-text">
                             {log.data_pesquisa}
                           </p>
                           <div className="flex items-center gap-3 mt-0.5">
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-text-muted">
                               {log.termos_pesquisados} termos
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-text-muted">
                               {log.publicacoes_encontradas} encontradas
                             </span>
                             {log.duracao_ms && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-text-subtle">
                                 {formatDuration(log.duracao_ms)}
                               </span>
                             )}
@@ -248,7 +248,7 @@ export default function DOUSyncLogsPage() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.color} border ${config.border}`}>
                           {config.label}
                         </span>
-                        <p className="text-[10px] text-gray-400 mt-1">
+                        <p className="text-[10px] text-text-subtle mt-1">
                           {formatDate(log.created_at)}
                         </p>
                       </div>

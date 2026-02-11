@@ -155,11 +155,11 @@ export const LoginPage = () => {
         </svg>
 
         {/* Top logo */}
-        <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ position: 'relative', zIndex: 2, overflow: 'visible' }}>
           <img
             src={LOGO_URL}
             alt="TalentJUD"
-            style={{ height: 64, width: 'auto', borderRadius: 8, objectFit: 'contain' }}
+            style={{ height: 96, width: 'auto', borderRadius: 8, objectFit: 'contain', transform: 'scale(3)', transformOrigin: 'top left' }}
           />
         </div>
 
@@ -222,7 +222,7 @@ export const LoginPage = () => {
         <div style={s.formWrap}>
           {/* Mobile logo */}
           <div className="lg:hidden" style={{ textAlign: 'center', marginBottom: 32 }}>
-            <img src={LOGO_URL} alt="TalentJUD" style={{ height: 48, margin: '0 auto', borderRadius: 6 }}/>
+            <img src={LOGO_URL} alt="TalentJUD" style={{ height: 72, margin: '0 auto', borderRadius: 6, transform: 'scale(3)', transformOrigin: 'top center' }}/>
           </div>
 
           {/* Header */}
@@ -260,7 +260,7 @@ export const LoginPage = () => {
                     background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12,
                     outline: 'none', transition: 'border-color .15s, box-shadow .15s',
                   }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#721011'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.12)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.12)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
                 />
               </div>
@@ -289,7 +289,7 @@ export const LoginPage = () => {
                     background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12,
                     outline: 'none', transition: 'border-color .15s, box-shadow .15s',
                   }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#721011'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.12)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.12)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
                 />
                 <button
@@ -317,10 +317,10 @@ export const LoginPage = () => {
             {/* Remember + Forgot */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#64748b' }}>
-                <input type="checkbox" style={{ accentColor: '#721011', width: 16, height: 16 }}/>
+                <input type="checkbox" style={{ accentColor: 'var(--brand-primary)', width: 16, height: 16 }}/>
                 Lembrar-me
               </label>
-              <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 600, color: '#721011', textDecoration: 'none' }}>
+              <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-primary)', textDecoration: 'none' }}>
                 Esqueceu a senha?
               </Link>
             </div>
@@ -332,7 +332,7 @@ export const LoginPage = () => {
               style={{
                 width: '100%', padding: '15px 24px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                background: '#721011', color: '#fff', border: 'none', borderRadius: 12,
+                background: 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: 12,
                 fontSize: 15, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
                 cursor: isLoading ? 'wait' : 'pointer',
                 boxShadow: '0 4px 14px rgba(114,16,17,0.28)',
@@ -340,7 +340,7 @@ export const LoginPage = () => {
                 opacity: isLoading ? 0.7 : 1,
               }}
               onMouseEnter={(e) => { if (!isLoading) { e.currentTarget.style.background = '#4A0B0C'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(114,16,17,0.35)' }}}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#721011'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(114,16,17,0.28)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-primary)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(114,16,17,0.28)' }}
             >
               {isLoading ? (
                 <>

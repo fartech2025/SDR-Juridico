@@ -114,11 +114,11 @@ export default function AuthCallback() {
   }, [navigate])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-surface-alt">
       <div className="text-center">
         <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-emerald-600 border-r-transparent"></div>
-        <h2 className="text-xl font-semibold text-gray-800">Processando...</h2>
-        <p className="mt-2 text-gray-600">Aguarde enquanto confirmamos seu acesso.</p>
+        <h2 className="text-xl font-semibold text-text">Processando...</h2>
+        <p className="mt-2 text-text-muted">Aguarde enquanto confirmamos seu acesso.</p>
       </div>
     </div>
   )

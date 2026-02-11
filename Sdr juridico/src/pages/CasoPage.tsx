@@ -115,13 +115,13 @@ const toDateInput = (value?: string | null) => (value ? value.slice(0, 10) : '')
 const taskStatusPill = (status: Tarefa['status']) => {
   if (status === 'concluida') return 'border-green-200 bg-green-50 text-green-700'
   if (status === 'em_andamento') return 'border-orange-200 bg-orange-50 text-orange-700'
-  return 'border-gray-200 bg-gray-50 text-gray-600'
+  return 'border-border bg-surface-alt text-text-muted'
 }
 
 const taskPriorityPill = (priority: Tarefa['priority']) => {
   if (priority === 'alta') return 'border-red-200 bg-red-50 text-red-700'
   if (priority === 'normal') return 'border-blue-200 bg-blue-50 text-blue-700'
-  return 'border-gray-200 bg-gray-50 text-gray-600'
+  return 'border-border bg-surface-alt text-text-muted'
 }
 
 const FALLBACK_CASO: Caso = {
@@ -148,7 +148,7 @@ const Badge = ({
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'primary' | 'accent'
 }) => {
   const variants = {
-    default: 'bg-gray-100 text-gray-700',
+    default: 'bg-surface-alt text-text',
     primary: 'bg-red-50 text-red-800',
     accent: 'bg-amber-50 text-amber-700',
     success: 'bg-green-50 text-green-700',
@@ -184,8 +184,8 @@ const TabButton = ({
     className={cn(
       'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200',
       active
-        ? 'bg-white text-gray-900 shadow-sm'
-        : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+        ? 'bg-white text-text shadow-sm'
+        : 'text-text-muted hover:text-text hover:bg-white/50'
     )}
   >
     {children}
@@ -209,14 +209,14 @@ const FilterChip = ({
       'px-3 py-1.5 text-sm font-medium rounded-full border transition-all duration-200',
       active
         ? 'border-red-200 bg-red-50 text-red-800'
-        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+        : 'border-border bg-white text-text-muted hover:border-border-strong'
     )}
     style={
       active
         ? {
             borderColor: 'rgba(114, 16, 17, 0.2)',
             backgroundColor: 'rgba(114, 16, 17, 0.05)',
-            color: '#721011',
+            color: 'var(--brand-primary)',
           }
         : {}
     }
@@ -237,12 +237,12 @@ const TaskItem = ({
   onEdit: () => void
   onDelete: () => void
 }) => (
-  <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-    <span className="text-sm text-gray-700">{title}</span>
+  <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
+    <span className="text-sm text-text">{title}</span>
     <div className="flex items-center gap-2">
       <button
         type="button"
-        className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-all"
+        className="h-7 w-7 flex items-center justify-center rounded-lg border border-border bg-white text-text-muted hover:bg-surface-alt hover:text-text hover:border-border-strong transition-all"
         onClick={onEdit}
         title="Editar tarefa"
       >
@@ -250,7 +250,7 @@ const TaskItem = ({
       </button>
       <button
         type="button"
-        className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
+        className="h-7 w-7 flex items-center justify-center rounded-lg border border-border bg-white text-text-muted hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
         onClick={onDelete}
         title="Excluir tarefa"
       >
@@ -743,7 +743,7 @@ export const CasoPage = () => {
 
   return (
     <div
-      className="min-h-screen bg-gray-50 pb-12"
+      className="min-h-screen bg-surface-alt pb-12"
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
       <div className="p-6">
@@ -752,20 +752,20 @@ export const CasoPage = () => {
           <div className="flex items-center gap-4">
             <button
               type="button"
-              className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+              className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
               onClick={() => navigate('/app/casos')}
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm font-medium">Voltar</span>
             </button>
-            <div className="h-6 w-px bg-gray-200" />
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-              <span className="text-xs text-gray-500 font-mono">
+            <div className="h-6 w-px bg-surface-alt" />
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-alt rounded-lg">
+              <span className="text-xs text-text-muted font-mono">
                 #{caso.id.slice(0, 20)}
               </span>
               <button
                 type="button"
-                className="text-gray-400 hover:text-gray-600"
+                className="text-text-subtle hover:text-text-muted"
                 onClick={() => navigator.clipboard.writeText(caso.id)}
               >
                 <Copy className="w-4 h-4" />
@@ -775,10 +775,10 @@ export const CasoPage = () => {
         </div>
 
         {/* Case Header */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-border p-6 mb-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-xl font-bold text-gray-900 mb-3">{caso.cliente}</h1>
+              <h1 className="text-xl font-bold text-text mb-3">{caso.cliente}</h1>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={statusBadgeVariant(caso.status)}>
                   {caso.status.charAt(0).toUpperCase() + caso.status.slice(1)}
@@ -790,7 +790,7 @@ export const CasoPage = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium text-text hover:bg-surface-alt transition-colors"
               >
                 <Pencil className="w-4 h-4" />
                 Editar Caso
@@ -798,7 +798,7 @@ export const CasoPage = () => {
               <button
                 type="button"
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
                 onClick={openModal}
               >
                 <Plus className="w-5 h-5" />
@@ -809,7 +809,7 @@ export const CasoPage = () => {
 
           {/* Inline DataJud/DOU status indicators */}
           {(caso.numero_processo || douCount > 0) && (
-            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
               {caso.numero_processo && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
                   <Scale className="w-4 h-4 text-blue-600" />
@@ -844,7 +844,7 @@ export const CasoPage = () => {
             {/* Left Column - Main Content */}
             <div className="xl:col-span-2 space-y-6">
               {/* Main Tabs */}
-              <div className="bg-gray-100/50 rounded-xl p-1.5 inline-flex gap-1 flex-wrap">
+              <div className="bg-surface-alt/50 rounded-xl p-1.5 inline-flex gap-1 flex-wrap">
                 {tabs.map((tab) => (
                   <TabButton
                     key={tab}
@@ -859,13 +859,13 @@ export const CasoPage = () => {
               {/* Search and Filter */}
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle">
                     <Search className="w-5 h-5" />
                   </div>
                   <input
                     type="text"
                     placeholder="Buscar eventos..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                     style={
                       {
                         '--tw-ring-color': 'rgba(114, 16, 17, 0.2)',
@@ -877,7 +877,7 @@ export const CasoPage = () => {
                 </div>
                 <button
                   type="button"
-                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors bg-white"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-border rounded-lg text-sm font-medium text-text hover:bg-surface-alt transition-colors bg-white"
                   onClick={() => setFiltersOpen((prev) => !prev)}
                 >
                   <Filter className="w-5 h-5" />
@@ -887,11 +887,11 @@ export const CasoPage = () => {
 
               {/* Filters Panel */}
               {filtersOpen && (
-                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs text-gray-700 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-white px-4 py-3 text-xs text-text shadow-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">Periodo</span>
+                    <span className="text-text-muted">Periodo</span>
                     <select
-                      className="h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                      className="h-9 rounded-lg border border-border bg-surface-alt px-3 text-xs text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                       value={dateRange}
                       onChange={(e) =>
                         setDateRange(e.target.value as 'all' | '7d' | '30d' | '90d')
@@ -904,9 +904,9 @@ export const CasoPage = () => {
                     </select>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">Ordenacao</span>
+                    <span className="text-text-muted">Ordenacao</span>
                     <select
-                      className="h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                      className="h-9 rounded-lg border border-border bg-surface-alt px-3 text-xs text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                       value={sortOrder}
                       onChange={(e) => setSortOrder(e.target.value as 'recent' | 'oldest')}
                     >
@@ -916,7 +916,7 @@ export const CasoPage = () => {
                   </div>
                   <button
                     type="button"
-                    className="ml-auto text-xs text-gray-500 hover:text-gray-700"
+                    className="ml-auto text-xs text-text-muted hover:text-text"
                     onClick={resetFilters}
                   >
                     Limpar filtros
@@ -927,35 +927,35 @@ export const CasoPage = () => {
               {/* AI Summary Section */}
               {activeTab === 'Tudo' && (
                 <>
-                  <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                    <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                  <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+                    <div className="px-5 py-4 border-b border-border flex items-center gap-3">
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                        style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: 'var(--brand-primary)' }}
                       >
                         <FileText className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">Dossie Juridico</h3>
-                        <p className="text-xs text-gray-500">Resumo gerado e pontos relevantes</p>
+                        <h3 className="font-semibold text-text">Dossie Juridico</h3>
+                        <p className="text-xs text-text-muted">Resumo gerado e pontos relevantes</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
                       {/* AI Summary */}
-                      <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-5 border border-gray-100">
+                      <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-5 border border-border">
                         <div className="flex items-center gap-2 mb-3">
                           <div
                             className="w-6 h-6 rounded-md flex items-center justify-center"
-                            style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                            style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: 'var(--brand-primary)' }}
                           >
                             <Lightbulb className="w-4 h-4" />
                           </div>
-                          <h4 className="text-sm font-semibold text-gray-900">
+                          <h4 className="text-sm font-semibold text-text">
                             Resumo gerado por IA
                           </h4>
                         </div>
-                        <p className="text-sm text-gray-600 leading-relaxed">
+                        <p className="text-sm text-text-muted leading-relaxed">
                           {highlights[0]?.content}
                         </p>
                       </div>
@@ -969,9 +969,9 @@ export const CasoPage = () => {
                           >
                             <KeyRound className="w-4 h-4" />
                           </div>
-                          <h4 className="text-sm font-semibold text-gray-900">Pontos relevantes</h4>
+                          <h4 className="text-sm font-semibold text-text">Pontos relevantes</h4>
                         </div>
-                        <p className="text-sm text-gray-600 leading-relaxed">
+                        <p className="text-sm text-text-muted leading-relaxed">
                           {highlights[1]?.content}
                         </p>
                       </div>
@@ -979,7 +979,7 @@ export const CasoPage = () => {
 
                     <button
                       type="button"
-                      className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1 border-t border-gray-100"
+                      className="w-full py-3 text-sm font-medium text-text-muted hover:text-text hover:bg-surface-alt transition-colors flex items-center justify-center gap-1 border-t border-border"
                       onClick={handleScrollToTimeline}
                     >
                       Ver linha do tempo completa
@@ -1013,9 +1013,9 @@ export const CasoPage = () => {
                   {/* Timeline Section */}
                   <div
                     ref={timelineRef}
-                    className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm"
+                    className="bg-white rounded-xl border border-border overflow-hidden shadow-sm"
                   >
-                    <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="px-5 py-4 border-b border-border flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -1024,11 +1024,11 @@ export const CasoPage = () => {
                           <Clock className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">Linha do Tempo</h3>
-                          <p className="text-xs text-gray-500">
+                          <h3 className="font-semibold text-text">Linha do Tempo</h3>
+                          <p className="text-xs text-text-muted">
                             {totalEvents} evento{totalEvents !== 1 ? 's' : ''}
                             {datajudCount > 0 && (
-                              <span style={{ color: '#721011' }}> · {datajudCount} DataJud</span>
+                              <span style={{ color: 'var(--brand-primary)' }}> · {datajudCount} DataJud</span>
                             )}
                             {douCount > 0 && (
                               <span className="text-amber-600"> · {douCount} DOU</span>
@@ -1038,8 +1038,8 @@ export const CasoPage = () => {
                       </div>
                       <button
                         type="button"
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-gray-50"
-                        style={{ color: '#721011' }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-surface-alt"
+                        style={{ color: 'var(--brand-primary)' }}
                         onClick={openModal}
                       >
                         <Plus className="w-5 h-5" />
@@ -1047,7 +1047,7 @@ export const CasoPage = () => {
                       </button>
                     </div>
 
-                    <div className="px-5 py-4 border-b border-gray-100">
+                    <div className="px-5 py-4 border-b border-border">
                       <div className="flex items-center gap-2 flex-wrap">
                         {['Tudo', 'Docs', 'Agenda', 'Comercial', 'Juridico', 'Automacao', 'Humano'].map(
                           (tab) => (
@@ -1082,10 +1082,10 @@ export const CasoPage = () => {
                       </div>
                     ) : (
                       <div className="p-8 text-center">
-                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                          <FileText className="w-5 h-5 text-gray-400" />
+                        <div className="w-12 h-12 rounded-full bg-surface-alt flex items-center justify-center mx-auto mb-3">
+                          <FileText className="w-5 h-5 text-text-subtle" />
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-text-muted">
                           Nenhum evento encontrado para este filtro.
                         </p>
                       </div>
@@ -1096,17 +1096,17 @@ export const CasoPage = () => {
 
               {/* Tarefas Tab */}
               {activeTab === 'Tarefas' && (
-                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                  <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+                  <div className="px-5 py-4 border-b border-border flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-gray-900">Tarefas do caso</h3>
-                      <p className="text-xs text-gray-500">
+                      <h3 className="font-semibold text-text">Tarefas do caso</h3>
+                      <p className="text-xs text-text-muted">
                         Atividades vinculadas a este dossie.
                       </p>
                     </div>
                     <Link
                       to={`/app/tarefas?casoId=${caso.id}`}
-                      className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-white px-4 text-xs font-semibold text-text shadow-sm hover:bg-surface-alt"
                     >
                       Abrir tarefas
                     </Link>
@@ -1116,9 +1116,9 @@ export const CasoPage = () => {
                       caseTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-4"
+                          className="rounded-xl border border-border bg-surface-alt/50 p-4"
                         >
-                          <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
+                          <div className="flex items-center justify-between gap-3 text-xs text-text-muted">
                             <span
                               className={cn(
                                 'inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase',
@@ -1129,16 +1129,16 @@ export const CasoPage = () => {
                             </span>
                             {task.dueDate && <span>Vence em {formatDate(task.dueDate)}</span>}
                           </div>
-                          <p className="mt-2 text-sm font-semibold text-gray-900">
+                          <p className="mt-2 text-sm font-semibold text-text">
                             {normalizeChecklistTitle(task.title)}
                           </p>
                           {task.description && (
-                            <p className="mt-1 text-xs text-gray-500">{task.description}</p>
+                            <p className="mt-1 text-xs text-text-muted">{task.description}</p>
                           )}
                         </div>
                       ))
                     ) : (
-                      <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 text-sm text-gray-500">
+                      <div className="rounded-xl border border-border bg-surface-alt/50 p-4 text-sm text-text-muted">
                         Nenhuma tarefa vinculada a este caso.
                       </div>
                     )}
@@ -1148,12 +1148,12 @@ export const CasoPage = () => {
 
               {/* Other tabs */}
               {activeTab !== 'Tudo' && activeTab !== 'Tarefas' && (
-                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                  <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900">{activeTab}</h3>
+                <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+                  <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                    <h3 className="font-semibold text-text">{activeTab}</h3>
                     <button
                       type="button"
-                      className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-white px-4 text-xs font-semibold text-text shadow-sm hover:bg-surface-alt"
                       onClick={openModal}
                     >
                       Adicionar nota
@@ -1164,17 +1164,17 @@ export const CasoPage = () => {
                       filteredEvents.map((event) => (
                         <div
                           key={event.id}
-                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-4"
+                          className="rounded-xl border border-border bg-surface-alt/50 p-4"
                         >
-                          <p className="text-sm font-semibold text-gray-900">{event.title}</p>
-                          <p className="text-xs text-gray-500">{event.description}</p>
-                          <p className="mt-2 text-[11px] text-gray-400">
+                          <p className="text-sm font-semibold text-text">{event.title}</p>
+                          <p className="text-xs text-text-muted">{event.description}</p>
+                          <p className="mt-2 text-[11px] text-text-subtle">
                             {formatDateTime(event.date)}
                           </p>
                         </div>
                       ))
                     ) : (
-                      <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 text-sm text-gray-500">
+                      <div className="rounded-xl border border-border bg-surface-alt/50 p-4 text-sm text-text-muted">
                         Sem eventos para esta categoria.
                       </div>
                     )}
@@ -1186,24 +1186,24 @@ export const CasoPage = () => {
             {/* Right Column - Client Info & Tasks */}
             <div className="space-y-6">
               {/* Client Card */}
-              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                <div className="p-5 border-b border-gray-100">
+              <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+                <div className="p-5 border-b border-border">
                   <div className="flex items-center gap-4">
                     <div
                       className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold text-white"
-                      style={{ backgroundColor: '#721011' }}
+                      style={{ backgroundColor: 'var(--brand-primary)' }}
                     >
                       {clientInitials}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{caso.cliente}</h3>
-                      <p className="text-sm text-gray-500">{lead?.email ?? 'cliente@email.com'}</p>
+                      <h3 className="font-semibold text-text">{caso.cliente}</h3>
+                      <p className="text-sm text-text-muted">{lead?.email ?? 'cliente@email.com'}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-5">
-                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                  <div className="flex items-center gap-3 text-sm text-text-muted">
                     <Phone className="w-5 h-5" />
                     <span>{lead?.phone ?? '+55 31 99999-0000'}</span>
                   </div>
@@ -1211,12 +1211,12 @@ export const CasoPage = () => {
               </div>
 
               {/* Tasks Card */}
-              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">Tarefas</h3>
+              <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                  <h3 className="font-semibold text-text">Tarefas</h3>
                   <button
                     type="button"
-                    className="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                    className="text-sm font-medium px-3 py-1.5 rounded-lg border border-border hover:bg-surface-alt transition-colors"
                     onClick={openChecklistDrawerForCreate}
                   >
                     Adicionar tarefa
@@ -1225,7 +1225,7 @@ export const CasoPage = () => {
 
                 <div className="px-5 py-2">
                   {checklistItems.length === 0 ? (
-                    <div className="py-4 text-center text-sm text-gray-500">
+                    <div className="py-4 text-center text-sm text-text-muted">
                       Nenhuma tarefa cadastrada para este caso.
                     </div>
                   ) : (
@@ -1243,21 +1243,21 @@ export const CasoPage = () => {
               </div>
 
               {/* Notes Card */}
-              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">Notas do caso</h3>
+              <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                  <h3 className="font-semibold text-text">Notas do caso</h3>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       className="text-sm font-medium hover:underline"
-                      style={{ color: '#721011' }}
+                      style={{ color: 'var(--brand-primary)' }}
                       onClick={handleScrollToTimeline}
                     >
                       Ver linha do tempo
                     </button>
                     <button
                       type="button"
-                      className="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                      className="text-sm font-medium px-3 py-1.5 rounded-lg border border-border hover:bg-surface-alt transition-colors"
                       onClick={openModal}
                     >
                       Adicionar nota
@@ -1271,20 +1271,20 @@ export const CasoPage = () => {
                       {recentNotas.map((nota) => (
                         <div
                           key={nota.id}
-                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-3"
+                          className="rounded-xl border border-border bg-surface-alt/50 p-3"
                         >
-                          <div className="text-sm font-semibold text-gray-900">{nota.title}</div>
+                          <div className="text-sm font-semibold text-text">{nota.title}</div>
                           {nota.description && (
-                            <div className="mt-1 text-xs text-gray-500">{nota.description}</div>
+                            <div className="mt-1 text-xs text-text-muted">{nota.description}</div>
                           )}
-                          <div className="mt-2 text-[11px] text-gray-400">
+                          <div className="mt-2 text-[11px] text-text-subtle">
                             {formatDateTime(nota.date)}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-center text-sm text-gray-500">
+                    <p className="text-center text-sm text-text-muted">
                       Nenhuma nota registrada para este caso.
                     </p>
                   )}
@@ -1292,13 +1292,13 @@ export const CasoPage = () => {
               </div>
 
               {/* Recent Documents Card */}
-              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">Documentos recentes</h3>
+              <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                  <h3 className="font-semibold text-text">Documentos recentes</h3>
                   <Link
                     to="/app/documentos"
                     className="text-sm font-medium hover:underline"
-                    style={{ color: '#721011' }}
+                    style={{ color: 'var(--brand-primary)' }}
                   >
                     Ver documentos
                   </Link>
@@ -1310,23 +1310,23 @@ export const CasoPage = () => {
                       {caseDocs.slice(0, 3).map((doc) => (
                         <div
                           key={doc.id}
-                          className="rounded-xl border border-gray-100 bg-gray-50/50 p-3"
+                          className="rounded-xl border border-border bg-surface-alt/50 p-3"
                         >
-                          <div className="text-sm font-semibold text-gray-900">{doc.title}</div>
-                          <div className="text-xs text-gray-500">{doc.status}</div>
+                          <div className="text-sm font-semibold text-text">{doc.title}</div>
+                          <div className="text-xs text-text-muted">{doc.status}</div>
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center">
-                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                        <Folder className="w-5 h-5 text-gray-400" />
+                      <div className="w-12 h-12 rounded-full bg-surface-alt flex items-center justify-center mx-auto mb-3">
+                        <Folder className="w-5 h-5 text-text-subtle" />
                       </div>
-                      <p className="text-sm text-gray-500">Nenhum documento anexado.</p>
+                      <p className="text-sm text-text-muted">Nenhum documento anexado.</p>
                       <button
                         type="button"
                         className="mt-3 text-sm font-medium flex items-center gap-1 mx-auto hover:gap-2 transition-all"
-                        style={{ color: '#721011' }}
+                        style={{ color: 'var(--brand-primary)' }}
                       >
                         <Plus className="w-5 h-5" />
                         Adicionar documento
@@ -1350,7 +1350,7 @@ export const CasoPage = () => {
           <>
             <button
               type="button"
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt rounded-lg transition-colors"
               onClick={closeModal}
               disabled={eventSaving}
             >
@@ -1359,7 +1359,7 @@ export const CasoPage = () => {
             <button
               type="button"
               className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-70"
-              style={{ backgroundColor: '#721011' }}
+              style={{ backgroundColor: 'var(--brand-primary)' }}
               onClick={handleSaveEvent}
               disabled={eventSaving}
             >
@@ -1375,20 +1375,20 @@ export const CasoPage = () => {
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-gray-500">Titulo</label>
+            <label className="text-xs uppercase tracking-wide text-text-muted">Titulo</label>
             <input
               type="text"
               placeholder="Descreva a nota"
-              className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+              className="w-full h-10 px-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
               style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
               value={eventForm.title}
               onChange={(e) => setEventForm((prev) => ({ ...prev, title: e.target.value }))}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-gray-500">Categoria</label>
+            <label className="text-xs uppercase tracking-wide text-text-muted">Categoria</label>
             <select
-              className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+              className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
               value={eventForm.category}
               onChange={(e) =>
                 setEventForm((prev) => ({
@@ -1405,9 +1405,9 @@ export const CasoPage = () => {
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-gray-500">Descricao</label>
+            <label className="text-xs uppercase tracking-wide text-text-muted">Descricao</label>
             <textarea
-              className="min-h-[120px] w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+              className="min-h-[120px] w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
               placeholder="Detalhes da nota"
               value={eventForm.description}
               onChange={(e) =>
@@ -1428,17 +1428,17 @@ export const CasoPage = () => {
               onClick={closeTaskDrawer}
             />
             <aside className="absolute right-0 top-0 flex h-full w-full max-w-[480px] flex-col bg-white shadow-xl">
-              <div className="border-b border-gray-100 px-6 py-6">
+              <div className="border-b border-border px-6 py-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
-                    <p className="text-[11px] uppercase tracking-[0.32em] text-gray-400">
+                    <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
                       Tarefa
                     </p>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-text">
                       {taskDrawerMode === 'create' ? 'Nova tarefa' : taskDrawerForm.title || 'Tarefa'}
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-500">
+                      <span className="inline-flex rounded-full border border-border bg-surface-alt px-3 py-1 text-xs font-semibold text-text-muted">
                         Tarefa do caso
                       </span>
                       <span
@@ -1461,7 +1461,7 @@ export const CasoPage = () => {
                   </div>
                   <button
                     type="button"
-                    className="text-sm text-gray-400 hover:text-gray-700"
+                    className="text-sm text-text-subtle hover:text-text"
                     onClick={closeTaskDrawer}
                     aria-label="Fechar"
                   >
@@ -1470,18 +1470,18 @@ export const CasoPage = () => {
                 </div>
               </div>
 
-              <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 text-sm text-gray-600">
+              <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 text-sm text-text-muted">
                 {taskDrawerError && (
                   <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
                     {taskDrawerError}
                   </div>
                 )}
                 <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-wide text-gray-500">Titulo</label>
+                  <label className="text-xs uppercase tracking-wide text-text-muted">Titulo</label>
                   <input
                     type="text"
                     placeholder="Descreva a tarefa"
-                    className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    className="w-full h-10 px-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                     style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                     value={taskDrawerForm.title}
                     onChange={(e) =>
@@ -1491,9 +1491,9 @@ export const CasoPage = () => {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-wide text-gray-500">Status</label>
+                    <label className="text-xs uppercase tracking-wide text-text-muted">Status</label>
                     <select
-                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                      className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                       value={taskDrawerForm.status}
                       onChange={(e) =>
                         setTaskDrawerForm((prev) => ({
@@ -1508,11 +1508,11 @@ export const CasoPage = () => {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-wide text-gray-500">
+                    <label className="text-xs uppercase tracking-wide text-text-muted">
                       Prioridade
                     </label>
                     <select
-                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                      className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                       value={taskDrawerForm.priority}
                       onChange={(e) =>
                         setTaskDrawerForm((prev) => ({
@@ -1528,10 +1528,10 @@ export const CasoPage = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-wide text-gray-500">Prazo</label>
+                  <label className="text-xs uppercase tracking-wide text-text-muted">Prazo</label>
                   <input
                     type="date"
-                    className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    className="w-full h-10 px-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                     style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
                     value={taskDrawerForm.dueDate}
                     onChange={(e) =>
@@ -1540,11 +1540,11 @@ export const CasoPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-wide text-gray-500">
+                  <label className="text-xs uppercase tracking-wide text-text-muted">
                     Descricao
                   </label>
                   <textarea
-                    className="min-h-[120px] w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                    className="min-h-[120px] w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                     placeholder="Detalhes da tarefa"
                     value={taskDrawerForm.description}
                     onChange={(e) =>
@@ -1555,28 +1555,28 @@ export const CasoPage = () => {
                     }
                   />
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Vinculo</p>
-                  <p className="mt-2 text-sm text-gray-700">
+                <div className="rounded-xl border border-border bg-surface-alt px-4 py-3 text-xs text-text-muted">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-text-subtle">Vinculo</p>
+                  <p className="mt-2 text-sm text-text">
                     Caso: {caso.title} - {caso.cliente}
                   </p>
                   {taskDrawerTask ? (
-                    <p className="mt-1 text-[11px] text-gray-400">
+                    <p className="mt-1 text-[11px] text-text-subtle">
                       Criada em {formatDateTime(taskDrawerTask.createdAt)}
                     </p>
                   ) : (
-                    <p className="mt-1 text-[11px] text-gray-400">
+                    <p className="mt-1 text-[11px] text-text-subtle">
                       O item sera criado para este caso.
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 bg-white px-6 py-4">
+              <div className="border-t border-border bg-white px-6 py-4">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt rounded-lg transition-colors"
                     onClick={closeTaskDrawer}
                     disabled={taskDrawerSaving}
                   >
@@ -1585,7 +1585,7 @@ export const CasoPage = () => {
                   <button
                     type="button"
                     className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-70"
-                    style={{ backgroundColor: '#721011' }}
+                    style={{ backgroundColor: 'var(--brand-primary)' }}
                     onClick={handleSaveTaskDrawer}
                     disabled={taskDrawerSaving}
                   >

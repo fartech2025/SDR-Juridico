@@ -160,7 +160,7 @@ export default function SecurityMonitoring() {
       case 'high': return 'bg-orange-100 text-orange-700 border-orange-200'
       case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
       case 'low': return 'bg-blue-100 text-blue-700 border-blue-200'
-      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+      default: return 'bg-surface-alt text-text border-border'
     }
   }
 
@@ -169,7 +169,7 @@ export default function SecurityMonitoring() {
       case 'active': return 'bg-red-500'
       case 'investigating': return 'bg-yellow-500'
       case 'resolved': return 'bg-green-500'
-      default: return 'bg-gray-500'
+      default: return 'bg-surface-alt0'
     }
   }
 
@@ -178,7 +178,7 @@ export default function SecurityMonitoring() {
       case 'good': return 'text-green-600'
       case 'warning': return 'text-yellow-600'
       case 'critical': return 'text-red-600'
-      default: return 'text-gray-600'
+      default: return 'text-text-muted'
     }
   }
 
@@ -215,7 +215,7 @@ export default function SecurityMonitoring() {
           <div className="flex gap-3">
             <button
               onClick={loadSecurityData}
-              className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-text shadow-sm hover:bg-gray-50 transition"
+              className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-text shadow-sm hover:bg-surface-alt transition"
             >
               <RefreshCw className="h-4 w-4" />
               Atualizar
@@ -278,7 +278,7 @@ export default function SecurityMonitoring() {
                         "flex items-center gap-1 text-xs",
                         metric.trend === 'up' ? 'text-green-600' :
                         metric.trend === 'down' ? 'text-red-600' :
-                        'text-gray-600'
+                        'text-text-muted'
                       )}>
                         {metric.trend === 'up' && <TrendingUp className="h-3 w-3" />}
                         {metric.trend === 'down' && <TrendingDown className="h-3 w-3" />}
@@ -322,7 +322,7 @@ export default function SecurityMonitoring() {
                 {alerts.slice(0, 5).map((alert) => (
                   <div
                     key={alert.id}
-                    className="flex items-start gap-4 rounded-xl border border-border p-4 hover:bg-gray-50 transition"
+                    className="flex items-start gap-4 rounded-xl border border-border p-4 hover:bg-surface-alt transition"
                   >
                     <div className={cn("mt-1 h-2 w-2 rounded-full", getStatusColor(alert.status))} />
                     <div className="flex-1">
@@ -361,7 +361,7 @@ export default function SecurityMonitoring() {
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="flex items-start gap-4 rounded-xl border border-border p-4 hover:bg-gray-50 transition"
+                  className="flex items-start gap-4 rounded-xl border border-border p-4 hover:bg-surface-alt transition"
                 >
                   <div className={cn("mt-1 h-2 w-2 rounded-full", getStatusColor(alert.status))} />
                   <div className="flex-1">
@@ -418,7 +418,7 @@ export default function SecurityMonitoring() {
               ].map((log, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded-xl border border-border p-4 hover:bg-gray-50 transition"
+                  className="flex items-center justify-between rounded-xl border border-border p-4 hover:bg-surface-alt transition"
                 >
                   <div className="flex items-center gap-4">
                     <span className="text-xs text-text-subtle font-mono">{log.time}</span>
@@ -466,7 +466,7 @@ export default function SecurityMonitoring() {
                         <p className="text-xs text-text-subtle">Conformidade</p>
                       </div>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-2 bg-surface-alt rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-green-600 rounded-full transition-all"
                         style={{ width: `${compliance.score}%` }}

@@ -137,7 +137,7 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
       {/* Drawer */}
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-[520px] flex-col bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#721011] to-[#8b1415]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-brand-primary to-brand-primary/90">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <UserRound className="h-5 w-5 text-white" />
@@ -178,7 +178,7 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
                 activeTab === tab.key
-                  ? 'text-[#721011] border-b-2 border-[#721011] bg-white'
+                  ? 'text-brand-primary border-b-2 border-brand-primary bg-white'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               )}
             >
@@ -296,7 +296,7 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
               
               {historyLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#721011] border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-primary border-t-transparent"></div>
                 </div>
               ) : history.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
@@ -313,11 +313,11 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
                       <div key={entry.id} className="relative pl-8">
                         <div className={cn(
                           'absolute left-0 w-6 h-6 rounded-full border-2 flex items-center justify-center bg-white',
-                          index === history.length - 1 ? 'border-[#721011]' : 'border-gray-300'
+                          index === history.length - 1 ? 'border-brand-primary' : 'border-gray-300'
                         )}>
                           <div className={cn(
                             'w-2 h-2 rounded-full',
-                            index === history.length - 1 ? 'bg-[#721011]' : 'bg-gray-400'
+                            index === history.length - 1 ? 'bg-brand-primary' : 'bg-gray-400'
                           )} />
                         </div>
                         
@@ -402,7 +402,7 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
               
               {tarefasLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#721011] border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-primary border-t-transparent"></div>
                 </div>
               ) : tarefas.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
@@ -450,7 +450,7 @@ export const LeadDrawer = ({ open, lead, relatedCase, onClose }: LeadDrawerProps
               
               {mensagensLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#721011] border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-primary border-t-transparent"></div>
                 </div>
               ) : mensagens.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">

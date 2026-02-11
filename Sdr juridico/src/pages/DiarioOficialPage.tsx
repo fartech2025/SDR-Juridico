@@ -168,13 +168,13 @@ export const DiarioOficialPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background px-6 lg:px-8 py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background" style={{ padding: '20px' }}>
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-text flex items-center gap-3">
-              <Newspaper className="w-8 h-8 text-info" />
+              <Newspaper className="h-5 w-5 text-info" />
               Diário Oficial
             </h1>
             <p className="text-text-muted">
@@ -191,7 +191,7 @@ export const DiarioOficialPage = () => {
           </div>
           <Link
             to="/app/dou-logs"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-surface text-sm font-medium text-text hover:bg-surface-alt transition-colors"
           >
             <Clock className="w-4 h-4" />
             <span className="hidden sm:inline">Monitoramento DOU</span>

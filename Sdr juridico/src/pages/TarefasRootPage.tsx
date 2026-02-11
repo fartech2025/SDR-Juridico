@@ -11,14 +11,14 @@ export const TarefasRootPage = () => {
   return (
     <div className="p-6 space-y-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white p-1 w-fit">
+      <div className="flex items-center gap-1 rounded-xl border border-border bg-white p-1 w-fit">
         <button
           onClick={() => setTab('kanban')}
           className={cn(
             'px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200',
             tab === 'kanban'
-              ? 'bg-gray-100 text-gray-900'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              ? 'bg-surface-alt text-text'
+              : 'text-text-muted hover:text-text hover:bg-surface-alt'
           )}
         >
           Kanban
@@ -28,8 +28,8 @@ export const TarefasRootPage = () => {
           className={cn(
             'px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200',
             tab === 'lista'
-              ? 'bg-gray-100 text-gray-900'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              ? 'bg-surface-alt text-text'
+              : 'text-text-muted hover:text-text hover:bg-surface-alt'
           )}
         >
           Lista

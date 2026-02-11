@@ -430,6 +430,34 @@ export const DataJudPage = () => {
     }
   })()
 
+  const obterLogoHeader = (() => {
+    let cache: { dataUrl: string; width: number; height: number } | null = null
+    const logoUrl =
+      'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/talent%20jud%2003.png'
+
+    return async () => {
+      if (cache) return cache
+      const response = await fetch(logoUrl)
+      if (!response.ok) throw new Error('Nao foi possivel carregar a logo.')
+      const blob = await response.blob()
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(new Error('Falha ao ler a logo.'))
+        reader.readAsDataURL(blob)
+      })
+      const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+        img.onerror = () => reject(new Error('Falha ao medir a logo.'))
+        img.src = dataUrl
+      })
+      cache = { dataUrl, ...dimensions }
+      return cache
+    }
+  })()
+
   const exportarProcessoParaPDF = async (processo: ProcessoDataJud) => {
     try {
       const doc = new jsPDF()
@@ -442,6 +470,7 @@ export const DataJudPage = () => {
       let y = topMargin
       const maxWidth = pageWidth - 2 * margin
       const watermark = await obterMarcaDagua().catch(() => null)
+      const headerLogo = await obterLogoHeader().catch(() => null)
 
       // Configurações de fonte
       const ensureSpace = (height: number) => {
@@ -601,10 +630,19 @@ export const DataJudPage = () => {
         doc.setPage(i)
         doc.setFillColor(245, 247, 251)
         doc.rect(0, 0, pageWidth, 22, 'F')
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'bold')
-        doc.setTextColor(26, 47, 76)
-        doc.text('Relatorio DataJud', margin, 14)
+        // Logo no cabeçalho
+        if (headerLogo) {
+          const logoH = 28
+          const logoAspect = headerLogo.width / headerLogo.height
+          const logoW = logoH * logoAspect
+          const logoY = (22 - logoH) / 2
+          doc.addImage(headerLogo.dataUrl, 'PNG', margin, logoY < 0 ? 0 : logoY, logoW, logoH)
+        } else {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'bold')
+          doc.setTextColor(26, 47, 76)
+          doc.text('Relatorio DataJud', margin, 14)
+        }
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(90)
         doc.text(
@@ -730,7 +768,7 @@ export const DataJudPage = () => {
         {outrosPolos.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-semibold text-text-muted flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+              <span className="w-2 h-2 rounded-full bg-text-subtle"></span>
               Terceiros / Outros
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -745,7 +783,7 @@ export const DataJudPage = () => {
   return (
     <div
       className={cn(
-        'min-h-screen pb-12 px-6 lg:px-8',
+        'min-h-screen pt-5 pb-12 px-6 lg:px-8',
         'bg-base text-text',
       )}
       style={{ fontFamily: "'DM Sans', sans-serif" }}
@@ -774,7 +812,7 @@ export const DataJudPage = () => {
               Integracao CNJ
             </p>
             <div className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-[#721011]" />
+              <Database className="h-5 w-5 text-brand-primary" />
               <h2 className={cn('font-display text-2xl', 'text-text')}>
                 API DataJud
               </h2>
@@ -893,7 +931,7 @@ export const DataJudPage = () => {
                   className={cn(
                     'flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition',
                     tipoBusca === tipo.id
-                      ? 'border-[#721011]/60 bg-[#721011]/10 text-[#721011]'
+                      ? 'border-brand-primary/60 bg-brand-primary/10 text-brand-primary'
                       : 'border-border bg-white text-text-muted hover:text-text'
                   )}
                 >

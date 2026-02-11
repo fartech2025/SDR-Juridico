@@ -187,7 +187,7 @@ export default function TarefasArquivadasPage() {
       case 'alta': return 'bg-red-100 text-red-700 border-red-200'
       case 'media': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
       case 'baixa': return 'bg-green-100 text-green-700 border-green-200'
-      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+      default: return 'bg-surface-alt text-text border-border'
     }
   }
 
@@ -197,7 +197,7 @@ export default function TarefasArquivadasPage() {
       case 'em_andamento': return 'bg-blue-100 text-blue-700'
       case 'pendente': return 'bg-yellow-100 text-yellow-700'
       case 'cancelada': return 'bg-red-100 text-red-700'
-      default: return 'bg-gray-100 text-gray-700'
+      default: return 'bg-surface-alt text-text'
     }
   }
 
@@ -212,17 +212,17 @@ export default function TarefasArquivadasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-alt">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Archive className="w-6 h-6 text-gray-600" />
+            <div className="p-2 bg-surface-alt rounded-lg">
+              <Archive className="w-6 h-6 text-text-muted" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Tarefas Arquivadas</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-2xl font-bold text-text">Tarefas Arquivadas</h1>
+              <p className="text-sm text-text-muted">
                 {tarefas.length} tarefa{tarefas.length !== 1 ? 's' : ''} no arquivo
               </p>
             </div>
@@ -231,15 +231,15 @@ export default function TarefasArquivadasPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="px-6 py-4 bg-white border-b border-gray-200">
+      <div className="px-6 py-4 bg-white border-b border-border">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-subtle" />
           <input
             type="text"
             placeholder="Buscar tarefas arquivadas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
       </div>
@@ -252,11 +252,11 @@ export default function TarefasArquivadasPage() {
           </div>
         ) : filteredTarefas.length === 0 ? (
           <div className="text-center py-12">
-            <Archive className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Archive className="w-16 h-16 text-text-subtle mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-text mb-2">
               {searchTerm ? 'Nenhuma tarefa encontrada' : 'Nenhuma tarefa arquivada'}
             </h3>
-            <p className="text-gray-500">
+            <p className="text-text-muted">
               {searchTerm 
                 ? 'Tente buscar por outro termo'
                 : 'As tarefas arquivadas aparecerão aqui'}
@@ -267,13 +267,13 @@ export default function TarefasArquivadasPage() {
             {filteredTarefas.map((tarefa) => (
               <div
                 key={tarefa.id}
-                className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl border border-border p-5 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     {/* Título e badges */}
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <h3 className="font-semibold text-gray-900 truncate">
+                      <h3 className="font-semibold text-text truncate">
                         {tarefa.titulo}
                       </h3>
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(tarefa.status)}`}>
@@ -286,13 +286,13 @@ export default function TarefasArquivadasPage() {
 
                     {/* Descrição */}
                     {tarefa.descricao && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-sm text-text-muted mb-3 line-clamp-2">
                         {tarefa.descricao}
                       </p>
                     )}
 
                     {/* Meta info */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
+                    <div className="flex items-center gap-4 text-sm text-text-muted flex-wrap">
                       {tarefa.lead && (
                         <span className="flex items-center gap-1">
                           <User className="w-4 h-4" />

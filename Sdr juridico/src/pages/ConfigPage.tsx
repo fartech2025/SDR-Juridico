@@ -277,9 +277,10 @@ export const ConfigPage = () => {
   return (
     <div
       className={cn(
-        'min-h-screen pb-12',
+        'min-h-screen',
         'bg-base text-text',
       )}
+      style={{ padding: '20px' }}
     >
       <div className="space-y-5">
         <header
@@ -321,7 +322,7 @@ export const ConfigPage = () => {
             className={cn(
               'rounded-full border px-4 py-1.5 text-xs uppercase tracking-wide transition',
               activeTab === tab
-                ? 'border-[#721011]/60 bg-[#721011]/10 text-[#721011]'
+                ? 'border-brand-primary/60 bg-brand-primary/10 text-brand-primary'
                 : 'border-border bg-white text-text-muted hover:text-text',
             )}
           >
@@ -387,7 +388,7 @@ export const ConfigPage = () => {
                         variant="primary"
                         size="sm"
                         onClick={() => navigate('/app/datajud')}
-                        className="!bg-[#721011] !text-white hover:!bg-[#8a1315] !border-0"
+                        className="!bg-brand-primary !text-white hover:!bg-brand-primary/90 !border-0"
                       >
                         <Database className="h-4 w-4 mr-2" />
                         Acessar API
@@ -397,7 +398,7 @@ export const ConfigPage = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedIntegration(integration)}
-                        className="!bg-[#721011] !text-white hover:!bg-[#8a1315] !border-0"
+                        className="!bg-brand-primary !text-white hover:!bg-brand-primary/90 !border-0"
                       >
                         {actionLabel}
                       </Button>
@@ -509,7 +510,7 @@ export const ConfigPage = () => {
               <div
                 className={cn(
                   'rounded-2xl border px-3 py-3 text-xs shadow-soft',
-                  'border-[#721011]/40 bg-[#721011]/10 text-[#721011]',
+                  'border-brand-primary/40 bg-brand-primary/10 text-brand-primary',
                 )}
               >
                 Use o botao abaixo para vincular ou desvincular sua conta do

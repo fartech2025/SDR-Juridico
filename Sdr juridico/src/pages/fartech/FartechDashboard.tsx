@@ -59,16 +59,16 @@ export default function FartechDashboard() {
   
   return (
     <FartechGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-surface-alt">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-text">
                   Fartech Dashboard
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-muted">
                   Visão geral de todas as organizações
                 </p>
               </div>
@@ -140,10 +140,10 @@ export default function FartechDashboard() {
                 {alerts.slice(0, 5).map((org) => (
                   <div key={org.id} className="flex items-center justify-between bg-white rounded-lg p-4">
                     <div>
-                      <p className="font-medium text-gray-900">{org.name}</p>
+                      <p className="font-medium text-text">{org.name}</p>
                       <div className="mt-1 space-y-1">
                         {org.alerts.map((alert: string, idx: number) => (
-                          <p key={idx} className="text-sm text-gray-600">
+                          <p key={idx} className="text-sm text-text-muted">
                             {alert}
                           </p>
                         ))}
@@ -164,9 +164,9 @@ export default function FartechDashboard() {
           
           {/* Organizations List */}
           <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-border">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-text">
                   Organizações
                 </h2>
                 
@@ -179,37 +179,37 @@ export default function FartechDashboard() {
               </div>
               
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-subtle" />
                 <input
                   type="text"
                   placeholder="Buscar organizações..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-10 pr-4 py-2 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
             </div>
             
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-surface-alt">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Organização
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Plano
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Usuários
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Criado em
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wider">
                       Ações
                     </th>
                   </tr>
@@ -217,21 +217,21 @@ export default function FartechDashboard() {
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-text-muted">
                         Carregando...
                       </td>
                     </tr>
                   ) : filteredOrgs && filteredOrgs.length > 0 ? (
                     filteredOrgs.slice(0, 10).map((org) => (
-                      <tr key={org.id} className="hover:bg-gray-50">
+                      <tr key={org.id} className="hover:bg-surface-alt">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
                               <Building2 className="w-5 h-5 text-emerald-600" />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{org.name}</p>
-                              <p className="text-sm text-gray-500">{org.slug}</p>
+                              <p className="font-medium text-text">{org.name}</p>
+                              <p className="text-sm text-text-muted">{org.slug}</p>
                             </div>
                           </div>
                         </td>
@@ -243,11 +243,11 @@ export default function FartechDashboard() {
                         <td className="px-6 py-4">
                           <StatusBadge status={org.status} />
                         </td>
-                        <td className="px-6 py-4 text-gray-900">
+                        <td className="px-6 py-4 text-text">
                           {/* TODO: Show actual user count */}
                           -
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-text-muted">
                           {new Date(org.created_at).toLocaleDateString('pt-BR')}
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -262,7 +262,7 @@ export default function FartechDashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-text-muted">
                         Nenhuma organização encontrada
                       </td>
                     </tr>
@@ -302,15 +302,15 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: StatCardProps) 
         </div>
       </div>
       
-      <p className="text-2xl font-bold text-gray-900 mb-1">
+      <p className="text-2xl font-bold text-text mb-1">
         {value}
       </p>
       
-      <p className="text-sm font-medium text-gray-600 mb-1">
+      <p className="text-sm font-medium text-text-muted mb-1">
         {title}
       </p>
       
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-text-muted">
         {subtitle}
       </p>
     </div>
@@ -322,7 +322,7 @@ function StatusBadge({ status }: { status: string }) {
     active: { label: 'Ativo', class: 'bg-green-100 text-green-800' },
     suspended: { label: 'Suspenso', class: 'bg-yellow-100 text-yellow-800' },
     cancelled: { label: 'Cancelado', class: 'bg-red-100 text-red-800' },
-    pending: { label: 'Pendente', class: 'bg-gray-100 text-gray-700' },
+    pending: { label: 'Pendente', class: 'bg-surface-alt text-text' },
   }
   
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active

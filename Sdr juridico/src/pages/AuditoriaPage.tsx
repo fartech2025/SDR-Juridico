@@ -89,10 +89,10 @@ export const AuditoriaPage = () => {
   return (
     <div
       className={cn(
-        'min-h-screen pb-12',
+        'min-h-screen',
         'bg-base text-text',
       )}
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
+      style={{ fontFamily: "'DM Sans', sans-serif", padding: '20px' }}
     >
       <div className="space-y-5">
         <header
@@ -118,7 +118,7 @@ export const AuditoriaPage = () => {
               Sistema
             </p>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-[#721011]" />
+              <ShieldCheck className="h-5 w-5 text-brand-primary" />
               <h2 className={cn('font-display text-2xl', 'text-text')}>
                 Auditoria
               </h2>
@@ -132,7 +132,7 @@ export const AuditoriaPage = () => {
               variant="outline"
               size="sm"
               onClick={handleClearFilters}
-              className="h-9 rounded-full px-4 bg-white/80"
+              className="h-9 rounded-full px-4 bg-surface/80"
             >
               Limpar filtros
             </Button>
@@ -140,7 +140,7 @@ export const AuditoriaPage = () => {
               variant="outline"
               size="sm"
               onClick={fetchLogs}
-              className="h-9 rounded-full px-4 bg-white/80"
+              className="h-9 rounded-full px-4 bg-surface/80"
             >
               Atualizar
             </Button>
@@ -163,7 +163,7 @@ export const AuditoriaPage = () => {
             />
           </div>
           <select
-            className="h-10 rounded-full border border-border bg-white px-4 text-sm text-text shadow-soft"
+            className="h-10 rounded-full border border-border bg-surface px-4 text-sm text-text shadow-soft"
             value={actionFilter}
             onChange={(event) => setActionFilter(event.target.value as ActionFilter)}
           >
@@ -173,7 +173,7 @@ export const AuditoriaPage = () => {
             <option value="delete">Remocoes</option>
           </select>
           <select
-            className="h-10 rounded-full border border-border bg-white px-4 text-sm text-text shadow-soft"
+            className="h-10 rounded-full border border-border bg-surface px-4 text-sm text-text shadow-soft"
             value={entityFilter}
             onChange={(event) => setEntityFilter(event.target.value as typeof entityOptions[number]['value'])}
           >
@@ -191,7 +191,7 @@ export const AuditoriaPage = () => {
           {logs.map((log) => (
             <div
               key={log.id}
-              className="rounded-2xl border border-border bg-white px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
+              className="rounded-2xl border border-border bg-surface px-4 py-4 shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
             >
               <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-text-subtle">
                 <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export const AuditoriaPage = () => {
           ))}
 
           {logs.length === 0 && !loading && !error && (
-            <div className="rounded-2xl border border-border bg-white px-4 py-6 text-center text-sm text-text-muted shadow-soft">
+            <div className="rounded-2xl border border-border bg-surface px-4 py-6 text-center text-sm text-text-muted shadow-soft">
               Nenhum evento encontrado para os filtros atuais.
             </div>
           )}

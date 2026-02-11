@@ -44,7 +44,7 @@ export default function OrganizationForm() {
     max_users: 5,
     max_storage_gb: 10,
     max_cases: null,
-    primary_color: '#721011',
+    primary_color: 'var(--brand-primary)',
     secondary_color: null,
     address_street: '',
     address_number: '',
@@ -243,31 +243,31 @@ export default function OrganizationForm() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Carregando...</div>
+      <div className="min-h-screen bg-surface-alt flex items-center justify-center">
+        <div className="text-text-muted">Carregando...</div>
       </div>
     )
   }
   
   return (
     <FartechGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-surface-alt">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-border">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <button
                   onClick={() => navigate('/admin/organizations')}
-                  className="mr-4 p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="mr-4 p-2 text-text-muted hover:bg-surface-alt rounded-lg transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
+                  <h1 className="text-3xl font-bold text-text">
                     {isEditMode ? 'Editar Organização' : 'Nova Organização'}
                   </h1>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-text-muted">
                     {isEditMode ? 'Atualize as informações da organização' : 'Crie uma nova organização no sistema'}
                   </p>
                 </div>
@@ -286,8 +286,8 @@ export default function OrganizationForm() {
           <form onSubmit={handleSubmit}>
             {/* Basic Information */}
             <div className="bg-white rounded-lg shadow mb-6">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-lg font-semibold text-text">
                   Informações Básicas
                 </h2>
               </div>
@@ -295,7 +295,7 @@ export default function OrganizationForm() {
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Nome da Organização *
                     </label>
                     <input
@@ -303,13 +303,13 @@ export default function OrganizationForm() {
                       required
                       value={formData.name}
                       onChange={(e) => handleNameChange(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       placeholder="Ex: Silva & Associados"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Slug (URL) *
                     </label>
                     <input
@@ -317,31 +317,31 @@ export default function OrganizationForm() {
                       required
                       value={formData.slug}
                       onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       placeholder="silva-associados"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-text-muted">
                       Usado na URL: {formData.slug || 'slug'}.fartech.com.br
                     </p>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text mb-2">
                     CNPJ
                   </label>
                   <input
                     type="text"
                     value={formData.cnpj}
                     onChange={(e) => setFormData(prev => ({ ...prev, cnpj: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                    className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     placeholder="00.000.000/0000-00"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Email do Responsável *
                     </label>
                     <input
@@ -356,7 +356,7 @@ export default function OrganizationForm() {
                           admin_email: email,
                         }))
                       }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       placeholder="responsavel@escritorio.com.br"
                     />
                     <p className="mt-1 text-xs text-brand-primary font-medium">
@@ -365,7 +365,7 @@ export default function OrganizationForm() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Email do Admin (auto-preenchido)
                     </label>
                     <input
@@ -373,24 +373,24 @@ export default function OrganizationForm() {
                       required={!isEditMode}
                       value={formData.admin_email}
                       onChange={(e) => setFormData(prev => ({ ...prev, admin_email: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-surface-alt text-text focus:ring-2 focus:ring-brand-primary"
                       placeholder="admin@escritorio.com.br"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-text-muted">
                       Preenchido automaticamente. Altere apenas se o admin for diferente do responsável.
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text mb-2">
                     Nome do Admin (opcional)
                   </label>
                   <input
                     type="text"
                     value={formData.admin_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, admin_name: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                    className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     placeholder="Nome completo"
                   />
                 </div>
@@ -399,15 +399,15 @@ export default function OrganizationForm() {
             
             {/* Plan and Limits */}
             <div className="bg-white rounded-lg shadow mb-6">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-lg font-semibold text-text">
                   Plano e Limites
                 </h2>
               </div>
               
               <div className="p-6 space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text mb-2">
                     Plano *
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -419,10 +419,10 @@ export default function OrganizationForm() {
                         className={`p-4 border-2 rounded-lg text-left transition-all ${
                           formData.plan === plan.value
                             ? 'border-brand-primary bg-brand-primary-subtle'
-                            : 'border-gray-300 hover:border-gray-400'
+                            : 'border-border-strong hover:border-border-strong'
                         }`}
                       >
-                        <p className="font-semibold text-gray-900 capitalize">
+                        <p className="font-semibold text-text capitalize">
                           {plan.label}
                         </p>
                       </button>
@@ -432,7 +432,7 @@ export default function OrganizationForm() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Máximo de Usuários *
                     </label>
                     <input
@@ -441,12 +441,12 @@ export default function OrganizationForm() {
                       min="1"
                       value={formData.max_users}
                       onChange={(e) => setFormData(prev => ({ ...prev, max_users: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Armazenamento (GB) *
                     </label>
                     <input
@@ -455,12 +455,12 @@ export default function OrganizationForm() {
                       min="1"
                       value={formData.max_storage_gb}
                       onChange={(e) => setFormData(prev => ({ ...prev, max_storage_gb: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Máximo de Casos
                     </label>
                     <input
@@ -468,7 +468,7 @@ export default function OrganizationForm() {
                       min="1"
                       value={formData.max_cases || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, max_cases: e.target.value ? parseInt(e.target.value) : null }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       placeholder="Ilimitado"
                     />
                   </div>
@@ -478,8 +478,8 @@ export default function OrganizationForm() {
             
             {/* Branding */}
             <div className="bg-white rounded-lg shadow mb-6">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-lg font-semibold text-text">
                   Identidade Visual
                 </h2>
               </div>
@@ -487,7 +487,7 @@ export default function OrganizationForm() {
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Cor Primária *
                     </label>
                     <div className="flex items-center gap-3">
@@ -501,13 +501,13 @@ export default function OrganizationForm() {
                         type="text"
                         value={formData.primary_color}
                         onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                        className="flex-1 px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Cor Secundária
                     </label>
                     <div className="flex items-center gap-3">
@@ -521,7 +521,7 @@ export default function OrganizationForm() {
                         type="text"
                         value={formData.secondary_color || ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                        className="flex-1 px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                         placeholder="var(--brand-primary)"
                       />
                     </div>
@@ -532,8 +532,8 @@ export default function OrganizationForm() {
             
             {/* Address */}
             <div className="bg-white rounded-lg shadow mb-6">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-lg font-semibold text-text">
                   Endereço
                 </h2>
               </div>
@@ -541,93 +541,93 @@ export default function OrganizationForm() {
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Logradouro
                     </label>
                     <input
                       type="text"
                       value={formData.address_street}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_street: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       placeholder="Rua, Avenida, etc."
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Número
                     </label>
                     <input
                       type="text"
                       value={formData.address_number}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_number: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Complemento
                     </label>
                     <input
                       type="text"
                       value={formData.address_complement}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_complement: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Bairro
                     </label>
                     <input
                       type="text"
                       value={formData.address_neighborhood}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_neighborhood: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Cidade
                     </label>
                     <input
                       type="text"
                       value={formData.address_city}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_city: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       Estado
                     </label>
                     <input
                       type="text"
                       value={formData.address_state}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_state: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       maxLength={2}
                       placeholder="SP"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text mb-2">
                       CEP
                     </label>
                     <input
                       type="text"
                       value={formData.address_postal_code}
                       onChange={(e) => setFormData(prev => ({ ...prev, address_postal_code: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand-primary"
+                      className="w-full px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-brand-primary"
                       placeholder="00000-000"
                     />
                   </div>
@@ -640,7 +640,7 @@ export default function OrganizationForm() {
               <button
                 type="button"
                 onClick={() => navigate('/admin/organizations')}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors"
               >
                 Cancelar
               </button>

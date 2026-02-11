@@ -50,7 +50,7 @@ export const NotificationCenter = ({
           {unreadCount > 0 && (
             <span
               className="px-2 py-0.5 text-[10px] font-bold rounded-full text-white"
-              style={{ backgroundColor: '#721011' }}
+              style={{ backgroundColor: 'var(--brand-primary)' }}
             >
               {unreadCount}
             </span>
@@ -60,7 +60,7 @@ export const NotificationCenter = ({
           <button
             onClick={onMarkAllRead}
             className="flex items-center gap-1 text-xs font-medium transition-colors hover:opacity-80"
-            style={{ color: '#721011' }}
+            style={{ color: 'var(--brand-primary)' }}
           >
             <CheckCheck className="h-3.5 w-3.5" />
             Marcar todas lidas
@@ -89,7 +89,7 @@ export const NotificationCenter = ({
                   {!item.read && (
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: '#721011' }}
+                      style={{ backgroundColor: 'var(--brand-primary)' }}
                     />
                   )}
                   <Badge
@@ -137,7 +137,7 @@ export const NotificationCenter = ({
                   size="sm"
                   onClick={() => navigate(item.actionHref!)}
                   className="px-0 text-xs hover:opacity-80"
-                  style={{ color: '#721011' }}
+                  style={{ color: 'var(--brand-primary)' }}
                 >
                   {item.actionLabel}
                   <ChevronRight className="h-3.5 w-3.5 ml-0.5" />

@@ -250,18 +250,18 @@ export default function OrganizationDetails() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Carregando...</div>
+      <div className="min-h-screen bg-surface-alt flex items-center justify-center">
+        <div className="text-text-muted">Carregando...</div>
       </div>
     )
   }
   
   if (error || !organization) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-alt flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-600">{error || 'Organização não encontrada'}</p>
+          <p className="text-text-muted">{error || 'Organização não encontrada'}</p>
           <button
             onClick={() => navigate('/admin/organizations')}
             className="mt-4 text-emerald-600 hover:underline"
@@ -275,15 +275,15 @@ export default function OrganizationDetails() {
   
   return (
     <FartechGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-surface-alt">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <button
                   onClick={() => navigate('/admin/organizations')}
-                  className="mr-4 p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="mr-4 p-2 text-text-muted hover:bg-surface-alt rounded-lg transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -301,10 +301,10 @@ export default function OrganizationDetails() {
                   </div>
                   
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-3xl font-bold text-text">
                       {organization.name}
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-text-muted">
                       {organization.slug} • <StatusBadge status={organization.status} />
                     </p>
                   </div>
@@ -314,7 +314,7 @@ export default function OrganizationDetails() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleViewAsOrg}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center px-4 py-2 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors"
                 >
                   Visualizar como Org
                 </button>
@@ -388,8 +388,8 @@ export default function OrganizationDetails() {
               {/* Usage */}
               {usage && (
                 <div className="bg-white rounded-lg shadow">
-                  <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900">
+                  <div className="p-6 border-b border-border">
+                    <h2 className="text-lg font-semibold text-text">
                       Uso de Recursos
                     </h2>
                   </div>
@@ -426,8 +426,8 @@ export default function OrganizationDetails() {
               
               {/* Plan Details */}
               <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="p-6 border-b border-border">
+                  <h2 className="text-lg font-semibold text-text">
                     Detalhes do Plano
                   </h2>
                 </div>
@@ -435,36 +435,36 @@ export default function OrganizationDetails() {
                 <div className="p-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Plano</p>
-                      <p className="text-lg font-semibold text-gray-900 capitalize">
+                      <p className="text-sm text-text-muted mb-1">Plano</p>
+                      <p className="text-lg font-semibold text-text capitalize">
                         {organization.plan}
                       </p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Ciclo de Cobrança</p>
-                      <p className="text-lg font-semibold text-gray-900 capitalize">
+                      <p className="text-sm text-text-muted mb-1">Ciclo de Cobrança</p>
+                      <p className="text-lg font-semibold text-text capitalize">
                         {organization.billing_cycle || 'monthly'}
                       </p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Limite de Usuários</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <p className="text-sm text-text-muted mb-1">Limite de Usuários</p>
+                      <p className="text-lg font-semibold text-text">
                         {organization.max_users}
                       </p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Armazenamento</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <p className="text-sm text-text-muted mb-1">Armazenamento</p>
+                      <p className="text-lg font-semibold text-text">
                         {organization.max_storage_gb}GB
                       </p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Limite de Casos</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <p className="text-sm text-text-muted mb-1">Limite de Casos</p>
+                      <p className="text-lg font-semibold text-text">
                         {organization.max_cases || 'Ilimitado'}
                       </p>
                     </div>
@@ -475,25 +475,25 @@ export default function OrganizationDetails() {
               {/* Address */}
               {organization.address_street && (
                 <div className="bg-white rounded-lg shadow">
-                  <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <div className="p-6 border-b border-border">
+                    <h2 className="text-lg font-semibold text-text flex items-center">
                       <MapPin className="w-5 h-5 mr-2" />
                       Endereço
                     </h2>
                   </div>
                   
                   <div className="p-6">
-                    <p className="text-gray-900">
+                    <p className="text-text">
                       {organization.address_street}, {organization.address_number}
                       {organization.address_complement && ` - ${organization.address_complement}`}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-text-muted">
                       {organization.address_neighborhood}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-text-muted">
                       {organization.address_city} - {organization.address_state}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-text-muted">
                       CEP: {organization.address_postal_code}
                     </p>
                   </div>
@@ -505,8 +505,8 @@ export default function OrganizationDetails() {
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="p-6 border-b border-border">
+                  <h2 className="text-lg font-semibold text-text">
                     Informações
                   </h2>
                 </div>
@@ -514,14 +514,14 @@ export default function OrganizationDetails() {
                 <div className="p-6 space-y-4">
                   {organization.cnpj && (
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">CNPJ</p>
-                      <p className="text-gray-900">{organization.cnpj}</p>
+                      <p className="text-sm text-text-muted mb-1">CNPJ</p>
+                      <p className="text-text">{organization.cnpj}</p>
                     </div>
                   )}
                   
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Criado em</p>
-                    <div className="flex items-center text-gray-900">
+                    <p className="text-sm text-text-muted mb-1">Criado em</p>
+                    <div className="flex items-center text-text">
                       <Calendar className="w-4 h-4 mr-2" />
                       {new Date(organization.created_at).toLocaleDateString('pt-BR', {
                         day: '2-digit',
@@ -533,8 +533,8 @@ export default function OrganizationDetails() {
                   
                   {trialEndsAt && (
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Trial termina em</p>
-                      <div className="flex items-center text-gray-900">
+                      <p className="text-sm text-text-muted mb-1">Trial termina em</p>
+                      <div className="flex items-center text-text">
                         <Calendar className="w-4 h-4 mr-2" />
                         {new Date(trialEndsAt).toLocaleDateString('pt-BR')}
                       </div>
@@ -545,21 +545,21 @@ export default function OrganizationDetails() {
               
               {/* Branding */}
               <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="p-6 border-b border-border">
+                  <h2 className="text-lg font-semibold text-text">
                     Identidade Visual
                   </h2>
                 </div>
                 
                 <div className="p-6 space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Cor Primária</p>
+                    <p className="text-sm text-text-muted mb-2">Cor Primária</p>
                     <div className="flex items-center">
                       <div 
-                        className="w-10 h-10 rounded border border-gray-300 mr-3"
+                        className="w-10 h-10 rounded border border-border-strong mr-3"
                         style={{ backgroundColor: organization.primary_color }}
                       />
-                      <span className="text-gray-900 font-mono">
+                      <span className="text-text font-mono">
                         {organization.primary_color}
                       </span>
                     </div>
@@ -567,13 +567,13 @@ export default function OrganizationDetails() {
                   
                   {organization.secondary_color && (
                     <div>
-                      <p className="text-sm text-gray-500 mb-2">Cor Secundária</p>
+                      <p className="text-sm text-text-muted mb-2">Cor Secundária</p>
                       <div className="flex items-center">
                         <div 
-                          className="w-10 h-10 rounded border border-gray-300 mr-3"
+                          className="w-10 h-10 rounded border border-border-strong mr-3"
                           style={{ backgroundColor: organization.secondary_color }}
                         />
-                        <span className="text-gray-900 font-mono">
+                        <span className="text-text font-mono">
                           {organization.secondary_color}
                         </span>
                       </div>
@@ -582,8 +582,8 @@ export default function OrganizationDetails() {
                   
                   {organization.custom_domain && (
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Domínio Customizado</p>
-                      <p className="text-gray-900">{organization.custom_domain}</p>
+                      <p className="text-sm text-text-muted mb-1">Domínio Customizado</p>
+                      <p className="text-text">{organization.custom_domain}</p>
                     </div>
                   )}
                 </div>
@@ -591,8 +591,8 @@ export default function OrganizationDetails() {
               
               {/* Features */}
               <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="p-6 border-b border-border">
+                  <h2 className="text-lg font-semibold text-text">
                     Recursos Habilitados
                   </h2>
                 </div>
@@ -629,7 +629,7 @@ function StatusBadge({ status }: { status: string }) {
     active: { label: 'Ativo', class: 'bg-green-100 text-green-800' },
     suspended: { label: 'Suspenso', class: 'bg-yellow-100 text-yellow-800' },
     cancelled: { label: 'Cancelado', class: 'bg-red-100 text-red-800' },
-    pending: { label: 'Pendente', class: 'bg-gray-100 text-gray-700' },
+    pending: { label: 'Pendente', class: 'bg-surface-alt text-text' },
   }
   
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active
@@ -664,11 +664,11 @@ function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
         </div>
       </div>
       
-      <p className="text-2xl font-bold text-gray-900 mb-1">
+      <p className="text-2xl font-bold text-text mb-1">
         {value}
       </p>
       
-      <p className="text-sm font-medium text-gray-600">
+      <p className="text-sm font-medium text-text-muted">
         {title}
       </p>
     </div>
@@ -693,14 +693,14 @@ function UsageBar({ label, current, limit, percentage, unit }: UsageBarProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-text">
           {label}
         </span>
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-text-muted">
           {current.toFixed(1)} / {limit} {unit} ({percentage.toFixed(0)}%)
         </span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
+      <div className="w-full bg-surface-alt rounded-full h-2.5">
         <div 
           className={`h-2.5 rounded-full transition-all ${getColor()}`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
@@ -713,11 +713,11 @@ function UsageBar({ label, current, limit, percentage, unit }: UsageBarProps) {
 function FeatureItem({ enabled, label }: { enabled: boolean; label: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-gray-700">{label}</span>
+      <span className="text-sm text-text">{label}</span>
       {enabled ? (
         <CheckCircle className="w-5 h-5 text-green-500" />
       ) : (
-        <XCircle className="w-5 h-5 text-gray-400" />
+        <XCircle className="w-5 h-5 text-text-subtle" />
       )}
     </div>
   )

@@ -274,17 +274,17 @@ export default function UserManagement() {
 
   return (
     <OrgAdminGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-surface-alt">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <h1 className="text-3xl font-bold text-text flex items-center">
                   <Users className="w-8 h-8 mr-3" />
                   Gerenciar Usuarios
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-muted">
                   {effectiveOrgName} — {activeUserCount}{effectiveMaxUsers !== null ? ` / ${effectiveMaxUsers}` : ''} usuarios
                 </p>
               </div>
@@ -306,12 +306,12 @@ export default function UserManagement() {
           {isFartechAdmin && (
             <div className="bg-white rounded-lg shadow p-4 mb-6">
               <div className="flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-gray-500" />
-                <label className="text-sm font-medium text-gray-700">Organizacao:</label>
+                <Building2 className="w-5 h-5 text-text-muted" />
+                <label className="text-sm font-medium text-text">Organizacao:</label>
                 <select
                   value={selectedOrgId}
                   onChange={(e) => setSelectedOrgId(e.target.value)}
-                  className="flex-1 max-w-sm px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="flex-1 max-w-sm px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 >
                   <option value="all">Todas as organizacoes</option>
                   {allOrgs.map(org => (
@@ -351,13 +351,13 @@ export default function UserManagement() {
           {/* Search */}
           <div className="bg-white rounded-lg shadow mb-6 p-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-subtle" />
               <input
                 type="text"
                 placeholder="Buscar por nome ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
+                className="w-full pl-10 pr-4 py-2 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -366,21 +366,21 @@ export default function UserManagement() {
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-surface-alt">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Usuario
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Funcao
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Cadastrado em
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                       Ultimo Acesso
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wider">
                       Acoes
                     </th>
                   </tr>
@@ -388,7 +388,7 @@ export default function UserManagement() {
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={5} className="px-6 py-8 text-center text-text-muted">
                         Carregando usuarios...
                       </td>
                     </tr>
@@ -398,7 +398,7 @@ export default function UserManagement() {
                       const disableActions = Boolean(actionsBlockedReason)
 
                       return (
-                        <tr key={user.id} className={`hover:bg-gray-50 ${!user.ativo ? 'opacity-60' : ''}`}>
+                        <tr key={user.id} className={`hover:bg-surface-alt ${!user.ativo ? 'opacity-60' : ''}`}>
                           <td className="px-6 py-4">
                             <div className="flex items-center">
                               <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
@@ -407,10 +407,10 @@ export default function UserManagement() {
                                 </span>
                               </div>
                               <div>
-                                <p className="font-medium text-gray-900">
+                                <p className="font-medium text-text">
                                   {user.nome || 'Sem nome'}
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-text-muted">
                                   {user.email}
                                   {!user.ativo && (
                                     <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
@@ -424,10 +424,10 @@ export default function UserManagement() {
                           <td className="px-6 py-4">
                             <RoleBadge role={user.role} />
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
+                          <td className="px-6 py-4 text-sm text-text-muted">
                             {new Date(user.created_at).toLocaleDateString('pt-BR')}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
+                          <td className="px-6 py-4 text-sm text-text-muted">
                             {user.last_sign_in_at
                               ? new Date(user.last_sign_in_at).toLocaleDateString('pt-BR')
                               : 'Nunca'}
@@ -437,7 +437,7 @@ export default function UserManagement() {
                               <button
                                 onClick={() => setEditingUser(user)}
                                 disabled={disableActions}
-                                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 text-text-muted hover:text-blue-600 hover:bg-surface-alt rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title={actionsBlockedReason || 'Editar'}
                               >
                                 <Edit className="w-4 h-4" />
@@ -445,7 +445,7 @@ export default function UserManagement() {
                               <button
                                 onClick={() => setRemovingUser(user)}
                                 disabled={disableActions || isSelf}
-                                className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 text-text-muted hover:text-red-600 hover:bg-surface-alt rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title={
                                   isSelf
                                     ? 'Voce nao pode remover a si mesmo'
@@ -461,7 +461,7 @@ export default function UserManagement() {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={5} className="px-6 py-8 text-center text-text-muted">
                         Nenhum usuario encontrado
                       </td>
                     </tr>
@@ -636,13 +636,13 @@ function InviteUserModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-text">
             Convidar Usuario
           </h2>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            className="p-1 text-text-subtle hover:text-text-muted rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -650,47 +650,47 @@ function InviteUserModal({
 
         <form onSubmit={handleInvite} className="px-6 py-5 space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-text">
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="usuario@email.com"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-text">
               Nome completo
             </label>
             <div className="relative">
-              <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
               <input
                 type="text"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder="Nome do usuario"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-text">
               Funcao
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as OrgMemberRole)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full px-4 py-2.5 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(
                 ([value, label]) => (
@@ -707,7 +707,7 @@ function InviteUserModal({
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -761,14 +761,14 @@ function EditUserModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
-            <p className="text-xs text-gray-500">Org: {orgId}</p>
-            <h2 className="text-lg font-semibold text-gray-900">Editar Usuario</h2>
+            <p className="text-xs text-text-muted">Org: {orgId}</p>
+            <h2 className="text-lg font-semibold text-text">Editar Usuario</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            className="p-1 text-text-subtle hover:text-text-muted rounded-lg transition-colors"
             aria-label="Fechar"
           >
             <X className="w-5 h-5" />
@@ -777,32 +777,32 @@ function EditUserModal({
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-text">Email</label>
             <input
               type="email"
               value={user.email}
               disabled
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+              className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-alt text-text-muted"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">Nome completo</label>
+            <label className="block text-sm font-medium text-text">Nome completo</label>
             <input
               type="text"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Nome do usuario"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full px-4 py-2.5 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">Funcao</label>
+            <label className="block text-sm font-medium text-text">Funcao</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as OrgMemberRole)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full px-4 py-2.5 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -812,12 +812,12 @@ function EditUserModal({
             </select>
           </div>
 
-          <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
+          <label className="flex items-center gap-3 text-sm font-medium text-text">
             <input
               type="checkbox"
               checked={ativo}
               onChange={(e) => setAtivo(e.target.checked)}
-              className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+              className="h-4 w-4 text-emerald-600 border-border-strong rounded focus:ring-emerald-500"
             />
             Manter usuario ativo nesta organizacao
           </label>
@@ -827,7 +827,7 @@ function EditUserModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -877,11 +877,11 @@ function RemoveUserModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Gerenciar usuario</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-text">Gerenciar usuario</h2>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            className="p-1 text-text-subtle hover:text-text-muted rounded-lg transition-colors"
             aria-label="Fechar"
           >
             <X className="w-5 h-5" />
@@ -889,10 +889,10 @@ function RemoveUserModal({
         </div>
 
         <div className="px-6 py-5 space-y-4">
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-text">
             <span className="font-semibold">{user.nome || user.email}</span>
           </p>
-          <div className="space-y-2 text-sm text-gray-600">
+          <div className="space-y-2 text-sm text-text-muted">
             <p><strong>Inativar:</strong> remove acesso à organização (org_members.ativo=false, permissões reset), mas mantém o usuário no Auth.</p>
             <p><strong>Remover:</strong> apaga o usuário da organização, da tabela usuarios e do Auth.</p>
           </div>
@@ -902,7 +902,7 @@ function RemoveUserModal({
               type="button"
               onClick={() => handle('inactive')}
               disabled={confirming !== null}
-              className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {confirming === 'inactive' && <Loader2 className="w-4 h-4 animate-spin" />}
               {confirming === 'inactive' ? 'Inativando...' : 'Inativar (reversível)'}
@@ -921,7 +921,7 @@ function RemoveUserModal({
               type="button"
               onClick={onClose}
               disabled={confirming !== null}
-              className="w-full px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2.5 border border-border text-text-muted rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -956,7 +956,7 @@ function RoleBadge({ role }: { role: OrgMemberRole }) {
     },
     leitura: {
       label: 'Somente Leitura',
-      class: 'bg-gray-100 text-gray-800',
+      class: 'bg-surface-alt text-text',
       icon: Users,
     },
   }

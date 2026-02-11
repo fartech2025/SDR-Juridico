@@ -31,7 +31,7 @@ const statusLabel = (status: Caso['status']) => {
 }
 
 const statusPill = (status: Caso['status']) => {
-  if (status === 'encerrado') return 'bg-gray-100 text-gray-600'
+  if (status === 'encerrado') return 'bg-surface-alt text-text-muted'
   if (status === 'suspenso') return 'bg-amber-50 text-amber-700'
   return 'bg-green-50 text-green-700'
 }
@@ -40,14 +40,14 @@ const areaPill = (area: Caso['area']) => {
   if (area === 'Trabalhista') return 'bg-purple-50 text-purple-700 border-purple-200'
   if (area === 'Previdenciario') return 'bg-blue-50 text-blue-700 border-blue-200'
   if (area === 'Empresarial') return 'bg-amber-50 text-amber-700 border-amber-200'
-  return 'bg-gray-50 text-gray-700 border-gray-200'
+  return 'bg-surface-alt text-text border-border'
 }
 
 const prioridadePill = (prioridade?: Caso['prioridade']) => {
   if (prioridade === 'critica') return 'bg-red-50 text-red-700'
   if (prioridade === 'alta') return 'bg-orange-50 text-orange-700'
   if (prioridade === 'media') return 'bg-amber-50 text-amber-700'
-  return 'bg-gray-50 text-gray-600'
+  return 'bg-surface-alt text-text-muted'
 }
 
 const prioridadeLabel = (prioridade?: Caso['prioridade']) => {
@@ -255,14 +255,14 @@ export const CasosPage = () => {
 
   if (showForm) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-text">
                 {isEditing ? 'Editar Caso' : 'Novo Caso'}
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-text-muted mt-1">
                 {isEditing ? 'Atualize os dados do caso' : 'Preencha os dados do novo caso'}
               </p>
             </div>
@@ -272,24 +272,24 @@ export const CasosPage = () => {
             </Button>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="bg-surface rounded-xl border border-border p-6">
             <form className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Titulo *</label>
+                  <label className="text-sm font-medium text-text">Titulo *</label>
                   <input
                     value={formData.titulo}
                     onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                     placeholder="Titulo do caso"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Cliente</label>
+                  <label className="text-sm font-medium text-text">Cliente</label>
                   <select
                     value={formData.clienteId}
                     onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                   >
                     <option value="">Sem cliente</option>
                     {clientes.map((cliente) => (
@@ -298,20 +298,20 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Area</label>
+                  <label className="text-sm font-medium text-text">Area</label>
                   <input
                     value={formData.area}
                     onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                     placeholder="Ex: Trabalhista"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <label className="text-sm font-medium text-text">Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as CasoRow['status'] })}
-                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                   >
                     <option value="ativo">Ativo</option>
                     <option value="suspenso">Suspenso</option>
@@ -319,11 +319,11 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Prioridade</label>
+                  <label className="text-sm font-medium text-text">Prioridade</label>
                   <select
                     value={formData.prioridade}
                     onChange={(e) => setFormData({ ...formData, prioridade: e.target.value as CasoRow['prioridade'] })}
-                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Media</option>
@@ -332,11 +332,11 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Etapa</label>
+                  <label className="text-sm font-medium text-text">Etapa</label>
                   <select
                     value={formData.stage || ''}
                     onChange={(e) => setFormData({ ...formData, stage: e.target.value as CasoRow['stage'] })}
-                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                   >
                     <option value="triagem">Triagem</option>
                     <option value="negociacao">Negociacao</option>
@@ -345,22 +345,22 @@ export const CasosPage = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Valor estimado</label>
+                  <label className="text-sm font-medium text-text">Valor estimado</label>
                   <input
                     type="number"
                     value={formData.valor}
                     onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                     placeholder="0"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Descricao</label>
+                  <label className="text-sm font-medium text-text">Descricao</label>
                   <textarea
                     value={formData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                     rows={4}
-                    className="w-full rounded-lg border border-gray-200 p-4 text-sm focus:outline-none focus:ring-2"
+                    className="w-full rounded-lg border border-border p-4 text-sm focus:outline-none focus:ring-2"
                     placeholder="Descricao do caso"
                   />
                 </div>
@@ -372,14 +372,14 @@ export const CasosPage = () => {
                   onClick={handleSaveCaso}
                   disabled={saving}
                   className="flex-1 h-10 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: '#721011' }}
+                  style={{ backgroundColor: 'var(--brand-primary)' }}
                 >
                   {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar Caso'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { resetCasoForm(); setShowForm(false) }}
-                  className="px-6 h-10 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-6 h-10 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors"
                 >
                   Cancelar
                 </button>
@@ -391,8 +391,8 @@ export const CasosPage = () => {
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
           input:focus, select:focus, textarea:focus {
-            --tw-ring-color: #721011;
-            border-color: #721011;
+            --tw-ring-color: 'var(--brand-primary)';
+            border-color: 'var(--brand-primary)';
           }
         `}</style>
       </div>
@@ -400,30 +400,30 @@ export const CasosPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="bg-surface rounded-xl border border-border p-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: 'var(--brand-primary)' }}
                 >
                   <Briefcase className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
                   Gestão de Casos
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Casos</h1>
-              <p className="text-sm text-gray-500 mt-1">Gerencie todos os casos jurídicos</p>
+              <h1 className="text-2xl font-bold text-text">Casos</h1>
+              <p className="text-sm text-text-muted mt-1">Gerencie todos os casos jurídicos</p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => void fetchCasos()}
                 disabled={loading}
-                className="px-4 py-2 rounded-lg border border-gray-200 font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors disabled:opacity-50"
               >
                 Atualizar
               </button>
@@ -438,7 +438,7 @@ export const CasosPage = () => {
                 }}
                 disabled={!canManageCasos}
                 className="px-6 py-2 rounded-lg font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50"
-                style={{ backgroundColor: '#721011' }}
+                style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 <Plus className="inline mr-2 h-4 w-4" />
                 Novo Caso
@@ -449,59 +449,59 @@ export const CasosPage = () => {
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
-                <Briefcase className="h-5 w-5" style={{ color: '#721011' }} />
+                <Briefcase className="h-5 w-5" style={{ color: 'var(--brand-primary)' }} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-sm text-gray-500">Total de Casos</p>
+                <p className="text-2xl font-bold text-text">{stats.total}</p>
+                <p className="text-sm text-text-muted">Total de Casos</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.ativos}</p>
-                <p className="text-sm text-gray-500">Em Andamento</p>
+                <p className="text-2xl font-bold text-text">{stats.ativos}</p>
+                <p className="text-sm text-text-muted">Em Andamento</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.criticos}</p>
-                <p className="text-sm text-gray-500">Alta Prioridade</p>
+                <p className="text-2xl font-bold text-text">{stats.criticos}</p>
+                <p className="text-sm text-text-muted">Alta Prioridade</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters + Table */}
-        <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
           <div className="p-6 space-y-4">
             <div className="flex flex-wrap gap-3">
               <div className="relative flex-1 min-w-[300px]">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar por titulo, cliente, processo..."
-                  className="h-10 w-full rounded-lg border border-gray-200 pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
-                  style={{ '--tw-ring-color': '#721011' } as React.CSSProperties}
+                  className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                  style={{ '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
                 />
               </div>
               <select
                 value={areaFilter}
                 onChange={(e) => setAreaFilter(e.target.value)}
-                className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
               >
                 <option value="todos">Todas as areas</option>
                 {Array.from(new Set(casos.map((caso) => caso.area))).map((area) => (
@@ -511,7 +511,7 @@ export const CasosPage = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2"
+                className="h-10 rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
               >
                 <option value="todos">Todos os status</option>
                 <option value="ativo">Ativo</option>
@@ -527,9 +527,9 @@ export const CasosPage = () => {
               emptyAction={emptyAction}
               onRetry={error ? fetchCasos : undefined}
             >
-              <div className="overflow-hidden rounded-xl border border-gray-100">
+              <div className="overflow-hidden rounded-xl border border-border">
                 <table className="w-full border-collapse text-left text-sm">
-                  <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+                  <thead className="bg-surface-alt text-xs uppercase tracking-wider text-text-muted">
                     <tr>
                       <th className="px-4 py-3">Caso</th>
                       <th className="px-4 py-3">N. Processo</th>
@@ -551,37 +551,37 @@ export const CasosPage = () => {
                       return (
                         <React.Fragment key={caso.id}>
                           <tr
-                            className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                            className="border-t border-border hover:bg-surface-alt cursor-pointer"
                             onClick={() => navigate(`/app/caso/${caso.id}`)}
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
                                 <div
                                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
-                                  style={{ backgroundColor: '#721011' }}
+                                  style={{ backgroundColor: 'var(--brand-primary)' }}
                                 >
                                   {initials}
                                 </div>
                                 <div className="min-w-0">
-                                  <div className="font-medium text-gray-900 truncate">{caso.title}</div>
-                                  <div className="text-xs text-gray-500 truncate">{caso.cliente}</div>
+                                  <div className="font-medium text-text truncate">{caso.title}</div>
+                                  <div className="text-xs text-text-muted truncate">{caso.cliente}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-4 py-3">
                               {caso.numero_processo ? (
-                                <span className="font-mono text-xs text-gray-700">{caso.numero_processo}</span>
+                                <span className="font-mono text-xs text-text">{caso.numero_processo}</span>
                               ) : (
-                                <span className="text-xs text-gray-400">-</span>
+                                <span className="text-xs text-text-subtle">-</span>
                               )}
                             </td>
                             <td className="px-4 py-3">
                               {caso.tribunal ? (
-                                <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 uppercase">
+                                <span className="inline-flex rounded-full bg-surface-alt px-2.5 py-1 text-xs font-medium text-text uppercase">
                                   {caso.tribunal}
                                 </span>
                               ) : (
-                                <span className="text-xs text-gray-400">-</span>
+                                <span className="text-xs text-text-subtle">-</span>
                               )}
                             </td>
                             <td className="px-4 py-3">
@@ -600,7 +600,7 @@ export const CasosPage = () => {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-sm text-gray-700">{caso.responsavel || '-'}</span>
+                              <span className="text-sm text-text">{caso.responsavel || '-'}</span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
@@ -609,14 +609,14 @@ export const CasosPage = () => {
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); void handleEditCaso(caso.id) }}
-                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50"
+                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-surface-alt"
                                     >
-                                      <Pencil className="h-4 w-4 text-gray-600" />
+                                      <Pencil className="h-4 w-4 text-text-muted" />
                                     </button>
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); void handleDeleteCaso(caso.id, caso.title) }}
-                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-red-50"
+                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-red-50"
                                     >
                                       <Trash2 className="h-4 w-4 text-red-600" />
                                     </button>
@@ -626,12 +626,12 @@ export const CasosPage = () => {
                             </td>
                           </tr>
                           {canManageCasos && assigningCasoId === caso.id && (
-                            <tr className="border-t border-gray-100 bg-gray-50">
+                            <tr className="border-t border-border bg-surface-alt">
                               <td colSpan={8} className="px-4 py-3">
-                                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
-                                  <span className="text-xs font-medium text-gray-700">Encaminhar para</span>
+                                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
+                                  <span className="text-xs font-medium text-text">Encaminhar para</span>
                                   <select
-                                    className="h-8 rounded-lg border border-gray-200 px-3 text-xs bg-white"
+                                    className="h-8 rounded-lg border border-border px-3 text-xs bg-surface"
                                     value={selectedCasoAdvogadoId}
                                     onChange={(e) => setSelectedCasoAdvogadoId(e.target.value)}
                                   >
@@ -642,13 +642,13 @@ export const CasosPage = () => {
                                   </select>
                                   <button
                                     className="h-8 px-4 rounded-lg text-xs font-medium text-white"
-                                    style={{ backgroundColor: '#721011' }}
+                                    style={{ backgroundColor: 'var(--brand-primary)' }}
                                     onClick={() => void handleEncaminharCaso(caso.id)}
                                   >
                                     Encaminhar
                                   </button>
                                   <button
-                                    className="h-8 px-4 rounded-lg border border-gray-200 text-xs font-medium text-gray-700"
+                                    className="h-8 px-4 rounded-lg border border-border text-xs font-medium text-text"
                                     onClick={() => { setAssigningCasoId(null); setSelectedCasoAdvogadoId('') }}
                                   >
                                     Cancelar
@@ -670,7 +670,7 @@ export const CasosPage = () => {
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-        input:focus, select:focus { --tw-ring-color: #721011; border-color: #721011; }
+        input:focus, select:focus { --tw-ring-color: 'var(--brand-primary)'; border-color: 'var(--brand-primary)'; }
       `}</style>
     </div>
   )
