@@ -228,7 +228,7 @@ const TaskCard = ({
   <div className="bg-surface rounded-xl border border-border p-5 hover:shadow-md transition-all">
     <div className="flex items-start gap-4">
       <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
         style={{ backgroundColor: `${color}15`, color }}
       >
         <Icon className="h-5 w-5" />

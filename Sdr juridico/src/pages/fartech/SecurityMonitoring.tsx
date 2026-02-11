@@ -202,7 +202,7 @@ export default function SecurityMonitoring() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-text flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-lg">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-red-500 to-pink-500 text-white shadow-lg">
                 <Shield className="h-6 w-6" />
               </div>
               Monitoramento de Segurança
@@ -294,7 +294,7 @@ export default function SecurityMonitoring() {
             </div>
 
             {/* Security Score Card */}
-            <div className="rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-8 text-white shadow-lg">
+            <div className="rounded-2xl bg-linear-to-br from-green-500 to-emerald-600 p-8 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium opacity-90 mb-2">Score de Segurança Geral</p>

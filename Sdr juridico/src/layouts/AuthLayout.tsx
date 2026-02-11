@@ -48,7 +48,7 @@ export const AuthLayout = ({
           {children}
         </div>
         <div
-          className="relative min-h-140 overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-brand-primary-subtle via-white to-brand-accent-100 shadow-xl"
+          className="relative min-h-140 overflow-hidden rounded-2xl border border-slate-200 bg-linear-to-br from-brand-primary-subtle via-white to-brand-accent-100 shadow-xl"
         >
           <div className="absolute right-6 top-6 flex items-center gap-3 text-xs text-slate-600">
             <span className="uppercase tracking-[0.18em]">{sideTitle}</span>

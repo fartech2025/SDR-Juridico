@@ -943,7 +943,7 @@ export const CasoPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
                       {/* AI Summary */}
-                      <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-5 border border-border">
+                      <div className="bg-linear-to-br from-gray-50 to-gray-100/50 rounded-xl p-5 border border-border">
                         <div className="flex items-center gap-2 mb-3">
                           <div
                             className="w-6 h-6 rounded-md flex items-center justify-center"
@@ -961,7 +961,7 @@ export const CasoPage = () => {
                       </div>
 
                       {/* Key Points */}
-                      <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 rounded-xl p-5 border border-amber-100/50">
+                      <div className="bg-linear-to-br from-amber-50/50 to-orange-50/30 rounded-xl p-5 border border-amber-100/50">
                         <div className="flex items-center gap-2 mb-3">
                           <div
                             className="w-6 h-6 rounded-md flex items-center justify-center"
@@ -1407,7 +1407,7 @@ export const CasoPage = () => {
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-wide text-text-muted">Descricao</label>
             <textarea
-              className="min-h-[120px] w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+              className="min-h-30 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
               placeholder="Detalhes da nota"
               value={eventForm.description}
               onChange={(e) =>
@@ -1427,7 +1427,7 @@ export const CasoPage = () => {
               style={{ backdropFilter: 'blur(4px)' }}
               onClick={closeTaskDrawer}
             />
-            <aside className="absolute right-0 top-0 flex h-full w-full max-w-[480px] flex-col bg-white shadow-xl">
+            <aside className="absolute right-0 top-0 flex h-full w-full max-w-120 flex-col bg-white shadow-xl">
               <div className="border-b border-border px-6 py-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
@@ -1544,7 +1544,7 @@ export const CasoPage = () => {
                     Descricao
                   </label>
                   <textarea
-                    className="min-h-[120px] w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
+                    className="min-h-30 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/25"
                     placeholder="Detalhes da tarefa"
                     value={taskDrawerForm.description}
                     onChange={(e) =>

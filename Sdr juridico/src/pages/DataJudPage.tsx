@@ -732,7 +732,7 @@ export const DataJudPage = () => {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-primary" />
-          <p className="text-text font-semibold text-base">Partes do Processo</p>
+          <p className="text-text font-semibold">Partes do Processo</p>
           <Badge variant="info" className="ml-auto">{polos.length} parte(s)</Badge>
         </div>
         
@@ -792,12 +792,12 @@ export const DataJudPage = () => {
         <header
           className={cn(
             'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]',
-            'border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
+            'border-border bg-linear-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              'absolute inset-0 bg-no-repeat bg-right bg-size-[520px]',
               'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
@@ -852,7 +852,7 @@ export const DataJudPage = () => {
         <CardContent>
           {!configurado ? (
             <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/5 p-4">
-              <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
               <div className="space-y-2">
                 <p className="text-sm font-medium text-warning">
                   API DataJud não configurada
@@ -1336,7 +1336,7 @@ export const DataJudPage = () => {
                           <p className="text-text font-semibold">Classe Processual</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-base font-medium text-text">
+                          <span className="font-medium text-text">
                             {processo.classe?.nome || renderValue(processo.classe)}
                           </span>
                           {processo.classe?.codigo && (
@@ -1388,7 +1388,7 @@ export const DataJudPage = () => {
                           </div>
                         </summary>
                         
-                        <div className="mt-4 max-h-[600px] overflow-y-auto space-y-3 p-4 border rounded-xl bg-surface-2">
+                        <div className="mt-4 max-h-150 overflow-y-auto space-y-3 p-4 border rounded-xl bg-surface-2">
                           {processo.movimentos
                             .filter((m: any) => m.nome)
                             .sort((a: any, b: any) => {
@@ -1402,14 +1402,14 @@ export const DataJudPage = () => {
                                 className="flex gap-4 p-4 rounded-xl bg-surface border border-border hover:border-primary/30 hover:shadow-sm transition-all"
                               >
                                 {/* Timeline indicator */}
-                                <div className="flex-shrink-0 flex flex-col items-center">
+                                <div className="shrink-0 flex flex-col items-center">
                                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
                                     <span className="text-xs font-bold text-primary">
                                       {idx + 1}
                                     </span>
                                   </div>
                                   {idx < (processo.movimentos?.filter((m: any) => m.nome).length || 0) - 1 && (
-                                    <div className="w-px flex-1 bg-border mt-2 min-h-[20px]"></div>
+                                    <div className="w-px flex-1 bg-border mt-2 min-h-5"></div>
                                   )}
                                 </div>
                                 

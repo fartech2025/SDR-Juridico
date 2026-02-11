@@ -120,11 +120,11 @@ const DroppableColumn = ({
           <h3 className="text-xs sm:text-sm font-bold truncate">
             {title}
           </h3>
-          <span className="flex-shrink-0 ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full bg-white/80">
+          <span className="shrink-0 ml-2 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold rounded-full bg-white/80">
             {count}
           </span>
         </div>
-        <div className="space-y-2 min-h-[300px] sm:min-h-[400px] overflow-y-auto max-h-[60vh] scrollbar-thin">
+        <div className="space-y-2 min-h-75 sm:min-h-100 overflow-y-auto max-h-[60vh] scrollbar-thin">
           {children}
         </div>
       </div>
@@ -165,7 +165,7 @@ const DraggableLeadCard = ({
         <div className="flex items-start gap-1 sm:gap-2">
           {/* Drag handle */}
           <span
-            className="flex-shrink-0 inline-flex cursor-grab items-center rounded border border-border bg-surface-alt p-0.5 sm:p-1 text-text-subtle active:cursor-grabbing hover:bg-surface-alt sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+            className="shrink-0 inline-flex cursor-grab items-center rounded border border-border bg-surface-alt p-0.5 sm:p-1 text-text-subtle active:cursor-grabbing hover:bg-surface-alt sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -180,7 +180,7 @@ const DraggableLeadCard = ({
           
           {/* Nome do lead */}
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="text-xs sm:text-sm font-semibold text-text line-clamp-2 break-words">
+            <p className="text-xs sm:text-sm font-semibold text-text line-clamp-2 wrap-break-word">
               {lead.name}
             </p>
           </div>
@@ -221,13 +221,13 @@ const DraggableLeadCard = ({
         <div className="mt-2 space-y-1">
           {lead.phone && (
             <div className="flex items-center gap-1 text-[10px] sm:text-xs text-text-muted">
-              <Phone className="h-3 w-3 flex-shrink-0" />
+              <Phone className="h-3 w-3 shrink-0" />
               <span className="truncate">{formatPhone(lead.phone)}</span>
             </div>
           )}
           {lead.email && (
             <div className="flex items-center gap-1 text-[10px] sm:text-xs text-text-muted">
-              <Mail className="h-3 w-3 flex-shrink-0" />
+              <Mail className="h-3 w-3 shrink-0" />
               <span className="truncate">{lead.email}</span>
             </div>
           )}
@@ -509,7 +509,7 @@ export const LeadsKanbanPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-slate-100">
+    <div className="flex flex-col h-full bg-linear-to-br from-gray-50 to-slate-100">
       {/* Header */}
       <div className="bg-white border-b border-border shadow-sm sticky top-0 z-10">
         <div className="px-3 sm:px-6 py-3 sm:py-4">
@@ -534,7 +534,7 @@ export const LeadsKanbanPage = () => {
               </Link>
 
               {/* Busca */}
-              <div className="relative flex-1 min-w-[150px] sm:w-auto">
+              <div className="relative flex-1 min-w-37.5 sm:w-auto">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-text-subtle" />
                 <input
                   type="text"
@@ -735,7 +735,7 @@ export const LeadsKanbanPage = () => {
         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header do modal */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-gradient-to-r from-brand-primary to-brand-primary/90">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-linear-to-r from-brand-primary to-brand-primary/90">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                   <User className="h-5 w-5 text-white" />

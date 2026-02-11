@@ -98,12 +98,12 @@ export const AuditoriaPage = () => {
         <header
           className={cn(
             'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]',
-            'border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
+            'border-border bg-linear-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              'absolute inset-0 bg-no-repeat bg-right bg-size-[520px]',
               'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}

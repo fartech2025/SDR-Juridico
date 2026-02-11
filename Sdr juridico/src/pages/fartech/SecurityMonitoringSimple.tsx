@@ -981,12 +981,12 @@ export default function SecurityMonitoringSimple() {
                       </div>
                       <div className="flex items-center gap-4 text-xs text-text-subtle">
                         {log.actor_user_id && (
-                          <span className="font-mono truncate max-w-[200px]">
+                          <span className="font-mono truncate max-w-50">
                             User: {log.actor_user_id.substring(0, 8)}...
                           </span>
                         )}
                         {log.entity_id && (
-                          <span className="font-mono truncate max-w-[200px]">
+                          <span className="font-mono truncate max-w-50">
                             ID: {log.entity_id.substring(0, 8)}...
                           </span>
                         )}

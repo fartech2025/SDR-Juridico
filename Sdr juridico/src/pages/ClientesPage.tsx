@@ -929,7 +929,7 @@ export const ClientesPage = () => {
         {/* Filters */}
         <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px]">
+            <div className="relative flex-1 min-w-50">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
               <input
                 className="h-10 w-full rounded-lg border border-border bg-white pl-10 pr-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"

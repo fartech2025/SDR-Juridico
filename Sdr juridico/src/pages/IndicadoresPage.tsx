@@ -176,12 +176,12 @@ export const IndicadoresPage = () => {
       <div className="space-y-5">
         <header
           className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]','border-border bg-linear-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              'absolute inset-0 bg-no-repeat bg-right bg-size-[520px]',
               'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
@@ -220,7 +220,7 @@ export const IndicadoresPage = () => {
                 Leads x Fechamentos (mes)
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-[320px] pt-0">
+            <CardContent className="h-80 pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={monthlyMetrics}>
                   <CartesianGrid stroke="var(--color-border-soft)" strokeDasharray="4 6" />
@@ -265,7 +265,7 @@ export const IndicadoresPage = () => {
             <CardHeader>
               <CardTitle className="text-base">Funil de etapas</CardTitle>
             </CardHeader>
-            <CardContent className="h-[320px] pt-0">
+            <CardContent className="h-80 pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnelStages} layout="vertical" margin={{ left: 20 }}>
                   <CartesianGrid stroke="var(--color-border-soft)" strokeDasharray="4 6" />

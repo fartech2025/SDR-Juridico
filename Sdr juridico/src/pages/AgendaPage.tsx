@@ -906,7 +906,7 @@ export const AgendaPage = () => {
                     <div className="grid grid-cols-7 gap-2 text-xs">
                       {monthMatrix.map((day, index) => {
                         if (!day) {
-                          return <div key={`empty-${index}`} className="min-h-[110px]" />
+                          return <div key={`empty-${index}`} className="min-h-27.5" />
                         }
                         const dayEvents = eventsByDate.get(day.iso) ?? []
                         const isToday = day.iso === todayIso
@@ -915,7 +915,7 @@ export const AgendaPage = () => {
                           <div
                             key={day.iso}
                             className={cn(
-                              'min-h-[110px] rounded-lg border border-border bg-surface p-2 transition hover:bg-surface-alt cursor-pointer',
+                              'min-h-27.5 rounded-lg border border-border bg-surface p-2 transition hover:bg-surface-alt cursor-pointer',
                               isSelected && 'border-brand-primary/40',
                             )}
                             onClick={() => handleSlotCreate(day.iso)}

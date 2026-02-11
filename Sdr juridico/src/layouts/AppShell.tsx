@@ -313,7 +313,7 @@ export const AppShell = () => {
                           color: '#721011'
                         } : {}}
                       >
-                        <div className="flex-shrink-0 relative" style={isActive ? { color: '#721011' } : {}}>
+                        <div className="shrink-0 relative" style={isActive ? { color: '#721011' } : {}}>
                           <item.icon className="h-5 w-5" />
                           {apiStatusMap[item.to] && (
                             <span
@@ -343,7 +343,7 @@ export const AppShell = () => {
                           <span
                             className={cn(
                               'inline-flex items-center justify-center text-[10px] font-bold text-white rounded-full',
-                              sidebarCollapsed ? 'absolute -top-1 -right-1 min-w-[16px] h-4 px-1' : 'min-w-[20px] h-5 px-1.5'
+                              sidebarCollapsed ? 'absolute -top-1 -right-1 min-w-4 h-4 px-1' : 'min-w-5 h-5 px-1.5'
                             )}
                             style={{ backgroundColor: '#721011' }}
                           >

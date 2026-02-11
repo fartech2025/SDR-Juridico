@@ -504,10 +504,10 @@ export default function CustomComponent() {
 <div style={{ backgroundColor: '#10b981' }} />
 
 // ❌ Classes Tailwind customizadas sem tokens
-<div className="bg-gradient-to-br from-green-500" />
+<div className="bg-linear-to-br from-green-500" />
 
 // ❌ Valores arbitrários quando há tokens
-<div className="p-[23px]" /> // Use p-6 (24px) ou p-md
+<div className="p-5.75" /> // Use p-6 (24px) ou p-md
 ```
 
 ### 🎨 Substituições Recomendadas

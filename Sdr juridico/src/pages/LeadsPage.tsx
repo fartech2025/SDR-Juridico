@@ -744,7 +744,7 @@ export const LeadsPage = () => {
 
               {/* Filtros */}
               <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[300px]">
+                <div className="relative flex-1 min-w-75">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
                   <input
                     className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong transition-all bg-white"
@@ -755,7 +755,7 @@ export const LeadsPage = () => {
                 </div>
 
                 <select
-                  className="h-10 rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong bg-white min-w-[140px]"
+                  className="h-10 rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong bg-white min-w-35"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
@@ -768,7 +768,7 @@ export const LeadsPage = () => {
                 </select>
 
                 <select
-                  className="h-10 rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong bg-white min-w-[140px]"
+                  className="h-10 rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-border-strong bg-white min-w-35"
                   value={heatFilter}
                   onChange={(event) => setHeatFilter(event.target.value)}
                 >
@@ -820,9 +820,9 @@ export const LeadsPage = () => {
                         </div>
 
                         {/* Info Principal */}
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-50">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-semibold text-text">
+                            <h3 className="font-semibold text-text">
                               {lead.name}
                             </h3>
                             {/* Badge de Temperatura */}
@@ -858,7 +858,7 @@ export const LeadsPage = () => {
                           <div className="text-right">
                             <span
                               className={cn(
-                                'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium min-w-[90px]',
+                                'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium min-w-22.5',
                                 statusBadge(lead.status)
                               )}
                             >

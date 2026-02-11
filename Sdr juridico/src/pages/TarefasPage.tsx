@@ -314,7 +314,7 @@ export const TarefasPage = () => {
       <div className="bg-white rounded-xl border border-border p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="text-base font-semibold text-text">Lista de tarefas</h3>
+            <h3 className="font-semibold text-text">Lista de tarefas</h3>
             <p className="text-sm text-text-muted">Organize por prioridade e vencimento.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -338,7 +338,7 @@ export const TarefasPage = () => {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          <div className="relative flex-1 min-w-[260px]">
+          <div className="relative flex-1 min-w-65">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
             <input
               className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
@@ -403,7 +403,7 @@ export const TarefasPage = () => {
                   >
                     <ListTodo className="h-5 w-5" />
                   </div>
-                  <div className="flex-1 min-w-[200px]">
+                  <div className="flex-1 min-w-50">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-text">{displayTitle}</p>
                       <span
@@ -511,7 +511,7 @@ export const TarefasPage = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium text-text">Descricao</label>
             <textarea
-              className="min-h-[100px] w-full rounded-lg border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2"
+              className="min-h-25 w-full rounded-lg border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2"
               value={formState.description}
               onChange={(event) =>
                 setFormState((prev) => ({ ...prev, description: event.target.value }))

@@ -285,12 +285,12 @@ export const ConfigPage = () => {
       <div className="space-y-5">
         <header
           className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]','border-border bg-gradient-to-br from-brand-primary-subtle via-surface to-surface-alt',
+            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]','border-border bg-linear-to-br from-brand-primary-subtle via-surface to-surface-alt',
           )}
         >
           <div
             className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-[length:520px]',
+              'absolute inset-0 bg-no-repeat bg-right bg-size-[520px]',
               'opacity-90',
             )}
             style={{ backgroundImage: `url(${heroLight})` }}
@@ -388,7 +388,7 @@ export const ConfigPage = () => {
                         variant="primary"
                         size="sm"
                         onClick={() => navigate('/app/datajud')}
-                        className="!bg-brand-primary !text-white hover:!bg-brand-primary/90 !border-0"
+                        className="bg-brand-primary! text-white! hover:bg-brand-primary/90! border-0!"
                       >
                         <Database className="h-4 w-4 mr-2" />
                         Acessar API
@@ -398,7 +398,7 @@ export const ConfigPage = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedIntegration(integration)}
-                        className="!bg-brand-primary !text-white hover:!bg-brand-primary/90 !border-0"
+                        className="bg-brand-primary! text-white! hover:bg-brand-primary/90! border-0!"
                       >
                         {actionLabel}
                       </Button>
