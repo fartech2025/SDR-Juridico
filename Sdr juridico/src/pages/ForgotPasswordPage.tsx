@@ -3,7 +3,7 @@ import { CheckCircle2, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
-import logoMark from '@/assets/logo-mark.svg'
+
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -56,7 +56,7 @@ export const ForgotPasswordPage = () => {
   return (
     <AuthLayout title="RECUPERAR ACESSO" sideSubtitle="">
       <div className="flex items-center gap-3">
-        <img src={logoMark} alt="Logo" className="h-10 w-10" />
+        <img src="https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/talent%20jud%2003.png" alt="TalentJUD" className="h-10 w-auto" />
       </div>
 
       <h2 className="mt-6 text-2xl font-semibold text-slate-800">

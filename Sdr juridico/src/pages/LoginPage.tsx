@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { permissionsService } from '@/services/permissionsService'
 import { usePermissions } from '@/hooks/usePermissions'
 
-const LOGO_URL = 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/LOGO1.jpeg'
+const LOGO_URL = 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/talent%20jud%2003.png'
 
 export const LoginPage = () => {
   const navigate = useNavigate()
@@ -171,20 +171,15 @@ export const LoginPage = () => {
               fill="url(#sg)" stroke="rgba(255,255,255,0.25)" strokeWidth="2"/>
             <path d="M200 50 L320 90 L320 175 C320 235 200 285 200 285 C200 285 80 235 80 175 L80 90 Z"
               fill="url(#ig)" opacity="0.5"/>
-            <g transform="translate(140,100)">
-              <rect x="55" y="40" width="10" height="120" fill="rgba(255,255,255,0.85)" rx="2"/>
-              <rect x="20" y="35" width="80" height="8" fill="rgba(255,255,255,0.85)" rx="2"/>
-              <circle cx="30" cy="90" r="25" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="3"/>
-              <line x1="30" y1="43" x2="30" y2="65" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
-              <circle cx="90" cy="90" r="25" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="3"/>
-              <line x1="90" y1="43" x2="90" y2="65" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
-              <rect x="35" y="160" width="50" height="10" fill="rgba(255,255,255,0.85)" rx="2"/>
-            </g>
-            <g transform="translate(175,240)">
-              <rect x="10" y="15" width="30" height="25" fill="rgba(255,255,255,0.85)" rx="3"/>
-              <path d="M15 15 L15 8 C15 2 20 0 25 0 C30 0 35 2 35 8 L35 15" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="4" strokeLinecap="round"/>
-              <circle cx="25" cy="27" r="4" fill="#721011"/>
-            </g>
+            <clipPath id="logoClip">
+              <circle cx="200" cy="170" r="91"/>
+            </clipPath>
+            <image
+              href="https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/TALENT%20SDR%20SEM%20FUNDO.png"
+              x="96" y="66" width="208" height="208"
+              clipPath="url(#logoClip)"
+              preserveAspectRatio="xMidYMid slice"
+            />
             <defs>
               <linearGradient id="sg" x1="50" y1="20" x2="350" y2="320">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.22)"/>
