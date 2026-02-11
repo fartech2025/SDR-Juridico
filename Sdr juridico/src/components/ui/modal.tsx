@@ -11,6 +11,8 @@ export interface ModalProps {
   children?: React.ReactNode
   footer?: React.ReactNode
   className?: string
+  maxWidth?: string
+  noPadding?: boolean
 }
 
 export const Modal = ({
@@ -21,6 +23,8 @@ export const Modal = ({
   children,
   footer,
   className,
+  maxWidth,
+  noPadding,
 }: ModalProps) => {
   const [visible, setVisible] = React.useState(false)
   const [animating, setAnimating] = React.useState(false)
@@ -90,8 +94,8 @@ export const Modal = ({
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '32rem',
-          padding: '20px 24px',
+          maxWidth: maxWidth || '32rem',
+          padding: noPadding ? '0' : '20px 24px',
           border: '1px solid #e5e7eb',
           transition: 'all 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
           transform: animating ? 'scale(1) translateY(0)' : 'scale(0.75) translateY(16px)',
@@ -114,11 +118,11 @@ export const Modal = ({
         )}
         <div
           style={{
-            marginTop: '16px',
+            marginTop: noPadding ? '0' : '16px',
             fontSize: '14px',
             color: '#374151',
-            maxHeight: '65vh',
-            overflowY: 'auto',
+            maxHeight: noPadding ? undefined : '65vh',
+            overflowY: noPadding ? undefined : 'auto',
           }}
         >
           {children}

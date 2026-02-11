@@ -732,8 +732,8 @@ export const LeadsKanbanPage = () => {
 
       {/* Modal/Drawer do Lead */}
       {modalOpen && activeLead && (
-        <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <Modal open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="42rem" noPadding>
+          <div className="bg-white rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header do modal */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-linear-to-r from-brand-primary to-brand-primary/90">
               <div className="flex items-center gap-3">
