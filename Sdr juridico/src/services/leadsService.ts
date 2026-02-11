@@ -33,6 +33,7 @@ const mapDbLeadStatusToUiStatus = (status?: string | null): LeadRow['status'] =>
   if (status === 'novo') return 'novo'
   if (status === 'em_triagem') return 'em_contato'
   if (status === 'qualificado') return 'qualificado'
+  if (status === 'proposta') return 'proposta'
   if (status === 'nao_qualificado') return 'perdido'
   if (status === 'convertido') return 'ganho'
   if (status === 'perdido') return 'perdido'
@@ -42,7 +43,7 @@ const mapDbLeadStatusToUiStatus = (status?: string | null): LeadRow['status'] =>
 const mapUiStatusToDbStatus = (status?: LeadRow['status'] | null): string => {
   if (status === 'em_contato') return 'em_triagem'
   if (status === 'qualificado') return 'qualificado'
-  if (status === 'proposta') return 'qualificado'
+  if (status === 'proposta') return 'proposta'
   if (status === 'ganho') return 'convertido'
   if (status === 'perdido') return 'perdido'
   return 'novo'
@@ -51,7 +52,7 @@ const mapUiStatusToDbStatus = (status?: LeadRow['status'] | null): string => {
 const mapUiStatusToDbFilter = (status: LeadRow['status']) => {
   if (status === 'em_contato') return ['em_triagem']
   if (status === 'qualificado') return ['qualificado']
-  if (status === 'proposta') return ['qualificado']
+  if (status === 'proposta') return ['proposta']
   if (status === 'ganho') return ['convertido']
   if (status === 'perdido') return ['perdido', 'nao_qualificado']
   return ['novo']
