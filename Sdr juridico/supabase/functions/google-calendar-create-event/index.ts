@@ -164,7 +164,8 @@ const createGoogleCalendarEvent = async (
 /**
  * Handler principal
  * Aceita: { user_id?, org_id?, event }
- * Prioridade: token do user > token da org
+ * Usa APENAS token da integração da org (obtido via OAuth customizado)
+ * NÃO usar directToken ou user_metadata — pertencem ao projeto GCP do Supabase
  */
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -177,7 +178,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { user_id, org_id, access_token: directToken, event: eventData } = body
+    const { user_id, org_id, event: eventData } = body
 
     if (!eventData) {
       return jsonResponse({ error: 'event é obrigatório' }, 400, req)
@@ -188,23 +189,25 @@ serve(async (req) => {
     let accessToken: string | null = null
     let tokenSource = 'none'
 
-    // 0) Token direto enviado pelo frontend (localStorage)
-    if (directToken) {
-      accessToken = directToken
-      tokenSource = 'direct'
-      console.log('Usando token direto do frontend')
-    }
-
-    // 1) Tentar token pessoal do usuário (user_metadata)
-    if (!accessToken && user_id) {
-      accessToken = await getUserToken(supabase, user_id)
-      if (accessToken) tokenSource = 'user_metadata'
-    }
-
-    // 2) Fallback: token da organização
-    if (!accessToken && org_id) {
+    // Usar APENAS token da organização (obtido via OAuth customizado google-calendar-oauth)
+    // Esse é o único fluxo que usa NOSSO Client ID/Secret (projeto GCP 410413435637)
+    if (org_id) {
       accessToken = await getOrgToken(supabase, org_id)
       if (accessToken) tokenSource = 'org'
+    }
+
+    // Se não tem org_id, tentar buscar a org do usuário
+    if (!accessToken && user_id) {
+      const { data: membership } = await supabase
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', user_id)
+        .limit(1)
+        .maybeSingle()
+      if (membership?.org_id) {
+        accessToken = await getOrgToken(supabase, membership.org_id)
+        if (accessToken) tokenSource = 'org_via_user'
+      }
     }
 
     if (!accessToken) {
@@ -218,7 +221,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Criando evento via token: ${tokenSource} (user_id: ${user_id || 'N/A'})`)
+    console.log(`Criando evento via token: ${tokenSource} (user_id: ${user_id || 'N/A'}, org_id: ${org_id || 'N/A'})`)
 
     const createdEvent = await createGoogleCalendarEvent(accessToken, eventData)
 
