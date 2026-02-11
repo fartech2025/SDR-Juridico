@@ -1,12 +1,18 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.3.1  
+**Versão:** 2.3.2  
 **Data:** 11 de fevereiro de 2026  
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.3.2 (11 de fevereiro de 2026)
+- ✅ **Fix Google Calendar 500**: Corrigido erro 500 ao criar eventos — Edge Function `google-calendar-create-event` agora usa **exclusivamente** tokens da integração da org (tabela `integrations`), obtidos via OAuth customizado (projeto GCP 410413435637). Removidos paths `directToken` (localStorage) e `user_metadata` que usavam tokens do projeto GCP do Supabase (450955346215) onde Calendar API não está habilitada
+- ✅ **Frontend Token Cleanup**: Removido uso de `provider_token` do Supabase Auth em `useGoogleCalendarCreate.ts`, `AuthContext.tsx` e `AuthCallback.tsx` — esses tokens pertencem ao projeto GCP do Supabase, não ao projeto do cliente
+- ✅ **Limpeza do Projeto**: 100+ arquivos redundantes (docs, SQL, scripts) movidos para `_archive/` e adicionados ao `.gitignore`
+- ✅ **vercel.json Corrigido**: Config de deploy apontava para `app/` em vez de `Sdr juridico/` — corrigido para build e output corretos
 
 ### v2.3.1 (11 de fevereiro de 2026)
 - ✅ **Header Independente do Sidebar**: Header agora permanece fixo em `lg:left-64` e não acompanha o colapso do sidebar (antes mudava para `lg:left-20`)
@@ -1716,8 +1722,8 @@ CREATE POLICY "org_admin_manage" ON [tabela]
 │  ┌──────────────────────▼──────────────────────────────┐    │
 │  │  useGoogleCalendarCreate.ts                          │    │
 │  │  - Hook para criar eventos no Google Calendar        │    │
-│  │  - Pre-check de tokens antes de chamar Edge Function │    │
-│  │  - Fallback: localStorage → user_metadata → DB       │    │
+│  │  - Envia user_id e org_id para Edge Function         │    │
+│  │  - Tokens resolvidos server-side (tabela integrations)│    │
 │  └──────────────────────┬──────────────────────────────┘    │
 └─────────────────────────┼───────────────────────────────────┘
                           │ HTTPS
@@ -1743,7 +1749,8 @@ CREATE POLICY "org_admin_manage" ON [tabela]
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │  google-calendar-create-event/index.ts              │    │
 │  │  - Cria evento no Google Calendar                   │    │
-│  │  - Tokens: header → user_metadata → DB integration  │    │
+│  │  - Token: APENAS tabela integrations (org OAuth)    │    │
+│  │  - Refresh automático se token expirado             │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────┐    │
@@ -1800,28 +1807,40 @@ CREATE POLICY "org_admin_manage" ON [tabela]
    - Marca integração no localStorage como enabled=true
 ```
 
-### 3. Armazenamento de Tokens (Estratégia Multi-Camada)
+### 3. Armazenamento de Tokens (Fonte Única — v2.3.2)
+
+> **IMPORTANTE**: Desde v2.3.2, a Edge Function `google-calendar-create-event` usa
+> **exclusivamente** tokens da tabela `integrations`. Os paths `directToken` (localStorage)
+> e `user_metadata` foram removidos porque esses tokens pertencem ao projeto GCP do Supabase
+> (450955346215) onde a Google Calendar API não está habilitada. Apenas tokens obtidos via
+> nosso OAuth customizado (projeto GCP 410413435637) funcionam.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  CAMADA 1: Tabela `integrations` (fonte principal)      │
+│  FONTE ÚNICA: Tabela `integrations`                     │
 │  - org_id + provider='google_calendar'                  │
 │  - secrets: {access_token, refresh_token, expires_at}   │
+│  - Tokens obtidos via OAuth customizado (google-calendar│
+│    -oauth Edge Function) com NOSSO Client ID/Secret     │
+│  - Projeto GCP: 410413435637 (Calendar API habilitada)  │
 │  - Usada por: Edge Functions (sync, create-event)       │
 │  - RLS: membros da org podem ler, admins podem escrever │
+│  - Refresh automático via getOrgToken() se expirado     │
 └─────────────────────────────────────────────────────────┘
-                       │
+
+⚠️  DESCONTINUADOS (v2.3.2):
 ┌─────────────────────────────────────────────────────────┐
-│  CAMADA 2: user_metadata (backup por usuário)           │
-│  - Salvo via store-google-tokens Edge Function          │
-│  - Fallback se integração org não encontrada            │
+│  ❌ user_metadata (tokens do Supabase Auth)             │
+│  - Pertencem ao projeto GCP do Supabase (450955346215)  │
+│  - Calendar API NÃO habilitada nesse projeto            │
+│  - store-google-tokens Edge Function ainda existe mas   │
+│    tokens salvos NÃO são usados para criar eventos      │
 └─────────────────────────────────────────────────────────┘
-                       │
 ┌─────────────────────────────────────────────────────────┐
-│  CAMADA 3: localStorage (frontend only)                 │
-│  - google_calendar_token: {access_token, refresh_token} │
-│  - Usado por: useGoogleCalendarCreate hook              │
-│  - Compatibilidade com integrationsService (localStorage)│
+│  ❌ localStorage (removido do frontend)                 │
+│  - google_calendar_token: REMOVIDO em v2.3.2            │
+│  - useGoogleCalendarCreate NÃO lê mais do localStorage  │
+│  - Tokens ficam apenas server-side (tabela integrations) │
 └─────────────────────────────────────────────────────────┘
 ```
 
