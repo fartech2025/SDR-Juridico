@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, Plus, Pencil, Trash2, UserPlus, Users, AlertTriangle, CheckCircle, CheckCircle2, XCircle, Loader2, Building2 } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, UserPlus, Users, AlertTriangle, CheckCircle, CheckCircle2, XCircle, Loader2, Building2, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
@@ -559,8 +559,26 @@ export const ClientesPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Email</label>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-text">Email</label>
+                  {emailValido === true && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 border border-green-200">
+                      <CheckCircle className="h-3 w-3" /> Verificado
+                    </span>
+                  )}
+                  {emailValido === false && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 border border-red-200">
+                      <XCircle className="h-3 w-3" /> Inválido
+                    </span>
+                  )}
+                  {validandoEmail && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 border border-blue-200">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Validando...
+                    </span>
+                  )}
+                </div>
                 <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
                   <input
                     type="email"
                     value={formData.email}
@@ -571,7 +589,7 @@ export const ClientesPage = () => {
                     }}
                     onBlur={() => validarEmail(formData.email)}
                     className={cn(
-                      'h-11 w-full rounded-lg border bg-white px-4 pr-10 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2',
+                      'h-11 w-full rounded-lg border bg-white pl-10 pr-10 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2',
                       emailValido === true ? 'border-green-400 focus:border-green-500 focus:ring-green-500/20' :
                       emailValido === false ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' :
                       'border-border focus:border-brand-primary focus:ring-brand-primary/20'

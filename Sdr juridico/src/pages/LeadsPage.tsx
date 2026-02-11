@@ -394,9 +394,26 @@ export const LeadsPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-text">
-                      Email *
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-text">
+                        Email *
+                      </label>
+                      {emailValido === true && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 border border-green-200">
+                          <CheckCircle2 className="h-3 w-3" /> Verificado
+                        </span>
+                      )}
+                      {emailValido === false && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 border border-red-200">
+                          <XCircle className="h-3 w-3" /> Inválido
+                        </span>
+                      )}
+                      {validandoEmail && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 border border-blue-200">
+                          <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent" /> Validando...
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
                       <input
