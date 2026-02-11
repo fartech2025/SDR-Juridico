@@ -1,12 +1,38 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.2.0  
-**Data:** 10 de fevereiro de 2026  
+**Versão:** 2.3.1  
+**Data:** 11 de fevereiro de 2026  
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.3.1 (11 de fevereiro de 2026)
+- ✅ **Header Independente do Sidebar**: Header agora permanece fixo em `lg:left-64` e não acompanha o colapso do sidebar (antes mudava para `lg:left-20`)
+- ✅ **ENUM lead_status Validado**: Confirmado que o banco usa ENUM (não constraint CHECK) com todos os valores: `novo`, `em_triagem`, `em_contato`, `qualificado`, `proposta`, `nao_qualificado`, `convertido`, `ganho`, `perdido`
+- ✅ **Kanban Leads com Proposta**: Status "Proposta" funcional no Kanban — o ENUM já continha o valor, não era necessária migration adicional
+
+### v2.3.0 (11 de fevereiro de 2026)
+- ✅ **Header Fixo (AppShell)**: Navbar agora é `fixed` em vez de `sticky`, permanece visível ao rolar o conteúdo
+- ✅ **Modal TarefasKanbanPage**: Refatorado para usar componente `Modal` com `createPortal` (z-index 9999), corrigindo sobreposição
+- ✅ **Sistema de Alertas Persistente**: Nova tabela `alertas` com tipos (datajud_movimento, dou_publicacao, tarefa_vencida, caso_critico, lead_esfriando) e prioridades (P0, P1, P2)
+- ✅ **alertasService + useAlertas**: Serviço completo e hook para CRUD de alertas com suporte a org-wide e user-specific
+- ✅ **Lead Scoring Engine**: Motor de pontuação configurável (0-100) mapeado para heat (frio/morno/quente) com 6 fatores ponderados
+- ✅ **lead_scoring_configs Table**: Tabela para configuração de pesos do scoring por organização
+- ✅ **Status "Proposta" em Leads**: Novo status válido na constraint CHECK (antes era mapeado para 'qualificado')
+- ✅ **Microsoft Teams Integration**: Edge Functions `teams-oauth` e `teams-create-event` para OAuth e criação de reuniões
+- ✅ **TeamsQuickCreate Component**: Componente para criação rápida de reuniões Teams integrado à agenda
+- ✅ **MeetingCreatorForm Component**: Formulário unificado para criação de reuniões Google Meet e Teams
+- ✅ **AnalyticsPage**: Nova página de analytics com favoritos, histórico e estatísticas de consultas DataJud
+- ✅ **IndicadoresPage**: Dashboard completo com gráficos de Funil de Conversão, Metas e Insights gerados
+- ✅ **AuditoriaPage**: Página dedicada para visualização de logs de auditoria do sistema
+- ✅ **DOUSyncLogsPage**: Página para monitoramento de sincronização com Diário Oficial da União
+- ✅ **Security Monitoring (Fartech)**: Páginas `SecurityMonitoring` e `SecurityReportPage` para admins da plataforma
+- ✅ **telemetryService**: Serviço para tracking de uso e métricas de navegação (usePageTracking hook)
+- ✅ **useTeamsMeetingCreate + useTeamsSync**: Hooks para integração Microsoft Teams
+- ✅ **useGoogleCalendarCreate**: Hook separado para criação de eventos no Google Calendar
+- ✅ **useDOU + useDataJudSync**: Hooks para consultas DOU e sincronização DataJud
 
 ### v2.2.0 (10 de fevereiro de 2026)
 - ✅ **Funil de Conversão (LeadsKanbanPage)**: Gráfico visual de funil abaixo do Kanban com 6 etapas (Novo → Em Contato → Qualificado → Proposta → Ganho → Perdido)
@@ -280,7 +306,11 @@ src/
 │   │   ├── EmailService.ts
 │   │   ├── StorageService.ts
 │   │   ├── NotificationService.ts
-│   │   └── AuditLogService.ts
+│   │   ├── AuditLogService.ts
+│   │   ├── alertasService.ts          # 🆕 Sistema de alertas persistente
+│   │   ├── leadScoringService.ts      # 🆕 Motor de scoring para leads
+│   │   ├── telemetryService.ts        # 🆕 Telemetria e tracking de uso
+│   │   └── favoritosService.ts        # 🆕 Favoritos e histórico DataJud
 │   ├── http/                        # Configuração HTTP
 │   │   ├── api-client.ts
 │   │   ├── interceptors.ts
@@ -324,6 +354,11 @@ src/
 │   │   │   ├── documentos/
 │   │   │   │   ├── UploadDocumentos.tsx     # Upload com geração de ID interno
 │   │   │   │   └── DocumentoViewer.tsx      # Modal de visualização inline
+│   │   │   ├── meetings/                # 🆕 Componentes de reuniões
+│   │   │   │   ├── TeamsQuickCreate.tsx     # Criação rápida Teams
+│   │   │   │   ├── GoogleMeetQuickCreate.tsx # Criação rápida Google Meet
+│   │   │   │   ├── MeetingCreatorForm.tsx   # Form unificado Meet/Teams
+│   │   │   │   └── GoogleMeetAgendaIntegration.tsx # Integração agenda
 │   │   │   └── ...
 │   │   └── layout/                  # Layouts
 │   │       ├── AppShell.tsx
@@ -341,13 +376,18 @@ src/
 │   │   ├── fartech/
 │   │   │   ├── FartechDashboard.tsx
 │   │   │   ├── OrganizationsList.tsx
-│   │   │   └── SystemHealth.tsx
+│   │   │   ├── SecurityMonitoring.tsx       # 🆕 Monitoramento de segurança
+│   │   │   └── SecurityReportPage.tsx       # 🆕 Relatórios de segurança
 │   │   ├── DashboardPage.tsx
 │   │   ├── LeadsPage.tsx              # Lista de leads + métricas
 │   │   ├── LeadsKanbanPage.tsx        # Kanban DnD + Funil de Conversão
 │   │   ├── TarefasKanbanPage.tsx      # Kanban de tarefas
 │   │   ├── TarefasRootPage.tsx        # Router Kanban/Lista de tarefas
 │   │   ├── CasesPage.tsx
+│   │   ├── AnalyticsPage.tsx          # 🆕 Favoritos, histórico e estatísticas DataJud
+│   │   ├── AuditoriaPage.tsx          # 🆕 Logs de auditoria do sistema
+│   │   ├── IndicadoresPage.tsx        # 🆕 Dashboard com funil, metas e insights
+│   │   ├── DOUSyncLogsPage.tsx        # 🆕 Monitoramento sync DOU
 │   │   └── ...
 │   ├── hooks/                       # Custom hooks
 │   │   ├── useOrganization.ts
@@ -355,6 +395,14 @@ src/
 │   │   ├── useInvitations.ts
 │   │   ├── usePermissions.ts
 │   │   ├── useAuth.ts
+│   │   ├── useAlertas.ts              # 🆕 Sistema de alertas persistente
+│   │   ├── useTeamsMeetingCreate.ts   # 🆕 Criação reuniões Microsoft Teams
+│   │   ├── useTeamsSync.ts            # 🆕 Sincronização Teams
+│   │   ├── useGoogleCalendarCreate.ts # 🆕 Criação eventos Google Calendar
+│   │   ├── useGoogleCalendarSync.ts   # Sincronização Google Calendar
+│   │   ├── useDOU.ts                  # 🆕 Consultas Diário Oficial  
+│   │   ├── useDataJudSync.ts          # 🆕 Sincronização DataJud
+│   │   ├── usePageTracking.ts         # 🆕 Telemetria de navegação
 │   │   └── ...
 │   └── view-models/                 # ViewModels (lógica de apresentação)
 │       ├── DashboardViewModel.ts
@@ -1342,6 +1390,29 @@ erDiagram
         timestamp created_at
     }
     
+    alertas {
+        uuid id PK
+        uuid org_id FK
+        uuid user_id FK "NULL = org-wide"
+        varchar tipo "datajud_movimento,dou_publicacao,tarefa_vencida,caso_critico,lead_esfriando"
+        varchar prioridade "P0,P1,P2"
+        varchar titulo
+        text descricao
+        varchar entidade "lead,caso,tarefa,documento"
+        uuid entidade_id
+        text action_href
+        boolean lida
+        timestamp created_at
+    }
+    
+    lead_scoring_configs {
+        uuid id PK
+        uuid org_id FK UK
+        jsonb config "pesos: recency, value, area, channel, interaction, completeness"
+        timestamp created_at
+        timestamp updated_at
+    }
+    
     roles {
         uuid id PK
         varchar name UK
@@ -1804,7 +1875,77 @@ npx supabase secrets set \
 
 ---
 
-## 🔍 INTEGRAÇÃO DATAJUD (v1.9.0)
+## � INTEGRAÇÃO MICROSOFT TEAMS (v2.3.0)
+
+### 1. Arquitetura da Integração
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND (React)                          │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  TeamsQuickCreate.tsx / MeetingCreatorForm.tsx      │    │
+│  │  - Criação rápida de reuniões Teams                 │    │
+│  │  - Integrado à AgendaPage para agendamentos         │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐    │
+│  │  useTeamsMeetingCreate.ts                           │    │
+│  │  - createMeeting(): Cria reunião via Edge Function  │    │
+│  │  - Gerencia loading/error states                    │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐    │
+│  │  useTeamsSync.ts                                    │    │
+│  │  - Sincronização de eventos com calendário Teams    │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+└─────────────────────────┼───────────────────────────────────┘
+                          │ HTTPS
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│         SUPABASE EDGE FUNCTIONS (Microsoft Teams)           │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  teams-oauth/index.ts                               │    │
+│  │  - Fase 1: Redireciona para Microsoft OAuth         │    │
+│  │  - Fase 2: Troca code por tokens                    │    │
+│  │  - UPSERT: Cria/atualiza registro em `integrations` │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  teams-create-event/index.ts                        │    │
+│  │  - Cria reunião online no Microsoft Teams           │    │
+│  │  - Retorna link da reunião para inclusão no evento  │    │
+│  └─────────────────────────────────────────────────────┘    │
+└──────────────────────────┬──────────────────────────────────┘
+                          │ HTTPS
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Microsoft Graph API (graph.microsoft.com)       │
+│  - OAuth 2.0 com refresh_token                              │
+│  - Scopes: OnlineMeetings.ReadWrite, Calendars.ReadWrite    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Edge Functions Deploy
+
+```bash
+# Deploy com --no-verify-jwt
+npx supabase functions deploy teams-oauth --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+npx supabase functions deploy teams-create-event --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+```
+
+### 3. Componentes Frontend
+
+| Componente | Descrição |
+|------------|-----------|
+| `TeamsQuickCreate.tsx` | Botão/form para criação rápida de reunião Teams |
+| `MeetingCreatorForm.tsx` | Formulário unificado Google Meet + Teams |
+| `useTeamsMeetingCreate.ts` | Hook para chamadas à Edge Function |
+| `useTeamsSync.ts` | Hook para sincronização de calendário |
+
+---
+
+## �🔍 INTEGRAÇÃO DATAJUD (v1.9.0)
 
 ### 1. Arquitetura da Integração
 

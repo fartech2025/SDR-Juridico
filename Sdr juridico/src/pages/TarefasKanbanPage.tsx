@@ -694,21 +694,10 @@ export const TarefasKanbanPage = () => {
 
       {/* Drawer Completo de Visualização/Edição da Tarefa */}
       {modalOpen && active && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
-            style={{ animation: 'fadeIn 0.2s ease-out' }}
-            onClick={() => setModalOpen(false)}
-          />
-          
-          {/* Modal Panel Centralizado */}
-          <div 
-            className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ animation: 'scaleIn 0.25s ease-out' }}
-          >
+        <Modal open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="42rem" noPadding>
+          <div className="bg-white rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header do Drawer */}
-            <div className="flex-shrink-0 border-b border-border bg-gradient-to-r from-white to-gray-50">
+            <div className="shrink-0 border-b border-border bg-linear-to-r from-white to-gray-50">
               <div className="flex items-start justify-between p-5">
                 <div className="flex-1 min-w-0 pr-4">
                   {editMode ? (
@@ -1212,7 +1201,7 @@ export const TarefasKanbanPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal de Criar Tarefa */}
