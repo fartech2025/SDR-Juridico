@@ -109,6 +109,42 @@ export const LeadsPage = () => {
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingLeadId)
 
+  // Estado para validação de email
+  const [emailValido, setEmailValido] = React.useState<boolean | null>(null)
+  const [validandoEmail, setValidandoEmail] = React.useState(false)
+  const [emailInfo, setEmailInfo] = React.useState<string | null>(null)
+
+  const validarEmail = React.useCallback(async (email: string) => {
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      setEmailValido(null)
+      setEmailInfo(null)
+      return
+    }
+    setValidandoEmail(true)
+    try {
+      const res = await fetch(`https://api.eva.pingutil.com/email?email=${encodeURIComponent(email)}`)
+      const data = await res.json()
+      if (data.status === 'success' && data.data) {
+        const d = data.data
+        const valido = d.valid_syntax && d.deliverable && !d.disposable && !d.spam
+        setEmailValido(valido)
+        if (!d.valid_syntax) setEmailInfo('Formato inválido')
+        else if (d.disposable) setEmailInfo('E-mail temporário/descartável')
+        else if (d.spam) setEmailInfo('E-mail marcado como spam')
+        else if (!d.deliverable) setEmailInfo('E-mail não entregável')
+        else setEmailInfo(d.webmail ? 'Webmail válido' : 'E-mail corporativo válido')
+      } else {
+        setEmailValido(null)
+        setEmailInfo(null)
+      }
+    } catch {
+      setEmailValido(null)
+      setEmailInfo(null)
+    } finally {
+      setValidandoEmail(false)
+    }
+  }, [])
+
   const tabs = ['Todos', 'Quentes', 'Em negociacao', 'Fechados']
 
   // Métricas do pipeline de vendas
@@ -367,11 +403,30 @@ export const LeadsPage = () => {
                         type="email"
                         required
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value })
+                          setEmailValido(null)
+                          setEmailInfo(null)
+                        }}
+                        onBlur={() => validarEmail(formData.email)}
+                        className={`h-10 w-full rounded-lg border pl-10 pr-10 text-sm focus:outline-none focus:ring-2 ${
+                          emailValido === true ? 'border-green-400 focus:border-green-500 focus:ring-green-500/20' :
+                          emailValido === false ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' :
+                          'border-border focus:border-brand-primary focus:ring-brand-primary/20'
+                        }`}
                         placeholder="email@exemplo.com"
                       />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {validandoEmail && <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />}
+                        {!validandoEmail && emailValido === true && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        {!validandoEmail && emailValido === false && <XCircle className="h-4 w-4 text-red-500" />}
+                      </div>
                     </div>
+                    {emailInfo && (
+                      <p className={`text-xs mt-1 ${emailValido ? 'text-green-600' : 'text-red-500'}`}>
+                        {emailInfo}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">

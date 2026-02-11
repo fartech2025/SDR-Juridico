@@ -192,6 +192,42 @@ export const ClientesPage = () => {
     }
   }, [])
 
+  // Estado para validação de email
+  const [emailValido, setEmailValido] = React.useState<boolean | null>(null)
+  const [validandoEmail, setValidandoEmail] = React.useState(false)
+  const [emailInfo, setEmailInfo] = React.useState<string | null>(null)
+
+  const validarEmail = React.useCallback(async (email: string) => {
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      setEmailValido(null)
+      setEmailInfo(null)
+      return
+    }
+    setValidandoEmail(true)
+    try {
+      const res = await fetch(`https://api.eva.pingutil.com/email?email=${encodeURIComponent(email)}`)
+      const data = await res.json()
+      if (data.status === 'success' && data.data) {
+        const d = data.data
+        const valido = d.valid_syntax && d.deliverable && !d.disposable && !d.spam
+        setEmailValido(valido)
+        if (!d.valid_syntax) setEmailInfo('Formato inválido')
+        else if (d.disposable) setEmailInfo('E-mail temporário/descartável')
+        else if (d.spam) setEmailInfo('E-mail marcado como spam')
+        else if (!d.deliverable) setEmailInfo('E-mail não entregável')
+        else setEmailInfo(d.webmail ? 'Webmail válido' : 'E-mail corporativo válido')
+      } else {
+        setEmailValido(null)
+        setEmailInfo(null)
+      }
+    } catch {
+      setEmailValido(null)
+      setEmailInfo(null)
+    } finally {
+      setValidandoEmail(false)
+    }
+  }, [])
+
   // Estado para enriquecimento de dados
   const [buscandoDados, setBuscandoDados] = React.useState(false)
   const [documentoValido, setDocumentoValido] = React.useState<boolean | null>(null)
@@ -524,13 +560,35 @@ export const ClientesPage = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(event) => setFormData({ ...formData, email: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="email@exemplo.com"
-                />
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(event) => {
+                      setFormData({ ...formData, email: event.target.value })
+                      setEmailValido(null)
+                      setEmailInfo(null)
+                    }}
+                    onBlur={() => validarEmail(formData.email)}
+                    className={cn(
+                      'h-11 w-full rounded-lg border bg-white px-4 pr-10 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2',
+                      emailValido === true ? 'border-green-400 focus:border-green-500 focus:ring-green-500/20' :
+                      emailValido === false ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' :
+                      'border-border focus:border-brand-primary focus:ring-brand-primary/20'
+                    )}
+                    placeholder="email@exemplo.com"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {validandoEmail && <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />}
+                    {!validandoEmail && emailValido === true && <CheckCircle className="h-4 w-4 text-green-500" />}
+                    {!validandoEmail && emailValido === false && <XCircle className="h-4 w-4 text-red-500" />}
+                  </div>
+                </div>
+                {emailInfo && (
+                  <p className={cn('text-xs mt-1', emailValido ? 'text-green-600' : 'text-red-500')}>
+                    {emailInfo}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text">Telefone</label>
