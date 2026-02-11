@@ -145,6 +145,8 @@ export const ClientesPage = () => {
     health: 'ok' as ClienteRow['health'],
     observacoes: '',
     endereco: '',
+    bairro: '',
+    numero: '',
     cidade: '',
     estado: '',
     cep: '',
@@ -153,6 +155,43 @@ export const ClientesPage = () => {
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingClienteId)
   
+  // Estado para busca de CEP
+  const [buscandoCep, setBuscandoCep] = React.useState(false)
+
+  // Formatar CEP: 00000-000
+  const formatCep = (value: string) => {
+    const nums = value.replace(/\D/g, '').slice(0, 8)
+    if (nums.length <= 5) return nums
+    return `${nums.slice(0, 5)}-${nums.slice(5)}`
+  }
+
+  // Buscar endereço pelo CEP via ViaCEP
+  const buscarCep = React.useCallback(async (cep: string) => {
+    const nums = cep.replace(/\D/g, '')
+    if (nums.length !== 8) return
+    setBuscandoCep(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${nums}/json/`)
+      const data = await res.json()
+      if (data.erro) {
+        toast.error('CEP não encontrado')
+        return
+      }
+      setFormData(prev => ({
+        ...prev,
+        endereco: data.logradouro || prev.endereco,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        estado: data.uf || prev.estado,
+      }))
+      toast.success('Endereço preenchido automaticamente')
+    } catch {
+      toast.error('Erro ao consultar CEP')
+    } finally {
+      setBuscandoCep(false)
+    }
+  }, [])
+
   // Estado para enriquecimento de dados
   const [buscandoDados, setBuscandoDados] = React.useState(false)
   const [documentoValido, setDocumentoValido] = React.useState<boolean | null>(null)
@@ -337,6 +376,8 @@ export const ClientesPage = () => {
         health: cliente.health || 'ok',
         observacoes: cliente.observacoes || '',
         endereco: cliente.endereco || '',
+        bairro: '',
+        numero: '',
         cidade: cliente.cidade || '',
         estado: cliente.estado || '',
         cep: cliente.cep || '',
@@ -400,6 +441,10 @@ export const ClientesPage = () => {
 
     setSaving(true)
     try {
+      // Combinar endereço: logradouro + número + bairro
+      const partes = [formData.endereco, formData.numero, formData.bairro].filter(Boolean)
+      const enderecoCompleto = partes.join(', ') || null
+
       const payload: Omit<ClienteRow, 'id' | 'created_at' | 'updated_at' | 'org_id'> = {
         nome: formData.nome,
         email: formData.email || '',
@@ -407,7 +452,7 @@ export const ClientesPage = () => {
         empresa: null,
         cnpj: formData.tipo === 'pj' ? (formData.documento || null) : null,
         cpf: formData.tipo === 'pf' ? (formData.documento || null) : null,
-        endereco: formData.endereco || null,
+        endereco: enderecoCompleto,
         cidade: formData.cidade || null,
         estado: formData.estado || null,
         cep: formData.cep || null,
@@ -588,15 +633,70 @@ export const ClientesPage = () => {
                   <option value="critico">Crítico</option>
                 </select>
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-text">Endereço</label>
+              {/* CEP — primeiro campo de endereço */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-text">CEP</label>
+                <div className="flex gap-2">
+                  <input
+                    value={formData.cep}
+                    onChange={(event) => {
+                      const formatted = formatCep(event.target.value)
+                      setFormData({ ...formData, cep: formatted })
+                      // Auto-busca ao completar 9 chars (00000-000)
+                      if (formatted.replace(/\D/g, '').length === 8) {
+                        buscarCep(formatted)
+                      }
+                    }}
+                    className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                    placeholder="00000-000"
+                    maxLength={9}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => buscarCep(formData.cep)}
+                    disabled={buscandoCep || formData.cep.replace(/\D/g, '').length !== 8}
+                    className="h-11 px-4 rounded-lg border border-border bg-white text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
+                  >
+                    {buscandoCep ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    Buscar
+                  </button>
+                </div>
+              </div>
+              {/* Logradouro */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-text">Logradouro</label>
                 <input
                   value={formData.endereco}
                   onChange={(event) => setFormData({ ...formData, endereco: event.target.value })}
                   className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Rua, número, bairro"
+                  placeholder="Rua, Avenida..."
                 />
               </div>
+              {/* Número */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-text">Número</label>
+                <input
+                  value={formData.numero}
+                  onChange={(event) => setFormData({ ...formData, numero: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                  placeholder="Nº"
+                />
+              </div>
+              {/* Bairro */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-text">Bairro</label>
+                <input
+                  value={formData.bairro}
+                  onChange={(event) => setFormData({ ...formData, bairro: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                  placeholder="Bairro"
+                />
+              </div>
+              {/* Cidade */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text">Cidade</label>
                 <input
@@ -606,6 +706,7 @@ export const ClientesPage = () => {
                   placeholder="Cidade"
                 />
               </div>
+              {/* Estado */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text">Estado</label>
                 <input
@@ -613,15 +714,7 @@ export const ClientesPage = () => {
                   onChange={(event) => setFormData({ ...formData, estado: event.target.value })}
                   className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="UF"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">CEP</label>
-                <input
-                  value={formData.cep}
-                  onChange={(event) => setFormData({ ...formData, cep: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="00000-000"
+                  maxLength={2}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
