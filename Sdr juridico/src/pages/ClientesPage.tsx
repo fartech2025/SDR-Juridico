@@ -438,8 +438,8 @@ export const ClientesPage = () => {
   // Form view
   if (showForm) {
     return (
-      <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-        <div className="mx-auto max-w-4xl space-y-6">
+      <div className="bg-surface-alt" style={{ fontFamily: "'DM Sans', sans-serif", padding: '20px' }}>
+        <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -665,7 +665,7 @@ export const ClientesPage = () => {
 
   // List view
   return (
-    <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="bg-surface-alt" style={{ fontFamily: "'DM Sans', sans-serif", padding: '20px' }}>
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-white rounded-xl border border-border p-6">
