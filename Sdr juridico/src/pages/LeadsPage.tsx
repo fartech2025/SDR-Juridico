@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase, Pencil, Trash2, Flame, Sun, Snowflake, ArrowRight, CheckCircle2, XCircle, Users, LayoutGrid, List, ChevronDown } from 'lucide-react'
+import { Search, TrendingUp, DollarSign, Clock, Zap, Phone, Mail, MessageSquare, ArrowUpRight, Filter, ArrowLeft, Save, User, MapPin, Briefcase, Pencil, Trash2, Flame, Sun, Snowflake, ArrowRight, CheckCircle2, XCircle, Users, LayoutGrid, List } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams, Link } from 'react-router-dom'
 
@@ -120,25 +120,6 @@ export const LeadsPage = () => {
     const taxaConversao = total > 0 ? ((ganhos / total) * 100).toFixed(1) : '0'
 
     return { total, quentes, emNegociacao, ganhos, taxaConversao }
-  }, [leads])
-
-  // Dados do funil de conversão
-  const funnelData = React.useMemo(() => {
-    const novo = leads.filter(l => l.status === 'novo').length
-    const emContato = leads.filter(l => l.status === 'em_contato').length
-    const qualificado = leads.filter(l => l.status === 'qualificado').length
-    const proposta = leads.filter(l => l.status === 'proposta').length
-    const ganho = leads.filter(l => l.status === 'ganho').length
-    const perdido = leads.filter(l => l.status === 'perdido').length
-    const total = leads.length || 1
-    return [
-      { etapa: 'Novo', quantidade: novo, pct: ((novo / total) * 100).toFixed(0), color: 'var(--brand-primary)' },
-      { etapa: 'Em Contato', quantidade: emContato, pct: ((emContato / total) * 100).toFixed(0), color: 'var(--color-info)' },
-      { etapa: 'Qualificado', quantidade: qualificado, pct: ((qualificado / total) * 100).toFixed(0), color: 'var(--brand-accent)' },
-      { etapa: 'Proposta', quantidade: proposta, pct: ((proposta / total) * 100).toFixed(0), color: 'var(--color-warning)' },
-      { etapa: 'Ganho', quantidade: ganho, pct: ((ganho / total) * 100).toFixed(0), color: 'var(--color-success)' },
-      { etapa: 'Perdido', quantidade: perdido, pct: ((perdido / total) * 100).toFixed(0), color: 'var(--color-danger)' },
-    ]
   }, [leads])
 
   const filters = React.useMemo(
@@ -911,72 +892,6 @@ export const LeadsPage = () => {
           </div>
         </div>
 
-        {/* Funil de Conversão */}
-        <div className="bg-surface rounded-xl border border-border p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
-              <ChevronDown className="h-5 w-5 text-brand-primary" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-text">Funil de Conversão</h2>
-              <p className="text-xs text-text-muted">Pipeline de leads por etapa</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {funnelData.map((item, idx) => {
-              const maxQty = Math.max(...funnelData.map(d => d.quantidade), 1)
-              const barWidth = Math.max((item.quantidade / maxQty) * 100, 4)
-              // Funil: cada etapa vai ficando mais estreita
-              const funnelWidth = 100 - (idx * (60 / (funnelData.length - 1 || 1)))
-              return (
-                <div key={item.etapa} className="flex items-center gap-4">
-                  <div className="w-24 text-right">
-                    <span className="text-sm font-medium text-text">{item.etapa}</span>
-                  </div>
-                  <div className="flex-1 flex justify-center">
-                    <div
-                      className="relative rounded-lg overflow-hidden transition-all duration-500"
-                      style={{
-                        width: `${funnelWidth}%`,
-                        height: 40,
-                        backgroundColor: 'var(--color-surface-alt)',
-                      }}
-                    >
-                      <div
-                        className="absolute inset-y-0 left-0 rounded-lg transition-all duration-700 flex items-center justify-end pr-3"
-                        style={{
-                          width: `${barWidth}%`,
-                          backgroundColor: item.color,
-                          minWidth: item.quantidade > 0 ? 40 : 0,
-                          opacity: 0.85,
-                        }}
-                      >
-                        {item.quantidade > 0 && (
-                          <span className="text-white text-xs font-bold drop-shadow-sm">
-                            {item.quantidade}
-                          </span>
-                        )}
-                      </div>
-                      {item.quantidade === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs text-text-subtle">0</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="w-14 text-left">
-                    <span className="text-sm font-semibold text-text-muted">{item.pct}%</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          {/* Legenda resumo */}
-          <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-xs text-text-muted">
-            <span>Total no pipeline: <strong className="text-text">{leads.length}</strong> leads</span>
-            <span>Taxa de conversão: <strong className="text-success">{metrics.taxaConversao}%</strong></span>
-          </div>
-        </div>
       </div>
 
       <LeadDrawer
