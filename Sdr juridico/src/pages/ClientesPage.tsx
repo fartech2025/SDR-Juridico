@@ -578,7 +578,13 @@ export const ClientesPage = () => {
                   )}
                 </div>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
+                  <Mail className={cn(
+                    'absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors',
+                    emailValido === true ? 'text-green-500' :
+                    emailValido === false ? 'text-red-500' :
+                    validandoEmail ? 'text-blue-500 animate-pulse' :
+                    'text-text-subtle'
+                  )} />
                   <input
                     type="email"
                     value={formData.email}
