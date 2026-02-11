@@ -1,12 +1,21 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.1.0  
+**Versão:** 2.2.0  
 **Data:** 10 de fevereiro de 2026  
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.2.0 (10 de fevereiro de 2026)
+- ✅ **Funil de Conversão (LeadsKanbanPage)**: Gráfico visual de funil abaixo do Kanban com 6 etapas (Novo → Em Contato → Qualificado → Proposta → Ganho → Perdido)
+- ✅ **Funil com Design Tokens**: Cores mapeadas para CSS variables (--brand-primary, --color-info, --brand-accent, --color-warning, --color-success, --color-danger)
+- ✅ **Funil Responsivo**: Barras com largura proporcional ao total + formato de funil (estreitamento progressivo), percentuais e totais
+- ✅ **Design Tokens Migration**: Migração massiva de 38 arquivos — cores raw Tailwind (text-gray-*, bg-gray-*, border-gray-*, #721011) substituídas por tokens CSS
+- ✅ **Fix Trigger Lead Status**: Corrigido trigger `trigger_log_lead_status_change` que impedia salvar leads (NEW.responsavel → NEW.assigned_user_id, NEW.heat → NEW.qualificacao->>'heat')
+- ✅ **Espaçamento Padronizado 20px**: Padding de 20px (0.5cm) aplicado em LeadsPage (lista + formulário Novo Lead) e margem lateral de 20px no funil do Kanban
+- ✅ **LeadsKanbanPage Realtime**: Canal Supabase Realtime para atualizar Kanban automaticamente quando leads mudam
 
 ### v2.1.0 (10 de fevereiro de 2026)
 - ✅ **Google Calendar Integration**: Fluxo OAuth completo para vincular Google Calendar por organização
@@ -334,7 +343,10 @@ src/
 │   │   │   ├── OrganizationsList.tsx
 │   │   │   └── SystemHealth.tsx
 │   │   ├── DashboardPage.tsx
-│   │   ├── LeadsPage.tsx
+│   │   ├── LeadsPage.tsx              # Lista de leads + métricas
+│   │   ├── LeadsKanbanPage.tsx        # Kanban DnD + Funil de Conversão
+│   │   ├── TarefasKanbanPage.tsx      # Kanban de tarefas
+│   │   ├── TarefasRootPage.tsx        # Router Kanban/Lista de tarefas
 │   │   ├── CasesPage.tsx
 │   │   └── ...
 │   ├── hooks/                       # Custom hooks
@@ -2549,7 +2561,7 @@ COMMIT;
 - ✅ **Seção de devolução**: Input para motivo + confirmação
 - ✅ **Histórico de rejeição**: Box amarelo mostrando último motivo
 
-#### Frontend (LeadsPage) - NOVO!
+#### Frontend (LeadsPage)
 - ✅ **Cards de métricas redesenhados**: Layout 2x2 com gradientes e animações
   - Total Pipeline com ícone de usuários
   - Leads Quentes com badge animado "PRIORIDADE"
@@ -2563,6 +2575,19 @@ COMMIT;
 - ✅ **Filtros melhorados**: Inputs com ícones, seletores com emojis
 - ✅ **Informações de contato**: Email/telefone em chips destacados
 - ✅ **Área de interesse**: Badge azul com ícone de pasta
+- ✅ **Espaçamento padronizado**: padding 20px (0.5cm) na lista e formulário Novo Lead
+
+#### Frontend (LeadsKanbanPage) - NOVO!
+- ✅ **Funil de Conversão visual**: Gráfico de funil abaixo do Kanban board
+  - 6 etapas: Novo → Em Contato → Qualificado → Proposta → Ganho → Perdido
+  - Barras com largura proporcional (formato funil — estreitamento progressivo)
+  - Cores via design tokens CSS: --brand-primary, --color-info, --brand-accent, --color-warning, --color-success, --color-danger
+  - Exibe quantidade absoluta dentro de cada barra + percentual ao lado
+  - Rodapé com total no pipeline e taxa de conversão
+  - Atualiza automaticamente com filtros e dados em tempo real
+- ✅ **Margem lateral padronizada**: 20px (0.5cm) entre sidebar e margem direita
+- ✅ **Supabase Realtime**: Canal `leads-kanban-realtime` para atualização automática
+- ✅ **DnD (drag-and-drop)**: @dnd-kit/core para mover leads entre colunas de status
 
 #### Services (tarefasService.ts)
 - ✅ **`deleteTarefa()`**: Soft delete com UPDATE em vez de DELETE
