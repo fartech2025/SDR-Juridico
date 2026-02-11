@@ -139,28 +139,19 @@ export function useGoogleCalendarCreate() {
       try {
         const eventPayload = buildGoogleEventPayload(meeting)
         
-        // Ler token do localStorage (salvo no login com Google)
-        let directToken: string | null = null
-        try {
-          const stored = localStorage.getItem('google_calendar_token')
-          if (stored) {
-            const parsed = JSON.parse(stored)
-            directToken = parsed.access_token || null
-          }
-        } catch {
-          // ignore
-        }
+        // NÃO enviar token do localStorage (provider_token do Supabase Auth)
+        // pois pertence ao projeto GCP do Supabase e não tem Calendar API ativada.
+        // A Edge Function busca o token correto via user_metadata ou integração da org.
 
         // Verificar se há algum token disponível antes de chamar a edge function
         const hasUserMetadataTokens = !!user?.user_metadata?.google_calendar_tokens?.access_token
-        if (!directToken && !hasUserMetadataTokens && !currentOrg?.id) {
+        if (!hasUserMetadataTokens && !currentOrg?.id) {
           throw new Error('Google Calendar não conectado. Vincule sua conta Google em Configurações → Integrações.')
         }
 
         console.log('📅 Google Calendar - Enviando:', {
           user_id: user?.id || null,
           org_id: currentOrg?.id || null,
-          hasDirectToken: !!directToken,
           hasUserMetadataTokens,
           event: eventPayload,
         })
@@ -171,7 +162,6 @@ export function useGoogleCalendarCreate() {
             body: {
               user_id: user?.id || null,
               org_id: currentOrg?.id || null,
-              access_token: directToken,
               event: eventPayload,
             },
           },

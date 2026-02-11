@@ -25,25 +25,15 @@ export default function AuthCallback() {
 
           console.log('✅ OAuth sessão definida:', data.user?.email)
 
-          // Salvar tokens do Google para uso com Calendar API
+          // Provider tokens do Supabase Auth pertencem ao projeto GCP do Supabase
+          // e NÃO têm Calendar API ativada. Não salvar no localStorage.
+          // O token correto é obtido via OAuth customizado (google-calendar-oauth).
           const providerToken = data.session?.provider_token
           const providerRefreshToken = data.session?.provider_refresh_token
-          console.log('🔑 Provider token recebido?', !!providerToken, 'Refresh token?', !!providerRefreshToken)
+          console.log('🔑 Provider token recebido?', !!providerToken, '(não usado para Calendar)')
 
           if (providerToken) {
-            // Salvar no localStorage como fonte confiável (sempre funciona)
-            try {
-              localStorage.setItem('google_calendar_token', JSON.stringify({
-                access_token: providerToken,
-                refresh_token: providerRefreshToken || null,
-                saved_at: new Date().toISOString(),
-              }))
-              console.log('✅ Google tokens salvos no localStorage')
-            } catch (e) {
-              console.warn('⚠️ Falha ao salvar tokens no localStorage:', e)
-            }
-
-            // Também tentar salvar no user_metadata (backup servidor)
+            // Salvar no user_metadata via Edge Function (para uso futuro se necessário)
             if (data.user) {
               supabase.functions.invoke('store-google-tokens', {
                 body: {

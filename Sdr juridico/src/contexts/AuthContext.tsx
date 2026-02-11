@@ -60,20 +60,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(newSession)
         setUser(newSession?.user ?? null)
 
-        // Capturar Google provider_token quando o user faz login com Google
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.provider_token) {
-          console.log('🔑 [AuthContext] provider_token capturado via onAuthStateChange!')
-          try {
-            localStorage.setItem('google_calendar_token', JSON.stringify({
-              access_token: newSession.provider_token,
-              refresh_token: newSession.provider_refresh_token || null,
-              saved_at: new Date().toISOString(),
-            }))
-            console.log('✅ [AuthContext] Google token salvo no localStorage')
-          } catch (e) {
-            console.warn('⚠️ [AuthContext] Falha ao salvar token:', e)
-          }
-        }
+        // NOTA: NÃO salvar provider_token do Supabase Auth no localStorage
+        // O token do login social pertence ao projeto GCP do Supabase (450955346215)
+        // e NÃO tem a Calendar API ativada. O token correto para Google Calendar
+        // é obtido via OAuth customizado (Edge Function google-calendar-oauth)
+        // e fica salvo na tabela integrations ou no user_metadata.
       }
     })
 
