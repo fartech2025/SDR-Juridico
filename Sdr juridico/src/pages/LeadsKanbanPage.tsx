@@ -666,7 +666,7 @@ export const LeadsKanbanPage = () => {
       </div>
 
       {/* Funil de Conversão */}
-      <div className="bg-surface rounded-xl border border-border p-6">
+      <div className="bg-surface rounded-xl border border-border p-6 mx-5 mb-5">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
             <ChevronDown className="h-5 w-5 text-brand-primary" />
