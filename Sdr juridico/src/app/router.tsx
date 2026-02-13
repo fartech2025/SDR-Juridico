@@ -1,48 +1,68 @@
+import React, { Suspense } from 'react'
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 
-import { AppShell } from '@/layouts/AppShell'
-import { RootRedirect } from '@/components/RootRedirect'
-import { AgendaPage } from '@/pages/AgendaPage'
-import { AuditoriaPage } from '@/pages/AuditoriaPage'
-import AnalyticsPage from '@/pages/AnalyticsPage'
-import { CasoPage } from '@/pages/CasoPage'
-import { CasosPage } from '@/pages/CasosPage'
-import { ClientesPage } from '@/pages/ClientesPage'
-import { ConfigPage } from '@/pages/ConfigPage'
-import { DashboardPage } from '@/pages/DashboardPage'
-import { DataJudPage } from '@/pages/DataJudPage'
-import { DiarioOficialPage } from '@/pages/DiarioOficialPage'
-import DOUSyncLogsPage from '@/pages/DOUSyncLogsPage'
-import { DocumentosPage } from '@/pages/DocumentosPage'
-import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
-import { IndicadoresPage } from '@/pages/IndicadoresPage'
-import { LeadsPage } from '@/pages/LeadsPage'
-import { LeadsKanbanPage } from '@/pages/LeadsKanbanPage'
-import { TarefasRootPage } from '@/pages/TarefasRootPage'
-import TarefasArquivadasPage from '@/pages/TarefasArquivadasPage'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
+// ── Light pages (eager) ──────────────────────────────────────
 import { LoginPage } from '@/pages/LoginPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
-import { UserProfilePage } from '@/pages/UserProfilePage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 import AuthCallback from '@/pages/auth/AuthCallback'
-
-// Admin Pages
-import OrganizationsList from '@/pages/fartech/OrganizationsList'
-import OrganizationForm from '@/pages/fartech/OrganizationForm'
-import OrganizationDetails from '@/pages/fartech/OrganizationDetails'
-import OrganizationSettingsPage from '@/pages/fartech/OrganizationSettingsPage'
-import SecurityMonitoringSimple from '@/pages/fartech/SecurityMonitoringSimple'
-import SecurityReportPage from '@/pages/fartech/SecurityReportPage'
-import UserManagement from '@/pages/UserManagement'
-import OrgSettings from '@/pages/OrgSettings'
-import OrgSuspendedPage from '@/pages/OrgSuspendedPage'
-import NoOrganizationPage from '@/pages/NoOrganizationPage'
+import { RootRedirect } from '@/components/RootRedirect'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 // Guards
 import { FartechGuard } from '@/components/guards/FartechGuard'
 import { OrgAdminGuard } from '@/components/guards/OrgAdminGuard'
 import { OrgActiveGuard } from '@/components/guards/OrgActiveGuard'
+
+// ── Heavy pages (lazy — code splitting per route) ────────────
+const AppShell = React.lazy(() => import('@/layouts/AppShell').then(m => ({ default: m.AppShell })))
+const AgendaPage = React.lazy(() => import('@/pages/AgendaPage').then(m => ({ default: m.AgendaPage })))
+const AuditoriaPage = React.lazy(() => import('@/pages/AuditoriaPage').then(m => ({ default: m.AuditoriaPage })))
+const AnalyticsPage = React.lazy(() => import('@/pages/AnalyticsPage'))
+const CasoPage = React.lazy(() => import('@/pages/CasoPage').then(m => ({ default: m.CasoPage })))
+const CasosPage = React.lazy(() => import('@/pages/CasosPage').then(m => ({ default: m.CasosPage })))
+const ClientesPage = React.lazy(() => import('@/pages/ClientesPage').then(m => ({ default: m.ClientesPage })))
+const ConfigPage = React.lazy(() => import('@/pages/ConfigPage').then(m => ({ default: m.ConfigPage })))
+const DashboardPage = React.lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const DataJudPage = React.lazy(() => import('@/pages/DataJudPage').then(m => ({ default: m.DataJudPage })))
+const DiarioOficialPage = React.lazy(() => import('@/pages/DiarioOficialPage').then(m => ({ default: m.DiarioOficialPage })))
+const DOUSyncLogsPage = React.lazy(() => import('@/pages/DOUSyncLogsPage'))
+const DocumentosPage = React.lazy(() => import('@/pages/DocumentosPage').then(m => ({ default: m.DocumentosPage })))
+const IndicadoresPage = React.lazy(() => import('@/pages/IndicadoresPage').then(m => ({ default: m.IndicadoresPage })))
+const LeadsPage = React.lazy(() => import('@/pages/LeadsPage').then(m => ({ default: m.LeadsPage })))
+const LeadsKanbanPage = React.lazy(() => import('@/pages/LeadsKanbanPage').then(m => ({ default: m.LeadsKanbanPage })))
+const TarefasRootPage = React.lazy(() => import('@/pages/TarefasRootPage').then(m => ({ default: m.TarefasRootPage })))
+const TarefasArquivadasPage = React.lazy(() => import('@/pages/TarefasArquivadasPage'))
+const UserProfilePage = React.lazy(() => import('@/pages/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
+
+// Admin Pages (lazy)
+const OrganizationsList = React.lazy(() => import('@/pages/fartech/OrganizationsList'))
+const OrganizationForm = React.lazy(() => import('@/pages/fartech/OrganizationForm'))
+const OrganizationDetails = React.lazy(() => import('@/pages/fartech/OrganizationDetails'))
+const OrganizationSettingsPage = React.lazy(() => import('@/pages/fartech/OrganizationSettingsPage'))
+const SecurityMonitoringSimple = React.lazy(() => import('@/pages/fartech/SecurityMonitoringSimple'))
+const SecurityReportPage = React.lazy(() => import('@/pages/fartech/SecurityReportPage'))
+const UserManagement = React.lazy(() => import('@/pages/UserManagement'))
+const OrgSettings = React.lazy(() => import('@/pages/OrgSettings'))
+const OrgSuspendedPage = React.lazy(() => import('@/pages/OrgSuspendedPage'))
+const NoOrganizationPage = React.lazy(() => import('@/pages/NoOrganizationPage'))
+
+// ── Suspense fallback ────────────────────────────────────────
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+    <div style={{
+      width: 36, height: 36, border: '3px solid var(--brand-primary-100, #F5E6E6)',
+      borderTopColor: 'var(--brand-primary, #721011)', borderRadius: '50%',
+      animation: 'spin .7s linear infinite',
+    }} />
+    <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+  </div>
+)
+
+const Lazy = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoader />}>{children}</Suspense>
+)
 
 export const router = createBrowserRouter([
   {
@@ -70,7 +90,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <OrgActiveGuard>
-          <AppShell />
+          <Lazy><AppShell /></Lazy>
         </OrgActiveGuard>
       </ProtectedRoute>
     ),
@@ -158,7 +178,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <FartechGuard>
-          <AppShell />
+          <Lazy><AppShell /></Lazy>
         </FartechGuard>
       </ProtectedRoute>
     ),
@@ -211,7 +231,7 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <OrgActiveGuard>
           <OrgAdminGuard>
-            <AppShell />
+            <Lazy><AppShell /></Lazy>
           </OrgAdminGuard>
         </OrgActiveGuard>
       </ProtectedRoute>

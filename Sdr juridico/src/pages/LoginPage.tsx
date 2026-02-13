@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { ForgotPasswordModal } from '@/components/ui/ForgotPasswordModal'
 import { toast } from 'sonner'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,6 +12,7 @@ const LOGO_URL = 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/pub
 
 export const LoginPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { signIn, signInWithGoogle } = useAuth()
   const { refreshPermissions } = usePermissions()
   const [email, setEmail] = React.useState('')
@@ -18,6 +20,14 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false)
+  const [forgotOpen, setForgotOpen] = React.useState(false)
+
+  // Abrir modal automaticamente se vindo de /forgot-password
+  React.useEffect(() => {
+    if (location.pathname === '/forgot-password') {
+      setForgotOpen(true)
+    }
+  }, [location.pathname])
 
   // Detect auth tokens in URL hash (from invite/confirm email links)
   React.useEffect(() => {
@@ -320,9 +330,20 @@ export const LoginPage = () => {
                 <input type="checkbox" style={{ accentColor: 'var(--brand-primary)', width: 16, height: 16 }}/>
                 Lembrar-me
               </label>
-              <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-primary)', textDecoration: 'none' }}>
+              <button
+                type="button"
+                onClick={() => setForgotOpen(true)}
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-primary)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
                 Esqueceu a senha?
-              </Link>
+              </button>
+                  <ForgotPasswordModal open={forgotOpen} onClose={() => {
+                    setForgotOpen(false)
+                    // Se veio de /forgot-password, voltar para /login
+                    if (location.pathname === '/forgot-password') {
+                      navigate('/login', { replace: true })
+                    }
+                  }} />
             </div>
 
             {/* Submit */}

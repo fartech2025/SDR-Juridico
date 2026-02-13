@@ -1,8 +1,6 @@
 import * as React from 'react'
 import { createPortal } from 'react-dom'
 
-import { cn } from '@/utils/cn'
-
 export interface ModalProps {
   open: boolean
   title?: string
@@ -87,30 +85,36 @@ export const Modal = ({
           opacity: animating ? 1 : 0,
         }}
       />
-      {/* Modal panel — pop-in / explode */}
+      {/* Modal panel — 100% inline styles to resist force-light.css */}
       <div
-        className={cn('rounded-2xl bg-white shadow-2xl', className)}
+        data-modal-panel=""
         style={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
           maxWidth: maxWidth || '32rem',
+          boxSizing: 'border-box' as const,
           padding: noPadding ? '0' : '20px 24px',
+          background: '#ffffff',
           border: '1px solid #e5e7eb',
+          borderRadius: 16,
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08)',
           transition: 'all 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
           transform: animating ? 'scale(1) translateY(0)' : 'scale(0.75) translateY(16px)',
           opacity: animating ? 1 : 0,
+          color: '#1f2937',
+          fontFamily: "'DM Sans', system-ui, sans-serif",
         }}
       >
         {(title || description) && (
           <div style={{ marginBottom: '4px' }}>
             {title && (
-              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', lineHeight: 1.4 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', lineHeight: 1.4, margin: 0, fontFamily: 'inherit' }}>
                 {title}
               </h3>
             )}
             {description && (
-              <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px', marginBottom: 0, fontFamily: 'inherit' }}>
                 {description}
               </p>
             )}

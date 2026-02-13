@@ -16,28 +16,33 @@ class DOUService {
     source: string
     latency_ms: number
   }> {
+    // Busca o token JWT da sessão atual
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
     const { data, error } = await supabase.functions.invoke('dou-search', {
       body: {
         termo: params.termo,
         dataInicio: params.dataInicio,
         dataFim: params.dataFim,
       },
-    })
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    });
 
     if (error) {
-      console.error("Error searching DOU:", error)
-      throw new Error(error.message || "Erro ao buscar no DOU")
+      console.error("Error searching DOU:", error);
+      throw new Error(error.message || "Erro ao buscar no DOU");
     }
 
     if ((data as Record<string, unknown>)?.error) {
-      throw new Error(String((data as Record<string, unknown>).error))
+      throw new Error(String((data as Record<string, unknown>).error));
     }
 
     return {
       publicacoes: (data as Record<string, unknown>)?.data as DOUPublicacao[] || [],
       source: String((data as Record<string, unknown>)?.source || 'unknown'),
       latency_ms: Number((data as Record<string, unknown>)?.latency_ms || 0),
-    }
+    };
   }
 
   /**

@@ -1,25 +1,38 @@
 import * as React from 'react'
-import { CheckCircle2, Lock, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, Lock, ShieldCheck, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
-import { AuthLayout } from '@/layouts/AuthLayout'
 import { supabase } from '@/lib/supabaseClient'
 
+const LOGO_URL = 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/talent%20jud%2003.png'
+
+/**
+ * Página de redefinição de senha.
+ *
+ * Segue a arquitetura canônica:
+ * - Design tokens CSS (--brand-primary, --brand-accent, --brand-primary-900, etc.)
+ * - Paleta oficial Burgundy / Amber / Warm Gray / Preto
+ * - Layout split-screen consistente com LoginPage e ForgotPasswordPage
+ * - Sem lógica de negócio — apenas orquestra supabase.auth.updateUser
+ */
 export const ResetPasswordPage = () => {
   const navigate = useNavigate()
-  const [status, setStatus] = React.useState<'idle' | 'loading' | 'error'>(
-    'idle',
-  )
+  const [status, setStatus] = React.useState<'idle' | 'loading' | 'error' | 'success'>('idle')
   const [password, setPassword] = React.useState('')
   const [confirmPassword, setConfirmPassword] = React.useState('')
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [showConfirm, setShowConfirm] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState('')
+
+  const hasMinLength = password.length >= 8
+  const passwordsMatch = password === confirmPassword && confirmPassword.length > 0
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
 
-    if (!password.trim() || password.length < 8) {
+    if (!password.trim() || !hasMinLength) {
       setStatus('error')
       setErrorMessage('A senha deve ter no minimo 8 caracteres.')
       toast.error('A senha deve ter no minimo 8 caracteres.')
@@ -58,10 +71,14 @@ export const ResetPasswordPage = () => {
         data: { must_change_password: false },
       })
 
-      toast.success('Senha atualizada com sucesso! Faça login com sua nova senha.')
+      setStatus('success')
+      toast.success('Senha atualizada com sucesso!')
 
-      await supabase.auth.signOut()
-      navigate('/login', { replace: true })
+      // Redireciona após 2s
+      setTimeout(async () => {
+        await supabase.auth.signOut()
+        navigate('/login', { replace: true })
+      }, 2000)
     } catch {
       setStatus('error')
       setErrorMessage('Erro inesperado. Tente novamente.')
@@ -69,77 +86,401 @@ export const ResetPasswordPage = () => {
     }
   }
 
+  /* ───── inline styles — immune to force-light.css overrides ───── */
+  const s = {
+    page: {
+      display: 'flex',
+      minHeight: '100vh',
+      fontFamily: "'DM Sans', sans-serif",
+      background: '#f7f8fc',
+    } as React.CSSProperties,
+
+    left: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      justifyContent: 'space-between',
+      width: '55%',
+      minHeight: '100vh',
+      background: 'linear-gradient(145deg, var(--brand-primary, #721011) 0%, var(--brand-primary-900, #4A0B0C) 55%, #2D0707 100%)',
+      padding: '48px 56px',
+      position: 'relative' as const,
+      overflow: 'hidden',
+    } as React.CSSProperties,
+
+    right: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '45%',
+      minHeight: '100vh',
+      background: '#ffffff',
+      padding: '48px 56px',
+    } as React.CSSProperties,
+
+    formWrap: {
+      width: '100%',
+      maxWidth: 420,
+    } as React.CSSProperties,
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box',
+    padding: '14px 48px 14px 44px',
+    fontSize: 15, color: 'var(--color-text, #000)', fontFamily: "'DM Sans', sans-serif",
+    background: 'var(--color-gray-50, #F8F7F6)',
+    border: '1px solid var(--color-gray-300, #C3BFB9)', borderRadius: 12,
+    outline: 'none', transition: 'border-color .15s, box-shadow .15s',
+  }
+
   return (
-    <AuthLayout title="CRIAR NOVA SENHA" sideSubtitle="">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary-subtle text-brand-primary">
-          <ShieldCheck className="h-6 w-6" />
+    <div style={s.page}>
+      {/* ══════ LEFT PANEL — Branding ══════ */}
+      <div style={s.left} className="hidden lg:flex">
+        {/* Grid texture */}
+        <div
+          style={{
+            position: 'absolute', inset: 0, opacity: 0.04,
+            backgroundImage: 'linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px)',
+            backgroundSize: '56px 56px',
+          }}
+        />
+
+        {/* Shield watermark */}
+        <svg
+          style={{ position: 'absolute', right: -40, top: '50%', transform: 'translateY(-50%)', opacity: 0.06 }}
+          width="560" height="660" viewBox="0 0 200 240"
+        >
+          <path d="M100 0 L200 40 L200 140 C200 200 100 240 100 240 C100 240 0 200 0 140 L0 40 Z" fill="white" />
+        </svg>
+
+        {/* Top logo */}
+        <div style={{ position: 'relative', zIndex: 2, overflow: 'visible' }}>
+          <img
+            src={LOGO_URL}
+            alt="TalentJUD"
+            style={{ height: 96, width: 'auto', borderRadius: 8, objectFit: 'contain', transform: 'scale(3)', transformOrigin: 'top left' }}
+          />
+        </div>
+
+        {/* Central hero */}
+        <div style={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 32 }}>
+          <svg viewBox="0 0 400 350" fill="none" style={{ width: '72%', maxWidth: 380, height: 'auto' }}>
+            <path d="M200 20 L350 70 L350 180 C350 260 200 320 200 320 C200 320 50 260 50 180 L50 70 Z"
+              fill="url(#sg)" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
+            <path d="M200 50 L320 90 L320 175 C320 235 200 285 200 285 C200 285 80 235 80 175 L80 90 Z"
+              fill="url(#ig)" opacity="0.5" />
+            <clipPath id="logoClip">
+              <circle cx="200" cy="170" r="91" />
+            </clipPath>
+            <image
+              href="https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/TALENT%20SDR%20SEM%20FUNDO.png"
+              x="96" y="66" width="208" height="208"
+              clipPath="url(#logoClip)"
+              preserveAspectRatio="xMidYMid slice"
+            />
+            <defs>
+              <linearGradient id="sg" x1="50" y1="20" x2="350" y2="320">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+              </linearGradient>
+              <radialGradient id="ig" cx="50%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.28)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </radialGradient>
+            </defs>
+          </svg>
+
+          {/* Feature pills */}
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {['Seguro', 'Eficiente', 'Organizado'].map((t) => (
+              <span key={t} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',
+                borderRadius: 999, padding: '8px 18px',
+                color: '#fff', fontSize: 13, fontWeight: 500,
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom tagline */}
+        <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: 0 }}>
+          Plataforma completa para gestão jurídica
+        </p>
+      </div>
+
+      {/* ══════ RIGHT PANEL — Reset Password Form ══════ */}
+      <div style={s.right}>
+        <div style={s.formWrap}>
+          {/* Mobile logo */}
+          <div className="lg:hidden" style={{ textAlign: 'center', marginBottom: 32 }}>
+            <img src={LOGO_URL} alt="TalentJUD" style={{ height: 72, margin: '0 auto', borderRadius: 6, transform: 'scale(3)', transformOrigin: 'top center' }} />
+          </div>
+
+          {/* Back link */}
+          <Link
+            to="/login"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontSize: 13, fontWeight: 600,
+              color: 'var(--brand-secondary, #6B5E58)',
+              textDecoration: 'none', marginBottom: 24,
+              transition: 'color .15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--brand-primary, #721011)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--brand-secondary, #6B5E58)' }}
+          >
+            <ArrowLeft style={{ width: 16, height: 16 }} />
+            Voltar ao login
+          </Link>
+
+          {/* Header icon */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 56, height: 56, borderRadius: 16,
+            background: 'var(--brand-primary-50, #FAF3F3)',
+            marginBottom: 20,
+          }}>
+            <ShieldCheck style={{ width: 28, height: 28, color: 'var(--brand-primary, #721011)' }} />
+          </div>
+
+          <h2 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text, #000)', margin: '0 0 8px', lineHeight: 1.2 }}>
+            Criar nova senha
+          </h2>
+          <p style={{ fontSize: 15, color: 'var(--brand-secondary, #6B5E58)', margin: '0 0 32px' }}>
+            Informe sua nova senha para concluir a redefinição.
+          </p>
+
+          {/* ── Success state ── */}
+          {status === 'success' ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 64, height: 64, borderRadius: '50%',
+                background: '#ecfdf5', margin: '0 auto 20px',
+              }}>
+                <CheckCircle2 style={{ width: 32, height: 32, color: 'var(--color-success, #10b981)' }} />
+              </div>
+              <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text, #000)', margin: '0 0 8px' }}>
+                Senha atualizada!
+              </h3>
+              <p style={{ fontSize: 14, color: 'var(--brand-secondary, #6B5E58)', margin: '0 0 8px', lineHeight: 1.6 }}>
+                Sua senha foi redefinida com sucesso.
+              </p>
+              <p style={{ fontSize: 13, color: 'var(--color-gray-500, #8A7E78)', margin: '0 0 28px' }}>
+                Você será redirecionado para o login em instantes...
+              </p>
+              <Link
+                to="/login"
+                style={{
+                  display: 'block', width: '100%', padding: '14px 24px',
+                  textAlign: 'center', textDecoration: 'none',
+                  background: 'var(--brand-primary, #721011)',
+                  color: '#fff', borderRadius: 12,
+                  fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
+                  boxShadow: '0 4px 14px rgba(114,16,17,0.28)',
+                  transition: 'background .15s', boxSizing: 'border-box',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--brand-primary-900, #4A0B0C)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-primary, #721011)' }}
+              >
+                Ir para o login
+              </Link>
+            </div>
+          ) : (
+            /* ── Form state ── */
+            <form onSubmit={handleSubmit}>
+              {/* Nova senha */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--color-gray-700, #3D3632)', marginBottom: 6 }}>
+                  Nova senha
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <Lock style={{ width: 18, height: 18, color: 'var(--color-gray-400, #A39D98)' }} />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setStatus('idle') }}
+                    placeholder="••••••••"
+                    autoFocus
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.12)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0,
+                    }}
+                  >
+                    {showPassword
+                      ? <EyeOff style={{ width: 18, height: 18, color: 'var(--color-gray-400, #A39D98)' }} />
+                      : <Eye style={{ width: 18, height: 18, color: 'var(--color-gray-400, #A39D98)' }} />
+                    }
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirmar senha */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--color-gray-700, #3D3632)', marginBottom: 6 }}>
+                  Confirmar senha
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <Lock style={{ width: 18, height: 18, color: 'var(--color-gray-400, #A39D98)' }} />
+                  </div>
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setStatus('idle') }}
+                    placeholder="••••••••"
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.12)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    style={{
+                      position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0,
+                    }}
+                  >
+                    {showConfirm
+                      ? <EyeOff style={{ width: 18, height: 18, color: 'var(--color-gray-400, #A39D98)' }} />
+                      : <Eye style={{ width: 18, height: 18, color: 'var(--color-gray-400, #A39D98)' }} />
+                    }
+                  </button>
+                </div>
+              </div>
+
+              {/* Validation indicators */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                  <CheckCircle2 style={{
+                    width: 16, height: 16,
+                    color: hasMinLength ? 'var(--color-success, #10b981)' : 'var(--color-gray-300, #C3BFB9)',
+                    transition: 'color .2s',
+                  }} />
+                  <span style={{ color: hasMinLength ? 'var(--color-success, #10b981)' : 'var(--color-gray-500, #8A7E78)' }}>
+                    Mínimo de 8 caracteres
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                  <CheckCircle2 style={{
+                    width: 16, height: 16,
+                    color: passwordsMatch ? 'var(--color-success, #10b981)' : 'var(--color-gray-300, #C3BFB9)',
+                    transition: 'color .2s',
+                  }} />
+                  <span style={{ color: passwordsMatch ? 'var(--color-success, #10b981)' : 'var(--color-gray-500, #8A7E78)' }}>
+                    Senhas conferem
+                  </span>
+                </div>
+              </div>
+
+              {/* Error message */}
+              {status === 'error' && errorMessage && (
+                <div style={{
+                  borderRadius: 10, border: '1px solid #fecaca',
+                  background: '#fef2f2', padding: '10px 14px',
+                  fontSize: 13, color: '#dc2626', marginBottom: 20,
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
+                  {errorMessage}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                style={{
+                  width: '100%', padding: '15px 24px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  background: 'var(--brand-primary, #721011)', color: '#fff', border: 'none', borderRadius: 12,
+                  fontSize: 15, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
+                  cursor: status === 'loading' ? 'wait' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(114,16,17,0.28)',
+                  transition: 'background .15s, box-shadow .15s',
+                  opacity: status === 'loading' ? 0.7 : 1,
+                }}
+                onMouseEnter={(e) => { if (status !== 'loading') { e.currentTarget.style.background = 'var(--brand-primary-900, #4A0B0C)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(114,16,17,0.35)' } }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-primary, #721011)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(114,16,17,0.28)' }}
+              >
+                {status === 'loading' ? (
+                  <>
+                    <svg style={{ animation: 'spin 1s linear infinite' }} width="20" height="20" viewBox="0 0 24 24">
+                      <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Atualizando...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck style={{ width: 18, height: 18 }} />
+                    <span>Salvar nova senha</span>
+                  </>
+                )}
+              </button>
+
+              {/* Secondary link */}
+              <p style={{ marginTop: 24, textAlign: 'center', fontSize: 14, color: 'var(--brand-secondary, #6B5E58)' }}>
+                Lembrou sua senha?{' '}
+                <Link
+                  to="/login"
+                  style={{ fontWeight: 600, color: 'var(--brand-primary, #721011)', textDecoration: 'none' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none' }}
+                >
+                  Fazer login
+                </Link>
+              </p>
+            </form>
+          )}
+
+          {/* Footer */}
+          <p style={{ marginTop: 40, textAlign: 'center', fontSize: 12, color: 'var(--color-gray-400, #A39D98)' }}>
+            © 2026 TalentJUD. Todos os direitos reservados.
+          </p>
         </div>
       </div>
 
-      <h2 className="mt-6 text-2xl font-semibold text-slate-800">
-        Criar nova senha
-      </h2>
-      <p className="mt-2 text-sm text-slate-500">
-        Informe sua nova senha para concluir a redefinicao.
-      </p>
-
-      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            Nova senha
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <input
-              type="password"
-              placeholder="********"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="h-12 w-full rounded-full border bg-slate-50 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-[rgba(47,107,255,0.2)]"
-
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            Confirmacao
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <input
-              type="password"
-              placeholder="********"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              className="h-12 w-full rounded-full border bg-slate-50 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-[rgba(47,107,255,0.2)]"
-
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <CheckCircle2 className={`h-4 w-4 ${password.length >= 8 ? 'text-emerald-500' : 'text-slate-300'}`} />
-          Minimo de 8 caracteres
-        </div>
-        {status === 'error' && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
-            {errorMessage || 'Verifique as senhas e tente novamente.'}
-          </div>
-        )}
-        <button
-          type="submit"
-          className="h-12 w-full rounded-xl bg-blue-600 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-soft transition hover:brightness-95"
-          disabled={status === 'loading'}
-        >
-          {status === 'loading' ? 'Atualizando...' : 'Salvar senha'}
-        </button>
-        <Link
-          to="/login"
-          className="block text-center text-xs text-slate-500 hover:underline"
-        >
-          Voltar ao login
-        </Link>
-      </form>
-    </AuthLayout>
+      {/* Responsive + spin keyframe */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @media (max-width: 1023px) {
+          div[style] > div:first-child { display: none !important; }
+          div[style] > div:last-child  { width: 100% !important; padding: 32px 24px !important; }
+        }
+      `}</style>
+    </div>
   )
 }
+

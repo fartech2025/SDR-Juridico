@@ -2,6 +2,8 @@
 // Date: 2026-01-13
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { Modal } from '@/components/ui/modal'
 import {
   Users,
   Edit,
@@ -292,9 +294,19 @@ export default function UserManagement() {
               <button
                 onClick={() => setShowInviteModal(true)}
                 disabled={!effectiveOrg || activeUserCount >= (effectiveMaxUsers || Infinity)}
-                className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '8px 16px', border: 'none', borderRadius: 10,
+                  background: 'var(--brand-primary, #721011)', color: '#fff',
+                  fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(114,16,17,0.22)',
+                  transition: 'background .15s, opacity .15s',
+                  opacity: (!effectiveOrg || activeUserCount >= (effectiveMaxUsers || Infinity)) ? 0.5 : 1,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--brand-primary-900, #4A0B0C)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-primary, #721011)' }}
               >
-                <UserPlus className="w-4 h-4 mr-2" />
+                <UserPlus style={{ width: 16, height: 16 }} />
                 Convidar Usuario
               </button>
             </div>
@@ -311,7 +323,10 @@ export default function UserManagement() {
                 <select
                   value={selectedOrgId}
                   onChange={(e) => setSelectedOrgId(e.target.value)}
-                  className="flex-1 max-w-sm px-4 py-2 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="flex-1 max-w-sm px-4 py-2 border border-border-strong rounded-lg bg-white text-text"
+                  style={{ outline: 'none' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.10)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = 'none' }}
                 >
                   <option value="all">Todas as organizacoes</option>
                   {allOrgs.map(org => (
@@ -326,13 +341,13 @@ export default function UserManagement() {
 
           {/* Usage Info */}
           {effectiveMaxUsers !== null && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between">
+            <div style={{ background: 'var(--brand-primary-50, #FBF0F0)', border: '1px solid var(--brand-primary-200, #E8C5C5)', borderRadius: 10, padding: 16, marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p className="text-sm font-medium text-blue-900">
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--brand-primary-900, #4A0B0C)' }}>
                     Usuarios ativos: {activeUserCount} / {effectiveMaxUsers}
                   </p>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p style={{ fontSize: 12, color: 'var(--brand-primary, #721011)', marginTop: 4 }}>
                     {effectiveMaxUsers - activeUserCount > 0
                       ? `${effectiveMaxUsers - activeUserCount} vagas disponiveis`
                       : 'Nenhuma vaga disponivel'}
@@ -340,7 +355,7 @@ export default function UserManagement() {
                 </div>
 
                 {activeUserCount >= effectiveMaxUsers && (
-                  <div className="text-sm text-blue-700">
+                  <div style={{ fontSize: 14, color: 'var(--brand-primary, #721011)' }}>
                     Limite atingido - entre em contato para aumentar
                   </div>
                 )}
@@ -357,7 +372,10 @@ export default function UserManagement() {
                 placeholder="Buscar por nome ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
+                className="w-full pl-10 pr-4 py-2 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400"
+                style={{ outline: 'none' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114,16,17,0.10)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
           </div>
@@ -401,8 +419,8 @@ export default function UserManagement() {
                         <tr key={user.id} className={`hover:bg-surface-alt ${!user.ativo ? 'opacity-60' : ''}`}>
                           <td className="px-6 py-4">
                             <div className="flex items-center">
-                              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                                <span className="text-emerald-600 font-semibold">
+                              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--brand-primary-100, #F5E6E6)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12, flexShrink: 0 }}>
+                                <span style={{ color: 'var(--brand-primary, #721011)', fontWeight: 600, fontSize: 15 }}>
                                   {(user.nome || user.email)[0].toUpperCase()}
                                 </span>
                               </div>
@@ -437,7 +455,10 @@ export default function UserManagement() {
                               <button
                                 onClick={() => setEditingUser(user)}
                                 disabled={disableActions}
-                                className="p-2 text-text-muted hover:text-blue-600 hover:bg-surface-alt rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 text-text-muted hover:bg-surface-alt rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ transition: 'color .15s' }}
+                                onMouseEnter={(e) => { if (!disableActions) e.currentTarget.style.color = 'var(--brand-primary, #721011)' }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = '' }}
                                 title={actionsBlockedReason || 'Editar'}
                               >
                                 <Edit className="w-4 h-4" />
@@ -577,6 +598,12 @@ function InviteUserModal({
   const [nome, setNome] = useState('')
   const [role, setRole] = useState<OrgMemberRole>('advogado')
   const [submitting, setSubmitting] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    // Trigger animation
+    requestAnimationFrame(() => setVisible(true))
+  }, [])
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -633,95 +660,273 @@ function InviteUserModal({
     }
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-text">
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+      }}
+    >
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.55)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          transition: 'opacity 300ms ease',
+          opacity: visible ? 1 : 0,
+        }}
+      />
+
+      {/* Modal Panel */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: '480px',
+          minWidth: '380px',
+          boxSizing: 'border-box',
+          background: '#fff',
+          borderRadius: '16px',
+          padding: '24px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          transition: 'all 350ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transform: visible ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(20px)',
+          opacity: visible ? 1 : 0,
+        }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: 'var(--brand-primary, #721011)', lineHeight: 1.3 }}>
             Convidar Usuario
           </h2>
-          <button
-            onClick={onClose}
-            className="p-1 text-text-subtle hover:text-text-muted rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <p style={{ margin: '6px 0 0 0', fontSize: 14, color: 'var(--color-gray-600, #6B5E58)', lineHeight: 1.4 }}>
+            Envie um convite para um novo membro de {orgName}.
+          </p>
         </div>
 
-        <form onSubmit={handleInvite} className="px-6 py-5 space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-text">
+        {/* Form */}
+        <form onSubmit={handleInvite} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Email Field */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
               Email
             </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
+            <div style={{ position: 'relative' }}>
+              <Mail style={{
+                position: 'absolute',
+                left: 14,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 18,
+                height: 18,
+                color: 'var(--color-gray-400, #A39D98)',
+                pointerEvents: 'none',
+              }} />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="usuario@email.com"
-                className="w-full pl-10 pr-4 py-2.5 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 required
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '12px 16px 12px 44px',
+                  fontSize: 14,
+                  color: 'var(--color-text, #000)',
+                  background: 'var(--color-gray-50, #F8F7F6)',
+                  border: '2px solid var(--color-gray-300, #C3BFB9)',
+                  borderRadius: 10,
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114, 16, 17, 0.08)'
+                  e.currentTarget.style.background = '#fff'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+                  e.currentTarget.style.boxShadow = 'none'
+                  e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
+                }}
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-text">
+          {/* Nome Field */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
               Nome completo
             </label>
-            <div className="relative">
-              <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
+            <div style={{ position: 'relative' }}>
+              <UserIcon style={{
+                position: 'absolute',
+                left: 14,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 18,
+                height: 18,
+                color: 'var(--color-gray-400, #A39D98)',
+                pointerEvents: 'none',
+              }} />
               <input
                 type="text"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder="Nome do usuario"
-                className="w-full pl-10 pr-4 py-2.5 border border-border-strong rounded-lg bg-white text-text placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 required
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '12px 16px 12px 44px',
+                  fontSize: 14,
+                  color: 'var(--color-text, #000)',
+                  background: 'var(--color-gray-50, #F8F7F6)',
+                  border: '2px solid var(--color-gray-300, #C3BFB9)',
+                  borderRadius: 10,
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114, 16, 17, 0.08)'
+                  e.currentTarget.style.background = '#fff'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+                  e.currentTarget.style.boxShadow = 'none'
+                  e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
+                }}
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-text">
-              Funcao
+          {/* Role Field */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
+              Função
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as OrgMemberRole)}
-              className="w-full px-4 py-2.5 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '12px 16px',
+                fontSize: 14,
+                color: 'var(--color-text, #000)',
+                background: 'var(--color-gray-50, #F8F7F6)',
+                border: '2px solid var(--color-gray-300, #C3BFB9)',
+                borderRadius: 10,
+                outline: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114, 16, 17, 0.08)'
+                e.currentTarget.style.background = '#fff'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+                e.currentTarget.style.boxShadow = 'none'
+                e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
+              }}
             >
-              {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(
-                ([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ),
-              )}
+              {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="flex-1 px-4 py-2.5 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--color-text, #000)',
+                background: '#fff',
+                border: '2px solid var(--color-gray-300, #C3BFB9)',
+                borderRadius: 10,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                opacity: submitting ? 0.5 : 1,
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!submitting) {
+                  e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
+                  e.currentTarget.style.borderColor = 'var(--color-gray-400, #A39D98)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff'
+                e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+              }}
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#fff',
+                background: 'var(--brand-primary, #721011)',
+                border: 'none',
+                borderRadius: 10,
+                cursor: submitting ? 'wait' : 'pointer',
+                boxShadow: '0 4px 12px rgba(114, 16, 17, 0.25)',
+                opacity: submitting ? 0.7 : 1,
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+              onMouseEnter={(e) => {
+                if (!submitting) {
+                  e.currentTarget.style.background = 'var(--brand-primary-900, #4A0B0C)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(114, 16, 17, 0.3)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--brand-primary, #721011)'
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(114, 16, 17, 0.25)'
+              }}
             >
+              {submitting && <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />}
               {submitting ? 'Enviando...' : 'Convidar'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -740,6 +945,11 @@ function EditUserModal({
   const [role, setRole] = useState<OrgMemberRole>(user.role)
   const [ativo, setAtivo] = useState<boolean>(user.ativo)
   const [saving, setSaving] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    requestAnimationFrame(() => setVisible(true))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -758,51 +968,146 @@ function EditUserModal({
     }
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div>
-            <p className="text-xs text-text-muted">Org: {orgId}</p>
-            <h2 className="text-lg font-semibold text-text">Editar Usuario</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-text-subtle hover:text-text-muted rounded-lg transition-colors"
-            aria-label="Fechar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+      }}
+    >
+      <div
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.55)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          transition: 'opacity 300ms ease',
+          opacity: visible ? 1 : 0,
+        }}
+      />
+
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: '480px',
+          minWidth: '380px',
+          boxSizing: 'border-box',
+          background: '#fff',
+          borderRadius: '16px',
+          padding: '24px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          transition: 'all 350ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transform: visible ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(20px)',
+          opacity: visible ? 1 : 0,
+        }}
+      >
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: 'var(--brand-primary, #721011)', lineHeight: 1.3 }}>
+            Editar Usuario
+          </h2>
+          <p style={{ margin: '6px 0 0 0', fontSize: 14, color: 'var(--color-gray-600, #6B5E58)', lineHeight: 1.4 }}>
+            Atualize as informações do usuario {user.nome || user.email}.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-text">Email</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
+              Email
+            </label>
             <input
               type="email"
               value={user.email}
               disabled
-              className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-alt text-text-muted"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '12px 16px',
+                fontSize: 14,
+                color: 'var(--color-gray-500, #8A7E78)',
+                background: 'var(--color-gray-100, #F1F0EE)',
+                border: '2px solid var(--color-gray-200, #E8E5E3)',
+                borderRadius: 10,
+                outline: 'none',
+                cursor: 'not-allowed',
+              }}
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-text">Nome completo</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
+              Nome completo
+            </label>
             <input
               type="text"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Nome do usuario"
-              className="w-full px-4 py-2.5 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '12px 16px',
+                fontSize: 14,
+                color: 'var(--color-text, #000)',
+                background: 'var(--color-gray-50, #F8F7F6)',
+                border: '2px solid var(--color-gray-300, #C3BFB9)',
+                borderRadius: 10,
+                outline: 'none',
+                transition: 'all 0.2s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114, 16, 17, 0.08)'
+                e.currentTarget.style.background = '#fff'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+                e.currentTarget.style.boxShadow = 'none'
+                e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
+              }}
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-text">Funcao</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
+              Função
+            </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as OrgMemberRole)}
-              className="w-full px-4 py-2.5 border border-border-strong rounded-lg bg-white text-text focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '12px 16px',
+                fontSize: 14,
+                color: 'var(--color-text, #000)',
+                background: 'var(--color-gray-50, #F8F7F6)',
+                border: '2px solid var(--color-gray-300, #C3BFB9)',
+                borderRadius: 10,
+                outline: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114, 16, 17, 0.08)'
+                e.currentTarget.style.background = '#fff'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+                e.currentTarget.style.boxShadow = 'none'
+                e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
+              }}
             >
               {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -812,37 +1117,89 @@ function EditUserModal({
             </select>
           </div>
 
-          <label className="flex items-center gap-3 text-sm font-medium text-text">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 500, color: 'var(--color-text, #000)', cursor: 'pointer', marginTop: 4 }}>
             <input
               type="checkbox"
               checked={ativo}
               onChange={(e) => setAtivo(e.target.checked)}
-              className="h-4 w-4 text-emerald-600 border-border-strong rounded focus:ring-emerald-500"
+              style={{ width: 18, height: 18, accentColor: 'var(--brand-primary, #721011)', cursor: 'pointer' }}
             />
-            Manter usuario ativo nesta organizacao
+            Manter usuario ativo nesta organização
           </label>
 
-          <div className="flex items-center gap-3 pt-2">
+          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex-1 px-4 py-2.5 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--color-text, #000)',
+                background: '#fff',
+                border: '2px solid var(--color-gray-300, #C3BFB9)',
+                borderRadius: 10,
+                cursor: saving ? 'not-allowed' : 'pointer',
+                opacity: saving ? 0.5 : 1,
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!saving) {
+                  e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
+                  e.currentTarget.style.borderColor = 'var(--color-gray-400, #A39D98)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff'
+                e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
+              }}
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#fff',
+                background: 'var(--brand-primary, #721011)',
+                border: 'none',
+                borderRadius: 10,
+                cursor: saving ? 'wait' : 'pointer',
+                boxShadow: '0 4px 12px rgba(114, 16, 17, 0.25)',
+                opacity: saving ? 0.7 : 1,
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+              onMouseEnter={(e) => {
+                if (!saving) {
+                  e.currentTarget.style.background = 'var(--brand-primary-900, #4A0B0C)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(114, 16, 17, 0.3)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--brand-primary, #721011)'
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(114, 16, 17, 0.25)'
+              }}
             >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {saving && <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />}
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -860,8 +1217,10 @@ function RemoveUserModal({
   disableDelete?: boolean
 }) {
   const [confirming, setConfirming] = useState<'inactive' | 'delete' | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handle = async (type: 'inactive' | 'delete') => {
+    setError(null)
     try {
       setConfirming(type)
       if (type === 'inactive') {
@@ -869,94 +1228,94 @@ function RemoveUserModal({
       } else {
         await onDelete()
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao remover usuário')
     } finally {
       setConfirming(null)
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-text">Gerenciar usuario</h2>
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="Gerenciar usuário"
+      maxWidth="400px"
+      className="p-0"
+    >
+      <div className="px-6 py-5 space-y-4">
+        <p className="text-sm text-text">
+          <span className="font-semibold">{user.nome || user.email}</span>
+        </p>
+        <div className="space-y-2 text-sm text-text-muted">
+          <p><strong>Inativar:</strong> remove acesso à organização (org_members.ativo=false, permissões reset), mas mantém o usuário no Auth.</p>
+          <p><strong>Remover:</strong> apaga o usuário da organização, da tabela usuarios e do Auth.</p>
+        </div>
+        {error && <div className="text-red-600 text-sm">{error}</div>}
+        <div className="flex flex-col gap-3 pt-2">
           <button
-            onClick={onClose}
-            className="p-1 text-text-subtle hover:text-text-muted rounded-lg transition-colors"
-            aria-label="Fechar"
+            type="button"
+            onClick={() => handle('inactive')}
+            disabled={confirming !== null}
+            className="w-full px-4 py-2.5 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            <X className="w-5 h-5" />
+            {confirming === 'inactive' && <Loader2 className="w-4 h-4 animate-spin" />}
+            {confirming === 'inactive' ? 'Inativando...' : 'Inativar (reversível)'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handle('delete')}
+            disabled={confirming !== null || disableDelete}
+            className="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            title={disableDelete ? 'Voce nao pode remover a si mesmo' : 'Remover definitivamente'}
+          >
+            {confirming === 'delete' && <Loader2 className="w-4 h-4 animate-spin" />}
+            {disableDelete ? 'Nao pode remover a si mesmo' : confirming === 'delete' ? 'Removendo...' : 'Remover definitivamente'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={confirming !== null}
+            className="w-full px-4 py-2.5 border border-border text-text-muted rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
+          >
+            Cancelar
           </button>
         </div>
-
-        <div className="px-6 py-5 space-y-4">
-          <p className="text-sm text-text">
-            <span className="font-semibold">{user.nome || user.email}</span>
-          </p>
-          <div className="space-y-2 text-sm text-text-muted">
-            <p><strong>Inativar:</strong> remove acesso à organização (org_members.ativo=false, permissões reset), mas mantém o usuário no Auth.</p>
-            <p><strong>Remover:</strong> apaga o usuário da organização, da tabela usuarios e do Auth.</p>
-          </div>
-
-          <div className="flex flex-col gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => handle('inactive')}
-              disabled={confirming !== null}
-              className="w-full px-4 py-2.5 border border-border-strong text-text rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {confirming === 'inactive' && <Loader2 className="w-4 h-4 animate-spin" />}
-              {confirming === 'inactive' ? 'Inativando...' : 'Inativar (reversível)'}
-            </button>
-            <button
-              type="button"
-              onClick={() => handle('delete')}
-              disabled={confirming !== null || disableDelete}
-              className="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              title={disableDelete ? 'Voce nao pode remover a si mesmo' : 'Remover definitivamente'}
-            >
-              {confirming === 'delete' && <Loader2 className="w-4 h-4 animate-spin" />}
-              {disableDelete ? 'Nao pode remover a si mesmo' : confirming === 'delete' ? 'Removendo...' : 'Remover definitivamente'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={confirming !== null}
-              className="w-full px-4 py-2.5 border border-border text-text-muted rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 
 function RoleBadge({ role }: { role: OrgMemberRole }) {
-  const roleConfig: Record<string, { label: string; class: string; icon: typeof Shield }> = {
+  const roleConfig: Record<string, { label: string; bg: string; color: string; icon: typeof Shield }> = {
     admin: {
       label: 'Administrador',
-      class: 'bg-purple-100 text-purple-800',
+      bg: 'var(--brand-primary-100, #F5E6E6)',
+      color: 'var(--brand-primary, #721011)',
       icon: Shield,
     },
     gestor: {
       label: 'Gestor',
-      class: 'bg-blue-100 text-blue-800',
+      bg: 'var(--brand-accent-100, #F5E6DA)',
+      color: 'var(--brand-accent-700, #8F5225)',
       icon: Shield,
     },
     advogado: {
       label: 'Advogado',
-      class: 'bg-emerald-100 text-emerald-800',
+      bg: '#ecfdf5',
+      color: '#065f46',
       icon: Users,
     },
     secretaria: {
       label: 'Secretária',
-      class: 'bg-amber-100 text-amber-800',
+      bg: '#fef3c7',
+      color: '#92400e',
       icon: Users,
     },
     leitura: {
       label: 'Somente Leitura',
-      class: 'bg-surface-alt text-text',
+      bg: 'var(--color-gray-100, #F1F0EE)',
+      color: 'var(--color-gray-700, #3D3632)',
       icon: Users,
     },
   }
@@ -965,8 +1324,15 @@ function RoleBadge({ role }: { role: OrgMemberRole }) {
   const Icon = config.icon
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.class}`}>
-      <Icon className="w-3 h-3 mr-1" />
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        padding: '2px 10px', borderRadius: 999,
+        fontSize: 12, fontWeight: 500,
+        background: config.bg, color: config.color,
+      }}
+    >
+      <Icon style={{ width: 12, height: 12 }} />
       {config.label}
     </span>
   )
