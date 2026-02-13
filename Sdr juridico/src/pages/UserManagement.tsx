@@ -638,7 +638,16 @@ function InviteUserModal({
       })
 
       if (fnError) {
-        const detail = (fnError as any)?.context?.response?.text || fnError.message
+        let detail = fnError.message
+        try {
+          const ctx = (fnError as any)?.context
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json()
+            detail = body?.error || detail
+          }
+        } catch {
+          // fallback to default message
+        }
         toast.error(`Erro ao convidar usuario: ${detail}`)
         setSubmitting(false)
         return

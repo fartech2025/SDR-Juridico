@@ -1,9 +1,10 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const json = (payload: Record<string, unknown>, status = 200) =>
@@ -109,49 +110,69 @@ serve(async (req) => {
 
     // Invite or create user
     let userId: string | null = null
+    let emailSent = false
     const trimmedEmail = email.trim().toLowerCase()
     const trimmedNome = nome.trim()
+    const appUrl = Deno.env.get('APP_URL') || Deno.env.get('SITE_URL') || 'https://sdr-juridico.vercel.app'
 
-    // Try invite by email first
-    const appUrl = Deno.env.get('APP_URL') || Deno.env.get('SITE_URL') || 'http://localhost:5173'
-    const inviteResult = await supabaseAdmin.auth.admin.inviteUserByEmail(trimmedEmail, {
-      redirectTo: `${appUrl}/auth/callback`,
-      data: {
-        nome_completo: trimmedNome,
-        org_id: orgId,
-        role,
-        must_change_password: true,
-      },
-    })
+    // Check if user already exists as active org_member (prevent duplicates)
+    const { data: existingMember } = await supabaseAdmin
+      .from('org_members')
+      .select('id, user_id')
+      .eq('org_id', orgId)
+      .eq('ativo', true)
+      .in('user_id', 
+        (await supabaseAdmin.from('usuarios').select('id').eq('email', trimmedEmail)).data?.map((u: any) => u.id) || []
+      )
+      .maybeSingle()
 
-    if (inviteResult.error) {
-      // User may already exist - check
-      const { data: existingAuth, error: existingAuthError } =
-        await supabaseAdmin.auth.admin.getUserByEmail(trimmedEmail)
+    if (existingMember) {
+      return json({ error: `O usuario ${trimmedEmail} ja e membro ativo desta organizacao.` }, 400)
+    }
 
-      if (!existingAuthError && existingAuth?.user) {
-        userId = existingAuth.user.id
-      } else {
-        // Create user manually
-        const { data: createdUser, error: createdUserError } =
-          await supabaseAdmin.auth.admin.createUser({
-            email: trimmedEmail,
-            email_confirm: false,
-            user_metadata: {
-              nome_completo: trimmedNome,
-              org_id: orgId,
-              role,
-            },
-          })
+    // Check if user exists in usuarios table
+    const { data: existingUsuario } = await supabaseAdmin
+      .from('usuarios')
+      .select('id, email')
+      .eq('email', trimmedEmail)
+      .maybeSingle()
 
-        if (createdUserError) {
-          return json({ error: 'Erro ao criar usuario: ' + createdUserError.message }, 400)
-        }
-
-        userId = createdUser.user?.id ?? null
-      }
+    if (existingUsuario) {
+      // Existing user — add to org, no invite email needed (they already have credentials)
+      userId = existingUsuario.id
+      console.log(`✅ Usuário já existe: ${userId}, adicionando à org`)
     } else {
-      userId = inviteResult.data?.user?.id ?? null
+      // NEW USER — use inviteUserByEmail (creates auth user + sends invite email)
+      // First, clean up any orphan auth user (created in previous failed attempts without email)
+      const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+      const orphanUser = allUsers?.users?.find((u: any) => u.email === trimmedEmail)
+      if (orphanUser) {
+        console.log(`🧹 Removendo usuário órfão do auth: ${orphanUser.id}`)
+        await supabaseAdmin.auth.admin.deleteUser(orphanUser.id)
+        // Also clean up any orphan record in usuarios
+        await supabaseAdmin.from('usuarios').delete().eq('id', orphanUser.id)
+        await supabaseAdmin.from('org_members').delete().eq('user_id', orphanUser.id)
+      }
+
+      // Now invite (creates user + sends email in one step)
+      const { data: inviteData, error: inviteError } =
+        await supabaseAdmin.auth.admin.inviteUserByEmail(trimmedEmail, {
+          redirectTo: `${appUrl}/auth/callback`,
+          data: {
+            nome_completo: trimmedNome,
+            org_id: orgId,
+            role,
+            must_change_password: true,
+          },
+        })
+
+      if (inviteError) {
+        return json({ error: 'Erro ao convidar usuario: ' + inviteError.message }, 400)
+      }
+
+      userId = inviteData.user?.id ?? null
+      emailSent = true
+      console.log(`✅ Novo usuário convidado: ${userId}, email enviado para ${trimmedEmail}`)
     }
 
     if (!userId) {
@@ -195,10 +216,15 @@ serve(async (req) => {
       return json({ error: 'Erro ao adicionar membro: ' + memberError.message }, 400)
     }
 
+    const message = emailSent 
+      ? `Usuario ${trimmedNome} convidado com sucesso para ${org.name || 'a organizacao'}. Email de convite enviado.`
+      : `Usuario ${trimmedNome} adicionado com sucesso a ${org.name || 'a organizacao'}. (Email não enviado - configure SMTP no Supabase)`
+
     return json({
       ok: true,
       userId,
-      message: `Usuario ${trimmedNome} convidado com sucesso para ${org.name || 'a organizacao'}.`,
+      emailSent,
+      message,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido'

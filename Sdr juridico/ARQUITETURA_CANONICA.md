@@ -1,12 +1,20 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.3.2  
-**Data:** 11 de fevereiro de 2026  
+**Versão:** 2.4.0  
+**Data:** 13 de fevereiro de 2026  
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.4.0 (13 de fevereiro de 2026)
+- ✅ **Edge Function `invite-org-member` Reescrita**: Fluxo completo de convite — usa `inviteUserByEmail` como método primário (cria user + envia email em uma só chamada). Limpa usuários órfãos do auth antes de re-convidar. Verifica duplicidade em `org_members` antes de adicionar
+- ✅ **Edge Function `delete-org-member` Corrigida**: CORS aberto (`*`) e supabase-js atualizado (2.39.0 → 2.49.0)
+- ✅ **CORS Padronizado em Edge Functions**: Todas as edge functions de gestão de membros agora usam `Access-Control-Allow-Origin: *` em vez de `APP_URL` hardcoded
+- ✅ **supabase-js Atualizado nas Edge Functions**: Migrado de `@supabase/supabase-js@2.39.0` para `@2.49.0` — corrige `getUserByEmail is not a function`
+- ✅ **Tratamento de Erro Frontend (UserManagement)**: Corrigida extração de erro da edge function — `fnError.context.json()` em vez de `fnError.context.response.text` (incompatível com supabase-js v2)
+- ✅ **Restart Supabase Project**: Resolvido timeout de serviços backend (Auth, PostgREST) que travavam após deploy de edge function no plano NANO
 
 ### v2.3.2 (11 de fevereiro de 2026)
 - ✅ **Fix Google Calendar 500**: Corrigido erro 500 ao criar eventos — Edge Function `google-calendar-create-event` agora usa **exclusivamente** tokens da integração da org (tabela `integrations`), obtidos via OAuth customizado (projeto GCP 410413435637). Removidos paths `directToken` (localStorage) e `user_metadata` que usavam tokens do projeto GCP do Supabase (450955346215) onde Calendar API não está habilitada
@@ -2248,8 +2256,25 @@ Usuário → Formulário → CreateOrganizationUseCase
 
 ### 2. Convite de Usuário
 ```
-Gestor → InviteUserModal → InviteUserUseCase 
-  → Cria Invitation → Email convite → Aceitar convite
+Gestor → InviteUserModal (UserManagement.tsx)
+  → supabase.functions.invoke('invite-org-member')
+  → Edge Function verifica permissões (admin/gestor/fartech_admin)
+  → Verifica limite max_users da org
+  → Se usuário já existe em 'usuarios': adiciona ao org_members
+  → Se usuário novo:
+    → Limpa registros órfãos do auth (tentativas anteriores)
+    → inviteUserByEmail (cria auth user + envia email convite)
+    → Upsert em 'usuarios' e 'org_members'
+  → Usuário recebe email → clica link → /auth/callback → entra na org
+```
+
+### 2b. Remoção de Usuário
+```
+Gestor → RemoveUserModal (UserManagement.tsx)
+  → Inativar (reversível): org_members.ativo = false
+  → Remover definitivamente:
+    → supabase.functions.invoke('delete-org-member')
+    → Remove de org_members, usuarios e Auth
 ```
 
 ### 3. Link Mágico

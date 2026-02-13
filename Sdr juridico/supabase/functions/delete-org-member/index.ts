@@ -1,9 +1,10 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || 'http://localhost:5173',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const json = (payload: Record<string, unknown>, status = 200) =>

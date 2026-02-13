@@ -6,3 +6,9 @@ verify_jwt = true
 
 [functions.google-calendar-sync-cron]
 verify_jwt = false
+
+[functions.invite-org-member]
+verify_jwt = false
+
+[functions.invite-org-admin]
+verify_jwt = false
