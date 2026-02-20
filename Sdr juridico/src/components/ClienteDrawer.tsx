@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { Briefcase, ShieldCheck, UserRound } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import type { Cliente } from '@/types/domain'
 import { formatDate, formatDateTime } from '@/utils/format'
 import { stripChecklistPrefix } from '@/utils/checklist'
 import { useTarefas } from '@/hooks/useTarefas'
+import { CaseIntelligencePanel } from '@/components/CaseIntelligence'
 
 export interface ClienteDrawerProps {
   open: boolean
@@ -28,6 +30,7 @@ const healthPill = (health: Cliente['health']) => {
 }
 
 export const ClienteDrawer = ({ open, cliente, onClose }: ClienteDrawerProps) => {
+  const navigate = useNavigate()
   const { tarefas, loading: tarefasLoading, fetchTarefasByEntidade } = useTarefas()
 
   React.useEffect(() => {
@@ -112,6 +115,18 @@ export const ClienteDrawer = ({ open, cliente, onClose }: ClienteDrawerProps) =>
               Atualizado em {formatDateTime(cliente.lastUpdate)}
             </p>
           </section>
+
+          {/* Inteligência Preditiva — só para pessoa física com CPF */}
+          {cliente.cpf && (
+            <section className="space-y-3">
+              <CaseIntelligencePanel
+                cpf={cliente.cpf}
+                clienteId={cliente.id}
+                colapsado={true}
+                onConfigureClick={() => { onClose(); navigate('/app/config') }}
+              />
+            </section>
+          )}
 
           <section className="space-y-3">
             <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">

@@ -236,6 +236,7 @@ export interface Cliente {
   caseCount: number
   owner: string
   lastUpdate: string
+  cpf?: string | null
 }
 
 // ========================================

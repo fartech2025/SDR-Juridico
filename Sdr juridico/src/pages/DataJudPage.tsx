@@ -1,11 +1,12 @@
 import * as React from 'react'
-import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown, Bug } from 'lucide-react'
+import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown, Bug, UserCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
 
 import { BotaoFavorito } from '@/components/BotaoFavorito'
 import { registrarConsulta } from '@/services/favoritosService'
+import { CaseIntelligencePanel, ImportarClienteModal } from '@/components/CaseIntelligence'
 
 import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
@@ -155,6 +156,10 @@ export const DataJudPage = () => {
   const [classe, setClasse] = React.useState<string>('')
   const [buscarMultiTribunal, setBuscarMultiTribunal] = React.useState<boolean>(true)
 
+  // Waze Jurídico — CPF usado na última busca (para painel de IA)
+  const [cpfBuscado, setCpfBuscado] = React.useState<string | null>(null)
+  const [modalImportarProcesso, setModalImportarProcesso] = React.useState<{ numero: string; tribunal: string } | null>(null)
+
   // Tribunal detectado automaticamente
   const tribunalDetectado = React.useMemo(() => {
     if (tipoBusca === 'numero' && numeroProcesso.length >= 18) {
@@ -281,11 +286,14 @@ export const DataJudPage = () => {
           
           setResultados(processos)
           setTotalEncontrado(total)
-          
+
+          // Guardar CPF para o painel de Inteligência Preditiva
+          if (cpfLimpo.length === 11) setCpfBuscado(cpfLimpo)
+
           if (total === 0) {
             toast.info('Nenhum processo encontrado para este CPF/CNPJ')
           }
-          
+
           // Registrar consulta
           registrarConsulta({
             numero_processo: `CPF/CNPJ: ${cpfLimpo}`,
@@ -1532,11 +1540,14 @@ export const DataJudPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          toast.info('Funcionalidade em desenvolvimento')
-                        }}
+                        onClick={() => setModalImportarProcesso({
+                          numero: processo.numeroProcesso ?? '',
+                          tribunal: processo.tribunal ?? '',
+                        })}
+                        className="flex items-center gap-1.5"
                       >
-                        📥 Importar para Casos
+                        <UserCheck className="h-3.5 w-3.5" />
+                        Importar para Cliente
                       </Button>
                     </div>
                   </div>
@@ -1545,6 +1556,25 @@ export const DataJudPage = () => {
             })}
           </CardContent>
         </Card>
+      )}
+
+      {/* Painel de Inteligência Preditiva — aparece após busca por CPF */}
+      {tipoBusca === 'cpf' && cpfBuscado && (
+        <CaseIntelligencePanel
+          cpf={cpfBuscado}
+          onConfigureClick={() => navigate('/app/config')}
+        />
+      )}
+
+      {/* Modal: Importar processo para cliente */}
+      {modalImportarProcesso && cpfBuscado && (
+        <ImportarClienteModal
+          cpf={cpfBuscado}
+          numeroProcesso={modalImportarProcesso.numero}
+          tribunal={modalImportarProcesso.tribunal}
+          onClose={() => setModalImportarProcesso(null)}
+          onImportado={() => setModalImportarProcesso(null)}
+        />
       )}
       </div>
     </div>

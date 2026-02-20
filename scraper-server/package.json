@@ -1,0 +1,14 @@
+{
+  "name": "scraper-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Servidor local de scraping jurídico — substitui Escavador/Judit",
+  "scripts": {
+    "start": "npx tsx index.ts",
+    "dev": "npx tsx --watch index.ts"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "tsx": "^4.19.2"
+  }
+}

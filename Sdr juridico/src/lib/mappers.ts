@@ -176,6 +176,7 @@ export const mapClienteRowToCliente = (
   caseCount: data.caseCount,
   owner: row.responsavel || 'Nao atribuido',
   lastUpdate: data.lastUpdate,
+  cpf: row.cpf ?? null,
 })
 
 export const mapDocumentoRowToDocumento = (row: DocumentoRow): Documento => ({

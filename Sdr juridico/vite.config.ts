@@ -65,6 +65,12 @@ export default defineConfig({
   // ===== CONFIGURAÇÃO DO SERVIDOR DE DEV =====
   server: {
     proxy: {
+      // Proxy para o scraper local (Node.js server na porta 3001)
+      '/scraper-api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/scraper-api/, ''),
+      },
       '/api-datajud': {
         target: 'https://api-publica.datajud.cnj.jus.br',
         changeOrigin: true,
