@@ -31,3 +31,9 @@ export function stats(): { size: number; keys: string[] } {
   }
   return { size: store.size, keys: Array.from(store.keys()) }
 }
+
+export function clear(): number {
+  const count = store.size
+  store.clear()
+  return count
+}

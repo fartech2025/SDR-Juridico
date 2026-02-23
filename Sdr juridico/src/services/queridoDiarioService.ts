@@ -220,6 +220,56 @@ export function detectarEstadoProcesso(numeroProcesso: string): string | null {
   return tribunalEstado[codigoTribunal] || null;
 }
 
+// Regex para número de processo no formato CNJ: NNNNNNN-DD.AAAA.J.TR.OOOO
+const REGEX_CNJ = /\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}/g
+
+/**
+ * Extrai números de processo no formato CNJ de uma lista de excerpts de diários.
+ * Retorna lista de números únicos.
+ */
+export function extrairNumerosProcesso(excerpts: string[]): string[] {
+  const encontrados = new Set<string>()
+  for (const ex of excerpts) {
+    const matches = ex.match(REGEX_CNJ) ?? []
+    for (const m of matches) encontrados.add(m)
+  }
+  return [...encontrados]
+}
+
+/**
+ * Busca publicações no DOU por CPF, tentando o formato com pontos/traço
+ * (que é como o CPF aparece publicado nos diários oficiais).
+ * Combina resultados de ambas as formas para maximizar cobertura.
+ */
+export async function buscarDiariosOficiaisCpf(
+  cpf: string,
+  options: { size?: number; publishedSince?: string } = {}
+): Promise<GazetteSearchResponse> {
+  const cpfLimpo = cpf.replace(/\D/g, '')
+  const cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+
+  // O DOU publica CPF sempre formatado (XXX.XXX.XXX-XX)
+  // Busca com frase exata usando aspas para evitar falsos positivos
+  const params: Record<string, string> = {
+    endpoint: 'gazettes',
+    querystring: `"${cpfFormatado}"`,
+    size: String(options.size ?? 20),
+    offset: '0',
+    sort_by: 'descending_date',
+    excerpt_size: '1000',
+    number_of_excerpts: '5',
+  }
+
+  if (options.publishedSince) params.published_since = options.publishedSince
+
+  try {
+    const response = await fetchQueridoDiario(params)
+    return response
+  } catch {
+    return { total_gazettes: 0, gazettes: [] }
+  }
+}
+
 /**
  * Busca publicações por nome de pessoa/empresa
  */

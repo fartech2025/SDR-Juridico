@@ -12,16 +12,18 @@ import { search as searchStj } from './federal/stj'
 import { search as searchTst } from './federal/tst'
 import { searchByCpf as searchDataJud } from './datajud'
 
-// Lista de scrapers — MG primeiro (maior prioridade)
+// Lista de scrapers ativos
+// TJMG e TRF6 HTML desativados: portais migrados (PJe/eProc com CAPTCHA → 404)
+// Cobertura de TJMG e TRF6 é feita pelo DataJud via partes.cpf / partes.nome
 const SCRAPERS: Array<{ nome: string; fn: (cpf: string) => Promise<ScraperTribunalResult> }> = [
-  { nome: 'TJMG', fn: searchTjmg },
+  // { nome: 'TJMG', fn: searchTjmg }, // desativado — PJe com reCAPTCHA (404)
+  // { nome: 'TRF6', fn: searchTrf6 }, // desativado — eProc com CAPTCHA
   { nome: 'TRT3', fn: searchTrt3 },
-  { nome: 'TRF6', fn: searchTrf6 },
   { nome: 'TJSP', fn: searchTjsp },
   { nome: 'TJRJ', fn: searchTjrj },
   { nome: 'STJ', fn: searchStj },
   { nome: 'TST', fn: searchTst },
-  { nome: 'DataJud', fn: searchDataJud },
+  { nome: 'DataJud', fn: searchDataJud },   // cobre TJMG + TRF6 + todos os demais
 ]
 
 export async function searchByCpf(cpf: string): Promise<ScraperResult> {

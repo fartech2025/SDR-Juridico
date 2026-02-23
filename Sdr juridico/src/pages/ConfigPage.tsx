@@ -2,6 +2,8 @@ import * as React from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Database } from 'lucide-react'
 import { toast } from 'sonner'
+import { PjeConfigCard }   from '@/components/PjeConfigCard'
+import { EprocConfigCard } from '@/components/EprocConfigCard'
 
 import heroLight from '@/assets/hero-light.svg'
 import { PageState } from '@/components/PageState'
@@ -350,8 +352,10 @@ export const ConfigPage = () => {
       </div>
 
       <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
-          <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-            <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Cards avançados — visíveis apenas na aba Avançado */}
+            {activeTab === 'Avancado' && <PjeConfigCard />}
+            {activeTab === 'Avancado' && <EprocConfigCard />}
             {filteredIntegrations.map((integration) => {
               const isGoogleCalendar = matchesKey(
                 integration.name,
@@ -408,40 +412,6 @@ export const ConfigPage = () => {
               )
             })}
           </div>
-
-          <Card
-            className={cn(
-              'border',
-              'border-border bg-surface/90',
-            )}
-          >
-            <CardHeader>
-              <CardTitle className="text-sm">
-                Pendencias operacionais
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs text-text-muted">
-              {[
-                'Revisar conexao do WhatsApp.',
-                'Atualizar credenciais do Supabase.',
-                'Validar webhook do CRM.',
-              ].map((item) => (
-                <div
-                  key={item}
-                  className={cn(
-                    'flex items-center justify-between rounded-2xl border px-3 py-2 shadow-soft',
-                    'border-border bg-white',
-                  )}
-                >
-                  <span>{item}</span>
-                  <Button variant="ghost" size="sm">
-                    Revisar
-                  </Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
       </PageState>
 
       <Modal
@@ -535,28 +505,12 @@ export const ConfigPage = () => {
             )}
             <div
               className={cn(
-                'rounded-2xl border px-3 py-3 shadow-soft',
+                'rounded-2xl border px-3 py-3 shadow-soft text-xs',
                 'border-border bg-white',
               )}
             >
               Status atual:{' '}
-              <span className="text-text">{selectedIntegration.status}</span>
-            </div>
-            <div
-              className={cn(
-                'rounded-2xl border px-3 py-3 shadow-soft',
-                'border-border bg-white',
-              )}
-            >
-              Ultima sincronizacao: 2 dias atras.
-            </div>
-            <div
-              className={cn(
-                'rounded-2xl border px-3 py-3 shadow-soft',
-                'border-border bg-white',
-              )}
-            >
-              Ajustes disponiveis: webhooks, notificacoes e canais.
+              <span className="text-text font-medium">{selectedIntegration.status}</span>
             </div>
           </div>
         )}

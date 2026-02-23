@@ -1,14 +1,137 @@
 // "Waze Jurídico" — Orquestrador de inteligência preditiva de casos
 // Agrega dados de múltiplas fontes públicas e usa Claude para análise
-import Anthropic from '@anthropic-ai/sdk'
 import { supabase } from '@/lib/supabaseClient'
 import { resolveOrgScope } from '@/services/orgScope'
 import { buscarProcessosPorCpfMultiTribunal } from '@/services/datajudService'
-import { buscarDiariosOficiais } from '@/services/queridoDiarioService'
-import { buscarPorCpf as scraperBuscarPorCpf } from '@/services/localScraperService'
+import { buscarDiariosOficiais, buscarDiariosOficiaisCpf, extrairNumerosProcesso } from '@/services/queridoDiarioService'
+import { buscarPorCpf as scraperBuscarPorCpf, buscarProcessoMNI, verificarStatus as verificarScraper } from '@/services/localScraperService'
 import { consultarTudo as transparenciaConsultarTudo, isConfigurado as isTransparenciaConfigurada } from '@/services/portalTransparenciaService'
-import { verificarStatus as verificarScraper } from '@/services/localScraperService'
 import type { CaseInsight, CaseInsightOptions, DataSourceStatus } from '@/types/caseIntelligence'
+
+/** Extrai nome da pessoa a partir dos dados já coletados */
+function extrairNome(
+  transparencia: { servidores: any[]; ceis: any[]; ceaf: any[] },
+  processosScraper: any[],
+  processosDataJud: any[],
+): string | null {
+  // Portal Transparência — fonte mais confiável
+  if (transparencia.servidores.length > 0) return transparencia.servidores[0].nome ?? null
+  if (transparencia.ceis.length > 0) return transparencia.ceis[0].nomeRazaoSocial ?? null
+  if (transparencia.ceaf.length > 0) return transparencia.ceaf[0].nome ?? null
+
+  // DataJud via scraper (partes[].nome)
+  for (const p of processosScraper) {
+    const n = p.partes?.[0]?.nome?.trim()
+    if (n && n.length > 3) return n
+  }
+
+  // DataJud via Edge Function (dadosBasicos.polo[].nome)
+  for (const p of processosDataJud) {
+    const n = p.dadosBasicos?.polo?.[0]?.nome?.trim()
+    if (n && n.length > 3) return n
+  }
+
+  return null
+}
+
+/** Busca processos por nome via scraper-server /nome (DataJud partes.nome) */
+async function buscarPorNome(nome: string): Promise<any[]> {
+  try {
+    const res = await fetch('/scraper-api/nome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    return data?.processos ?? []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Para cada número de processo extraído do DOU, tenta MNI (PJe) primeiro quando disponível,
+ * depois DataJud como fallback. MNI retorna partes com nomes; DataJud só metadados.
+ */
+async function buscarProcessosPorNumerosDOU(
+  numerosProcesso: string[],
+  opts: { useMni: boolean } = { useMni: false },
+): Promise<any[]> {
+  if (numerosProcesso.length === 0) return []
+
+  const resultados: any[] = []
+  // Limita a 8 processos para não sobrecarregar
+  const numerosUnicos = [...new Set(numerosProcesso)].slice(0, 8)
+
+  await Promise.allSettled(
+    numerosUnicos.map(async (numero) => {
+      try {
+        // Tenta MNI primeiro (retorna partes com nomes — campo não disponível no DataJud público)
+        if (opts.useMni) {
+          const mniProcesso = await buscarProcessoMNI(numero)
+          if (mniProcesso) {
+            resultados.push(mniProcesso)
+            return
+          }
+        }
+
+        // Fallback: DataJud (busca pública, sem partes)
+        const res = await fetch('/scraper-api/processo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ numero }),
+          signal: AbortSignal.timeout(10_000),
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.processo) resultados.push(data.processo)
+      } catch {
+        // processo não encontrado — continua
+      }
+    })
+  )
+
+  return resultados
+}
+
+/** Busca publicações no DOU federal (Imprensa Nacional) por CPF ou nome */
+async function buscarDOUFederal(
+  query: string,
+  opts: { size?: number } = {}
+): Promise<{ titulo: string; tipo: string; data: string; secao: string; hierarquia: string; resumo: string; url: string }[]> {
+  try {
+    const res = await fetch('/scraper-api/dou', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: `"${query}"`, size: opts.size ?? 20 }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    return data?.resultados ?? []
+  } catch {
+    return []
+  }
+}
+
+/** Busca nome do CPF via scraper-server /enrich (DataJud + cpfcnpj.com.br) */
+async function enrichCpf(cpf: string): Promise<string | null> {
+  try {
+    const res = await fetch('/scraper-api/enrich', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return data?.nome ?? null
+  } catch {
+    return null
+  }
+}
 
 // Cache localStorage — TTL 24h
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
@@ -60,7 +183,7 @@ async function buscarCasosInternos(orgId: string) {
 }
 
 /** Monta o prompt para Claude com todos os dados coletados */
-function buildPrompt(cpf: string, dados: {
+function buildPrompt(cpf: string, nome: string | null, dados: {
   processosDataJud: any[]
   processosScraper: any[]
   publicacoesDOU: any[]
@@ -70,6 +193,7 @@ function buildPrompt(cpf: string, dados: {
   casosInternos: any[]
 }): string {
   const cpfMasked = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')
+  const identificacao = nome ? `Nome: ${nome} | CPF: ${cpfMasked}` : `CPF: ${cpfMasked}`
 
   const processosResumo = [
     ...dados.processosDataJud.slice(0, 20),
@@ -103,7 +227,7 @@ function buildPrompt(cpf: string, dados: {
 
   return `Você é um analista jurídico especializado em processos brasileiros. Analise os dados abaixo e retorne APENAS um objeto JSON válido (sem markdown, sem texto extra).
 
-CPF analisado: ${cpfMasked}
+Parte analisada: ${identificacao}
 
 PROCESSOS JUDICIAIS ENCONTRADOS (${processosResumo.length} processos):
 ${JSON.stringify(processosResumo.slice(0, 30), null, 2)}
@@ -148,10 +272,14 @@ export async function getInsight(
   // === Fase 1: Coletar dados em paralelo ===
   const scraperStatus = opts.useScraper ? await verificarScraper() : null
 
+  // CPF formatado para busca no DOU federal (ex: 129.001.406-09)
+  const cpfFormatadoDOU = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+
   const [
     datajudResult,
     scraperResult,
-    douResult,
+    douQueridoResult,
+    douFederalResult,
     transparenciaResult,
     internosResult,
   ] = await Promise.allSettled([
@@ -164,8 +292,13 @@ export async function getInsight(
       : Promise.resolve({ processos: [], total: 0, gerado_em: '' }),
 
     opts.useQueridoDiario
-      ? buscarDiariosOficiais(cpf.replace(/\D/g, ''), { size: 20 })
+      ? buscarDiariosOficiaisCpf(cpf, { size: 20 })
       : Promise.resolve(null),
+
+    // DOU federal (Imprensa Nacional) — scrapa HTML, não precisa de Querido Diário
+    opts.useQueridoDiario && opts.useScraper && scraperStatus?.online
+      ? buscarDOUFederal(cpfFormatadoDOU, { size: 20 })
+      : Promise.resolve([]),
 
     opts.useTransparencia && isTransparenciaConfigurada()
       ? transparenciaConsultarTudo(cpf)
@@ -180,12 +313,17 @@ export async function getInsight(
     ? (datajudResult.value.processos ?? [])
     : []
 
-  const processosScraper = scraperResult.status === 'fulfilled'
+  let processosScraper = scraperResult.status === 'fulfilled'
     ? (scraperResult.value.processos ?? [])
     : []
 
-  const publicacoesDOU = douResult.status === 'fulfilled' && douResult.value
-    ? (douResult.value.gazettes ?? [])
+  const publicacoesDOU = douQueridoResult.status === 'fulfilled' && douQueridoResult.value
+    ? (douQueridoResult.value.gazettes ?? [])
+    : []
+
+  // DOU federal (Imprensa Nacional) — resultados com campo resumo em vez de excerpts
+  const publicacoesDouFederal = douFederalResult.status === 'fulfilled'
+    ? (douFederalResult.value ?? [])
     : []
 
   const transparencia = transparenciaResult.status === 'fulfilled'
@@ -196,39 +334,107 @@ export async function getInsight(
     ? internosResult.value
     : []
 
-  // === Fase 2: Chamar Claude API ===
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-  if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY não configurada em .env.local')
+  // === Fase 2: Enriquecimento — CPF → nome → busca por nome ===
+  // Extrai nome de qualquer fonte já coletada na Fase 1
+  let nomeEncontrado = extrairNome(transparencia, processosScraper, processosDataJud)
 
-  const client = new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  })
+  // Se nenhuma fonte da Fase 1 retornou nome, tenta o enriquecimento ativo
+  if (!nomeEncontrado && opts.useScraper && scraperStatus?.online) {
+    nomeEncontrado = await enrichCpf(cpf)
+  }
 
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1500,
-    messages: [{
-      role: 'user',
-      content: buildPrompt(cpf, {
+  // Se encontrou nome, busca por nome em paralelo: DataJud + DOU federal
+  if (nomeEncontrado) {
+    const fase2Tasks: Promise<any>[] = []
+
+    if (opts.useDataJud) {
+      fase2Tasks.push(buscarPorNome(nomeEncontrado).then(processosPorNome => {
+        // Mescla evitando duplicatas por número de processo
+        const numerosExistentes = new Set(
+          processosScraper.map((p: any) => p.numero_processo?.replace(/\D/g, ''))
+        )
+        const novos = processosPorNome.filter(
+          (p: any) => !numerosExistentes.has(p.numero_processo?.replace(/\D/g, ''))
+        )
+        processosScraper = [...processosScraper, ...novos]
+      }).catch(() => {}))
+    }
+
+    // Busca nome também no DOU federal
+    if (opts.useQueridoDiario && opts.useScraper && scraperStatus?.online) {
+      fase2Tasks.push(buscarDOUFederal(nomeEncontrado, { size: 15 }).then(resultados => {
+        publicacoesDouFederal.push(...resultados)
+      }).catch(() => {}))
+    }
+
+    await Promise.allSettled(fase2Tasks)
+  }
+
+  // === Fase 3: Extração de processos do DOU (Querido Diário + DOU federal) ===
+  // Aplica regex CNJ nos textos do DOU para encontrar números de processo
+  // e consulta o DataJud por número (busca que funciona mesmo sem partes indexadas)
+  if (opts.useQueridoDiario && opts.useDataJud) {
+    const textosParaExtrair: string[] = [
+      // Querido Diário — excerpts
+      ...publicacoesDOU.flatMap((g: any) => g.excerpts ?? []),
+      // DOU federal — campo resumo
+      ...publicacoesDouFederal.map((r: any) => r.resumo ?? ''),
+    ]
+
+    if (textosParaExtrair.length > 0) {
+      const numerosExtraidos = extrairNumerosProcesso(textosParaExtrair)
+
+      if (numerosExtraidos.length > 0) {
+        const processosDOU = await buscarProcessosPorNumerosDOU(numerosExtraidos, {
+          useMni: !!(opts.useScraper && scraperStatus?.mni_configurado),
+        })
+
+        // Mescla com processosDataJud evitando duplicatas
+        const numerosExistentes = new Set(
+          processosDataJud.map((p: any) =>
+            (p.numeroProcesso ?? p.dadosBasicos?.numero ?? '').replace(/\D/g, '')
+          )
+        )
+        const novosDataJud = processosDOU.filter(
+          (p: any) => !numerosExistentes.has((p.numeroProcesso ?? '').replace(/\D/g, ''))
+        )
+        processosDataJud.push(...novosDataJud)
+      }
+    }
+  }
+
+  // Total de publicações DOU = Querido Diário (municipal/estadual) + DOU federal (IN)
+  const totalPublicacoesDOU = publicacoesDOU.length + publicacoesDouFederal.length
+
+  // === Fase 4: Chamar Claude via proxy local (chave nunca vai ao browser) ===
+  const claudeRes = await fetch('/scraper-api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt: buildPrompt(cpf, nomeEncontrado, {
         processosDataJud,
         processosScraper,
-        publicacoesDOU,
+        publicacoesDOU: [...publicacoesDOU, ...publicacoesDouFederal.map(r => ({ excerpts: [r.resumo] }))],
         ceis: transparencia.ceis,
         ceaf: transparencia.ceaf,
         servidores: transparencia.servidores,
         casosInternos,
       }),
-    }],
+    }),
+    signal: AbortSignal.timeout(30_000),
   })
-
-  const text = (message.content[0] as any).text ?? ''
+  if (!claudeRes.ok) {
+    const err = await claudeRes.json().catch(() => ({}))
+    throw new Error(err?.erro ?? 'Erro no proxy Claude')
+  }
+  const claudeData = await claudeRes.json()
+  const text = (claudeData?.content?.[0]?.text as string) ?? ''
   const jsonMatch = text.match(/\{[\s\S]*\}/)
   if (!jsonMatch) throw new Error('Claude não retornou JSON válido')
 
   const aiData = JSON.parse(jsonMatch[0])
 
-  // === Fase 3: Montar status de fontes ===
+  // === Fase 5: Montar status de fontes ===
   const fontes: DataSourceStatus[] = [
     {
       id: 'datajud',
@@ -248,7 +454,7 @@ export async function getInsight(
       id: 'dou',
       label: 'Diário Oficial',
       status: opts.useQueridoDiario ? 'ok' : 'desativado',
-      count: publicacoesDOU.length,
+      count: totalPublicacoesDOU,
     },
     {
       id: 'transparencia',
@@ -266,11 +472,11 @@ export async function getInsight(
     },
   ]
 
-  // === Fase 4: Montar insight final ===
+  // === Fase 6: Montar insight final ===
   const insight: CaseInsight = {
     processos_datajud: processosDataJud.length,
     processos_scraper: processosScraper.length,
-    publicacoes_dou: publicacoesDOU.length,
+    publicacoes_dou: totalPublicacoesDOU,
     similares_internos: casosInternos.length,
 
     area_predominante: aiData.area_predominante ?? '',
