@@ -59,7 +59,7 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
         return
       }
 
-      const existentesSet = new Set(
+      const existentesSet = new Set<string>(
         ((existentesResult as any).data ?? []).map(
           (r: { numero_processo: string }) => r.numero_processo.replace(/\D/g, '')
         )
