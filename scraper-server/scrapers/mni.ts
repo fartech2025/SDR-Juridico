@@ -7,6 +7,7 @@
 
 import type { ScraperProcesso } from '../lib/utils.js'
 import { get as cacheGet, set as cacheSet } from '../lib/cache.js'
+import { getGovFetch } from '../lib/govFetch.js'
 
 const MNI_NS    = 'http://www.cnj.jus.br/intercomunicacao-2.2.2'
 const SOAP_NS   = 'http://schemas.xmlsoap.org/soap/envelope/'
@@ -214,7 +215,8 @@ export async function consultarProcessoMNI(
   const cached     = cacheGet<ScraperProcesso>(cacheKey)
   if (cached) return cached
 
-  const res = await fetch(url, {
+  const gf  = await getGovFetch()
+  const res = await gf(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'text/xml;charset=UTF-8',

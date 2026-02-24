@@ -21,6 +21,16 @@ type DbCasoRow = {
   fase_atual?: string | null
   encerrado_em?: string | null
   responsavel?: string | null
+  // DataJud fields
+  numero_processo?: string | null
+  tribunal?: string | null
+  grau?: string | null
+  classe_processual?: string | null
+  assunto_principal?: string | null
+  datajud_processo_id?: string | null
+  datajud_sync_status?: string | null
+  datajud_last_sync_at?: string | null
+  datajud_sync_error?: string | null
   cliente?: {
     nome: string | null
     owner_user_id?: string | null
@@ -124,6 +134,16 @@ const mapDbCasoToCasoRow = (row: DbCasoRow, responsavelNome?: string | null): Ca
   data_encerramento: row.encerrado_em || null,
   encerrado_em: row.encerrado_em || null,
   cliente: row.cliente || null,
+  // DataJud fields
+  numero_processo: row.numero_processo || null,
+  tribunal: row.tribunal || null,
+  grau: row.grau || null,
+  classe_processual: row.classe_processual || null,
+  assunto_principal: row.assunto_principal || null,
+  datajud_processo_id: row.datajud_processo_id || null,
+  datajud_sync_status: row.datajud_sync_status || null,
+  datajud_last_sync_at: row.datajud_last_sync_at || null,
+  datajud_sync_error: row.datajud_sync_error || null,
 })
 
 /**

@@ -28,7 +28,7 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
   const [existentes, setExistentes] = React.useState<Set<string>>(new Set())
   const [erroCarregamento, setErroCarregamento] = React.useState<string | null>(null)
   const [tribunalFiltro, setTribunalFiltro] = React.useState<string>('')
-  const [resultado, setResultado] = React.useState<{ criados: number; ignorados: number } | null>(null)
+  const [resultado, setResultado] = React.useState<{ criados: number; ignorados: number; erros: number; erroMensagem?: string } | null>(null)
 
   // Busca processos quando o modal abre
   React.useEffect(() => {
@@ -125,12 +125,15 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
 
   const handleImportar = async () => {
     const orgId = currentOrg?.id
-    if (!orgId) return
+    if (!orgId) {
+      setErroCarregamento('Organização não identificada — recarregue a página.')
+      return
+    }
 
     setStep('importando')
     const paraImportar = processos.filter(p => selecionados.has(p.numero_processo))
     const res = await importarProcessosSelecionados(paraImportar, orgId)
-    setResultado({ criados: res.criados, ignorados: res.ignorados + res.erros })
+    setResultado({ criados: res.criados, ignorados: res.ignorados, erros: res.erros, erroMensagem: res.erroMensagem })
     setStep('concluido')
   }
 
@@ -196,7 +199,9 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
       {/* Estado: concluído */}
       {step === 'concluido' && resultado && (
         <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
-          <CheckCircle2 className="h-12 w-12 text-green-500" />
+          {resultado.erros > 0 && resultado.criados === 0
+            ? <AlertCircle className="h-12 w-12 text-red-500" />
+            : <CheckCircle2 className="h-12 w-12 text-green-500" />}
           <div className="space-y-1">
             <p className="font-semibold text-text text-lg">
               {resultado.criados} {resultado.criados === 1 ? 'caso criado' : 'casos criados'} com sucesso
@@ -204,6 +209,14 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
             {resultado.ignorados > 0 && (
               <p className="text-sm text-text-muted">
                 {resultado.ignorados} já existiam no SDR e foram ignorados.
+              </p>
+            )}
+            {resultado.erros > 0 && (
+              <p className="text-sm text-red-600">
+                {resultado.erros} {resultado.erros === 1 ? 'processo falhou' : 'processos falharam'} ao importar.
+                {resultado.erroMensagem && (
+                  <span className="block text-xs text-red-500 mt-0.5">{resultado.erroMensagem}</span>
+                )}
               </p>
             )}
           </div>

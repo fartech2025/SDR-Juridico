@@ -13,8 +13,37 @@
 
 import { MNI_ENDPOINTS } from './mni.js'
 import { ScraperProcesso } from '../lib/utils.js'
+import { getGovFetch }    from '../lib/govFetch.js'
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+
+/** Aceita redirecionamentos para Keycloak/SSO do PJe, mas APENAS em domínios .jus.br */
+function isKeycloakUrl(url: string): boolean {
+  try {
+    const { hostname, pathname } = new URL(url)
+    // Domínio obrigatoriamente .jus.br (evita SSRF para domínios externos)
+    if (!hostname.endsWith('.jus.br')) return false
+    // Deve ser uma rota de autenticação Keycloak ou SSO PJe
+    return (
+      hostname.includes('sso') ||
+      hostname.startsWith('keycloak') ||
+      pathname.includes('/auth/realms/') ||
+      pathname.includes('/realms/')
+    )
+  } catch {
+    return false
+  }
+}
+
+/** Valida que uma URL pertence ao domínio esperado (origin) ou ao Keycloak .jus.br */
+function isUrlTrusted(url: string, expectedOrigin: string): boolean {
+  try {
+    const { origin, hostname } = new URL(url)
+    return origin === expectedOrigin || hostname.endsWith('.jus.br')
+  } catch {
+    return false
+  }
+}
 
 // ── Cookie jar minimalista ────────────────────────────────────────────────────
 
@@ -88,23 +117,24 @@ async function loginPJe(
 ): Promise<LoginResult> {
   const jar = new CookieJar()
   const cpfLimpo = cpf.replace(/\D/g, '')
+  const gf = await getGovFetch()
 
   try {
     // ── Passo 1: GET /pje/login.seam → 302 para Keycloak ──────────────────
-    const r1 = await fetch(`${origin}/pje/login.seam`, {
+    const r1 = await gf(`${origin}/pje/login.seam`, {
       redirect: 'manual',
       headers: { 'User-Agent': UA },
       signal: AbortSignal.timeout(12_000),
     })
     jar.ingest(r1.headers)
     const kcAuthUrl = r1.headers.get('location') ?? ''
-    if (!kcAuthUrl.includes('sso.cloud.pje.jus.br')) {
-      console.warn(`[pje-painel] ${tribunal}: login.seam não redirecionou para Keycloak`)
+    if (!isKeycloakUrl(kcAuthUrl)) {
+      console.warn(`[pje-painel] ${tribunal}: login.seam não redirecionou para Keycloak (location=${kcAuthUrl.slice(0, 120) || '(vazio)'})`)
       return null
     }
 
     // ── Passo 2: GET Keycloak login page → obter action URL + cookies KC ──
-    const r2 = await fetch(kcAuthUrl, {
+    const r2 = await gf(kcAuthUrl, {
       headers: { 'User-Agent': UA },
       signal: AbortSignal.timeout(12_000),
     })
@@ -114,13 +144,35 @@ async function loginPJe(
     // Extrai action URL do formulário Keycloak
     const actionMatch = kcHtml.match(/action="([^"]*login-actions\/authenticate[^"]*)"/i)
     if (!actionMatch) {
-      console.warn(`[pje-painel] ${tribunal}: form action não encontrado no Keycloak`)
+      console.warn(`[pje-painel] ${tribunal}: form action não encontrado no Keycloak (status=${r2.status})`)
       return null
     }
     const actionUrl = actionMatch[1].replace(/&amp;/g, '&')
 
+    // Valida que o action URL pertence ao domínio Keycloak que iniciou o fluxo
+    // (evita submeter credenciais para URL arbitrária injetada no HTML)
+    if (!isUrlTrusted(actionUrl, new URL(kcAuthUrl).origin)) {
+      console.warn(`[pje-painel] ${tribunal}: action URL suspeito — domínio fora do Keycloak esperado`)
+      return null
+    }
+
+    // Extrai campos hidden do formulário para incluir no POST (alguns realms exigem)
+    const hiddenFields: Record<string, string> = {}
+    const hiddenRegex = /<input[^>]*type=["']hidden["'][^>]*>/gi
+    let hm: RegExpExecArray | null
+    while ((hm = hiddenRegex.exec(kcHtml)) !== null) {
+      const nameM  = hm[0].match(/name=["']([^"']+)["']/i)
+      const valueM = hm[0].match(/value=["']([^"']*)["']/i)
+      if (nameM) hiddenFields[nameM[1]] = valueM?.[1] ?? ''
+    }
+
     // ── Passo 3: POST credenciais → Keycloak valida e redireciona para PJe ─
-    const r3 = await fetch(actionUrl, {
+    const postBody = new URLSearchParams({
+      ...hiddenFields,
+      username: cpfLimpo,
+      password: senha,
+    })
+    const r3 = await gf(actionUrl, {
       method:   'POST',
       redirect: 'manual',
       headers: {
@@ -129,7 +181,7 @@ async function loginPJe(
         Cookie:         jar.toString(),
         Referer:        kcAuthUrl,
       },
-      body: new URLSearchParams({ username: cpfLimpo, password: senha }),
+      body: postBody,
       signal: AbortSignal.timeout(15_000),
     })
     jar.ingest(r3.headers)
@@ -151,15 +203,25 @@ async function loginPJe(
           return { __otp: true, cookiesStr: jar.toString(), otpActionUrl, credentialId, origin, tribunal }
         }
 
-        console.warn(`[pje-painel] ${tribunal}: credenciais rejeitadas pelo Keycloak`)
+        // Extrai mensagem de erro do Keycloak para diagnóstico
+        const kcErro = html3.match(/class=["'][^"']*alert-error[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|span|p)>/i)?.[1]
+          ?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+        console.warn(`[pje-painel] ${tribunal}: credenciais rejeitadas pelo Keycloak${kcErro ? ` — ${kcErro}` : ''}`)
         return null
       }
-      console.warn(`[pje-painel] ${tribunal}: redirect sem code (status=${r3.status})`)
+      console.warn(`[pje-painel] ${tribunal}: redirect sem code (status=${r3.status}, location=${(r3.headers.get('location') ?? '').slice(0, 80)})`)
       return null
     }
 
     // ── Passo 4: GET callback PJe → PJe troca code por token, seta JSESSIONID ─
-    const r4 = await fetch(callbackUrl, {
+    // Valida que o callback retorna para o origin PJe esperado
+    // (evita seguir redirects para domínios externos injetados pelo Keycloak)
+    if (!isUrlTrusted(callbackUrl, origin)) {
+      console.warn(`[pje-painel] ${tribunal}: callback URL suspeito — domínio diferente do PJe esperado (${callbackUrl.slice(0, 80)})`)
+      return null
+    }
+
+    const r4 = await gf(callbackUrl, {
       redirect: 'follow',
       headers: { 'User-Agent': UA, Cookie: jar.toString() },
       signal: AbortSignal.timeout(15_000),
@@ -174,7 +236,8 @@ async function loginPJe(
     console.log(`[pje-painel] ${tribunal}: login ok (JSESSIONID obtido)`)
     return { cookies: jar, origin, tribunal }
   } catch (err: any) {
-    console.warn(`[pje-painel] ${tribunal}: erro no login — ${err.message}`)
+    const cause = err.cause?.message ?? err.cause?.code ?? ''
+    console.warn(`[pje-painel] ${tribunal}: erro no login — ${err.message}${cause ? ` (${cause})` : ''}`)
     return null
   }
 }
@@ -188,11 +251,12 @@ export async function completarLoginComOtp(
   otpCode: string,
 ): Promise<{ valido: boolean; mensagem: string }> {
   const jar = new CookieJar()
+  const gf = await getGovFetch()
   try {
     const formBody: Record<string, string> = { totp: otpCode, otp: otpCode }
     if (otpData.credentialId) formBody.credentialId = otpData.credentialId
 
-    const r = await fetch(otpData.otpActionUrl, {
+    const r = await gf(otpData.otpActionUrl, {
       method:   'POST',
       redirect: 'manual',
       headers: {
@@ -218,7 +282,7 @@ export async function completarLoginComOtp(
     }
 
     // Passo 4: callback PJe
-    const r4 = await fetch(callbackUrl, {
+    const r4 = await gf(callbackUrl, {
       redirect: 'follow',
       headers: { 'User-Agent': UA, Cookie: jar.toString() },
       signal: AbortSignal.timeout(15_000),
@@ -244,6 +308,7 @@ async function listarViaRest(
   pagina:    number,
   quantidade: number,
 ): Promise<any[] | null> {
+  const gf = await getGovFetch()
   const paths = [
     '/pje/rest/painel/advogado/processo',
     '/pje/api/painel/advogado/processo',
@@ -252,7 +317,7 @@ async function listarViaRest(
   for (const path of paths) {
     try {
       const url = `${sessao.origin}${path}?pagina=${pagina}&quantidade=${quantidade}`
-      const res = await fetch(url, {
+      const res = await gf(url, {
         headers: {
           'User-Agent': UA,
           Accept:  'application/json',
@@ -275,6 +340,7 @@ async function listarViaRest(
 
 /** Scraping HTML do Painel do Advogado (fallback quando REST não existe) */
 async function listarViaHtml(sessao: SessaoPJe, offset = 0): Promise<{ rows: any[]; hasMore: boolean }> {
+  const gf = await getGovFetch()
   const painelPaths = [
     '/pje/painel/advogado.seam',
     '/pje/painel/advogado/painel.seam',
@@ -284,7 +350,7 @@ async function listarViaHtml(sessao: SessaoPJe, offset = 0): Promise<{ rows: any
   for (const path of painelPaths) {
     try {
       const url = `${sessao.origin}${path}?firstResult=${offset}&maxResults=30`
-      const res = await fetch(url, {
+      const res = await gf(url, {
         headers: { 'User-Agent': UA, Cookie: sessao.cookies.toString() },
         signal: AbortSignal.timeout(20_000),
       })

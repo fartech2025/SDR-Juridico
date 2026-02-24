@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown, Bug, UserCheck } from 'lucide-react'
+import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown, Bug, UserCheck, FilePlus, CheckCircle2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
@@ -7,6 +7,8 @@ import jsPDF from 'jspdf'
 import { BotaoFavorito } from '@/components/BotaoFavorito'
 import { registrarConsulta } from '@/services/favoritosService'
 import { CaseIntelligencePanel, ImportarClienteModal } from '@/components/CaseIntelligence'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { importarProcessoDataJud } from '@/services/pjeImportService'
 
 import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
@@ -138,8 +140,10 @@ const tribunais = [
 ]
 
 // Tipo para dados complementares do Querido Diário
+
 export const DataJudPage = () => {
   const navigate = useNavigate()
+  const { currentOrg } = useOrganization()
   const [conectado, setConectado] = React.useState<boolean>(false)
   const [testando, setTestando] = React.useState<boolean>(false)
   const [buscando, setBuscando] = React.useState<boolean>(false)
@@ -159,6 +163,41 @@ export const DataJudPage = () => {
   // Waze Jurídico — CPF usado na última busca (para painel de IA)
   const [cpfBuscado, setCpfBuscado] = React.useState<string | null>(null)
   const [modalImportarProcesso, setModalImportarProcesso] = React.useState<{ numero: string; tribunal: string } | null>(null)
+
+  // Per-card import state: numero_processo → 'idle' | 'loading' | 'done' | 'already' | 'error'
+  const [importStatus, setImportStatus] = React.useState<Map<string, 'idle' | 'loading' | 'done' | 'already' | 'error'>>(new Map())
+
+  const handleImportarCaso = React.useCallback(async (processo: ProcessoDataJud) => {
+    if (!currentOrg?.id) {
+      toast.error('Organização não identificada')
+      return
+    }
+    const key = processo.numeroProcesso ?? ''
+    if (!key) return
+    setImportStatus((prev) => new Map(prev).set(key, 'loading'))
+    try {
+      const result = await importarProcessoDataJud(processo, currentOrg.id)
+      if (result.erro) {
+        toast.error(`Erro ao importar: ${result.erro}`)
+        setImportStatus((prev) => new Map(prev).set(key, 'error'))
+      } else if (result.ignorado) {
+        toast.info('Processo já existe nos casos')
+        setImportStatus((prev) => new Map(prev).set(key, 'already'))
+      } else {
+        const msg = result.clienteCriado
+          ? 'Processo e cliente importados! Redirecionando...'
+          : 'Processo importado! Redirecionando...'
+        toast.success(msg)
+        setImportStatus((prev) => new Map(prev).set(key, 'done'))
+        // Navega para Casos para garantir que a lista seja atualizada com os dados do servidor
+        setTimeout(() => navigate('/app/casos'), 800)
+      }
+    } catch (err) {
+      console.error('[DataJudPage] importarProcessoDataJud threw:', err)
+      toast.error('Erro ao importar processo')
+      setImportStatus((prev) => new Map(prev).set(key, 'error'))
+    }
+  }, [currentOrg?.id, navigate])
 
   // Tribunal detectado automaticamente
   const tribunalDetectado = React.useMemo(() => {
@@ -1549,6 +1588,43 @@ export const DataJudPage = () => {
                         <UserCheck className="h-3.5 w-3.5" />
                         Importar para Cliente
                       </Button>
+
+                      {/* Importar direto para Casos */}
+                      {(() => {
+                        const key = processo.numeroProcesso ?? ''
+                        const status = importStatus.get(key) ?? 'idle'
+                        const isDone = status === 'done' || status === 'already'
+                        return (
+                          <Button
+                            size="sm"
+                            onClick={() => handleImportarCaso(processo)}
+                            disabled={status === 'loading' || isDone}
+                            className={cn(
+                              'flex items-center gap-1.5 border-0',
+                              isDone
+                                ? 'bg-green-600 hover:bg-green-600 text-white cursor-default'
+                                : 'bg-brand-primary hover:bg-brand-primary/90 text-white',
+                            )}
+                          >
+                            {status === 'loading' ? (
+                              <>
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                Importando...
+                              </>
+                            ) : isDone ? (
+                              <>
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                {status === 'already' ? 'Já existe' : 'Importado'}
+                              </>
+                            ) : (
+                              <>
+                                <FilePlus className="h-3.5 w-3.5" />
+                                Importar para Casos
+                              </>
+                            )}
+                          </Button>
+                        )
+                      })()}
                     </div>
                   </div>
                 </div>

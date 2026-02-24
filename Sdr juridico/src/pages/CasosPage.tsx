@@ -563,7 +563,14 @@ export const CasosPage = () => {
                                   {initials}
                                 </div>
                                 <div className="min-w-0">
-                                  <div className="font-medium text-text truncate">{caso.title}</div>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="font-medium text-text truncate">{caso.title}</div>
+                                    {caso.datajud_sync_status === 'sincronizado' && (
+                                      <span className="shrink-0 inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                        DataJud
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="text-xs text-text-muted truncate">{caso.cliente}</div>
                                 </div>
                               </div>

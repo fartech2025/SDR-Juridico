@@ -10,6 +10,7 @@
 //   TRF5:    eproc.trf5.jus.br
 
 import type { ScraperProcesso } from '../lib/utils.js'
+import { getGovFetch } from '../lib/govFetch.js'
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
 
@@ -64,8 +65,10 @@ function ingestCookies(headers: Headers, existente = ''): string {
 async function loginEproc(base: string, cpf: string, senha: string): Promise<string | null> {
   const cpfLimpo = cpf.replace(/\D/g, '')
   try {
+    const gf = await getGovFetch()
+
     // Passo 1: GET página de login → pega cookie de sessão inicial
-    const r1 = await fetch(`${base}/externo_controlador.php?acao=login`, {
+    const r1 = await gf(`${base}/externo_controlador.php?acao=login`, {
       redirect: 'follow',
       headers: { 'User-Agent': UA },
       signal: AbortSignal.timeout(12_000),
@@ -73,7 +76,7 @@ async function loginEproc(base: string, cpf: string, senha: string): Promise<str
     let cookies = ingestCookies(r1.headers)
 
     // Passo 2: POST credenciais
-    const r2 = await fetch(`${base}/externo_controlador.php?acao=entrar`, {
+    const r2 = await gf(`${base}/externo_controlador.php?acao=entrar`, {
       method:   'POST',
       redirect: 'manual',
       headers: {
@@ -160,9 +163,11 @@ async function listarProcessosEproc(
     '/externo_controlador.php?acao=principal',
   ]
 
+  const gf = await getGovFetch()
+
   for (const path of painelPaths) {
     try {
-      const res = await fetch(`${base}${path}`, {
+      const res = await gf(`${base}${path}`, {
         headers: { 'User-Agent': UA, Cookie: cookies },
         signal: AbortSignal.timeout(20_000),
       })
@@ -175,7 +180,7 @@ async function listarProcessosEproc(
         // Tenta segunda página se houver paginação
         const temProxima = /próxim|nextPage|page=2/i.test(html)
         if (temProxima) {
-          const res2 = await fetch(`${base}${path}&pagina=2`, {
+          const res2 = await gf(`${base}${path}&pagina=2`, {
             headers: { 'User-Agent': UA, Cookie: cookies },
             signal: AbortSignal.timeout(20_000),
           }).catch(() => null)

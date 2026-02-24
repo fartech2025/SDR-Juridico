@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Clock, Plus, Search, MoreVertical, X, User, Calendar, Flag, FileText, CheckCircle2, ArrowRight, MessageSquare, History, Edit3, Save, XCircle, AlertTriangle, Trash2, RotateCcw } from 'lucide-react'
+import { Clock, Plus, Search, MoreVertical, X, User, Calendar, Flag, FileText, CheckCircle2, ArrowRight, MessageSquare, History, Edit3, Save, XCircle, AlertTriangle, Trash2, RotateCcw, Play, Send, RefreshCw, CornerDownLeft, ArrowUp, Minus, ArrowDown } from 'lucide-react'
 
 import {
   DndContext,
@@ -18,8 +18,17 @@ import type { Tarefa } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDate, formatDateTime } from '@/utils/format'
 import { useTarefas } from '@/hooks/useTarefas'
+import { useLeads } from '@/hooks/useLeads'
+import { useClientes } from '@/hooks/useClientes'
+import { useCasos } from '@/hooks/useCasos'
 import { useTaskUiRole } from '@/utils/taskRole'
 import { supabase } from '@/lib/supabaseClient'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import {
+  TarefaFormModal,
+  buildDefaultValues,
+  type TarefaFormValues,
+} from '@/components/tarefas/TarefaFormModal'
 
 type ColumnKey = Tarefa['status']
 
@@ -42,19 +51,19 @@ const COLUMN_BG: Record<ColumnKey, string> = {
 }
 
 const priorityBadge = (priority: Tarefa['priority']) => {
-  if (priority === 'alta') return 'bg-gradient-to-r from-red-500 to-rose-500 text-white border-red-400 shadow-sm'
-  if (priority === 'normal') return 'bg-gradient-to-r from-slate-100 to-gray-100 text-slate-700 border-slate-300'
-  return 'bg-gradient-to-r from-sky-50 to-blue-50 text-sky-700 border-sky-200'
+  if (priority === 'alta')   return 'bg-red-50 text-red-700 border-red-200'
+  if (priority === 'normal') return 'bg-gray-100 text-gray-600 border-gray-200'
+  return 'bg-slate-50 text-slate-500 border-slate-200'
 }
 
-const priorityIcon = (priority: Tarefa['priority']) => {
-  if (priority === 'alta') return '🔥'
-  if (priority === 'normal') return '➖'
-  return '🔽'
+const PriorityIcon = ({ priority, className = 'w-3 h-3' }: { priority: Tarefa['priority']; className?: string }) => {
+  if (priority === 'alta')   return <ArrowUp   className={className} />
+  if (priority === 'normal') return <Minus     className={className} />
+  return                            <ArrowDown className={className} />
 }
 
 const priorityLabel = (priority: Tarefa['priority']) => {
-  if (priority === 'alta') return 'Alta'
+  if (priority === 'alta')   return 'Alta'
   if (priority === 'normal') return 'Normal'
   return 'Baixa'
 }
@@ -74,12 +83,12 @@ const isColumnKey = (value: unknown): value is ColumnKey => {
 }
 
 const COLUMN_HEADER_COLORS: Record<ColumnKey, string> = {
-  pendente: 'bg-amber-100 text-amber-800 border-amber-200',
-  em_andamento: 'bg-blue-100 text-blue-800 border-blue-200',
-  aguardando_validacao: 'bg-purple-100 text-purple-800 border-purple-200',
-  concluida: 'bg-green-100 text-green-800 border-green-200',
-  cancelada: 'bg-red-100 text-red-800 border-red-200',
-  devolvida: 'bg-surface-alt text-text border-border',
+  pendente:            'bg-amber-50 text-amber-700 border-amber-200',
+  em_andamento:        'bg-orange-50 text-orange-700 border-orange-200',
+  aguardando_validacao:'bg-purple-50 text-purple-700 border-purple-200',
+  concluida:           'bg-green-50 text-green-700 border-green-200',
+  cancelada:           'bg-red-50 text-red-700 border-red-200',
+  devolvida:           'bg-gray-50 text-gray-600 border-gray-200',
 }
 
 const DroppableColumn = ({
@@ -182,22 +191,18 @@ const DraggableTaskCard = ({
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {/* Badge de Prioridade */}
           <span className={cn(
-            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold border transition-all',
+            'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium border',
             priorityBadge(task.priority)
           )}>
-            <span className="text-xs">{priorityIcon(task.priority)}</span>
-            <span className="hidden sm:inline">{priorityLabel(task.priority)}</span>
+            <PriorityIcon priority={task.priority} className="w-2.5 h-2.5" />
+            {priorityLabel(task.priority)}
           </span>
-          
+
           {/* Badge de Atrasada */}
           {isOverdue(task) && (
-            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-gradient-to-r from-red-100 to-orange-100 text-red-700 border border-red-300 animate-pulse shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-              </span>
-              <span className="hidden sm:inline">Atrasada</span>
-              <span className="sm:hidden">!</span>
+            <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-red-50 text-red-700 border border-red-200">
+              <Clock className="w-2.5 h-2.5" />
+              Atrasada
             </span>
           )}
         </div>
@@ -219,8 +224,12 @@ const DraggableTaskCard = ({
 
 export const TarefasKanbanPage = () => {
   const role = useTaskUiRole()
+  const { currentOrg } = useOrganization()
   const { tarefas, loading, error, fetchTarefas, createTarefa, updateTarefa, submitForConfirmation, approveTarefa, rejectTarefa, fetchDeletedTarefas, restoreTarefa, deleteTarefa } =
     useTarefas()
+  const { leads }    = useLeads()
+  const { clientes } = useClientes()
+  const { casos }    = useCasos()
 
   const [query, setQuery] = React.useState('')
   const [modalOpen, setModalOpen] = React.useState(false)
@@ -250,6 +259,31 @@ export const TarefasKanbanPage = () => {
   const [showDeleted, setShowDeleted] = React.useState(false)
   const [deletedTarefas, setDeletedTarefas] = React.useState<Tarefa[]>([])
   const [loadingDeleted, setLoadingDeleted] = React.useState(false)
+  // Usuários da organização para seleção de responsável
+  const [orgUsers, setOrgUsers] = React.useState<Array<{ id: string; nome_completo: string }>>([])
+  const userNameById = React.useMemo(() => {
+    const m = new Map<string, string>()
+    for (const u of orgUsers) m.set(u.id, u.nome_completo)
+    return m
+  }, [orgUsers])
+
+  // Entity name maps for vínculo display
+  const leadMap    = React.useMemo(() => new Map(leads.map((l) => [l.id, l.name])), [leads])
+  const clienteMap = React.useMemo(() => new Map(clientes.map((c) => [c.id, c.name])), [clientes])
+  const casoMap    = React.useMemo(
+    () => new Map(casos.map((c) => [c.id, c.numero_processo ?? `${c.title} — ${c.cliente}`])),
+    [casos],
+  )
+
+  const resolveLinkLabel = React.useCallback((t: Tarefa): string | null => {
+    if (t.casoId)    return `Caso: ${casoMap.get(t.casoId)    ?? t.casoId}`
+    if (t.clienteId) return `Cliente: ${clienteMap.get(t.clienteId) ?? t.clienteId}`
+    if (t.leadId)    return `Lead: ${leadMap.get(t.leadId)    ?? t.leadId}`
+    return null
+  }, [casoMap, clienteMap, leadMap])
+
+  // Form state for the shared create modal
+  const [createFormInitial, setCreateFormInitial] = React.useState<Partial<TarefaFormValues>>(buildDefaultValues())
 
   // Função para buscar histórico da tarefa
   const fetchTaskHistory = React.useCallback(async (taskId: string) => {
@@ -285,6 +319,35 @@ export const TarefasKanbanPage = () => {
         .finally(() => setLoadingDeleted(false))
     }
   }, [showDeleted, fetchDeletedTarefas])
+
+  // Buscar usuários da organização para o seletor de responsável.
+  // Membership is tracked in org_members; usuarios.org_id may not be populated.
+  React.useEffect(() => {
+    if (!currentOrg?.id) return
+    const orgId = currentOrg.id
+    ;(async () => {
+      try {
+        const { data: members } = await supabase
+          .from('org_members')
+          .select('user_id')
+          .eq('org_id', orgId)
+          .eq('ativo', true)
+
+        const userIds = (members ?? []).map((m) => m.user_id)
+        if (userIds.length === 0) return
+
+        const { data: users } = await supabase
+          .from('usuarios')
+          .select('id, nome_completo')
+          .in('id', userIds)
+          .order('nome_completo')
+
+        if (users) setOrgUsers(users as Array<{ id: string; nome_completo: string }>)
+      } catch (err) {
+        console.error('[TarefasKanbanPage] orgUsers fetch:', err)
+      }
+    })()
+  }, [currentOrg?.id])
 
   const normalized = query.trim().toLowerCase()
 
@@ -431,11 +494,7 @@ export const TarefasKanbanPage = () => {
             {canCreate && !showDeleted && (
               <button
                 onClick={() => {
-                  setFormTitle('')
-                  setFormDescription('')
-                  setFormPriority('normal')
-                  setFormDueDate('')
-                  setAssignedDraft('')
+                  setCreateFormInitial(buildDefaultValues())
                   setCreateModalOpen(true)
                 }}
                 className="h-10 px-4 rounded-lg font-medium text-white transition-all hover:shadow-lg flex items-center gap-2"
@@ -529,44 +588,32 @@ export const TarefasKanbanPage = () => {
               <DroppableColumn columnKey={key} title={COLUMN_LABELS[key]} count={items.length} key={key}>
                 {items.map((t) => (
                   <DraggableTaskCard key={t.id} task={t} onOpen={() => openTask(t)}>
-                    <div className="mt-2.5 pt-2 border-t border-border flex flex-wrap gap-1.5">
+                    <div className="mt-2.5 pt-2 border-t border-gray-100 flex flex-wrap gap-1.5">
                       {/* Botões para ADVOGADO */}
                       {role === 'ADVOGADO' && key === 'pendente' && (
                         <button
-                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-brand-primary-100 bg-brand-primary-50 text-brand-primary hover:bg-brand-primary-100 hover:border-brand-primary transition-all shadow-sm"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            void onMove(t, 'em_andamento')
-                          }}
+                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); void onMove(t, 'em_andamento') }}
                         >
-                          <span className="text-sm">▶</span>
+                          <Play className="w-3 h-3" />
                           <span className="hidden sm:inline">Iniciar</span>
                         </button>
                       )}
                       {role === 'ADVOGADO' && key === 'em_andamento' && (
                         <button
-                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md bg-brand-primary text-white hover:bg-brand-primary-dark transition-all shadow-sm hover:shadow"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            void submitForConfirmation(t.id)
-                          }}
+                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); void submitForConfirmation(t.id) }}
                         >
-                          <span className="text-sm">📤</span>
+                          <Send className="w-3 h-3" />
                           <span className="hidden sm:inline">Enviar</span>
                         </button>
                       )}
                       {role === 'ADVOGADO' && key === 'devolvida' && (
                         <button
-                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            void onMove(t, 'em_andamento')
-                          }}
+                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); void onMove(t, 'em_andamento') }}
                         >
-                          <span className="text-sm">🔄</span>
+                          <RefreshCw className="w-3 h-3" />
                           <span className="hidden sm:inline">Retomar</span>
                         </button>
                       )}
@@ -574,39 +621,27 @@ export const TarefasKanbanPage = () => {
                       {/* Botões para GESTOR/ADMIN */}
                       {canApprove && key === 'pendente' && (
                         <button
-                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-brand-primary-100 bg-brand-primary-50 text-brand-primary hover:bg-brand-primary-100 hover:border-brand-primary transition-all shadow-sm"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            void onMove(t, 'em_andamento')
-                          }}
+                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); void onMove(t, 'em_andamento') }}
                         >
-                          <span className="text-sm">▶</span>
+                          <Play className="w-3 h-3" />
                           <span className="hidden sm:inline">Iniciar</span>
                         </button>
                       )}
                       {canApprove && key === 'em_andamento' && (
                         <>
                           <button
-                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-sm"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              void submitForConfirmation(t.id)
-                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void submitForConfirmation(t.id) }}
                           >
-                            <span className="text-sm">📤</span>
+                            <Send className="w-3 h-3" />
                             <span className="hidden sm:inline">Validar</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm hover:shadow"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              void approveTarefa(t.id)
-                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void approveTarefa(t.id) }}
                           >
-                            <span className="text-sm">✓</span>
+                            <CheckCircle2 className="w-3 h-3" />
                             <span className="hidden sm:inline">Concluir</span>
                           </button>
                         </>
@@ -614,26 +649,17 @@ export const TarefasKanbanPage = () => {
                       {canApprove && key === 'aguardando_validacao' && (
                         <>
                           <button
-                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm hover:shadow"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              void approveTarefa(t.id)
-                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void approveTarefa(t.id) }}
                           >
-                            <span className="text-sm">✓</span>
+                            <CheckCircle2 className="w-3 h-3" />
                             <span>Aprovar</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-border bg-white text-text hover:bg-surface-alt hover:border-border-strong transition-all shadow-sm"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setActive(t)
-                              setModalOpen(true)
-                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActive(t); setModalOpen(true) }}
                           >
-                            <span className="text-sm">↩</span>
+                            <CornerDownLeft className="w-3 h-3" />
                             <span>Devolver</span>
                           </button>
                         </>
@@ -641,39 +667,27 @@ export const TarefasKanbanPage = () => {
                       {canApprove && key === 'devolvida' && (
                         <>
                           <button
-                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              void onMove(t, 'em_andamento')
-                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void onMove(t, 'em_andamento') }}
                           >
-                            <span className="text-sm">🔄</span>
+                            <RefreshCw className="w-3 h-3" />
                             <span className="hidden sm:inline">Reabrir</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-sm"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              void onMove(t, 'pendente')
-                            }}
+                            className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void onMove(t, 'pendente') }}
                           >
-                            <span className="text-sm">↩</span>
+                            <RotateCcw className="w-3 h-3" />
                             <span className="hidden sm:inline">Pendente</span>
                           </button>
                         </>
                       )}
                       {canApprove && key === 'concluida' && (
                         <button
-                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-border bg-white text-text-muted hover:bg-surface-alt hover:border-border-strong transition-all shadow-sm"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            void onMove(t, 'em_andamento')
-                          }}
+                          className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); void onMove(t, 'em_andamento') }}
                         >
-                          <span className="text-sm">🔄</span>
+                          <RefreshCw className="w-3 h-3" />
                           <span className="hidden sm:inline">Reabrir</span>
                         </button>
                       )}
@@ -697,7 +711,7 @@ export const TarefasKanbanPage = () => {
         <Modal open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="42rem" noPadding>
           <div className="bg-white rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header do Drawer */}
-            <div className="shrink-0 border-b border-border bg-linear-to-r from-white to-gray-50">
+            <div className="shrink-0 border-b border-border bg-white">
               <div className="flex items-start justify-between p-5">
                 <div className="flex-1 min-w-0 pr-4">
                   {editMode ? (
@@ -721,10 +735,11 @@ export const TarefasKanbanPage = () => {
                     </span>
                     {/* Badge de Prioridade */}
                     <span className={cn(
-                      'inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold',
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border',
                       priorityBadge(active.priority)
                     )}>
-                      {priorityIcon(active.priority)} {priorityLabel(active.priority)}
+                      <PriorityIcon priority={active.priority} />
+                      {priorityLabel(active.priority)}
                     </span>
                     {/* Badge de Atrasada */}
                     {isOverdue(active) && (
@@ -805,15 +820,21 @@ export const TarefasKanbanPage = () => {
                         <User className="w-3.5 h-3.5" /> Responsável
                       </label>
                       {editMode ? (
-                        <input
+                        <select
                           value={assignedDraft}
                           onChange={(e) => setAssignedDraft(e.target.value)}
-                          placeholder="ID do usuário"
                           className="h-9 w-full rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
-                        />
+                        >
+                          <option value="">Não atribuído</option>
+                          {orgUsers.map((u) => (
+                            <option key={u.id} value={u.id}>{u.nome_completo}</option>
+                          ))}
+                        </select>
                       ) : (
                         <p className="text-sm font-medium text-text bg-white rounded-lg px-3 py-2 border border-border">
-                          {active.ownerId ? active.ownerId.slice(0, 8) + '...' : 'Não atribuído'}
+                          {active.ownerId
+                            ? (userNameById.get(active.ownerId) ?? active.ownerId.slice(0, 8) + '...')
+                            : 'Não atribuído'}
                         </p>
                       )}
                     </div>
@@ -853,13 +874,17 @@ export const TarefasKanbanPage = () => {
                           onChange={(e) => setFormPriority(e.target.value as Tarefa['priority'])}
                           className="h-9 w-full rounded-lg border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
                         >
-                          <option value="baixa">🔽 Baixa</option>
-                          <option value="normal">➖ Normal</option>
-                          <option value="alta">🔥 Alta</option>
+                          <option value="baixa">Baixa</option>
+                          <option value="normal">Normal</option>
+                          <option value="alta">Alta</option>
                         </select>
                       ) : (
-                        <p className="text-sm font-medium text-text bg-white rounded-lg px-3 py-2 border border-border capitalize">
-                          {priorityIcon(active.priority)} {priorityLabel(active.priority)}
+                        <p className={cn(
+                          'inline-flex items-center gap-1.5 text-sm font-medium rounded-lg px-3 py-2 border',
+                          priorityBadge(active.priority),
+                        )}>
+                          <PriorityIcon priority={active.priority} className="w-3.5 h-3.5" />
+                          {priorityLabel(active.priority)}
                         </p>
                       )}
                     </div>
@@ -874,6 +899,18 @@ export const TarefasKanbanPage = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Vínculo */}
+                  {(active.leadId || active.clienteId || active.casoId) && (
+                    <div className="space-y-1 col-span-2">
+                      <label className="text-xs text-text-muted font-medium flex items-center gap-1">
+                        Vínculo
+                      </label>
+                      <p className="text-sm font-medium text-text bg-white rounded-lg px-3 py-2 border border-border">
+                        {resolveLinkLabel(active)}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Seção: Descrição */}
@@ -915,13 +952,13 @@ export const TarefasKanbanPage = () => {
                           void onMove(active, 'em_andamento')
                           setModalOpen(false)
                         }}
-                        className="flex items-center gap-2 p-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
                       >
-                        <span className="text-lg">▶</span>
+                        <Play className="w-4 h-4" />
                         Iniciar Tarefa
                       </button>
                     )}
-                    
+
                     {/* Enviar para Validação */}
                     {active.status === 'em_andamento' && (
                       <>
@@ -930,9 +967,9 @@ export const TarefasKanbanPage = () => {
                             void submitForConfirmation(active.id)
                             setModalOpen(false)
                           }}
-                          className="flex items-center gap-2 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors text-sm font-medium"
+                          className="flex items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
                         >
-                          <span className="text-lg">📤</span>
+                          <Send className="w-4 h-4" />
                           Enviar p/ Validação
                         </button>
                         {canApprove && (
@@ -941,7 +978,7 @@ export const TarefasKanbanPage = () => {
                               void approveTarefa(active.id)
                               setModalOpen(false)
                             }}
-                            className="flex items-center gap-2 p-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-sm font-medium"
+                            className="flex items-center gap-2 p-3 rounded-xl bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium"
                           >
                             <CheckCircle2 className="w-4 h-4" />
                             Marcar Concluída
@@ -949,7 +986,7 @@ export const TarefasKanbanPage = () => {
                         )}
                       </>
                     )}
-                    
+
                     {/* Aprovar / Devolver */}
                     {active.status === 'aguardando_validacao' && canApprove && (
                       <>
@@ -958,7 +995,7 @@ export const TarefasKanbanPage = () => {
                             void approveTarefa(active.id)
                             setModalOpen(false)
                           }}
-                          className="flex items-center gap-2 p-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-sm font-medium"
+                          className="flex items-center gap-2 p-3 rounded-xl bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium"
                         >
                           <CheckCircle2 className="w-4 h-4" />
                           Aprovar Tarefa
@@ -971,14 +1008,14 @@ export const TarefasKanbanPage = () => {
                               setModalOpen(false)
                             }
                           }}
-                          className="flex items-center gap-2 p-3 rounded-xl border border-border bg-white text-text hover:bg-surface-alt transition-colors text-sm font-medium"
+                          className="flex items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
                         >
                           <XCircle className="w-4 h-4" />
                           Devolver
                         </button>
                       </>
                     )}
-                    
+
                     {/* Reabrir tarefa */}
                     {(active.status === 'concluida' || active.status === 'devolvida') && canApprove && (
                       <button
@@ -986,9 +1023,9 @@ export const TarefasKanbanPage = () => {
                           void onMove(active, 'em_andamento')
                           setModalOpen(false)
                         }}
-                        className="flex items-center gap-2 p-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
                       >
-                        <span className="text-lg">🔄</span>
+                        <RefreshCw className="w-4 h-4" />
                         Reabrir Tarefa
                       </button>
                     )}
@@ -1104,7 +1141,7 @@ export const TarefasKanbanPage = () => {
                                 
                                 {entry.motivo && (
                                   <p className="text-xs text-text-muted mt-1 bg-white rounded px-2 py-1 border border-border">
-                                    💬 {entry.motivo}
+                                    {entry.motivo}
                                   </p>
                                 )}
                                 
@@ -1180,6 +1217,15 @@ export const TarefasKanbanPage = () => {
                           dueDate: formDueDate || null,
                           ownerId: assignedDraft.trim() || undefined,
                         })
+                        // Sync active with updated values
+                        setActive((prev) => prev ? {
+                          ...prev,
+                          title: formTitle.trim(),
+                          description: formDescription.trim() || null,
+                          priority: formPriority,
+                          dueDate: formDueDate || null,
+                          ownerId: assignedDraft.trim() || undefined,
+                        } : prev)
                         setEditMode(false)
                       }}
                       className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-brand-primary font-medium text-white hover:bg-brand-primary-dark transition-colors text-sm"
@@ -1204,88 +1250,26 @@ export const TarefasKanbanPage = () => {
         </Modal>
       )}
 
-      {/* Modal de Criar Tarefa */}
-      <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Nova Tarefa">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm text-text-muted">Título *</label>
-            <input
-              value={formTitle}
-              onChange={(e) => setFormTitle(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-              placeholder="Título da tarefa"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm text-text-muted">Descrição</label>
-            <textarea
-              value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
-              rows={3}
-              className="w-full rounded-lg border border-border px-4 py-2 text-sm focus:outline-none focus:ring-2"
-              placeholder="Descrição da tarefa"
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm text-text-muted">Prioridade</label>
-              <select
-                value={formPriority}
-                onChange={(e) => setFormPriority(e.target.value as Tarefa['priority'])}
-                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-              >
-                <option value="baixa">Baixa</option>
-                <option value="normal">Normal</option>
-                <option value="alta">Alta</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-text-muted">Prazo</label>
-              <input
-                type="date"
-                value={formDueDate}
-                onChange={(e) => setFormDueDate(e.target.value)}
-                className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm text-text-muted">Atribuir para (ID do usuário)</label>
-            <input
-              value={assignedDraft}
-              onChange={(e) => setAssignedDraft(e.target.value)}
-              placeholder="Deixe vazio para atribuir a você mesmo"
-              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-            />
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button
-              className="h-10 px-4 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors"
-              onClick={() => setCreateModalOpen(false)}
-            >
-              Cancelar
-            </button>
-            <button
-              className="h-10 px-4 rounded-lg font-medium text-white transition-colors"
-              style={{ backgroundColor: 'var(--brand-primary)' }}
-              onClick={async () => {
-                if (!formTitle.trim()) return
-                await createTarefa({
-                  title: formTitle.trim(),
-                  description: formDescription.trim() || null,
-                  priority: formPriority,
-                  status: 'pendente',
-                  dueDate: formDueDate || null,
-                  ownerId: assignedDraft.trim() || undefined,
-                })
-                setCreateModalOpen(false)
-              }}
-            >
-              Criar Tarefa
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* Shared create modal (unified with lista view) */}
+      <TarefaFormModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSave={async (values) => {
+          await createTarefa({
+            title:       values.title.trim(),
+            description: values.description.trim() || null,
+            priority:    values.priority,
+            status:      'pendente',
+            dueDate:     values.dueDate || null,
+            ownerId:     values.ownerId || undefined,
+            leadId:      values.linkType === 'lead'    ? values.linkId || null : null,
+            clienteId:   values.linkType === 'cliente' ? values.linkId || null : null,
+            casoId:      values.linkType === 'caso'    ? values.linkId || null : null,
+          })
+        }}
+        initialValues={createFormInitial}
+        title="Nova Tarefa"
+      />
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');

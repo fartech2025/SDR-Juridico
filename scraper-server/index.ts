@@ -5,6 +5,7 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve }                     from 'node:path'
 import { fileURLToPath }               from 'node:url'
+import { randomBytes }                 from 'node:crypto'
 import { searchByCpf } from './scrapers/index.js'
 import { quickCpfCheck, searchByNome, buscarPorNumero, buscarPorOAB } from './scrapers/datajud.js'
 import { consultarProcessoMNI, tribunalTemMNI, MNI_ENDPOINTS } from './scrapers/mni.js'
@@ -46,7 +47,7 @@ interface PendingOtpSession {
 const pendingOtpSessions = new Map<string, PendingOtpSession>()
 
 function gerarSessionId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2)
+  return randomBytes(24).toString('base64url')
 }
 
 function limparSessoesExpiradas(): void {
@@ -63,8 +64,14 @@ const ENV_PATH  = resolve(__dirname, '.env')
 function salvarNoEnv(updates: Record<string, string>): void {
   let content = ''
   try { content = readFileSync(ENV_PATH, 'utf-8') } catch { /* .env ainda não existe */ }
-  for (const [key, value] of Object.entries(updates)) {
-    const rx = new RegExp(`^${key}=.*$`, 'm')
+  for (const [key, rawValue] of Object.entries(updates)) {
+    // Valida que a chave é um identificador env seguro
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(key)) throw new Error(`Chave de env inválida: ${key}`)
+    // Remove newlines e carriage returns do valor para evitar injeção de linhas no .env
+    const value = rawValue.replace(/[\r\n]/g, '')
+    // Escapa key na regex de forma literal (não interpola como padrão)
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const rx = new RegExp(`^${escapedKey}=.*$`, 'm')
     if (rx.test(content)) content = content.replace(rx, `${key}=${value}`)
     else                   content += `\n${key}=${value}`
   }
@@ -85,10 +92,21 @@ function sendJson(res: ServerResponse, data: unknown, status = 200): void {
   res.end(JSON.stringify(data))
 }
 
+const MAX_BODY_BYTES = 64 * 1024 // 64 KB — suficiente para qualquer payload legítimo
+
 async function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
-    req.on('data', (chunk) => chunks.push(chunk))
+    let total = 0
+    req.on('data', (chunk: Buffer) => {
+      total += chunk.length
+      if (total > MAX_BODY_BYTES) {
+        req.destroy()
+        reject(new Error('Payload muito grande (máximo 64 KB)'))
+        return
+      }
+      chunks.push(chunk)
+    })
     req.on('end',  () => resolve(Buffer.concat(chunks).toString('utf-8')))
     req.on('error', reject)
   })
@@ -293,6 +311,8 @@ const server = createServer(async (req, res) => {
     try {
       const { prompt } = JSON.parse(await readBody(req)) as { prompt: string }
       if (!prompt) return sendJson(res, { erro: 'Campo prompt é obrigatório' }, 400)
+      if (typeof prompt !== 'string' || prompt.length > 20_000)
+        return sendJson(res, { erro: 'Prompt inválido ou excede 20.000 caracteres' }, 400)
 
       const apiKey = process.env.ANTHROPIC_API_KEY
       if (!apiKey)
@@ -555,7 +575,7 @@ const server = createServer(async (req, res) => {
   res.end('Not Found')
 })
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   const mniStatus = isMniAtivo()
     ? `MNI ativo (${Object.keys(MNI_ENDPOINTS).length} tribunais)`
     : 'MNI inativo (configure via UI: Config → Avancado)'

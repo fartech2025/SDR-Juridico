@@ -169,9 +169,10 @@ export interface AdvogadoProcessosResult {
   processos: ScraperProcesso[]
   total: number
   gerado_em: string
-  autenticacao: 'pdpj-sso' | 'basic' | 'falhou'
-  tribunais: { tribunal: string; total: number; erro?: string }[]
+  autenticacao: 'oauth2-keycloak' | 'falhou'
+  tribunais: { tribunal: string; total: number; metodo?: string; erro?: string }[]
   datajud_oab?: number
+  eproc_total?: number
   erro?: string
 }
 
