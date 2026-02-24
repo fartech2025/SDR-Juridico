@@ -17,8 +17,13 @@ import { cn } from '@/utils/cn'
 import { useIntegrations } from '@/hooks/useIntegrations'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { supabase } from '@/lib/supabaseClient'
+<<<<<<< HEAD
+=======
+import { useTheme } from '@/contexts/ThemeContext'
+import { DatabasePage } from '@/pages/DatabasePage'
+>>>>>>> 2cac890 (feat: ajustes no SDR juridico + novas páginas)
 
-const tabs = ['Essencial', 'Avancado'] as const
+const tabs = ['Essencial', 'Avancado', 'Database'] as const
 type TabKey = (typeof tabs)[number]
 
 const resolveStatus = (
@@ -79,6 +84,9 @@ export const ConfigPage = () => {
   }, [integrations])
 
   const filteredIntegrations = React.useMemo(() => {
+    if (activeTab === 'Database') {
+      return [] // Database tab doesn't show integrations
+    }
     if (activeTab === 'Essencial') {
       return dedupedIntegrations.filter((integration) =>
         ['whatsapp', 'google_calendar', 'email'].some((key) =>
@@ -351,12 +359,22 @@ export const ConfigPage = () => {
         )}
       </div>
 
+<<<<<<< HEAD
       <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Cards avançados — visíveis apenas na aba Avançado */}
             {activeTab === 'Avancado' && <PjeConfigCard />}
             {activeTab === 'Avancado' && <EprocConfigCard />}
             {filteredIntegrations.map((integration) => {
+=======
+      {activeTab === 'Database' ? (
+        <DatabasePage />
+      ) : (
+        <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
+          <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+            <div className="grid gap-4 lg:grid-cols-2">
+              {filteredIntegrations.map((integration) => {
+>>>>>>> 2cac890 (feat: ajustes no SDR juridico + novas páginas)
               const isGoogleCalendar = matchesKey(
                 integration.name,
                 'google_calendar',
@@ -413,6 +431,7 @@ export const ConfigPage = () => {
             })}
           </div>
       </PageState>
+      )}
 
       <Modal
         open={Boolean(selectedIntegration)}

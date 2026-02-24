@@ -1291,10 +1291,21 @@ export const AgendaPage = () => {
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <div className="flex items-center justify-between mb-2">
+<<<<<<< HEAD
                   <label className="text-xs font-semibold text-text">Local</label>
                   {formState.title && formState.date && formState.time && (
                     <button
                       type="button"
+=======
+                  <span className="text-xs uppercase tracking-wide text-text-subtle">
+                    Local
+                  </span>
+                  {/* Google Meet desativado temporariamente */}
+                  {/* {formState.title && formState.date && formState.time && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+>>>>>>> 2cac890 (feat: ajustes no SDR juridico + novas páginas)
                       onClick={async () => {
                         setIsCreatingGoogleMeet(true)
                         try {
@@ -1334,8 +1345,13 @@ export const AgendaPage = () => {
                           Gerar Google Meet
                         </>
                       )}
+<<<<<<< HEAD
                     </button>
                   )}
+=======
+                    </Button>
+                  )} */}
+>>>>>>> 2cac890 (feat: ajustes no SDR juridico + novas páginas)
                 </div>
                 <input
                   value={formState.location}

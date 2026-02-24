@@ -5,6 +5,7 @@ import {
   Bell,
   Building2,
   CalendarClock,
+  Database,
   FileText,
   LayoutDashboard,
   ListTodo,
