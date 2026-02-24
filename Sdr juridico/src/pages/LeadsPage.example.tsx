@@ -92,7 +92,7 @@ export function LeadsRealPage() {
           origem: formData.origem,
           assunto: formData.assunto,
           status: sqlStatus as any,
-          qualificacao: { heat: formData.heat },
+          heat: formData.heat,
         })
         toast.success('Lead atualizado!')
       } else {
@@ -101,7 +101,6 @@ export function LeadsRealPage() {
           return
         }
         await createLead({
-          org_id: orgId,
           canal: 'whatsapp',
           nome: formData.nome,
           email: formData.email,
@@ -109,13 +108,13 @@ export function LeadsRealPage() {
           origem: formData.origem,
           assunto: formData.assunto,
           status: sqlStatus as any,
-          qualificacao: { heat: formData.heat },
+          heat: formData.heat,
           cliente_id: null,
           resumo: null,
           assigned_user_id: null,
           remote_id: null,
           last_contact_at: null,
-        })
+        } as any)
         toast.success('Lead criado!')
       }
       
@@ -160,7 +159,7 @@ export function LeadsRealPage() {
     }
   }
 
-  const isDark = theme === 'dark'
+  const isDark = theme !== 'light'
   const bgColor = isDark ? 'bg-slate-950' : 'bg-white'
   const textColor = isDark ? 'text-slate-100' : 'text-slate-900'
   const borderColor = isDark ? 'border-slate-700' : 'border-slate-200'

@@ -19,7 +19,6 @@ import {
   ChevronRight,
   UserRound,
   Users,
-  Database,
   Newspaper,
   ShieldCheck,
   Menu,
