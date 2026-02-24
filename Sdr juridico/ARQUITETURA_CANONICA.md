@@ -1,12 +1,20 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.4.0  
-**Data:** 13 de fevereiro de 2026  
+**Versão:** 2.5.0  
+**Data:** 23 de fevereiro de 2026  
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.5.0 (23 de fevereiro de 2026)
+- ✅ **Edge Function `delete-organization`**: Nova Edge Function com service_role para exclusão completa de organização — remove dependências em cascata (agendamentos, tarefas, casos, leads, clientes, documentos, org_members, audit_log, integrations) respeitando ordem de FKs, depois remove a org
+- ✅ **Edge Function `reset-member-password`**: Nova Edge Function com service_role para resetar senha de membros para senha padrão (`Mudar@123`). Suporta `action: 'list'` para listar membros da org via service_role (bypassa RLS) e `action: 'reset'` para alterar senha via Admin API
+- ✅ **audit_log FK Circular Resolvida**: Removida FK `audit_log.org_id → organizations.id` via Management API para permitir exclusão de orgs. Trigger de audit_log atualizado para setar `org_id=NULL` em registros quando a org é deletada
+- ✅ **Modais OrganizationDetails Refatorados**: Modais de reset de senha e exclusão de organização migrados de `createPortal` inline para componente `<Modal>` do design system (`@/components/ui/modal.tsx`), com props `open`, `onClose`, `title`, `description`, `footer`, `maxWidth`
+- ✅ **Botão Copiar Slug**: Adicionado botão de copiar slug no modal de exclusão de organização para facilitar confirmação
+- ✅ **OrganizationDetails.tsx Reestruturado**: Página de detalhes da organização (Fartech admin) com ações de Resetar Senha e Excluir Organização usando Edge Functions
 
 ### v2.4.0 (13 de fevereiro de 2026)
 - ✅ **Edge Function `invite-org-member` Reescrita**: Fluxo completo de convite — usa `inviteUserByEmail` como método primário (cria user + envia email em uma só chamada). Limpa usuários órfãos do auth antes de re-convidar. Verifica duplicidade em `org_members` antes de adicionar
@@ -755,7 +763,7 @@ ui/
 │   └── Button.stories.tsx
 ├── Input/
 ├── Card/
-├── Modal/
+├── Modal/         ← Componente canônico para modais
 └── ...
 ```
 
@@ -765,6 +773,39 @@ ui/
 - ✅ Acessibilidade (ARIA)
 - ✅ Responsivo por padrão
 - ✅ Documentado com Storybook (quando disponível)
+
+### Modal Canônico (`@/components/ui/modal.tsx`)
+
+**TODA modal nova DEVE usar este componente.** Não usar `createPortal` diretamente.
+
+```tsx
+import { Modal } from '@/components/ui/modal'
+
+<Modal
+  open={showModal}
+  onClose={() => setShowModal(false)}
+  title="Título da Modal"
+  description="Descrição opcional"
+  maxWidth="520px"
+  footer={<>botões</>}
+>
+  {/* conteúdo */}
+</Modal>
+```
+
+**Props disponíveis:**
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `open` | `boolean` | Controla visibilidade |
+| `onClose` | `() => void` | Callback ao fechar (ESC, backdrop, X) |
+| `title` | `string` | Título no header |
+| `description` | `string` | Subtítulo opcional |
+| `footer` | `ReactNode` | Área de botões de ação |
+| `maxWidth` | `string` | Largura máxima (ex: `"520px"`) |
+| `noPadding` | `boolean` | Remove padding do body |
+| `className` | `string` | Classes extras |
+
+**Implementação interna:** `createPortal` para `document.body`, z-index 9999, animação de entrada/saída 300ms, backdrop blur, ESC para fechar, body scroll lock.
 
 ---
 
@@ -1875,6 +1916,10 @@ npx supabase functions deploy google-calendar-sync --project-ref xocqcoebreoiaqx
 npx supabase functions deploy google-calendar-sync-cron --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
 npx supabase functions deploy google-calendar-create-event --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
 npx supabase functions deploy store-google-tokens --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+
+# Edge Functions de Gestão de Organizações (v2.5.0)
+npx supabase functions deploy delete-organization --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
+npx supabase functions deploy reset-member-password --project-ref xocqcoebreoiaqxoutar --no-verify-jwt
 ```
 
 ### 6. Secrets Configurados no Supabase
@@ -2275,6 +2320,30 @@ Gestor → RemoveUserModal (UserManagement.tsx)
   → Remover definitivamente:
     → supabase.functions.invoke('delete-org-member')
     → Remove de org_members, usuarios e Auth
+```
+
+### 2c. Reset de Senha de Membro
+```
+Fartech Admin → OrganizationDetails.tsx → Botão "Resetar Senha"
+  → Modal lista membros da org via Edge Function (action: 'list')
+    → Edge Function usa service_role para bypassa RLS
+  → Admin seleciona membro → Confirma reset
+  → supabase.functions.invoke('reset-member-password', { action: 'reset', user_id })
+  → Edge Function usa Admin API (updateUserById) para setar senha 'Mudar@123'
+```
+
+### 2d. Exclusão de Organização
+```
+Fartech Admin → OrganizationDetails.tsx → Botão "Excluir Organização"
+  → Modal exige confirmação digitando o slug da org
+  → supabase.functions.invoke('delete-organization', { org_id, confirm_slug })
+  → Edge Function (service_role) executa exclusão em cascata:
+    1. audit_log (SET org_id = NULL)
+    2. agendamentos, tarefas, documentos, casos
+    3. leads, clientes
+    4. integrations, org_members
+    5. organizations (registro principal)
+  → Redireciona para lista de organizações
 ```
 
 ### 3. Link Mágico

@@ -16,12 +16,18 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Mail
+  Mail,
+  Trash2,
+  KeyRound,
+  Copy,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { organizationsService } from '@/services/organizationsService'
 import { useFartechAdmin } from '@/hooks/useFartechAdmin'
 import { FartechGuard } from '@/components/guards'
 import { supabase } from '@/lib/supabaseClient'
+import { Modal } from '@/components/ui/modal'
 import type { Organization, OrganizationStats, OrganizationUsage } from '@/types/organization'
 
 export default function OrganizationDetails() {
@@ -36,6 +42,21 @@ export default function OrganizationDetails() {
   const [error, setError] = useState<string | null>(null)
   const [inviteStatus, setInviteStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [inviteLoading, setInviteLoading] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmSlug, setDeleteConfirmSlug] = useState('')
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetResult, setResetResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [orgMembers, setOrgMembers] = useState<Array<{ user_id: string; email: string; nome: string; role: string; ativo: boolean }>>([])
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [showGeneratedPassword, setShowGeneratedPassword] = useState(false)
+  const [generatedPassword, setGeneratedPassword] = useState('')
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+
+  const DEFAULT_PASSWORD = 'Mudar@123'
 
   const settings = (organization?.settings || {}) as Record<string, any>
   const trialEndsAt = settings.trial_ends_at as string | undefined
@@ -85,6 +106,136 @@ export default function OrganizationDetails() {
     if (id) {
       await viewOrganization(id)
       navigate('/app/dashboard')
+    }
+  }
+
+  const handleDeleteOrganization = async () => {
+    if (!id || !organization) return
+    if (deleteConfirmSlug.trim() !== organization.slug.trim()) {
+      setDeleteError('O slug digitado não corresponde. Digite exatamente: ' + organization.slug.trim())
+      return
+    }
+
+    setDeleteLoading(true)
+    setDeleteError(null)
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('delete-organization', {
+        body: { orgId: id, confirmSlug: deleteConfirmSlug.trim() },
+      })
+
+      if (fnError) {
+        console.error('❌ Edge Function error:', fnError)
+        // supabase-js v2: quando status não é 2xx, o body vem em fnError.context
+        let errorMsg = fnError.message || 'Erro desconhecido'
+        try {
+          // Tentar extrair o JSON da resposta
+          if (fnError.context && typeof fnError.context.json === 'function') {
+            const body = await fnError.context.json()
+            errorMsg = body?.error || body?.message || errorMsg
+          }
+        } catch { /* fallback para mensagem padrão */ }
+        setDeleteError('Erro ao excluir: ' + errorMsg)
+        return
+      }
+
+      // A resposta pode vir como string (quando a function não existe) ou objeto
+      const result = typeof data === 'string' ? (() => { try { return JSON.parse(data) } catch { return { error: data } } })() : data
+
+      if (!result || result.error) {
+        console.error('❌ Delete result error:', result)
+        setDeleteError(result?.error || 'Erro desconhecido ao excluir a organização')
+        return
+      }
+
+      // Sucesso — voltar para a lista
+      navigate('/admin/organizations', {
+        state: { refresh: true, message: `Organização "${organization.name}" excluída com sucesso.` },
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      setDeleteError(message)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const loadMembers = async () => {
+    if (!id) return
+    setMembersLoading(true)
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('reset-member-password', {
+        body: { orgId: id, action: 'list' },
+      })
+
+      if (fnError) {
+        let errorMsg = fnError.message || 'Erro desconhecido'
+        try {
+          if (fnError.context && typeof fnError.context.json === 'function') {
+            const body = await fnError.context.json()
+            errorMsg = body?.error || body?.message || errorMsg
+          }
+        } catch { /* fallback */ }
+        console.error('Erro ao carregar membros:', errorMsg)
+        setOrgMembers([])
+        return
+      }
+
+      const result = typeof data === 'string' ? (() => { try { return JSON.parse(data) } catch { return null } })() : data
+      setOrgMembers(result?.members || [])
+    } catch (err) {
+      console.error('Erro ao carregar membros:', err)
+      setOrgMembers([])
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  const handleResetPassword = async (userId: string, useDefault: boolean) => {
+    if (!id) return
+    setResetLoading(true)
+    setResetResult(null)
+    setSelectedUserId(userId)
+
+    const password = useDefault ? DEFAULT_PASSWORD : `Temp${crypto.randomUUID().substring(0, 8)}!`
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('reset-member-password', {
+        body: { orgId: id, userId, password },
+      })
+
+      if (fnError) {
+        let errorMsg = fnError.message || 'Erro desconhecido'
+        try {
+          if (fnError.context && typeof fnError.context.json === 'function') {
+            const body = await fnError.context.json()
+            errorMsg = body?.error || body?.message || errorMsg
+          }
+        } catch { /* fallback */ }
+        setResetResult({ type: 'error', message: errorMsg })
+        return
+      }
+
+      const result = typeof data === 'string' ? (() => { try { return JSON.parse(data) } catch { return { error: data } } })() : data
+
+      if (!result || result.error) {
+        setResetResult({ type: 'error', message: result?.error || 'Erro desconhecido' })
+        return
+      }
+
+      setGeneratedPassword(password)
+      setShowGeneratedPassword(true)
+      setResetResult({
+        type: 'success',
+        message: useDefault
+          ? `Senha resetada para a senha padrão (${DEFAULT_PASSWORD})`
+          : `Senha resetada para senha temporária`,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      setResetResult({ type: 'error', message })
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -335,11 +486,224 @@ export default function OrganizationDetails() {
                   <Edit className="w-4 h-4 mr-2" />
                   Editar
                 </Link>
+
+                <button
+                  onClick={() => { setShowResetModal(true); setResetResult(null); setSelectedUserId(null); setShowGeneratedPassword(false); loadMembers() }}
+                  className="inline-flex items-center px-4 py-2 border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors"
+                >
+                  <KeyRound className="w-4 h-4 mr-2" />
+                  Resetar Senha
+                </button>
+
+                <button
+                  onClick={() => { setShowDeleteModal(true); setDeleteConfirmSlug(''); setDeleteError(null) }}
+                  className="inline-flex items-center px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir
+                </button>
               </div>
             </div>
           </div>
         </div>
         
+        {/* Modal de reset de senha */}
+        <Modal
+          open={showResetModal && !!organization}
+          onClose={() => setShowResetModal(false)}
+          title="Resetar Senha de Membro"
+          description={organization ? `Selecione um membro de ${organization.name} para resetar a senha.` : ''}
+          maxWidth="520px"
+          footer={
+            <button
+              onClick={() => setShowResetModal(false)}
+              style={{
+                padding: '8px 20px', borderRadius: '8px', border: '1px solid #D1D5DB',
+                backgroundColor: 'white', color: '#374151', fontSize: '14px', fontWeight: 500, cursor: 'pointer',
+              }}
+            >
+              Fechar
+            </button>
+          }
+        >
+          {membersLoading ? (
+            <p style={{ textAlign: 'center', color: '#9CA3AF', padding: '20px' }}>Carregando membros...</p>
+          ) : orgMembers.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#9CA3AF', padding: '20px' }}>Nenhum membro encontrado.</p>
+          ) : (
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', overflow: 'hidden', marginBottom: '12px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#F9FAFB' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Nome</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Email</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Papel</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: '#374151' }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orgMembers.map((m) => (
+                    <tr key={m.user_id} style={{ borderTop: '1px solid #E5E7EB' }}>
+                      <td style={{ padding: '8px 12px', color: '#111827' }}>{m.nome}</td>
+                      <td style={{ padding: '8px 12px', color: '#6B7280', fontFamily: 'monospace', fontSize: '12px' }}>{m.email}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span style={{
+                          display: 'inline-block', padding: '2px 8px', borderRadius: '9999px', fontSize: '11px', fontWeight: 600,
+                          backgroundColor: m.role === 'admin' ? '#DBEAFE' : '#F3F4F6',
+                          color: m.role === 'admin' ? '#1E40AF' : '#6B7280',
+                        }}>
+                          {m.role}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleResetPassword(m.user_id, true)}
+                          disabled={resetLoading}
+                          title={`Resetar para ${DEFAULT_PASSWORD}`}
+                          style={{
+                            background: 'none', border: '1px solid #D97706', borderRadius: '6px',
+                            padding: '4px 10px', cursor: 'pointer', color: '#D97706', fontSize: '12px',
+                            fontWeight: 500, opacity: resetLoading && selectedUserId === m.user_id ? 0.5 : 1,
+                          }}
+                        >
+                          {resetLoading && selectedUserId === m.user_id ? 'Resetando...' : 'Resetar'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {resetResult && (
+            <div style={{
+              marginBottom: '12px', fontSize: '13px', borderRadius: '8px', padding: '10px 12px',
+              backgroundColor: resetResult.type === 'success' ? '#ECFDF5' : '#FEF2F2',
+              border: `1px solid ${resetResult.type === 'success' ? '#A7F3D0' : '#FECACA'}`,
+              color: resetResult.type === 'success' ? '#065F46' : '#DC2626',
+            }}>
+              {resetResult.message}
+              {resetResult.type === 'success' && (
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontFamily: 'monospace', backgroundColor: '#D1FAE5', padding: '4px 8px', borderRadius: '4px', fontSize: '14px', fontWeight: 600 }}>
+                    {showGeneratedPassword ? generatedPassword : '••••••••'}
+                  </span>
+                  <button
+                    onClick={() => setShowGeneratedPassword(!showGeneratedPassword)}
+                    title={showGeneratedPassword ? 'Ocultar' : 'Mostrar'}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#065F46', padding: '2px' }}
+                  >
+                    {showGeneratedPassword ? <EyeOff style={{ width: '14px', height: '14px' }} /> : <Eye style={{ width: '14px', height: '14px' }} />}
+                  </button>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(generatedPassword)}
+                    title="Copiar senha"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#065F46', padding: '2px' }}
+                  >
+                    <Copy style={{ width: '14px', height: '14px' }} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </Modal>
+
+        {/* Modal de exclusão */}
+        <Modal
+          open={showDeleteModal && !!organization}
+          onClose={() => { if (!deleteLoading) setShowDeleteModal(false) }}
+          title="Excluir Organização"
+          maxWidth="480px"
+          footer={
+            <>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+                style={{ padding: '10px 16px', fontSize: '14px', color: '#4B5563', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteOrganization}
+                disabled={deleteLoading || deleteConfirmSlug.trim() !== (organization?.slug?.trim() ?? '')}
+                style={{
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  backgroundColor: deleteLoading || deleteConfirmSlug.trim() !== (organization?.slug?.trim() ?? '') ? '#F87171' : '#DC2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: deleteLoading || deleteConfirmSlug.trim() !== (organization?.slug?.trim() ?? '') ? 'not-allowed' : 'pointer',
+                  opacity: deleteLoading || deleteConfirmSlug.trim() !== (organization?.slug?.trim() ?? '') ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                }}
+              >
+                {deleteLoading ? 'Excluindo...' : (
+                  <>
+                    <Trash2 style={{ width: '16px', height: '16px' }} />
+                    Excluir permanentemente
+                  </>
+                )}
+              </button>
+            </>
+          }
+        >
+          <p style={{ fontSize: '14px', color: '#4B5563', marginBottom: '8px' }}>
+            Esta ação é <strong style={{ color: '#DC2626' }}>irreversível</strong>. Todos os dados serão excluídos permanentemente:
+          </p>
+          <ul style={{ fontSize: '12px', color: '#6B7280', marginBottom: '16px', paddingLeft: '20px' }}>
+            <li>Membros, leads, clientes e casos</li>
+            <li>Documentos, tarefas e agenda</li>
+            <li>Logs, alertas e analytics</li>
+            <li>Usuários que pertencem apenas a esta org</li>
+          </ul>
+
+          <p style={{ fontSize: '14px', color: '#374151', marginBottom: '8px' }}>
+            Para confirmar, digite o slug: <code style={{ backgroundColor: '#F3F4F6', padding: '2px 6px', borderRadius: '4px', color: '#B91C1C', fontFamily: 'monospace', fontSize: '12px' }}>{organization?.slug}</code>
+            <button
+              type="button"
+              title="Copiar slug"
+              onClick={() => {
+                navigator.clipboard.writeText(organization?.slug?.trim() || '')
+                setDeleteError('')
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', marginLeft: '4px', verticalAlign: 'middle', color: '#6B7280', fontSize: '14px' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#111827')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#6B7280')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </p>
+
+          <input
+            type="text"
+            value={deleteConfirmSlug}
+            onChange={(e) => setDeleteConfirmSlug(e.target.value)}
+            placeholder={organization?.slug}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '8px',
+              fontSize: '14px',
+              outline: 'none',
+              marginBottom: '12px',
+              boxSizing: 'border-box',
+            }}
+            autoFocus
+          />
+
+          {deleteError && (
+            <div style={{ marginBottom: '12px', fontSize: '13px', color: '#DC2626', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '8px 12px', whiteSpace: 'pre-wrap' }}>
+              {deleteError}
+            </div>
+          )}
+        </Modal>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {inviteStatus && (
             <div
