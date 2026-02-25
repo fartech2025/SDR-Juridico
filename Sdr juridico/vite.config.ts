@@ -44,7 +44,7 @@ function scraperServerPlugin(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), react(), scraperServerPlugin()],
+  plugins: [tailwindcss(), react()], // scraperServerPlugin() desativado (scraper-server já rodando na porta 3001)
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -96,7 +96,6 @@ export default defineConfig({
       'react-router-dom',
       '@supabase/supabase-js',
       'lucide-react',
-      'date-fns',
       'recharts',
     ],
     exclude: ['@vite/client'],

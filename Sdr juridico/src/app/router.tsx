@@ -18,6 +18,16 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
+import UserManagement from '@/pages/UserManagement'
+import {
+  FartechDashboard,
+  OrganizationsList,
+  OrganizationForm,
+  OrganizationDetails,
+  OrganizationSettingsPage,
+  SecurityMonitoring,
+  SecurityReportPage,
+} from '@/pages/fartech'
 
 export const router = createBrowserRouter([
   {
@@ -95,6 +105,52 @@ export const router = createBrowserRouter([
       {
         path: 'analytics',
         element: <AnalyticsPage />,
+      },
+    ],
+  },
+  {
+    path: '/admin',
+    element: (
+      <ProtectedRoute>
+        <AppShell />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <Navigate to="organizations" replace />,
+      },
+      {
+        path: 'dashboard',
+        element: <FartechDashboard />,
+      },
+      {
+        path: 'organizations',
+        element: <OrganizationsList />,
+      },
+      {
+        path: 'organizations/new',
+        element: <OrganizationForm />,
+      },
+      {
+        path: 'organizations/:id',
+        element: <OrganizationDetails />,
+      },
+      {
+        path: 'organizations/:id/settings',
+        element: <OrganizationSettingsPage />,
+      },
+      {
+        path: 'users',
+        element: <UserManagement />,
+      },
+      {
+        path: 'security',
+        element: <SecurityMonitoring />,
+      },
+      {
+        path: 'security/report',
+        element: <SecurityReportPage />,
       },
     ],
   },
