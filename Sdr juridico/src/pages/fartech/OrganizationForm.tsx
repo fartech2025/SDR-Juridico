@@ -28,9 +28,10 @@ export default function OrganizationForm() {
   const { id } = useParams<{ id: string }>()
   const isEditMode = !!id
   
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(isEditMode) // começa true no edit para evitar flash de form vazio
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
   
   const [formData, setFormData] = useState<OrganizationFormData>({
     name: '',
@@ -44,7 +45,7 @@ export default function OrganizationForm() {
     max_users: 5,
     max_storage_gb: 10,
     max_cases: null,
-    primary_color: 'var(--brand-primary)',
+    primary_color: '#721011',
     secondary_color: null,
     address_street: '',
     address_number: '',
@@ -64,7 +65,12 @@ export default function OrganizationForm() {
   const loadOrganization = async (orgId: string) => {
     try {
       setLoading(true)
+      setNotFound(false)
       const org = await organizationsService.getById(orgId)
+      if (!org) {
+        setNotFound(true)
+        return
+      }
       if (org) {
         setFormData({
           name: org.name,
@@ -83,7 +89,7 @@ export default function OrganizationForm() {
           max_users: org.max_users,
           max_storage_gb: org.max_storage_gb,
           max_cases: org.max_cases,
-          primary_color: org.primary_color,
+          primary_color: /^#[0-9a-fA-F]{6}$/.test(org.primary_color || '') ? org.primary_color : '#721011',
           secondary_color: org.secondary_color,
           address: org.address || undefined,
           address_street: org.address?.street || '',
@@ -244,7 +250,26 @@ export default function OrganizationForm() {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-alt flex items-center justify-center">
-        <div className="text-text-muted">Carregando...</div>
+        <div className="text-center">
+          <div className="mb-4 inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-brand-primary border-r-transparent"></div>
+          <p className="text-text-muted text-sm">Carregando organização...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (notFound || (isEditMode && error === 'Erro ao carregar organização')) {
+    return (
+      <div className="min-h-screen bg-surface-alt flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-text-muted mb-4">{notFound ? 'Organização não encontrada' : error}</p>
+          <button
+            onClick={() => navigate('/admin/organizations')}
+            className="text-brand-primary hover:underline"
+          >
+            Voltar para lista
+          </button>
+        </div>
       </div>
     )
   }
