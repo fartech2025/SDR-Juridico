@@ -136,6 +136,32 @@ Sistema de gestão jurídica construído com arquitetura modular, escalável e b
 
 ---
 
+## 🚨 LEI FUNDAMENTAL — COMPLIANCE OBRIGATÓRIO
+
+> **Esta seção é NON-NEGOTIABLE. Toda ação de código — seja do time humano ou do assistente de IA — DEVE obrigatoriamente seguir os padrões aqui definidos. Sem exceções.**
+
+### Checklist de Conformidade (verificar antes de cada implementação)
+
+| # | Regra | Onde está documentado |
+|---|-------|-----------------------|
+| 1 | Cores via CSS variables, nunca hex hardcoded | Seção `PALETA DE CORES OFICIAL` |
+| 2 | Modais usam `<Modal>` de `@/components/ui/modal.tsx` | Seção `DESIGN SYSTEM` |
+| 3 | Fluxo: Component → Hook → Service → Supabase → Mapper | Seção `PADRÕES DE INTEGRAÇÃO` |
+| 4 | Toda query Supabase filtra por `org_id` explicitamente | Seção `MULTI-TENANT ISOLATION` |
+| 5 | Supabase client importado SEMPRE de `src/lib/supabaseClient.ts` | CLAUDE.md |
+| 6 | Soft delete: `UPDATE SET deleted_at`, nunca `DELETE` | Seção `MODELO DE DADOS` |
+| 7 | Colunas DB snake_case PT, types TS camelCase EN | Seção `CONVENÇÕES` |
+| 8 | Card padrão: `bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm` | CLAUDE.md |
+| 9 | Guards de rota seguem ordem obrigatória de verificações | Seção `GUARDS DE ROTAS` |
+| 10 | Integrações IA seguem plano MCP | Seção `PLANO MCP` |
+
+### Quando há dúvida
+1. Consultar a seção relevante desta arquitetura
+2. Buscar um componente existente que faz algo similar e replicar o padrão
+3. Nunca inventar um padrão novo sem documentar aqui primeiro
+
+---
+
 ## 🎯 PRINCÍPIOS ARQUITETURAIS
 
 ### 1. Separação de Responsabilidades
@@ -2671,6 +2697,142 @@ src/
 | 7 | Refatorar para Clean Architecture | 🟢 Desejável | 2-4 sem | ⬜ Backlog |
 | 8 | Ativar RBAC Dinâmico | 🟢 Futuro | 1-2 sem | ⬜ Backlog |
 | 9 | Notificações Realtime | 🟢 Desejável | 1 sem | ⬜ Backlog |
+| 10 | **Migrar scraper-server para MCP Server** | 🔴 Importante | 4-5 dias | 📅 **Agendado: 01/03/2026 (domingo)** |
+
+---
+
+## 🤖 PLANO MCP — Model Context Protocol (Agendado: 01/03/2026)
+
+> **Insight registrado em:** 25/02/2026  
+> **Objetivo:** Transformar o Waze Jurídico de um proxy passivo em um agente jurídico autônomo
+
+### Problema Atual
+
+O `caseIntelligenceService.ts` usa Claude de forma **passiva**:
+1. Frontend agrega manualmente DataJud + DOU + PJe + eProc
+2. Monta um prompt enorme (~5000 tokens de contexto)
+3. Claude responde uma vez, sem capacidade de follow-up ou decisão própria
+
+### O Que Muda com MCP
+
+```
+HOJE (proxy manual):
+  Frontend → caseIntelligenceService → POST /scraper-api/claude → Claude
+  (contexto montado pelo humano, Claude só responde)
+
+COM MCP (agentic loop):
+  Claude ← tool: consultar_datajud()         ← decide o que buscar
+  Claude ← tool: buscar_dou()                ← busca quando precisa
+  Claude ← tool: listar_processos_pje()      ← orquestra sozinho
+  Claude → análise completa com rastreabilidade
+```
+
+### Plano de Implementação (4-5 dias)
+
+#### Fase 1 — Setup (30min)
+```bash
+cd scraper-server && npm install @modelcontextprotocol/sdk zod
+```
+
+#### Fase 2 — Migrar endpoints para MCP tools (2 dias)
+Transformar os endpoints REST existentes em tools declarativas:
+
+```typescript
+// scraper-server/mcp-server.ts
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { z } from 'zod'
+
+const server = new McpServer({ name: "sdr-juridico", version: "1.0.0" })
+
+// Tool 1: DataJud
+server.tool("consultar_datajud", {
+  numero_processo: z.string().describe("Número CNJ do processo")
+}, async ({ numero_processo }) => {
+  return await datajudService.buscarProcessoAutomatico(numero_processo)
+})
+
+// Tool 2: DOU
+server.tool("buscar_dou", {
+  termo: z.string(),
+  cnpj: z.string().optional(),
+  cpf: z.string().optional()
+}, async (args) => {
+  return await douService.buscar(args)
+})
+
+// Tool 3: PJe + eProc (já existe em POST /advogado/processos)
+server.tool("listar_processos_advogado", {
+  cpf: z.string().describe("CPF do advogado")
+}, async ({ cpf }) => {
+  return await listarProcessosPJeEEproc(cpf)
+})
+
+// Tool 4: Busca por CPF (Portal Transparência + Querido Diário)
+server.tool("buscar_por_cpf", {
+  cpf: z.string()
+}, async ({ cpf }) => {
+  return await scraperOrchestrator.buscarPorCPF(cpf)
+})
+```
+
+#### Fase 3 — Resources multi-tenant para dados do Supabase (1 dia)
+```typescript
+// Resources: dados da org acessíveis via URI
+server.resource(
+  "caso",
+  new ResourceTemplate("caso://{org_id}/{caso_id}", { list: undefined }),
+  async (uri, { org_id, caso_id }) => {
+    const caso = await supabase.from('casos')
+      .select('*, clientes(*), tarefas(*), documentos(*)')
+      .eq('id', caso_id).eq('org_id', org_id).single()
+    return { contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(caso.data) }] }
+  }
+)
+```
+
+#### Fase 4 — Autenticação JWT multi-tenant (1 dia)
+```typescript
+// Middleware: valida JWT do Supabase e injeta org_id no contexto
+app.use('/mcp', async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1]
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) return res.status(401).json({ error: 'Unauthorized' })
+  req.orgId = await getOrgIdFromUser(user.id)
+  next()
+})
+```
+
+#### Fase 5 — Refatorar `caseIntelligenceService.ts` (1 dia)
+- Substituir chamada direta `POST /claude` pelo MCP client
+- Claude passa a decidir quais tools chamar baseado na pergunta do usuário
+- Manter compatibilidade com `DataJudPage` e `ClienteDrawer` como entry points
+
+#### Fase 6 — Prompt templates para análise jurídica (2h)
+```typescript
+server.prompt("analise_completa_caso", { caso_id: z.string() }, async ({ caso_id }) => ({
+  messages: [{
+    role: "user",
+    content: `Faça análise completa do caso ${caso_id}. Use as tools disponíveis para consultar
+    DataJud, DOU, processos PJe/eProc e histórico interno. Formate como relatório executivo.`
+  }]
+}))
+```
+
+### Arquivos a Criar/Modificar
+
+| Arquivo | Ação |
+|---------|------|
+| `scraper-server/mcp-server.ts` | CRIAR — novo MCP server |
+| `scraper-server/index.ts` | MODIFICAR — adicionar transport HTTP/MCP |
+| `scraper-server/package.json` | MODIFICAR — adicionar `@modelcontextprotocol/sdk` |
+| `src/services/caseIntelligenceService.ts` | MODIFICAR — usar MCP client em vez de fetch direto |
+
+### Ganho Esperado
+
+- Claude busca dados **quando precisa**, não recebe dump completo
+- Rastreabilidade: sabe quais fontes foram consultadas
+- Waze Jurídico evolui de componente de análise para **agente jurídico autônomo**
+- Base para integração com Claude Desktop / VS Code (interoperabilidade MCP)
 
 ---
 

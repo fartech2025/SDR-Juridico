@@ -2,6 +2,25 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ REGRA FUNDAMENTAL — LER ANTES DE QUALQUER AÇÃO
+
+**TODA ação de código — criação de arquivo, edição, novo componente, nova feature, correção de bug — DEVE obrigatoriamente seguir os padrões definidos em `Sdr juridico/ARQUITETURA_CANONICA.md`.**
+
+Antes de implementar qualquer coisa, verificar:
+
+1. **Cores**: Usar sempre CSS variables (`--brand-primary`, `--brand-accent`, etc.). Nunca hex hardcoded, nunca classes Tailwind blue/green/emerald para ações de marca.
+2. **Componentes UI**: Modais usam `<Modal>` de `@/components/ui/modal.tsx`. Nunca `createPortal` inline.
+3. **Fluxo de dados**: Component → Hook → Service → Supabase → Mapper. Nunca chamada direta ao Supabase no componente.
+4. **Multi-tenancy**: Toda query Supabase deve ter `.eq('org_id', orgId)`. RLS existe mas não substitui o filtro explícito.
+5. **Supabase client**: Sempre importar de `src/lib/supabaseClient.ts`. Nunca de outro lugar.
+6. **Soft delete**: Nunca `DELETE` em tabelas com `deleted_at`. Usar `UPDATE SET deleted_at = now()`.
+7. **Nomenclatura**: Colunas DB em snake_case português. Types/interfaces em camelCase inglês. Mappers fazem a conversão.
+8. **Padrão de card**: `bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm`
+9. **Guards de rota**: Seguir ordem obrigatória de verificações definida em OrgActiveGuard.
+10. **Integrações IA**: Seguir plano MCP documentado na seção `## 🤖 PLANO MCP` da arquitetura canônica.
+
+> Se houver dúvida sobre qualquer padrão, **consultar a ARQUITETURA_CANONICA.md antes de agir**.
+
 ## Commands
 
 All frontend commands run from inside `Sdr juridico/`:
