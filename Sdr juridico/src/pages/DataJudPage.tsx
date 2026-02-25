@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown, Bug, UserCheck, FilePlus, CheckCircle2 } from 'lucide-react'
+import { Search, RefreshCw, AlertCircle, Database, FileText, Users, Calendar, FileDown, Bug, UserCheck, FilePlus, CheckCircle2, Scale, ChevronDown, Copy } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
@@ -10,9 +10,7 @@ import { CaseIntelligencePanel, ImportarClienteModal } from '@/components/CaseIn
 import { useOrganization } from '@/contexts/OrganizationContext'
 import { importarProcessoDataJud } from '@/services/pjeImportService'
 
-import heroLight from '@/assets/hero-light.svg'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -737,7 +735,7 @@ export const DataJudPage = () => {
     const outrosPolos = polos.filter((p: any) => !poloAtivo.includes(p) && !poloPassivo.includes(p))
     
     const renderPolo = (polo: any, idx: number) => (
-      <div key={idx} className="rounded-xl border border-border bg-surface-2 p-3 hover:border-primary/30 transition-colors">
+      <div key={idx} className="rounded-xl border border-border bg-surface-alt p-3 transition-colors">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
             <p className="text-sm font-semibold text-text">
@@ -745,7 +743,7 @@ export const DataJudPage = () => {
             </p>
             {polo.tipoPessoa && (
               <p className="text-[10px] text-text-muted mt-0.5">
-                {polo.tipoPessoa === 'fisica' ? '👤 Pessoa Física' : '🏢 Pessoa Jurídica'}
+                {polo.tipoPessoa === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'}
               </p>
             )}
             {polo.documento && (
@@ -764,8 +762,8 @@ export const DataJudPage = () => {
           <div className="mt-2 pt-2 border-t border-border/50">
             <p className="text-[10px] text-text-muted mb-1">Advogado(s):</p>
             {polo.advogados.map((adv: any, advIdx: number) => (
-              <div key={advIdx} className="text-xs text-text flex items-center gap-1">
-                <span>⚖️</span>
+              <div key={advIdx} className="text-xs text-text flex items-center gap-1.5">
+                <Scale className="w-3 h-3 text-text-muted shrink-0" />
                 <span className="font-medium">{adv.nome}</span>
                 {adv.inscricao && <span className="text-text-muted font-mono">OAB {adv.inscricao}</span>}
               </div>
@@ -778,7 +776,7 @@ export const DataJudPage = () => {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary" />
+          <Users className="w-5 h-5" style={{ color: 'var(--brand-primary)' }} />
           <p className="text-text font-semibold">Partes do Processo</p>
           <Badge variant="info" className="ml-auto">{polos.length} parte(s)</Badge>
         </div>
@@ -829,74 +827,57 @@ export const DataJudPage = () => {
 
   return (
     <div
-      className={cn(
-        'min-h-screen pt-5 pb-12 px-6 lg:px-8',
-        'bg-base text-text',
-      )}
+      className="min-h-screen bg-surface-alt p-6"
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
-      <div className="space-y-5 max-w-6xl mx-auto">
-        <header
-          className={cn(
-            'relative overflow-hidden rounded-3xl border p-6 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.35)]',
-            'border-border bg-linear-to-br from-brand-primary-subtle via-surface to-surface-alt',
-          )}
-        >
-          <div
-            className={cn(
-              'absolute inset-0 bg-no-repeat bg-right bg-size-[520px]',
-              'opacity-90',
-            )}
-            style={{ backgroundImage: `url(${heroLight})` }}
-          />
-          <div className="relative z-10 space-y-2">
-            <p
-              className={cn(
-                'text-[11px] uppercase tracking-[0.32em]',
-                'text-text-muted',
-              )}
-            >
-              Integracao CNJ
-            </p>
-            <div className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-brand-primary" />
-              <h2 className={cn('font-display text-2xl', 'text-text')}>
-                API DataJud
-              </h2>
+      <div className="space-y-6">
+        <div className="bg-surface rounded-xl border border-border p-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
+                >
+                  <Database className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
+                  Integração CNJ
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold text-text">API DataJud</h1>
+              <p className="text-sm text-text-muted mt-1">
+                Base Nacional de Dados do Poder Judiciário — Consulta de processos judiciais
+              </p>
             </div>
-            <p className={cn('text-sm', 'text-text-muted')}>
-              Base Nacional de Dados do Poder Judiciario - Consulta de processos judiciais
-            </p>
           </div>
-        </header>
+        </div>
 
       {/* Status da Conexão */}
-      <Card className="border border-border bg-surface/90">
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center justify-between">
-            <span>Status da Conexão</span>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDebugAuth}
-                title="Debug: Verificar estado da autenticação"
-              >
-                <Bug className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTestarConexao}
-                disabled={testando}
-              >
-                <RefreshCw className={cn('h-4 w-4 mr-2', testando && 'animate-spin')} />
-                Testar Conexão
-              </Button>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-text">Status da Conexão</h3>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDebugAuth}
+              title="Debug: Verificar estado da autenticação"
+            >
+              <Bug className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestarConexao}
+              disabled={testando}
+            >
+              <RefreshCw className={cn('h-4 w-4 mr-2', testando && 'animate-spin')} />
+              Testar Conexão
+            </Button>
+          </div>
+        </div>
+        <div className="p-6">
           {!configurado ? (
             <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/5 p-4">
               <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
@@ -911,7 +892,7 @@ export const DataJudPage = () => {
                     href="https://www.cnj.jus.br/sistemas/datajud/api-publica/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline"
+                    className="hover:underline" style={{ color: 'var(--brand-primary)' }}
                   >
                     CNJ - API Pública
                   </a>
@@ -948,15 +929,15 @@ export const DataJudPage = () => {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Tipo de Busca */}
-      <Card className="border border-border bg-surface/90">
-        <CardHeader>
-          <CardTitle className="text-sm">Tipo de Busca</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-text">Tipo de Busca</h3>
+        </div>
+        <div className="p-6">
           <div className="flex flex-wrap gap-2">
             {[
               { id: 'numero' as TipoBusca, label: 'Por Número', icon: FileText, desc: 'Busca por número CNJ' },
@@ -978,9 +959,10 @@ export const DataJudPage = () => {
                   className={cn(
                     'flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition',
                     tipoBusca === tipo.id
-                      ? 'border-brand-primary/60 bg-brand-primary/10 text-brand-primary'
+                      ? 'border-transparent text-white'
                       : 'border-border bg-white text-text-muted hover:text-text'
                   )}
+                  style={tipoBusca === tipo.id ? { backgroundColor: 'var(--brand-primary)' } : undefined}
                 >
                   <Icon className="h-4 w-4" />
                   {tipo.label}
@@ -988,20 +970,21 @@ export const DataJudPage = () => {
               )
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Tribunal - Só mostra para busca por parte, classe ou avançada (ou CPF sem multi-tribunal) */}
       {(tipoBusca !== 'numero' && !(tipoBusca === 'cpf' && buscarMultiTribunal)) && (
-        <Card className="border border-border bg-surface/90">
-          <CardHeader>
-            <CardTitle className="text-sm">Tribunal</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="text-sm font-semibold text-text">Tribunal</h3>
+          </div>
+          <div className="p-6">
             <select
               value={tribunal}
               onChange={(e) => setTribunal(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full rounded-lg border border-border bg-surface px-4 text-sm focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': 'rgba(114, 16, 17, 0.2)' } as React.CSSProperties}
             >
               {tribunais.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -1009,22 +992,22 @@ export const DataJudPage = () => {
                 </option>
               ))}
             </select>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Formulário de Busca */}
-      <Card className="border border-border bg-surface/90">
-        <CardHeader>
-          <CardTitle className="text-sm">
+      <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-text">
             {tipoBusca === 'numero' && 'Buscar por Número do Processo'}
             {tipoBusca === 'parte' && 'Buscar por Nome da Parte'}
             {tipoBusca === 'cpf' && 'Buscar por CPF/CNPJ'}
             {tipoBusca === 'classe' && 'Buscar por Classe Processual'}
             {tipoBusca === 'avancada' && 'Busca Avançada'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </h3>
+        </div>
+        <div className="p-6 space-y-4">
           {/* Campo CPF/CNPJ */}
           {tipoBusca === 'cpf' && (
             <div className="space-y-4">
@@ -1045,13 +1028,13 @@ export const DataJudPage = () => {
               </div>
               
               {/* Opção de busca multi-tribunal */}
-              <div className="p-4 rounded-xl bg-info/5 border border-info/20">
+              <div className="p-4 rounded-xl bg-surface-alt border border-border">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={buscarMultiTribunal}
                     onChange={(e) => setBuscarMultiTribunal(e.target.checked)}
-                    className="w-5 h-5 rounded border-2 border-primary text-primary focus:ring-primary"
+                    className="w-5 h-5 rounded border-2 border-border"
                   />
                   <div>
                     <p className="text-sm font-medium text-text">
@@ -1081,15 +1064,18 @@ export const DataJudPage = () => {
               />
               {/* Mostrar tribunal detectado automaticamente */}
               {tipoBusca === 'numero' && numeroProcesso.length >= 18 && (
-                <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+                <div className="mt-3 p-3 rounded-xl bg-surface-alt border border-border">
                   {tribunalDetectado.tribunal ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <span className="text-primary text-lg">🎯</span>
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}
+                      >
+                        <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--brand-primary)' }} />
                       </div>
                       <div>
                         <p className="text-xs text-text-muted">Tribunal detectado automaticamente</p>
-                        <p className="text-sm font-semibold text-primary">
+                        <p className="text-sm font-semibold" style={{ color: 'var(--brand-primary)' }}>
                           {tribunalDetectado.nomeCompleto}
                         </p>
                         {tribunalDetectado.segmento && (
@@ -1190,22 +1176,20 @@ export const DataJudPage = () => {
               Limpar
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Resultados */}
       {totalEncontrado > 0 && (
-        <Card className="border border-border bg-surface/90">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Resultados da Busca
-              <Badge variant="info" className="ml-2">
-                {totalEncontrado} encontrado(s)
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+            <FileText className="w-5 h-5" style={{ color: '#721011' }} />
+            <h3 className="text-sm font-semibold text-text">Resultados da Busca</h3>
+            <span className="ml-2 inline-flex items-center rounded-full bg-surface-alt border border-border px-2.5 py-0.5 text-xs font-medium text-text-muted">
+              {totalEncontrado} encontrado(s)
+            </span>
+          </div>
+          <div className="p-6 space-y-6">
             {resultados.map((processo, index) => {
               // Debug: ver estrutura do processo
               if (index === 0) {
@@ -1251,12 +1235,15 @@ export const DataJudPage = () => {
                         <div className="space-y-3 flex-1">
                           {/* Número do Processo */}
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                              <FileText className="w-5 h-5 text-primary" />
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center"
+                              style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}
+                            >
+                              <FileText className="w-5 h-5" style={{ color: 'var(--brand-primary)' }} />
                             </div>
                             <div>
                               <p className="text-xs text-text-muted">Número Único CNJ</p>
-                              <p className="font-mono text-lg font-bold text-primary">
+                              <p className="font-mono text-lg font-bold" style={{ color: 'var(--brand-primary)' }}>
                                 {formatarNumeroProcesso(info.numero)}
                               </p>
                             </div>
@@ -1275,17 +1262,17 @@ export const DataJudPage = () => {
                             )}
                             {processo.sistema && (
                               <Badge variant="default" className="text-xs">
-                                📱 {renderValue(processo.sistema)}
+                                {renderValue(processo.sistema)}
                               </Badge>
                             )}
                             {processo.formato && (
                               <Badge variant="default" className="text-xs">
-                                {renderValue(processo.formato) === 'Eletrônico' ? '💻' : '📄'} {renderValue(processo.formato)}
+                                {renderValue(processo.formato)}
                               </Badge>
                             )}
                             {processo.nivelSigilo !== undefined && (
                               <Badge variant={processo.nivelSigilo === 0 ? "success" : "warning"} className="text-xs">
-                                {processo.nivelSigilo === 0 ? "🔓 Público" : `🔒 Sigilo ${processo.nivelSigilo}`}
+                                {processo.nivelSigilo === 0 ? 'Público' : `Sigilo ${processo.nivelSigilo}`}
                               </Badge>
                             )}
                           </div>
@@ -1299,7 +1286,7 @@ export const DataJudPage = () => {
                     {/* ===== INFORMAÇÕES DA CAPA ===== */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       {/* Órgão Julgador */}
-                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
+                      <div className="p-3 rounded-xl bg-surface-alt border border-border">
                         <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">Órgão Julgador</p>
                         <p className="text-text font-semibold text-sm">{renderValue(info.orgaoJulgador) || '-'}</p>
                         {processo.orgaoJulgador?.codigo && (
@@ -1315,16 +1302,16 @@ export const DataJudPage = () => {
                       </div>
                       
                       {/* Data de Ajuizamento */}
-                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
-                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">📅 Data de Ajuizamento</p>
+                      <div className="p-3 rounded-xl bg-surface-alt border border-border">
+                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">Data de Ajuizamento</p>
                         <p className="text-text font-semibold text-sm">
                           {formatarData(processo.dataAjuizamento || processo.dadosBasicos?.dataAjuizamento)}
                         </p>
                       </div>
                       
                       {/* Última Atualização */}
-                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
-                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">🔄 Última Atualização</p>
+                      <div className="p-3 rounded-xl bg-surface-alt border border-border">
+                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">Última Atualização</p>
                         <p className="text-text font-semibold text-sm">
                           {processo.dataHoraUltimaAtualizacao
                             ? new Date(processo.dataHoraUltimaAtualizacao).toLocaleDateString('pt-BR', {
@@ -1339,8 +1326,8 @@ export const DataJudPage = () => {
                       </div>
                       
                       {/* Valor da Causa (se disponível) */}
-                      <div className="p-3 rounded-xl bg-surface-2 border border-border">
-                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">💰 Valor da Causa</p>
+                      <div className="p-3 rounded-xl bg-surface-alt border border-border">
+                        <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">Valor da Causa</p>
                         <p className="text-text font-semibold text-sm">
                           {processo.dadosBasicos?.valorCausa 
                             ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(processo.dadosBasicos.valorCausa)
@@ -1353,11 +1340,8 @@ export const DataJudPage = () => {
 
                     {/* ===== ASSUNTOS ===== */}
                     {((processo.assuntos && processo.assuntos.length > 0) || (processo.dadosBasicos?.assunto)) && (
-                      <div className="p-4 rounded-xl bg-info/5 border border-info/20">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-lg">📋</span>
-                          <p className="text-text font-semibold">Assuntos Processuais</p>
-                        </div>
+                      <div className="p-4 rounded-xl bg-surface-alt border border-border">
+                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">Assuntos Processuais</p>
                         <div className="flex flex-wrap gap-2">
                           {(processo.assuntos || [processo.dadosBasicos?.assunto]).flat().filter(Boolean).map((assunto: any, idx: number) => (
                             <div key={idx} className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface rounded-lg border border-border">
@@ -1365,7 +1349,7 @@ export const DataJudPage = () => {
                                 {typeof assunto === 'string' ? assunto : assunto?.nome || 'Assunto'}
                               </span>
                               {assunto?.codigo && (
-                                <span className="text-[10px] text-text-muted font-mono bg-surface-2 px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] text-text-muted font-mono bg-surface-alt px-1.5 py-0.5 rounded">
                                   #{assunto.codigo}
                                 </span>
                               )}
@@ -1377,11 +1361,8 @@ export const DataJudPage = () => {
 
                     {/* ===== CLASSE PROCESSUAL DETALHADA ===== */}
                     {processo.classe && (
-                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg">⚖️</span>
-                          <p className="text-text font-semibold">Classe Processual</p>
-                        </div>
+                      <div className="p-4 rounded-xl bg-surface-alt border border-border">
+                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Classe Processual</p>
                         <div className="flex items-center gap-3">
                           <span className="font-medium text-text">
                             {processo.classe?.nome || renderValue(processo.classe)}
@@ -1396,7 +1377,7 @@ export const DataJudPage = () => {
                     )}
 
                     {/* ===== ID E METADADOS TÉCNICOS ===== */}
-                    <div className="p-3 rounded-lg bg-surface-2 border border-border">
+                    <div className="p-3 rounded-lg bg-surface-alt border border-border">
                       <p className="text-[10px] text-text-muted uppercase tracking-wider mb-2">Metadados Técnicos</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-xs">
                         {processo.id && (
@@ -1421,119 +1402,63 @@ export const DataJudPage = () => {
 
                     {/* ===== MOVIMENTAÇÕES PROCESSUAIS ===== */}
                     {processo.movimentos && processo.movimentos.length > 0 && (
-                      <details className="pt-4 border-t border-border">
+                      <details className="pt-4 border-t border-border group">
                         <summary className="cursor-pointer list-none">
-                          <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
-                            <Calendar className="w-5 h-5" />
-                            <span className="font-semibold">Histórico de Movimentações</span>
-                            <Badge variant="default" className="ml-auto bg-white/20 text-white border-0">
-                              {processo.movimentos.length} movimentações
-                            </Badge>
-                            <svg className="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                          <div className="flex items-center justify-between gap-2 py-1.5">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" style={{ color: 'var(--brand-primary)' }} />
+                              <span className="text-xs font-semibold text-text uppercase tracking-wide">
+                                Histórico de Movimentações
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-surface-alt border border-border px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                                {processo.movimentos.length}
+                              </span>
+                            </div>
+                            <ChevronDown className="w-4 h-4 text-text-muted transition-transform group-open:rotate-180" />
                           </div>
                         </summary>
-                        
-                        <div className="mt-4 max-h-150 overflow-y-auto space-y-3 p-4 border rounded-xl bg-surface-2">
+
+                        <div className="mt-3 max-h-[500px] overflow-y-auto space-y-3 pr-1">
                           {processo.movimentos
                             .filter((m: any) => m.nome)
                             .sort((a: any, b: any) => {
                               const dateA = a.dataHora ? new Date(a.dataHora).getTime() : 0
                               const dateB = b.dataHora ? new Date(b.dataHora).getTime() : 0
-                              return dateB - dateA // Mais recente primeiro
+                              return dateB - dateA
                             })
-                            .map((mov: any, idx: number) => (
+                            .map((mov: any, idx: number, arr: any[]) => (
                               <div
                                 key={idx}
-                                className="flex gap-4 p-4 rounded-xl bg-surface border border-border hover:border-primary/30 hover:shadow-sm transition-all"
+                                className="relative flex gap-4 rounded-2xl border border-border bg-white px-4 py-4 text-sm text-text-muted shadow-[0_8px_20px_rgba(18,38,63,0.06)]"
                               >
-                                {/* Timeline indicator */}
-                                <div className="shrink-0 flex flex-col items-center">
-                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
-                                    <span className="text-xs font-bold text-primary">
-                                      {idx + 1}
-                                    </span>
-                                  </div>
-                                  {idx < (processo.movimentos?.filter((m: any) => m.nome).length || 0) - 1 && (
-                                    <div className="w-px flex-1 bg-border mt-2 min-h-5"></div>
+                                <div className="flex flex-col items-center">
+                                  <span
+                                    className="h-3 w-3 rounded-full shrink-0"
+                                    style={{ backgroundColor: 'var(--brand-primary)' }}
+                                  />
+                                  {idx < arr.length - 1 && (
+                                    <span className="mt-2 h-full w-px bg-border-soft" />
                                   )}
                                 </div>
-                                
-                                {/* Conteúdo da movimentação */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-3 mb-2">
-                                    <div className="flex-1">
-                                      <p className="text-sm font-semibold text-text leading-snug">
-                                        {mov.nome}
-                                      </p>
-                                      {(mov.codigo || mov.codigoNacional) && (
-                                        <p className="text-[10px] text-text-muted mt-1 font-mono flex gap-2">
-                                          {mov.codigo && <span>Código: {mov.codigo}</span>}
-                                          {mov.codigoNacional && <span>• Nacional: {mov.codigoNacional}</span>}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                      <Badge variant="default" className="text-[10px]">
-                                        {mov.dataHora
-                                          ? new Date(mov.dataHora).toLocaleDateString('pt-BR', {
-                                              day: '2-digit',
-                                              month: '2-digit',
-                                              year: 'numeric',
-                                            })
-                                          : 'Sem data'}
-                                      </Badge>
-                                      {mov.dataHora && (
-                                        <span className="text-[10px] text-text-muted font-mono">
-                                          {new Date(mov.dataHora).toLocaleTimeString('pt-BR', {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                          })}
-                                        </span>
-                                      )}
-                                    </div>
+                                <div className="flex-1 space-y-1.5 min-w-0">
+                                  <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <span className="text-sm font-semibold text-text leading-snug">
+                                      {mov.nome}
+                                    </span>
+                                    <span className="text-[10px] text-text-subtle whitespace-nowrap shrink-0 font-mono">
+                                      {mov.dataHora
+                                        ? new Date(mov.dataHora).toLocaleDateString('pt-BR')
+                                        : '—'}
+                                    </span>
                                   </div>
-                                  
-                                  {/* Órgão Julgador da movimentação */}
-                                  {mov.orgaoJulgador?.nome && (
-                                    <p className="text-xs text-text-muted mb-2">
-                                      📍 {mov.orgaoJulgador.nome}
-                                    </p>
-                                  )}
-                                  
-                                  {/* Complemento em texto */}
                                   {mov.complemento && (
-                                    <div className="mb-2 p-2 bg-surface-2 rounded-lg text-xs text-text border-l-3 border-primary/30">
-                                      {mov.complemento}
-                                    </div>
+                                    <p className="text-xs text-text-muted">{mov.complemento}</p>
                                   )}
-                                  
-                                  {/* Complementos Tabelados Detalhados */}
-                                  {mov.complementosTabelados && mov.complementosTabelados.length > 0 && (
-                                    <div className="mt-3 pt-3 border-t border-border/50">
-                                      <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wider mb-2">
-                                        Detalhes da Movimentação:
-                                      </p>
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {mov.complementosTabelados.map((c: any, cIdx: number) => (
-                                          <div key={cIdx} className="text-xs bg-info/5 p-2 rounded-lg border border-info/10">
-                                            <p className="text-text font-medium">{c.nome}</p>
-                                            {c.descricao && (
-                                              <p className="text-text-muted text-[10px] mt-0.5">
-                                                {c.descricao.replace(/_/g, ' ')}
-                                              </p>
-                                            )}
-                                            {(c.codigo || c.valor) && (
-                                              <p className="text-[10px] text-text-muted font-mono mt-1">
-                                                {c.codigo && `Cód: ${c.codigo}`}
-                                                {c.codigo && c.valor && ' • '}
-                                                {c.valor && `Val: ${c.valor}`}
-                                              </p>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
+                                  {(mov.codigo || mov.codigoNacional || mov.orgaoJulgador?.nome) && (
+                                    <div className="flex flex-wrap gap-2 text-[10px] text-text-subtle font-mono">
+                                      {mov.codigo && <span>Cód: {mov.codigo}</span>}
+                                      {mov.codigoNacional && <span>· Nac: {mov.codigoNacional}</span>}
+                                      {mov.orgaoJulgador?.nome && <span>· {mov.orgaoJulgador.nome}</span>}
                                     </div>
                                   )}
                                 </div>
@@ -1544,67 +1469,54 @@ export const DataJudPage = () => {
                     )}
 
                     {/* ===== AÇÕES ===== */}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
-                      <Button
-                        variant="outline"
-                        size="sm"
+                    <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border">
+                      <button
+                        type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(formatarNumeroProcesso(info.numero))
                           toast.success('Número copiado!')
                         }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-alt transition-colors"
                       >
-                        📋 Copiar Número
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(JSON.stringify(processo, null, 2))
-                          toast.success('JSON completo copiado!')
-                        }}
-                      >
-                        📄 Copiar JSON
-                      </Button>
-                      
-                      <Button
-                        size="sm"
+                        <Copy className="h-3.5 w-3.5 text-text-muted" />
+                        Copiar Número
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => exportarProcessoParaPDF(processo)}
-                        className="flex items-center gap-2 bg-brand-secondary text-white hover:bg-brand-secondary-dark border-0"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-alt transition-colors"
                       >
-                        <FileDown className="h-4 w-4" />
+                        <FileDown className="h-3.5 w-3.5 text-text-muted" />
                         Exportar PDF
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setModalImportarProcesso({
                           numero: processo.numeroProcesso ?? '',
                           tribunal: processo.tribunal ?? '',
                         })}
-                        className="flex items-center gap-1.5"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-alt transition-colors"
                       >
-                        <UserCheck className="h-3.5 w-3.5" />
+                        <UserCheck className="h-3.5 w-3.5 text-text-muted" />
                         Importar para Cliente
-                      </Button>
+                      </button>
 
-                      {/* Importar direto para Casos */}
                       {(() => {
                         const key = processo.numeroProcesso ?? ''
                         const status = importStatus.get(key) ?? 'idle'
                         const isDone = status === 'done' || status === 'already'
                         return (
-                          <Button
-                            size="sm"
+                          <button
+                            type="button"
                             onClick={() => handleImportarCaso(processo)}
                             disabled={status === 'loading' || isDone}
                             className={cn(
-                              'flex items-center gap-1.5 border-0',
-                              isDone
-                                ? 'bg-green-600 hover:bg-green-600 text-white cursor-default'
-                                : 'bg-brand-primary hover:bg-brand-primary/90 text-white',
+                              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-60',
+                              isDone ? 'bg-green-600 cursor-default' : '',
                             )}
+                            style={!isDone ? { backgroundColor: 'var(--brand-primary)' } : undefined}
                           >
                             {status === 'loading' ? (
                               <>
@@ -1622,7 +1534,7 @@ export const DataJudPage = () => {
                                 Importar para Casos
                               </>
                             )}
-                          </Button>
+                          </button>
                         )
                       })()}
                     </div>
@@ -1630,8 +1542,8 @@ export const DataJudPage = () => {
                 </div>
               )
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Painel de Inteligência Preditiva — aparece após busca por CPF */}
