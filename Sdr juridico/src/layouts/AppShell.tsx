@@ -29,6 +29,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useIsFartechAdmin, useIsOrgAdmin } from '@/hooks/usePermissions'
+import { useAlertas } from '@/hooks/useAlertas'
 import { useApiHealth } from '@/hooks/useApiHealth'
 import { usePageTracking } from '@/hooks/usePageTracking'
 import { Button } from '@/components/ui/button'
@@ -111,6 +112,7 @@ export const AppShell = () => {
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin = useIsOrgAdmin()
   const apiHealth = useApiHealth()
+  const { naoLidas: alertasNaoLidas } = useAlertas()
 
   const apiStatusMap: Record<string, 'checking' | 'online' | 'offline'> = {
     '/app/datajud': apiHealth.datajud,
@@ -491,12 +493,26 @@ export const AppShell = () => {
           </div>
 
           {/* Notifications */}
-          <button className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+          <button
+            className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            onClick={() => navigate('/app/dashboard')}
+            title={alertasNaoLidas > 0 ? `${alertasNaoLidas} notificações não lidas` : 'Notificações'}
+          >
             <Bell className="h-5 w-5 text-gray-600" />
-            <span
-              className="absolute top-2 right-2 w-2 h-2 rounded-full"
-              style={{ backgroundColor: '#721011' }}
-            />
+            {alertasNaoLidas > 0 && (
+              <span
+                className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full"
+                style={{ backgroundColor: '#721011' }}
+              >
+                {alertasNaoLidas > 99 ? '99+' : alertasNaoLidas}
+              </span>
+            )}
+            {alertasNaoLidas === 0 && (
+              <span
+                className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                style={{ backgroundColor: '#721011' }}
+              />
+            )}
           </button>
 
           {/* Settings */}
