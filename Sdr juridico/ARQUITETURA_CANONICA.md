@@ -1135,25 +1135,257 @@ tests/
 
 ---
 
-## 🚀 DEPLOY
+## 🚀 DEPLOY — PROCESSO COMPLETO
 
-### Ambientes
+> **⚠️ LEIA ANTES DE FAZER QUALQUER DEPLOY**
+> O build remoto do Vercel (`npm run build`) **falha** com erros TypeScript (exit code 2).
+> O processo correto usa **`--prebuilt`**: build local + envio do artefato pronto para o Vercel.
+> NUNCA use `vercel deploy` sem `--prebuilt` — o deploy irá falhar.
 
+---
+
+### Pré-requisitos
+
+| Item | Valor |
+|---|---|
+| Diretório do projeto | `/Users/fernandodias/Desktop/SDR JURIDICO/Sdr juridico` |
+| Node | v20+ (via nvm) |
+| Vercel CLI | v50.22.1+ (`npx vercel --version`) |
+| Git user.email | **`contato@fartech.app.br`** (obrigatório — outro email é rejeitado pelo Vercel) |
+| Repositório | `fartech2025/SDR-Juridico`, branch `main` |
+| URL de produção | `https://sdr-juridico.vercel.app` |
+
+---
+
+### Passo 1 — Verificar configuração do Git
+
+Antes de qualquer commit, confirmar que o email do autor está correto:
+
+```bash
+git config user.email
+# deve retornar: contato@fartech.app.br
+
+# Se retornar outro email, corrigir com:
+git config user.email "contato@fartech.app.br"
+git config user.name "FarTech"
 ```
-development  → localhost:5173
-staging      → staging.sdrjuridico.com
-production   → sdrjuridico.com
+
+> **Por quê?** O Vercel vincula deploys ao autor do commit. Commits com `frpdias@icloud.com`
+> ou qualquer outro email fora do `fartech2025` serão bloqueados pelo Vercel Linked Account.
+
+---
+
+### Passo 2 — Pull + Sync com o repositório remoto
+
+```bash
+cd "/Users/fernandodias/Desktop/SDR JURIDICO/Sdr juridico"
+
+# 1. Verificar estado local antes de qualquer coisa
+git status
+
+# 2. Fazer pull para trazer possíveis commits do remoto
+git pull origin main
+
+# Resultado esperado quando não há novidades:
+# Already up to date.
+
+# Resultado quando há novidades:
+# Fast-forward
+#  src/algum-arquivo.tsx | 10 ++++---
+#  1 file changed, 7 insertions(+), 3 deletions(-)
 ```
 
-### CI/CD Pipeline
+> **Se houver conflitos após o pull:**
+> ```bash
+> git status                    # ver arquivos em conflito
+> # Editar cada arquivo, resolver os conflitos marcados com <<< === >>>
+> git add .
+> git commit -m "fix: resolve merger conflict em X"
+> ```
 
-```yaml
-1. Lint → 2. Type Check → 3. Tests → 4. Build → 5. Deploy
+---
+
+### Passo 3 — Desenvolver e commitar as mudanças
+
+```bash
+# Após fazer as alterações no código, commitar seguindo Conventional Commits:
+git add .
+git commit -m "feat: descrição da nova feature"
+# ou
+git commit -m "fix: descrição do bug corrigido"
+# ou
+git commit -m "chore: ajuste de configuração"
+
+# Enviar para o remoto
+git push origin main
+```
+
+**Prefixos Conventional Commits usados no projeto:**
+
+| Prefixo | Uso |
+|---|---|
+| `feat:` | Nova funcionalidade |
+| `fix:` | Correção de bug |
+| `chore:` | Scripts, configs, deps — sem mudança no código |
+| `refactor:` | Refatoração sem alterar comportamento |
+| `style:` | CSS/Tailwind — sem lógica |
+| `docs:` | Só documentação |
+
+> **Se o push for rejeitado (remote has diverged):**
+> ```bash
+> git pull --rebase origin main   # rebasa local em cima do remoto
+> git push origin main            # empurra normalmente
+> ```
+
+---
+
+### Passo 4 — Build local
+
+```bash
+cd "/Users/fernandodias/Desktop/SDR JURIDICO/Sdr juridico"
+
+node_modules/.bin/vite build
+```
+
+**Saída esperada em caso de sucesso:**
+```
+vite v7.x.x building for production...
+✓ 1234 modules transformed.
+dist/index.html                  0.50 kB
+dist/assets/index-[hash].js    856.23 kB
+dist/assets/index-[hash].css    98.12 kB
+✓ built in 5.20s
+```
+
+> **Se o build falhar:**
+> - Erros de TypeScript — corrigir o erro indicado
+> - Erros de import — verificar se o arquivo existe e o caminho está correto
+> - Nunca ignorar erros de build — o deploy publicaria código quebrado
+
+---
+
+### Passo 5 — Preparar artefato para deploy (`--prebuilt`)
+
+O Vercel `--prebuilt` exige que os arquivos estejam em `.vercel/output/static/`:
+
+```bash
+cd "/Users/fernandodias/Desktop/SDR JURIDICO/Sdr juridico"
+
+# Limpar saída anterior e copiar dist/ para o diretório esperado pelo Vercel
+rm -rf .vercel/output/static
+mkdir -p .vercel/output/static
+cp -r dist/. .vercel/output/static/
+```
+
+> **Por quê `.vercel/output/static/`?**
+> O Vercel CLI, ao receber `--prebuilt`, procura os artefatos de build em `.vercel/output/`.
+> O subdiretório `static/` corresponde a um site estático (SPA). O `vercel.json` na raiz
+> define as rewrites para `index.html`, garantindo que o React Router funcione.
+
+---
+
+### Passo 6 — Deploy para produção
+
+```bash
+cd "/Users/fernandodias/Desktop/SDR JURIDICO/Sdr juridico"
+
+vercel deploy --prebuilt --prod --yes
+```
+
+**Saída esperada:**
+```
+Vercel CLI 50.x.x
+🔍  Inspect: https://vercel.com/fartechs-projects-c64e0af4/sdr-juridico/HASH [2s]
+✅  Production: https://sdr-juridico-HASH-fartechs-projects-c64e0af4.vercel.app [10s]
+```
+
+> Anote a URL de deployment gerada (ex: `sdr-juridico-dobvq4hlc-fartechs-projects-c64e0af4.vercel.app`).
+> Ela será usada no próximo passo.
+
+---
+
+### Passo 7 — Apontar o alias de produção
+
+O Vercel gera uma URL única por deployment. É necessário apontar o alias fixo para essa URL:
+
+```bash
+vercel alias set <URL-DO-DEPLOYMENT-ACIMA> sdr-juridico.vercel.app
+
+# Exemplo real:
+vercel alias set sdr-juridico-dobvq4hlc-fartechs-projects-c64e0af4.vercel.app sdr-juridico.vercel.app
+```
+
+**Saída esperada:**
+```
+> Success! https://sdr-juridico.vercel.app now points to https://sdr-juridico-HASH-fartechs-projects-c64e0af4.vercel.app [2s]
+```
+
+> **Por quê é necessário?**
+> Cada deploy cria uma URL única imutável. O alias `sdr-juridico.vercel.app` precisa ser
+> redirecionado manualmente para o deployment mais recente. Sem isso, a URL de produção
+> continuaria apontando para o deploy anterior.
+
+---
+
+### Fluxo completo em um bloco (copy-paste)
+
+```bash
+# === DEPLOY COMPLETO SDR JURÍDICO ===
+# Copiar e colar este bloco inteiro no terminal
+
+cd "/Users/fernandodias/Desktop/SDR JURIDICO/Sdr juridico"
+
+# 1. Garantir email correto
+git config user.email "contato@fartech.app.br"
+
+# 2. Sync com remoto
+git pull origin main
+
+# 3. (Opcional) Commitar mudanças locais pendentes
+# git add . && git commit -m "feat: descrição" && git push origin main
+
+# 4. Build
+node_modules/.bin/vite build
+
+# 5. Preparar artefato prebuilt
+rm -rf .vercel/output/static && mkdir -p .vercel/output/static && cp -r dist/. .vercel/output/static/
+
+# 6. Deploy
+vercel deploy --prebuilt --prod --yes
+# --> Anote a URL de deployment gerada (sdr-juridico-XXXX.vercel.app)
+
+# 7. Apontar alias (substituir XXXX pela URL gerada acima)
+# vercel alias set sdr-juridico-XXXX-fartechs-projects-c64e0af4.vercel.app sdr-juridico.vercel.app
 ```
 
 ---
 
-## 📈 PERFORMANCE
+### Troubleshooting de Deploy
+
+| Sintoma | Causa provável | Solução |
+|---|---|---|
+| `Error: Your account is not authorized to deploy` | Email do git errado | `git config user.email "contato@fartech.app.br"` |
+| `Build failed with exit code 2` | Erros TypeScript no Vercel | Usar `--prebuilt` (nunca deploy sem ele) |
+| `Error: No Output Directory named "dist"` não encontrado | Build não foi rodado | Executar `node_modules/.bin/vite build` antes |
+| Alias aponta para deploy antigo | Esqueceu o Passo 7 | Rodar `vercel alias set <nova-url> sdr-juridico.vercel.app` |
+| `ENOENT: .vercel/output/static` | Diretório não criado | `mkdir -p .vercel/output/static` antes do `cp` |
+| `git push` rejeitado — `non-fast-forward` | Remoto tem commits que local não tem | `git pull --rebase origin main` e depois `git push` |
+| Tela branca após deploy | Rota não registrada em `router.tsx` | Verificar se a rota existe como filho do AppShell |
+
+---
+
+### Verificação pós-deploy
+
+Após o alias ser configurado, validar:
+
+1. Acessar https://sdr-juridico.vercel.app
+2. Fazer login com uma conta ativa
+3. Navegar para `/app/dashboard` — confirmar que carrega sem tela branca
+4. Se for admin Fartech, navegar para `/admin/organizations` — confirmar sidebar
+
+---
+
+## �📈 PERFORMANCE
 
 ### Otimizações
 - ✅ Code splitting por rota
