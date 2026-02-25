@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 
 /** Inicia o scraper-server automaticamente junto com o dev server do Vite */
-function scraperServerPlugin(): Plugin {
+function _scraperServerPlugin(): Plugin {
   return {
     name: 'scraper-server-auto',
     apply: 'serve', // apenas em dev, não no build
@@ -44,7 +44,7 @@ function scraperServerPlugin(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), react()], // scraperServerPlugin() desativado (scraper-server já rodando na porta 3001)
+  plugins: [tailwindcss(), react(), _scraperServerPlugin()], // _scraperServerPlugin tem apply:'serve' — só inicia em dev
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
