@@ -14,6 +14,12 @@ import { DocumentosPage } from '@/pages/DocumentosPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { IndicadoresPage } from '@/pages/IndicadoresPage'
 import { LeadsPage } from '@/pages/LeadsPage'
+import { LeadsKanbanPage } from '@/pages/LeadsKanbanPage'
+import { AuditoriaPage } from '@/pages/AuditoriaPage'
+import { DiarioOficialPage } from '@/pages/DiarioOficialPage'
+import { TarefasRootPage } from '@/pages/TarefasRootPage'
+import { TarefasKanbanPage } from '@/pages/TarefasKanbanPage'
+import TarefasArquivadasPage from '@/pages/TarefasArquivadasPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -67,6 +73,10 @@ export const router = createBrowserRouter([
         element: <LeadsPage />,
       },
       {
+        path: 'leads/kanban',
+        element: <LeadsKanbanPage />,
+      },
+      {
         path: 'clientes',
         element: <ClientesPage />,
       },
@@ -105,6 +115,26 @@ export const router = createBrowserRouter([
       {
         path: 'analytics',
         element: <AnalyticsPage />,
+      },
+      {
+        path: 'auditoria',
+        element: <AuditoriaPage />,
+      },
+      {
+        path: 'diario-oficial',
+        element: <DiarioOficialPage />,
+      },
+      {
+        path: 'tarefas',
+        element: <TarefasRootPage />,
+      },
+      {
+        path: 'tarefas/kanban',
+        element: <TarefasKanbanPage />,
+      },
+      {
+        path: 'tarefas/arquivadas',
+        element: <TarefasArquivadasPage />,
       },
     ],
   },
