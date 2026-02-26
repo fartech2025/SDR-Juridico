@@ -34,7 +34,9 @@
       "WebFetch(domain:legalcloud.com.br)",
       "Bash(cd \"C:/Users/alanp/OneDrive/Documentos/SDR-Juridico/Sdr juridico\" && node_modules/.bin/tsc --noEmit 2>&1)",
       "Bash(curl:*)",
-      "WebFetch(domain:eproc1g.tjmg.jus.br)"
+      "WebFetch(domain:eproc1g.tjmg.jus.br)",
+      "Bash(npx playwright:*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }

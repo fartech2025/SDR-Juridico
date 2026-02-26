@@ -26,8 +26,12 @@ export function PjeConfigCard() {
   const [importModalAberto, setImportModalAberto]  = React.useState(false)
   const [statusMNI,         setStatusMNI]          = React.useState<StatusMNI>('verificando')
   const [tribunais,         setTribunais]          = React.useState(0)
+  const [oabFallbackAtivo,  setOabFallbackAtivo]   = React.useState(false)
+  const [oabUfConfigurada,  setOabUfConfigurada]   = React.useState<string>('')
   const [cpf,               setCpf]               = React.useState('')
   const [senha,             setSenha]             = React.useState('')
+  const [oab,               setOab]               = React.useState('')
+  const [uf,                setUf]                = React.useState('')
   const [mostrarSenha,      setMostrarSenha]      = React.useState(false)
   const [salvando,          setSalvando]          = React.useState(false)
   const [msgResultado,      setMsgResultado]      = React.useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null)
@@ -40,8 +44,15 @@ export function PjeConfigCard() {
   const verificar = React.useCallback(async () => {
     setStatusMNI('verificando')
     const status = await verificarStatus()
-    if (!status?.online) { setStatusMNI('offline'); return }
+    if (!status?.online) {
+      setStatusMNI('offline')
+      setOabFallbackAtivo(false)
+      setOabUfConfigurada('')
+      return
+    }
     setTribunais(status.mni_tribunais ?? 0)
+    setOabFallbackAtivo(Boolean(status.mni_oab_configurado))
+    setOabUfConfigurada((status.mni_uf ?? '').toUpperCase())
     setStatusMNI(status.mni_configurado ? 'ativo' : 'inativo')
   }, [])
 
@@ -51,6 +62,8 @@ export function PjeConfigCard() {
     setModalAberto(false)
     setCpf('')
     setSenha('')
+    setOab('')
+    setUf('')
     setMsgResultado(null)
     setEtapa('formulario')
     setSessionId('')
@@ -67,11 +80,18 @@ export function PjeConfigCard() {
       setMsgResultado({ tipo: 'erro', texto: 'Informe a senha do PJe.' })
       return
     }
+    if ((oab.trim().length > 0 && uf.trim().length === 0) || (oab.trim().length === 0 && uf.trim().length > 0)) {
+      setMsgResultado({ tipo: 'erro', texto: 'Para busca por OAB, preencha OAB e UF juntos.' })
+      return
+    }
 
     setSalvando(true)
     setMsgResultado(null)
 
-    const resultado = await configurarMNI(cpf, senha)
+    const resultado = await configurarMNI(cpf, senha, {
+      oab: oab.trim() || undefined,
+      uf: uf.trim() || undefined,
+    })
 
     setSalvando(false)
 
@@ -122,6 +142,14 @@ export function PjeConfigCard() {
     setCpf(fmt)
   }
 
+  const handleOabChange = (v: string) => {
+    setOab(v.replace(/\D/g, '').slice(0, 12))
+  }
+
+  const handleUfChange = (v: string) => {
+    setUf(v.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 2))
+  }
+
   // ── Badge de status ─────────────────────────────────────────────────────────
   const badgeVariant = statusMNI === 'ativo' ? 'success' : statusMNI === 'offline' ? 'danger' : 'warning'
   const badgeLabel   = statusMNI === 'ativo' ? 'Ativo' : statusMNI === 'offline' ? 'Offline' : statusMNI === 'verificando' ? '…' : 'Não configurado'
@@ -149,6 +177,12 @@ export function PjeConfigCard() {
             <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
               <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
               Credenciais configuradas — {tribunais} tribunais acessíveis
+            </div>
+          )}
+          {statusMNI === 'ativo' && oabFallbackAtivo && (
+            <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              Busca complementar por OAB ativa{` (${oabUfConfigurada || 'UF'})`}
             </div>
           )}
           {statusMNI === 'offline' && (
@@ -342,6 +376,33 @@ export function PjeConfigCard() {
             </div>
             <p className="text-[11px] text-text-muted">
               A conexão será testada no TJMG antes de salvar.
+            </p>
+          </div>
+
+          {/* OAB / UF (opcional, recomendado para fallback DataJud) */}
+          <div className="space-y-1.5">
+            <label className="text-xs uppercase tracking-wide text-text-muted">
+              OAB / UF (opcional)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Input
+                placeholder="Número OAB"
+                value={oab}
+                onChange={e => handleOabChange(e.target.value)}
+                disabled={salvando}
+                inputMode="numeric"
+                className="sm:col-span-2"
+              />
+              <Input
+                placeholder="UF"
+                value={uf}
+                onChange={e => handleUfChange(e.target.value)}
+                disabled={salvando}
+                maxLength={2}
+              />
+            </div>
+            <p className="text-[11px] text-text-muted">
+              Preencha para habilitar busca complementar no DataJud quando tribunais PJe estiverem indisponíveis.
             </p>
           </div>
 

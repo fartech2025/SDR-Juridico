@@ -29,6 +29,7 @@ import { auditLogsService } from '@/services/auditLogsService'
 import type { AuditLogEntry } from '@/services/auditLogsService'
 import { cn } from '@/utils/cn'
 import { useNavigate } from 'react-router-dom'
+import { addPdfHeader, addPdfFooters, getTableTheme, MARGIN } from '@/services/pdfReportService'
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -88,13 +89,15 @@ async function generatePDF(data: ReportData) {
   const jsPDFClass = jsPDFModule.default || jsPDFModule.jsPDF
 
   const doc = new jsPDFClass('p', 'mm', 'a4')
+  const pageWidth = doc.internal.pageSize.getWidth()
 
   // Ensure the plugin is registered
   try { applyPlugin(jsPDFClass as any) } catch { /* already applied */ }
 
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const margin = 15
-  let y = 15
+  // Header padrão
+  await addPdfHeader(doc, 'RELATÓRIO DE SEGURANÇA')
+
+  let y = 40
 
   // Helper: call autoTable with doc
   const table = (options: any) => {
@@ -108,7 +111,7 @@ async function generatePDF(data: ReportData) {
   const addNewPageIfNeeded = (needed: number) => {
     if (y + needed > 275) {
       doc.addPage()
-      y = 15
+      y = 25
     }
   }
 
@@ -117,29 +120,12 @@ async function generatePDF(data: ReportData) {
   const warn = '[!]'
   const fail = '[X]'
 
-  // ── Header ──
-  doc.setFillColor(109, 40, 45)
-  doc.rect(0, 0, pageWidth, 40, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(20)
-  doc.setFont('helvetica', 'bold')
-  doc.text('RELATORIO DE SEGURANCA', margin, 18)
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.text('SDR Juridico - TalentJUD', margin, 26)
-  doc.text(
-    'Gerado em: ' + data.generatedAt.toLocaleDateString('pt-BR') + ' as ' + data.generatedAt.toLocaleTimeString('pt-BR'),
-    margin,
-    33,
-  )
-  y = 50
-
   // ── 1. Resumo Executivo ──
-  doc.setTextColor(109, 40, 45)
-  doc.setFontSize(14)
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('1. Resumo Executivo', margin, y)
-  y += 8
+  doc.text('1. Resumo Executivo', MARGIN, y)
+  y += 6
 
   const securityScore = data.securityChecklist.filter((c) => c.status).length
   const securityTotal = data.securityChecklist.length
@@ -147,34 +133,32 @@ async function generatePDF(data: ReportData) {
   const connectedAPIs = data.apiStatuses.filter((a) => a.status === 'connected').length
   const totalRecords = data.tableStats.reduce((acc, t) => acc + t.count, 0)
 
+  const tableTheme = getTableTheme()
   table({
     startY: y,
     head: [['Indicador', 'Valor', 'Status']],
     body: [
-      ['Score de Seguranca', scorePercent + '/100', scorePercent >= 90 ? ok + ' Excelente' : scorePercent >= 70 ? warn + ' Bom' : fail + ' Atencao'],
-      ['Conexao com Banco', data.connection.status === 'connected' ? 'Online' : 'Offline', data.connection.status === 'connected' ? ok : fail],
-      ['Latencia', data.connection.latency ? data.connection.latency + 'ms' : 'N/A', data.connection.latency && data.connection.latency < 100 ? ok : warn],
-      ['Usuarios Cadastrados', String(data.totalUsers), '-'],
-      ['Organizacoes Ativas', data.activeOrgs + '/' + data.totalOrgs, '-'],
+      ['Score de Segurança', scorePercent + '/100', scorePercent >= 90 ? ok + ' Excelente' : scorePercent >= 70 ? warn + ' Bom' : fail + ' Atenção'],
+      ['Conexão com Banco', data.connection.status === 'connected' ? 'Online' : 'Offline', data.connection.status === 'connected' ? ok : fail],
+      ['Latência', data.connection.latency ? data.connection.latency + 'ms' : 'N/A', data.connection.latency && data.connection.latency < 100 ? ok : warn],
+      ['Usuários Cadastrados', String(data.totalUsers), '-'],
+      ['Organizações Ativas', data.activeOrgs + '/' + data.totalOrgs, '-'],
       ['APIs Conectadas', connectedAPIs + '/' + data.apiStatuses.length, connectedAPIs === data.apiStatuses.length ? ok : warn],
       ['Total de Registros', totalRecords.toLocaleString('pt-BR'), '-'],
       ['Logs de Auditoria', String(data.auditLogs.length), data.auditLogs.length > 0 ? ok : warn],
     ],
-    margin: { left: margin, right: margin },
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [109, 40, 45], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
+    ...tableTheme,
     columnStyles: { 2: { halign: 'center' } },
   })
-  y = getLastTableY() + 12
+  y = getLastTableY() + 10
 
   // ── 2. Security Checklist ──
-  addNewPageIfNeeded(60)
-  doc.setTextColor(109, 40, 45)
-  doc.setFontSize(14)
+  addNewPageIfNeeded(50)
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('2. Checklist de Seguranca', margin, y)
-  y += 8
+  doc.text('2. Checklist de Segurança', MARGIN, y)
+  y += 6
 
   table({
     startY: y,
@@ -184,71 +168,62 @@ async function generatePDF(data: ReportData) {
       c.item,
       c.status ? 'Implementado' : 'Pendente',
     ]),
-    margin: { left: margin, right: margin },
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [109, 40, 45], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
+    ...tableTheme,
     columnStyles: { 0: { halign: 'center', cellWidth: 12 }, 2: { halign: 'center' } },
   })
-  y = getLastTableY() + 12
+  y = getLastTableY() + 10
 
   // ── 3. Conformidade ──
   addNewPageIfNeeded(50)
-  doc.setTextColor(109, 40, 45)
-  doc.setFontSize(14)
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('3. Conformidade Regulatoria', margin, y)
-  y += 8
+  doc.text('3. Conformidade Regulatória', MARGIN, y)
+  y += 6
 
   table({
     startY: y,
-    head: [['Norma', 'Descricao', 'Score', 'Status']],
+    head: [['Norma', 'Descrição', 'Score', 'Status']],
     body: data.complianceItems.map((c) => [
       c.name,
       c.description,
       c.score + '%',
-      c.score >= 95 ? ok + ' Conforme' : c.score >= 80 ? warn + ' Parcial' : fail + ' Nao conforme',
+      c.score >= 95 ? ok + ' Conforme' : c.score >= 80 ? warn + ' Parcial' : fail + ' Não conforme',
     ]),
-    margin: { left: margin, right: margin },
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [109, 40, 45], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
+    ...tableTheme,
     columnStyles: { 2: { halign: 'center' }, 3: { halign: 'center' } },
   })
-  y = getLastTableY() + 12
+  y = getLastTableY() + 10
 
   // ── 4. Status das APIs ──
   addNewPageIfNeeded(50)
-  doc.setTextColor(109, 40, 45)
-  doc.setFontSize(14)
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('4. Status das APIs e Servicos', margin, y)
-  y += 8
+  doc.text('4. Status das APIs e Serviços', MARGIN, y)
+  y += 6
 
   table({
     startY: y,
-    head: [['Servico', 'Status', 'Detalhes', '']],
+    head: [['Serviço', 'Status', 'Detalhes', '']],
     body: data.apiStatuses.map((a) => [
       a.name,
-      a.status === 'connected' ? 'Conectado' : a.status === 'disconnected' ? 'Desconectado' : 'Nao configurado',
+      a.status === 'connected' ? 'Conectado' : a.status === 'disconnected' ? 'Desconectado' : 'Não configurado',
       a.message,
       a.status === 'connected' ? ok : a.status === 'disconnected' ? fail : warn,
     ]),
-    margin: { left: margin, right: margin },
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [109, 40, 45], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
+    ...tableTheme,
     columnStyles: { 3: { halign: 'center', cellWidth: 12 } },
   })
-  y = getLastTableY() + 12
+  y = getLastTableY() + 10
 
-  // ── 5. Estatisticas das Tabelas ──
-  addNewPageIfNeeded(60)
-  doc.setTextColor(109, 40, 45)
-  doc.setFontSize(14)
+  // ── 5. Estatísticas do Banco de Dados ──
+  addNewPageIfNeeded(50)
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('5. Estatisticas do Banco de Dados', margin, y)
-  y += 8
+  doc.text('5. Estatísticas do Banco de Dados', MARGIN, y)
+  y += 6
 
   const tableBody = data.tableStats.map((t) => [
     t.name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
@@ -260,10 +235,7 @@ async function generatePDF(data: ReportData) {
     startY: y,
     head: [['Tabela', 'Registros']],
     body: tableBody,
-    margin: { left: margin, right: margin },
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [109, 40, 45], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
+    ...tableTheme,
     columnStyles: { 1: { halign: 'right' } },
     didParseCell: (hookData: any) => {
       if (hookData.row.index === tableBody.length - 1 && hookData.section === 'body') {
@@ -272,68 +244,49 @@ async function generatePDF(data: ReportData) {
       }
     },
   })
-  y = getLastTableY() + 12
+  y = getLastTableY() + 10
 
   // ── 6. Infraestrutura ──
   addNewPageIfNeeded(50)
-  doc.setTextColor(109, 40, 45)
-  doc.setFontSize(14)
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('6. Infraestrutura', margin, y)
-  y += 8
+  doc.text('6. Infraestrutura', MARGIN, y)
+  y += 6
 
   table({
     startY: y,
     head: [['Componente', 'Tecnologia', 'Detalhe']],
     body: data.infrastructure.map((i) => [i.label, i.value, i.detail]),
-    margin: { left: margin, right: margin },
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [109, 40, 45], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
+    ...tableTheme,
   })
-  y = getLastTableY() + 12
+  y = getLastTableY() + 10
 
-  // ── 7. Ultimos Logs de Auditoria ──
+  // ── 7. Últimos Logs de Auditoria ──
   if (data.auditLogs.length > 0) {
     addNewPageIfNeeded(50)
-    doc.setTextColor(109, 40, 45)
-    doc.setFontSize(14)
+    doc.setTextColor(40, 40, 40)
+    doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
-    doc.text('7. Ultimos Logs de Auditoria', margin, y)
-    y += 8
+    doc.text('7. Últimos Logs de Auditoria', MARGIN, y)
+    y += 6
 
     table({
       startY: y,
-      head: [['Data/Hora', 'Acao', 'Entidade', 'Usuario']],
+      head: [['Data/Hora', 'Ação', 'Entidade', 'Usuário']],
       body: data.auditLogs.slice(0, 20).map((log) => [
         new Date(log.created_at).toLocaleString('pt-BR'),
         log.action,
         log.entity || '-',
         log.actor_user_id ? log.actor_user_id.substring(0, 12) + '...' : '-',
       ]),
-      margin: { left: margin, right: margin },
-      styles: { fontSize: 8, cellPadding: 2.5 },
-      headStyles: { fillColor: [109, 40, 45], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
+      ...tableTheme,
     })
-    y = getLastTableY() + 12
+    y = getLastTableY() + 10
   }
 
-  // ── Footer ──
-  const totalPages = (doc as any).internal.getNumberOfPages()
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i)
-    doc.setFontSize(8)
-    doc.setTextColor(150, 150, 150)
-    doc.text(
-      'SDR Juridico - Relatorio de Seguranca - Pagina ' + i + ' de ' + totalPages,
-      pageWidth / 2,
-      290,
-      { align: 'center' },
-    )
-    doc.setDrawColor(200, 200, 200)
-    doc.line(margin, 285, pageWidth - margin, 285)
-  }
+  // Footer padrão
+  addPdfFooters(doc, 'Relatório de Segurança')
 
   // Save
   const filename = 'relatorio-seguranca-' + data.generatedAt.toISOString().slice(0, 10) + '.pdf'

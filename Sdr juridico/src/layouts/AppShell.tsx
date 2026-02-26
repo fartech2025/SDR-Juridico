@@ -11,7 +11,6 @@ import {
   ListTodo,
   Power,
   Settings,
-  SlidersHorizontal,
   Briefcase,
   Search,
   ChevronDown,
@@ -24,6 +23,7 @@ import {
   Menu,
   X,
   Flame,
+  CircleDollarSign,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -74,7 +74,8 @@ const appNavGroups: { label: string; items: NavItem[] }[] = [
     label: 'Governanca',
     items: [
       { label: 'Auditoria', to: '/app/auditoria', icon: ShieldCheck },
-      { label: 'Indicadores', to: '/app/indicadores', icon: BarChart3 },
+      { label: 'Analytics', to: '/app/analytics', icon: BarChart3 },
+      { label: 'Financeiro', to: '/app/financeiro', icon: CircleDollarSign },
     ],
   },
 ]
@@ -91,19 +92,6 @@ const orgAdminNavItems = [
   { label: 'Usuarios da Org', to: '/org/users', icon: Users },
 ]
 
-const findActiveGroupLabel = (
-  groups: { label: string; items: NavItem[] }[],
-  pathname: string,
-) => {
-  const normalizedPath = pathname.startsWith('/app/caso/')
-    ? '/app/casos'
-    : pathname
-  const group = groups.find((item) =>
-    item.items.some((navItem) => normalizedPath.startsWith(navItem.to)),
-  )
-  return group?.label ?? null
-}
-
 export const AppShell = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -112,7 +100,7 @@ export const AppShell = () => {
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin = useIsOrgAdmin()
   const apiHealth = useApiHealth()
-  const { naoLidas: alertasNaoLidas } = useAlertas()
+  const { alertas, naoLidas: alertasNaoLidas, marcarLida, marcarTodasLidas } = useAlertas()
 
   const apiStatusMap: Record<string, 'checking' | 'online' | 'offline'> = {
     '/app/datajud': apiHealth.datajud,
@@ -145,9 +133,10 @@ export const AppShell = () => {
   const [logoutOpen, setLogoutOpen] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false)
-  const [sidebarGroupOpen, setSidebarGroupOpen] = React.useState<string | null>(null)
+  const [notifOpen, setNotifOpen] = React.useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const profileMenuRef = React.useRef<HTMLDivElement | null>(null)
+  const notifRef = React.useRef<HTMLDivElement | null>(null)
 
   const profilePath = React.useMemo(() => {
     if (location.pathname.startsWith('/admin')) return '/admin/perfil'
@@ -174,11 +163,6 @@ export const AppShell = () => {
       { label: 'Administracao', items: administrationItems },
     ]
   }, [administrationItems, location.pathname])
-
-  const activeGroupLabel = React.useMemo(
-    () => findActiveGroupLabel(sidebarGroups, location.pathname),
-    [sidebarGroups, location.pathname],
-  )
 
   usePageTracking()
 
@@ -209,14 +193,27 @@ export const AppShell = () => {
   }, [profileMenuOpen])
 
   React.useEffect(() => {
-    setProfileMenuOpen(false)
-  }, [location.pathname])
+    if (!notifOpen) return
+    const handlePointer = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (target && notifRef.current?.contains(target)) return
+      setNotifOpen(false)
+    }
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNotifOpen(false)
+    }
+    document.addEventListener('mousedown', handlePointer)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handlePointer)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [notifOpen])
 
   React.useEffect(() => {
-    if (activeGroupLabel) {
-      setSidebarGroupOpen(activeGroupLabel)
-    }
-  }, [activeGroupLabel])
+    setProfileMenuOpen(false)
+    setNotifOpen(false)
+  }, [location.pathname])
 
   const handleLogout = async () => {
     setLogoutOpen(false)
@@ -276,10 +273,6 @@ export const AppShell = () => {
             const normalizedPath = location.pathname.startsWith('/app/caso/')
               ? '/app/casos'
               : location.pathname
-            const hasActiveItem = group.items.some((item) =>
-              normalizedPath.startsWith(item.to),
-            )
-            const isOpen = sidebarGroupOpen === group.label
             return (
               <div key={group.label} className="space-y-1">
                 {index > 0 && <div className="my-4" />}
@@ -411,7 +404,6 @@ export const AppShell = () => {
                 const normalizedPath = location.pathname.startsWith('/app/caso/')
                   ? '/app/casos'
                   : location.pathname
-                const isOpen = sidebarGroupOpen === group.label
                 return (
                   <div key={group.label} className="space-y-1">
                     {index > 0 && <div className="my-4" />}
@@ -493,27 +485,116 @@ export const AppShell = () => {
           </div>
 
           {/* Notifications */}
-          <button
-            className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-            onClick={() => navigate('/app/dashboard')}
-            title={alertasNaoLidas > 0 ? `${alertasNaoLidas} notificações não lidas` : 'Notificações'}
-          >
-            <Bell className="h-5 w-5 text-gray-600" />
-            {alertasNaoLidas > 0 && (
-              <span
-                className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full"
-                style={{ backgroundColor: '#721011' }}
+          <div className="relative" ref={notifRef}>
+            <button
+              className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => setNotifOpen((o) => !o)}
+              title={alertasNaoLidas > 0 ? `${alertasNaoLidas} notificações não lidas` : 'Notificações'}
+            >
+              <Bell className="h-5 w-5 text-gray-600" />
+              {alertasNaoLidas > 0 && (
+                <span
+                  className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full"
+                  style={{ backgroundColor: '#721011' }}
+                >
+                  {alertasNaoLidas > 99 ? '99+' : alertasNaoLidas}
+                </span>
+              )}
+              {alertasNaoLidas === 0 && (
+                <span
+                  className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                  style={{ backgroundColor: '#721011', opacity: 0.5 }}
+                />
+              )}
+            </button>
+
+            {notifOpen && (
+              <div
+                className="absolute right-0 top-full z-50 mt-2 flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
+                style={{ width: 360, maxHeight: 480 }}
               >
-                {alertasNaoLidas > 99 ? '99+' : alertasNaoLidas}
-              </span>
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Notificações</p>
+                    {alertasNaoLidas > 0 && (
+                      <p className="text-xs text-gray-400">{alertasNaoLidas} não lida{alertasNaoLidas > 1 ? 's' : ''}</p>
+                    )}
+                  </div>
+                  {alertasNaoLidas > 0 && (
+                    <button
+                      onClick={() => void marcarTodasLidas()}
+                      className="rounded-lg px-2 py-1 text-xs font-medium transition hover:bg-gray-100"
+                      style={{ color: '#721011' }}
+                    >
+                      Marcar todas como lidas
+                    </button>
+                  )}
+                </div>
+
+                {/* List */}
+                <div className="flex-1 overflow-y-auto">
+                  {alertas.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <Bell className="mb-3 h-8 w-8 text-gray-300" />
+                      <p className="text-sm font-medium text-gray-500">Nenhuma notificação</p>
+                      <p className="text-xs text-gray-400">Você está em dia.</p>
+                    </div>
+                  ) : (
+                    alertas.slice(0, 30).map((alerta) => {
+                      const prioColor = alerta.prioridade === 'P0' ? '#dc2626' : alerta.prioridade === 'P1' ? '#d97706' : '#6b7280'
+                      const isUnread = !alerta.lida
+                      return (
+                        <button
+                          key={alerta.id}
+                          className={cn(
+                            'w-full border-b border-gray-50 px-4 py-3 text-left transition hover:bg-gray-50',
+                            isUnread && 'bg-red-50/40',
+                          )}
+                          onClick={() => {
+                            void marcarLida(alerta.id)
+                            if (alerta.action_href) {
+                              setNotifOpen(false)
+                              navigate(alerta.action_href)
+                            }
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Unread dot */}
+                            <span
+                              className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: isUnread ? prioColor : 'transparent', border: isUnread ? 'none' : '1.5px solid #d1d5db' }}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="rounded px-1.5 py-0.5 text-[10px] font-bold text-white"
+                                  style={{ backgroundColor: prioColor }}
+                                >
+                                  {alerta.prioridade}
+                                </span>
+                                <p className={cn('truncate text-xs font-medium', isUnread ? 'text-gray-900' : 'text-gray-500')}>
+                                  {alerta.titulo}
+                                </p>
+                              </div>
+                              {alerta.descricao && (
+                                <p className="mt-0.5 line-clamp-2 text-xs text-gray-400">{alerta.descricao}</p>
+                              )}
+                              <p className="mt-1 text-[10px] text-gray-300">
+                                {new Date(alerta.created_at).toLocaleDateString('pt-BR', {
+                                  day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
             )}
-            {alertasNaoLidas === 0 && (
-              <span
-                className="absolute top-2 right-2 w-2 h-2 rounded-full"
-                style={{ backgroundColor: '#721011' }}
-              />
-            )}
-          </button>
+          </div>
 
           {/* Settings */}
           <button

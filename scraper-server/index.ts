@@ -12,6 +12,7 @@ import { consultarProcessoMNI, tribunalTemMNI, MNI_ENDPOINTS } from './scrapers/
 import { buscarTodosProcessosAdvogado, testarCredenciaisPJe, completarLoginComOtp } from './scrapers/pje-painel.js'
 import type { OtpPendingData } from './scrapers/pje-painel.js'
 import { buscarProcessosEproc, testarCredenciaisEproc, EPROC_INSTANCIAS } from './scrapers/eproc.js'
+import { retentarComPlaywright, PJE_PLAYWRIGHT_ATIVO } from './scrapers/pje-playwright.js'
 import { stats, clear as cacheClear, get as cacheGet, set as cacheSet } from './lib/cache.js'
 
 const PORT = 3001
@@ -25,8 +26,19 @@ const ALLOWED_ORIGINS = [
 const mniCreds = {
   cpf:   process.env.MNI_CPF   ?? '',
   senha: process.env.MNI_SENHA ?? '',
+  oab:   (process.env.MNI_OAB   ?? '').replace(/\D/g, ''),
+  uf:    (process.env.MNI_UF    ?? '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 2),
 }
 const isMniAtivo = () => mniCreds.cpf.length > 0 && mniCreds.senha.length > 0
+const isMniOabAtivo = () => mniCreds.oab.length > 0 && mniCreds.uf.length === 2
+
+function normalizarOab(v?: string): string {
+  return (v ?? '').replace(/\D/g, '')
+}
+
+function normalizarUf(v?: string): string {
+  return (v ?? '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 2)
+}
 
 // ── Credenciais eProc — fallback para MNI se não configuradas ──────────────────
 const eprocCreds = {
@@ -41,6 +53,8 @@ const isEprocAtivo  = () => getEprocCpf().length > 0 && getEprocSenha().length >
 interface PendingOtpSession {
   cpf:        string
   senha:      string
+  oab?:       string
+  uf?:        string
   otpData:    OtpPendingData
   expiresAt:  number
 }
@@ -128,6 +142,8 @@ const server = createServer(async (req, res) => {
       versao:              '1.3.0',
       mni_configurado:     isMniAtivo(),
       mni_tribunais:       Object.keys(MNI_ENDPOINTS).length,
+      mni_oab_configurado: isMniOabAtivo(),
+      mni_uf:              mniCreds.uf || null,
       eproc_configurado:   isEprocAtivo(),
       eproc_instancias:    EPROC_INSTANCIAS.length,
       cache:               stats(),
@@ -414,9 +430,30 @@ const server = createServer(async (req, res) => {
   // Se Keycloak exigir 2FA, retorna { aguardando_otp: true, session_id } para o frontend
   if (req.method === 'POST' && url.pathname === '/configurar/mni') {
     try {
-      const { cpf, senha } = JSON.parse(await readBody(req)) as { cpf?: string; senha?: string }
+      const { cpf, senha, oab, uf } = JSON.parse(await readBody(req)) as {
+        cpf?: string
+        senha?: string
+        oab?: string
+        uf?: string
+      }
       if (!cpf || !senha || cpf.replace(/\D/g, '').length < 11)
         return sendJson(res, { erro: 'CPF (11 dígitos) e senha são obrigatórios' }, 400)
+
+      const oabInformada = typeof oab === 'string' && oab.trim().length > 0
+      const ufInformada  = typeof uf  === 'string' && uf.trim().length > 0
+      if (oabInformada !== ufInformada) {
+        return sendJson(res, {
+          erro: 'Para busca por OAB, informe os dois campos: OAB e UF.',
+        }, 400)
+      }
+
+      const oabNormalizada = normalizarOab(oab)
+      const ufNormalizada  = normalizarUf(uf)
+      if (oabInformada && (oabNormalizada.length < 3 || ufNormalizada.length !== 2)) {
+        return sendJson(res, {
+          erro: 'OAB/UF inválidos. Exemplo: OAB 123456 e UF MG.',
+        }, 400)
+      }
 
       console.log(`[scraper] /configurar/mni: testando credenciais ${cpf.replace(/\D/g, '').slice(0,3)}.***.***-**`)
       const teste = await testarCredenciaisPJe(cpf, senha)
@@ -426,7 +463,12 @@ const server = createServer(async (req, res) => {
         limparSessoesExpiradas()
         const sessionId = gerarSessionId()
         pendingOtpSessions.set(sessionId, {
-          cpf, senha, otpData: teste.otpPending, expiresAt: Date.now() + 5 * 60 * 1000,
+          cpf,
+          senha,
+          oab: oabInformada ? oabNormalizada : undefined,
+          uf: oabInformada ? ufNormalizada : undefined,
+          otpData: teste.otpPending,
+          expiresAt: Date.now() + 5 * 60 * 1000,
         })
         console.log(`[scraper] /configurar/mni: 2FA necessário — session ${sessionId}`)
         return sendJson(res, { aguardando_otp: true, session_id: sessionId, mensagem: teste.mensagem })
@@ -436,15 +478,26 @@ const server = createServer(async (req, res) => {
         return sendJson(res, { erro: teste.mensagem, tribunal_testado: teste.tribunal }, 401)
       }
 
-      salvarNoEnv({ MNI_CPF: cpf, MNI_SENHA: senha })
+      const updates: Record<string, string> = { MNI_CPF: cpf, MNI_SENHA: senha }
+      if (oabInformada) {
+        updates.MNI_OAB = oabNormalizada
+        updates.MNI_UF  = ufNormalizada
+      }
+      salvarNoEnv(updates)
       mniCreds.cpf   = cpf
       mniCreds.senha = senha
+      if (oabInformada) {
+        mniCreds.oab = oabNormalizada
+        mniCreds.uf  = ufNormalizada
+      }
 
       console.log(`[scraper] /configurar/mni: credenciais salvas — MNI agora ATIVO`)
       return sendJson(res, {
         sucesso: true, mensagem: teste.mensagem,
         tribunal_testado: teste.tribunal, mni_configurado: true,
         mni_tribunais: Object.keys(MNI_ENDPOINTS).length,
+        mni_oab_configurado: isMniOabAtivo(),
+        mni_uf: mniCreds.uf || null,
       })
     } catch (err: any) {
       console.error('[scraper] /configurar/mni erro:', err.message)
@@ -475,14 +528,25 @@ const server = createServer(async (req, res) => {
 
       // Salva credenciais após 2FA bem-sucedido
       pendingOtpSessions.delete(session_id)
-      salvarNoEnv({ MNI_CPF: sessao.cpf, MNI_SENHA: sessao.senha })
+      const updates: Record<string, string> = { MNI_CPF: sessao.cpf, MNI_SENHA: sessao.senha }
+      if (sessao.oab && sessao.uf) {
+        updates.MNI_OAB = sessao.oab
+        updates.MNI_UF  = sessao.uf
+      }
+      salvarNoEnv(updates)
       mniCreds.cpf   = sessao.cpf
       mniCreds.senha = sessao.senha
+      if (sessao.oab && sessao.uf) {
+        mniCreds.oab = sessao.oab
+        mniCreds.uf  = sessao.uf
+      }
 
       console.log(`[scraper] /configurar/mni/otp: 2FA ok — credenciais salvas`)
       return sendJson(res, {
         sucesso: true, mensagem: resultado.mensagem,
         mni_configurado: true, mni_tribunais: Object.keys(MNI_ENDPOINTS).length,
+        mni_oab_configurado: isMniOabAtivo(),
+        mni_uf: mniCreds.uf || null,
       })
     } catch (err: any) {
       console.error('[scraper] /configurar/mni/otp erro:', err.message)
@@ -518,7 +582,7 @@ const server = createServer(async (req, res) => {
 
   // ── POST /advogado/processos — todos os processos do advogado em tribunais PJe ──
   // Usa credenciais MNI_CPF + MNI_SENHA para autenticar via PDPJ-Br SSO ou Basic Auth.
-  // Parâmetros opcionais no body: { oab?, uf? } para busca adicional no DataJud.
+  // Busca adicional no DataJud/OAB pode vir do body { oab?, uf? } ou de MNI_OAB/MNI_UF no .env.
   if (req.method === 'POST' && url.pathname === '/advogado/processos') {
     if (!isMniAtivo()) {
       return sendJson(res, {
@@ -527,18 +591,52 @@ const server = createServer(async (req, res) => {
     }
     try {
       const body = JSON.parse(await readBody(req)) as { oab?: string; uf?: string }
-      console.log('[scraper] /advogado/processos: iniciando busca em todos os tribunais PJe...')
+      const bodyOab = typeof body.oab === 'string' && body.oab.trim().length > 0 ? body.oab : undefined
+      const bodyUf  = typeof body.uf  === 'string' && body.uf.trim().length  > 0 ? body.uf  : undefined
+      const bodyInformouOab = bodyOab !== undefined
+      const bodyInformouUf  = bodyUf  !== undefined
+      if (bodyInformouOab !== bodyInformouUf) {
+        return sendJson(res, { erro: 'Informe OAB e UF juntos no body da requisição.' }, 400)
+      }
+
+      const oabEfetiva = normalizarOab(bodyInformouOab ? bodyOab : mniCreds.oab)
+      const ufEfetiva  = normalizarUf(bodyInformouUf  ? bodyUf  : mniCreds.uf)
+      const usarOab = oabEfetiva.length > 0 && ufEfetiva.length === 2
+
+      if ((bodyOab && oabEfetiva.length < 3) || (bodyUf && ufEfetiva.length !== 2)) {
+        return sendJson(res, { erro: 'Parâmetros oab/uf inválidos para busca complementar.' }, 400)
+      }
+
+      console.log(
+        `[scraper] /advogado/processos: iniciando busca em todos os tribunais PJe` +
+        `${usarOab ? ` + DataJud/OAB(${oabEfetiva}/${ufEfetiva})` : ''}...`
+      )
 
       // Busca PJe + eProc + DataJud em paralelo
       const painelPromise = buscarTodosProcessosAdvogado(mniCreds.cpf, mniCreds.senha)
       const eprocPromise  = isEprocAtivo()
         ? buscarProcessosEproc(getEprocCpf(), getEprocSenha())
         : Promise.resolve({ processos: [], tribunais: [] })
-      const oabPromise    = body.oab && body.uf
-        ? buscarPorOAB(body.oab, body.uf)
+      const oabPromise    = usarOab
+        ? buscarPorOAB(oabEfetiva, ufEfetiva)
         : Promise.resolve([])
 
       const [painel, eproc, processosOAB] = await Promise.all([painelPromise, eprocPromise, oabPromise])
+
+      // Playwright fallback — re-tenta tribunais onde o HTTP scraper retornou 0 processos
+      // Ativado por PJE_PLAYWRIGHT=1 em scraper-server/.env
+      let processosPlaywright: import('./scrapers/pje-playwright.js').PlaywrightResult['processos'] = []
+      if (PJE_PLAYWRIGHT_ATIVO) {
+        const tribunaisVazios = painel.tribunais
+          .filter(t => t.total === 0 && t.erro && !t.erro.toLowerCase().includes('auth') && !t.erro.toLowerCase().includes('credencial'))
+          .map(t => t.tribunal)
+
+        if (tribunaisVazios.length > 0) {
+          console.log(`[scraper] Playwright fallback para ${tribunaisVazios.length} tribunal(is): ${tribunaisVazios.join(', ')}`)
+          processosPlaywright = await retentarComPlaywright(tribunaisVazios, mniCreds.cpf, mniCreds.senha)
+          console.log(`[scraper] Playwright encontrou ${processosPlaywright.length} processo(s) adicional(is)`)
+        }
+      }
 
       // Mescla deduplificando por número CNJ
       const numerosExistentes = new Set(painel.processos.map(p => p.numero_processo.replace(/\D/g, '')))
@@ -547,23 +645,32 @@ const server = createServer(async (req, res) => {
       novosEproc.forEach(p => numerosExistentes.add(p.numero_processo.replace(/\D/g, '')))
 
       const novosOAB = processosOAB.filter(p => !numerosExistentes.has(p.numero_processo.replace(/\D/g, '')))
+      novosOAB.forEach(p => numerosExistentes.add(p.numero_processo.replace(/\D/g, '')))
 
-      const todosProcessos = [...painel.processos, ...novosEproc, ...novosOAB]
+      const novosPlaywright = processosPlaywright.filter(p => !numerosExistentes.has(p.numero_processo.replace(/\D/g, '')))
+
+      const todosProcessos = [...painel.processos, ...novosEproc, ...novosOAB, ...novosPlaywright]
 
       console.log(
         `[scraper] /advogado/processos: ${todosProcessos.length} processos ` +
-        `(pje: ${painel.total}, eproc: ${novosEproc.length}, datajud-oab: ${novosOAB.length}) ` +
-        `auth=${painel.autenticacao}`
+        `(pje: ${painel.total}, eproc: ${novosEproc.length}, datajud-oab: ${novosOAB.length}, playwright: ${novosPlaywright.length}) ` +
+        `auth=${painel.autenticacao} ` +
+        `diag(login_ok=${painel.diagnostico?.logins_ok ?? 0}, ` +
+        `auth_fail=${painel.diagnostico?.falhas_auth ?? 0}, ` +
+        `rede_fail=${painel.diagnostico?.falhas_rede ?? 0}, ` +
+        `fluxo_fail=${painel.diagnostico?.falhas_fluxo ?? 0})`
       )
 
       return sendJson(res, {
-        processos:    todosProcessos,
-        total:        todosProcessos.length,
-        gerado_em:    painel.gerado_em,
-        autenticacao: painel.autenticacao,
-        tribunais:    [...painel.tribunais, ...eproc.tribunais.map(t => ({ ...t, metodo: 'eproc' as const }))],
-        datajud_oab:  novosOAB.length,
-        eproc_total:  novosEproc.length,
+        processos:          todosProcessos,
+        total:              todosProcessos.length,
+        gerado_em:          painel.gerado_em,
+        autenticacao:       painel.autenticacao,
+        diagnostico:        painel.diagnostico,
+        tribunais:          [...painel.tribunais, ...eproc.tribunais.map(t => ({ ...t, metodo: 'eproc' as const }))],
+        datajud_oab:        novosOAB.length,
+        eproc_total:        novosEproc.length,
+        playwright_total:   novosPlaywright.length,
       })
     } catch (err: any) {
       console.error('[scraper] /advogado/processos erro:', err.message)

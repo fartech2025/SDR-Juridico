@@ -43,6 +43,17 @@ const trendVariant = (
 const monthLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
 const toMonthKey = (value: Date) => `${value.getFullYear()}-${value.getMonth()}`
+const isSameMonth = (value: string, baseDate: Date) => {
+  const date = new Date(value)
+  return date.getFullYear() === baseDate.getFullYear() && date.getMonth() === baseDate.getMonth()
+}
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(value)
 
 const buildMonthlyMetrics = (dates: string[]): MonthlyMetric[] => {
   const now = new Date()
@@ -74,6 +85,7 @@ export const IndicadoresPage = () => {
   const state = resolveStatus(params.get('state'))
   const { leads, loading: leadsLoading, error: leadsError } = useLeads()
   const { casos, loading: casosLoading, error: casosError } = useCasos()
+  const today = React.useMemo(() => new Date(), [])
 
   const monthlyMetrics = React.useMemo(() => {
     const createdDates = leads.map((lead) => lead.createdAt)
@@ -155,6 +167,57 @@ export const IndicadoresPage = () => {
     ]
   }, [casos, leads])
 
+  const managementIndicators = React.useMemo(() => {
+    const contratosFechadosMes = leads.filter(
+      (lead) => lead.status === 'ganho' && isSameMonth(lead.createdAt, today),
+    )
+    const propostasMes = leads.filter(
+      (lead) => lead.status === 'proposta' && isSameMonth(lead.createdAt, today),
+    ).length
+    const contratosMesCount = contratosFechadosMes.length
+    const taxaFechamentoMes =
+      propostasMes + contratosMesCount > 0
+        ? Math.round((contratosMesCount / (propostasMes + contratosMesCount)) * 100)
+        : 0
+    const valorContratosFechadosMes = contratosFechadosMes.reduce(
+      (acc, lead) => acc + (lead.estimatedValue || 0),
+      0,
+    )
+    const carteiraAtiva = casos
+      .filter((caso) => caso.status === 'ativo')
+      .reduce((acc, caso) => acc + (caso.value || 0), 0)
+    const pipelineComercial = leads
+      .filter((lead) => ['qualificado', 'proposta'].includes(lead.status))
+      .reduce((acc, lead) => acc + (lead.estimatedValue || 0), 0)
+
+    return [
+      {
+        id: 'mg-1',
+        label: 'Contratos fechados (mes)',
+        value: `${contratosMesCount}`,
+        helper: `${taxaFechamentoMes}% de conversao sobre propostas do mes`,
+      },
+      {
+        id: 'mg-2',
+        label: 'Valor fechado (mes)',
+        value: formatCurrency(valorContratosFechadosMes),
+        helper: 'Somatorio de estimativas dos leads ganhos',
+      },
+      {
+        id: 'mg-3',
+        label: 'Carteira ativa',
+        value: formatCurrency(carteiraAtiva),
+        helper: 'Valor total dos casos ativos em andamento',
+      },
+      {
+        id: 'mg-4',
+        label: 'Pipeline comercial',
+        value: formatCurrency(pipelineComercial),
+        helper: 'Valor potencial de leads qualificados e proposta',
+      },
+    ]
+  }, [casos, leads, today])
+
   const baseState =
     leadsLoading || casosLoading
       ? 'loading'
@@ -208,6 +271,26 @@ export const IndicadoresPage = () => {
         </header>
 
       <PageState status={pageState} emptyTitle="Sem indicadores disponiveis">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {managementIndicators.map((metric) => (
+            <Card
+              key={metric.id}
+              className={cn(
+                'border',
+                'border-border bg-surface/90',
+              )}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-text-muted">{metric.label}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-text">{metric.value}</p>
+                <p className="mt-1 text-xs text-text-subtle">{metric.helper}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           <Card
             className={cn(

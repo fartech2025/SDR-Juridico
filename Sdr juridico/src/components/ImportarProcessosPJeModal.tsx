@@ -43,7 +43,7 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
     async function carregar() {
       const orgId = currentOrg?.id
       const [processosResult, existentesResult] = await Promise.all([
-        listarProcessosAdvogado(),
+        listarProcessosAdvogado({}),
         orgId
           ? supabase
               .from('casos')
@@ -57,6 +57,14 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
         setErroCarregamento(processosResult.erro)
         setStep('selecao')
         return
+      }
+
+      if (processosResult.processos.length === 0 && processosResult.diagnostico) {
+        const d = processosResult.diagnostico
+        setErroCarregamento(
+          `Sem retorno dos tribunais. Login OK: ${d.logins_ok}/${d.tentativas} | ` +
+          `falhas de credencial: ${d.falhas_auth}, rede: ${d.falhas_rede}, fluxo: ${d.falhas_fluxo}.`
+        )
       }
 
       const existentesSet = new Set<string>(
@@ -179,9 +187,9 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
     >
       {/* Estado: carregando */}
       {step === 'carregando' && (
-        <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-          <Loader2 className="h-10 w-10 animate-spin" style={{ color: '#721011' }} />
+        <div className="flex flex-col items-center justify-center gap-6 py-12 text-center">
           <div>
+            <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4" style={{ color: '#721011' }} />
             <p className="font-medium text-text">Buscando processos em 28 tribunais PJe...</p>
             <p className="text-sm text-text-muted mt-1">Isso pode levar até 2 minutos.</p>
           </div>
@@ -330,7 +338,7 @@ export function ImportarProcessosPJeModal({ open, onClose }: Props) {
                           {p.numero_processo}
                         </td>
                         <td className="px-3 py-2 text-text-muted whitespace-nowrap">{p.tribunal}</td>
-                        <td className="px-3 py-2 text-text-muted hidden sm:table-cell max-w-[160px] truncate">
+                        <td className="px-3 py-2 text-text-muted hidden sm:table-cell max-w-40 truncate">
                           {p.classe ?? '—'}
                         </td>
                         <td className="px-3 py-2 text-text-muted hidden md:table-cell whitespace-nowrap">

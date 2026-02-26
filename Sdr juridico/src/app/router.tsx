@@ -11,8 +11,8 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { DataJudPage } from '@/pages/DataJudPage'
 import { DatabasePage } from '@/pages/DatabasePage'
 import { DocumentosPage } from '@/pages/DocumentosPage'
+import { FinanceiroPage } from '@/pages/FinanceiroPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
-import { IndicadoresPage } from '@/pages/IndicadoresPage'
 import { LeadsPage } from '@/pages/LeadsPage'
 import { LeadsKanbanPage } from '@/pages/LeadsKanbanPage'
 import { AuditoriaPage } from '@/pages/AuditoriaPage'
@@ -98,7 +98,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'indicadores',
-        element: <IndicadoresPage />,
+        element: <Navigate to="/app/analytics" replace />,
       },
       {
         path: 'config',
@@ -115,6 +115,10 @@ export const router = createBrowserRouter([
       {
         path: 'analytics',
         element: <AnalyticsPage />,
+      },
+      {
+        path: 'financeiro',
+        element: <FinanceiroPage />,
       },
       {
         path: 'auditoria',

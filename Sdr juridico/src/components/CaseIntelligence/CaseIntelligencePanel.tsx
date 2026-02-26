@@ -83,7 +83,7 @@ export function CaseIntelligencePanel({ cpf, colapsado = false, onConfigureClick
         onClick={() => setExpandido(!expandido)}
       >
         <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 flex-shrink-0" style={{ color: '#721011' }} />
+          <Brain className="w-4 h-4 shrink-0" style={{ color: '#721011' }} />
           <span className="text-sm font-semibold text-gray-900">Inteligência Preditiva</span>
           {insight?.cached && (
             <span className="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">cache</span>
@@ -153,7 +153,7 @@ export function CaseIntelligencePanel({ cpf, colapsado = false, onConfigureClick
           {/* Erro */}
           {estado === 'erro' && (
             <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg text-sm text-red-700">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium">Erro na análise</p>
                 <p className="text-xs mt-0.5">{erro}</p>
@@ -239,7 +239,7 @@ export function CaseIntelligencePanel({ cpf, colapsado = false, onConfigureClick
                 <div className="space-y-1">
                   {insight.alertas.map((alerta, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg p-2">
-                      <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                       {alerta}
                     </div>
                   ))}
@@ -249,7 +249,7 @@ export function CaseIntelligencePanel({ cpf, colapsado = false, onConfigureClick
               {/* Recomendação */}
               {insight.recomendacao && (
                 <div className="flex items-start gap-2 text-sm p-3 rounded-lg border-l-2" style={{ borderColor: '#721011', backgroundColor: '#72101108' }}>
-                  <TrendingUp className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#721011' }} />
+                  <TrendingUp className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#721011' }} />
                   <span className="text-gray-800">{insight.recomendacao}</span>
                 </div>
               )}

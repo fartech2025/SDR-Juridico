@@ -11,6 +11,8 @@ export interface ScraperStatus {
   timestamp: string
   mni_configurado?: boolean
   mni_tribunais?: number
+  mni_oab_configurado?: boolean
+  mni_uf?: string | null
   eproc_configurado?: boolean
   eproc_instancias?: number
 }
@@ -55,6 +57,8 @@ export interface ConfigurarMNIResult {
   tribunal_testado?: string
   mni_configurado?: boolean
   mni_tribunais?: number
+  mni_oab_configurado?: boolean
+  mni_uf?: string | null
   erro?: string
   // 2FA
   aguardando_otp?: boolean
@@ -66,12 +70,16 @@ export interface ConfigurarMNIResult {
  * Testa o login no TJMG antes de salvar — retorna erro se credenciais inválidas.
  * Persiste no arquivo .env do scraper-server e ativa em memória imediatamente.
  */
-export async function configurarMNI(cpf: string, senha: string): Promise<ConfigurarMNIResult> {
+export async function configurarMNI(
+  cpf: string,
+  senha: string,
+  extras: { oab?: string; uf?: string } = {}
+): Promise<ConfigurarMNIResult> {
   try {
     const res = await fetch(`${SCRAPER_URL}/configurar/mni`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cpf, senha }),
+      body: JSON.stringify({ cpf, senha, ...extras }),
       signal: AbortSignal.timeout(40_000),
     })
     const data = await res.json() as Record<string, unknown>
@@ -93,6 +101,8 @@ export async function configurarMNI(cpf: string, senha: string): Promise<Configu
       tribunal_testado: data.tribunal_testado as string | undefined,
       mni_configurado:  data.mni_configurado as boolean | undefined,
       mni_tribunais:    data.mni_tribunais as number | undefined,
+      mni_oab_configurado: data.mni_oab_configurado as boolean | undefined,
+      mni_uf:             (data.mni_uf as string | null | undefined) ?? null,
     }
   } catch (err: any) {
     return {
@@ -121,6 +131,8 @@ export async function submeterOTP(sessionId: string, codigo: string): Promise<Co
       mensagem:        (data.mensagem as string) ?? '',
       mni_configurado: data.mni_configurado as boolean | undefined,
       mni_tribunais:   data.mni_tribunais as number | undefined,
+      mni_oab_configurado: data.mni_oab_configurado as boolean | undefined,
+      mni_uf:             (data.mni_uf as string | null | undefined) ?? null,
     }
   } catch (err: any) {
     return {
@@ -170,6 +182,13 @@ export interface AdvogadoProcessosResult {
   total: number
   gerado_em: string
   autenticacao: 'oauth2-keycloak' | 'falhou'
+  diagnostico?: {
+    tentativas: number
+    logins_ok: number
+    falhas_auth: number
+    falhas_rede: number
+    falhas_fluxo: number
+  }
   tribunais: { tribunal: string; total: number; metodo?: string; erro?: string }[]
   datajud_oab?: number
   eproc_total?: number

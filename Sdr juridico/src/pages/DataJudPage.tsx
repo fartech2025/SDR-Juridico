@@ -9,6 +9,7 @@ import { registrarConsulta } from '@/services/favoritosService'
 import { CaseIntelligencePanel, ImportarClienteModal } from '@/components/CaseIntelligence'
 import { useOrganization } from '@/contexts/OrganizationContext'
 import { importarProcessoDataJud } from '@/services/pjeImportService'
+import { addPdfHeader, addPdfFooters, getTableTheme, MARGIN } from '@/services/pdfReportService'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -509,15 +510,15 @@ export const DataJudPage = () => {
       const info = extrairInfoProcesso(processo)
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
-      const margin = 18
-      const topMargin = 28
-      const bottomMargin = 18
+      const topMargin = 40
+      const bottomMargin = 10
       let y = topMargin
-      const maxWidth = pageWidth - 2 * margin
-      const watermark = await obterMarcaDagua().catch(() => null)
-      const headerLogo = await obterLogoHeader().catch(() => null)
+      const maxWidth = pageWidth - 2 * MARGIN
 
-      // Configurações de fonte
+      // Header padrão
+      await addPdfHeader(doc, 'DETALHES DO PROCESSO JURÍDICO', `Processo: ${formatarNumeroProcesso(info.numero)}`)
+
+      // Funcionalidades auxiliares
       const ensureSpace = (height: number) => {
         if (y + height > pageHeight - bottomMargin) {
           doc.addPage()
@@ -531,7 +532,7 @@ export const DataJudPage = () => {
         const lines = doc.splitTextToSize(text, maxWidth)
         const lineHeight = fontSize * 0.5 + 3
         ensureSpace(lines.length * lineHeight + 2)
-        doc.text(lines, margin, y)
+        doc.text(lines, MARGIN, y)
         y += lines.length * lineHeight
       }
 
@@ -539,11 +540,11 @@ export const DataJudPage = () => {
         ensureSpace(14)
         doc.setFontSize(11)
         doc.setFont('helvetica', 'bold')
-        doc.setTextColor(26, 47, 76)
-        doc.text(title, margin, y)
+        doc.setTextColor(114, 16, 17)
+        doc.text(title, MARGIN, y)
         y += 6
         doc.setDrawColor(220)
-        doc.line(margin, y, pageWidth - margin, y)
+        doc.line(MARGIN, y, pageWidth - MARGIN, y)
         y += 6
         doc.setTextColor(40)
       }
@@ -552,29 +553,8 @@ export const DataJudPage = () => {
         addText(`${label}: ${value}`, 10)
       }
 
-      // Título
-      addText('RELATORIO COMPLETO DO PROCESSO', 16, true)
-      y += 5
-      addText(`Processo: ${formatarNumeroProcesso(info.numero)}`, 12, true)
-      y += 3
-
-      if (watermark) {
-        const targetWidth = pageWidth * 0.28
-        const aspect = watermark.height / watermark.width
-        const targetHeight = targetWidth * aspect
-        const x = pageWidth - targetWidth - margin
-        const yPos = topMargin + 2
-        const jsPdfAny = jsPDF as unknown as { GState?: new (state: { opacity: number }) => any }
-        const docAny = doc as unknown as { setGState?: (state: any) => void }
-
-        if (docAny.setGState && jsPdfAny.GState) {
-          docAny.setGState(new jsPdfAny.GState({ opacity: 0.15 }))
-        }
-        doc.addImage(watermark.dataUrl, 'PNG', x, yPos, targetWidth, targetHeight)
-        if (docAny.setGState && jsPdfAny.GState) {
-          docAny.setGState(new jsPdfAny.GState({ opacity: 1 }))
-        }
-      }
+      // Watermark
+      const watermark = await obterMarcaDagua().catch(() => null)
 
       // Informações básicas
       addSectionTitle('DADOS GERAIS')
@@ -669,50 +649,21 @@ export const DataJudPage = () => {
         })
       }
 
-      // Marca d'agua e rodapé
+      // Footer padrão com avisos LGPD
+      addPdfFooters(doc, 'Relatório DataJud')
+      
+      // Avisos de LGPD nas páginas
       const totalPages = doc.getNumberOfPages()
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i)
-        doc.setFillColor(245, 247, 251)
-        doc.rect(0, 0, pageWidth, 22, 'F')
-        // Logo no cabeçalho
-        if (headerLogo) {
-          const logoH = 28
-          const logoAspect = headerLogo.width / headerLogo.height
-          const logoW = logoH * logoAspect
-          const logoY = (22 - logoH) / 2
-          doc.addImage(headerLogo.dataUrl, 'PNG', margin, logoY < 0 ? 0 : logoY, logoW, logoH)
-        } else {
-          doc.setFontSize(10)
-          doc.setFont('helvetica', 'bold')
-          doc.setTextColor(26, 47, 76)
-          doc.text('Relatorio DataJud', margin, 14)
-        }
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor(90)
-        doc.text(
-          formatarNumeroProcesso(info.numero),
-          pageWidth - margin,
-          14,
-          { align: 'right' },
-        )
-        doc.setFontSize(8)
-        doc.setFont('helvetica', 'normal')
-        doc.text(
-          `Gerado em: ${new Date().toLocaleString('pt-BR')} - Pagina ${i} de ${totalPages}`,
-          pageWidth / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        )
         doc.setFontSize(7)
         doc.setTextColor(120)
         doc.text(
-          'LGPD: Este relatorio contem dados pessoais e deve ser acessado e compartilhado apenas por pessoas autorizadas.',
+          'LGPD: Este relatório contém dados pessoais. Acesso e compartilhamento apenas por pessoas autorizadas.',
           pageWidth / 2,
-          doc.internal.pageSize.getHeight() - 5,
+          pageHeight - 2,
           { align: 'center' }
         )
-        doc.setTextColor(40)
       }
 
       // Salvar PDF

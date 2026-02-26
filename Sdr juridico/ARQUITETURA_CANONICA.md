@@ -1,12 +1,20 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.5.0  
-**Data:** 23 de fevereiro de 2026  
+**Versão:** 2.6.0
+**Data:** 26 de fevereiro de 2026
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.6.0 (26 de fevereiro de 2026)
+- ✅ **Módulo Financeiro**: Nova seção `## 💰 MÓDULO FINANCEIRO` documentando schema, tipos, hooks, service, fluxo de dados e exceção de soft delete
+- ✅ **`FinanceSnapshot` completo**: Adicionado campo `receitasAtrasadas: number` ao tipo e ao `useMemo` do `useFinanceiro` — estava calculado mas não tipado
+- ✅ **Fix Recharts yAxisId**: `ComposedChart` em `FinanceiroPage` agora tem dois `<YAxis>` (`yAxisId="left"` para barras, `yAxisId="right"` para linha de saldo) — eliminado warning no console
+- ✅ **Cor saldo do gráfico**: `#1f3c88` (azul violação) substituído por `#5B4FCF` (roxo neutro) na linha de saldo do fluxo de caixa
+- ✅ **Modal "Novo Lançamento"**: Formulário movido de card inline para `<Modal>` canônico (`@/components/ui/modal.tsx`) com botão no header da página
+- ✅ **Dead code removido**: `expandedPeriod` state e import `LineChart` removidos de `FinanceiroPage`
 
 ### v2.5.0 (23 de fevereiro de 2026)
 - ✅ **Edge Function `delete-organization`**: Nova Edge Function com service_role para exclusão completa de organização — remove dependências em cascata (agendamentos, tarefas, casos, leads, clientes, documentos, org_members, audit_log, integrations) respeitando ordem de FKs, depois remove a org
@@ -3145,6 +3153,207 @@ COMMIT;
 
 ---
 
+## 💰 MÓDULO FINANCEIRO
+
+> **Introduzido em:** v2.6.0 (26/02/2026)
+> **Rota:** `/app/financeiro`
+> **Arquivos:** `src/types/financeiro.ts` · `src/hooks/useFinanceiro.ts` · `src/services/financeiroService.ts` · `src/pages/FinanceiroPage.tsx`
+
+---
+
+### Schema da Tabela
+
+**`financeiro_lancamentos`** — migration: `supabase/migrations/20260225_financeiro_lancamentos.sql`
+
+| Coluna | Tipo | Observação |
+|--------|------|------------|
+| `id` | UUID PK | `gen_random_uuid()` |
+| `org_id` | UUID FK → `orgs.id` | multi-tenancy obrigatório |
+| `tipo` | TEXT | `'receita' \| 'despesa'` |
+| `status` | TEXT | `'previsto' \| 'pago' \| 'atrasado'` |
+| `categoria` | TEXT | texto livre (sem FK) |
+| `descricao` | TEXT | |
+| `valor` | NUMERIC(14,2) | ≥ 0 |
+| `vencimento` | DATE | |
+| `pago_em` | DATE | nullable |
+| `cliente` | TEXT | nullable, texto livre |
+| `caso_id` | UUID FK → `casos.id` | nullable, ON DELETE SET NULL |
+| `responsavel_user_id` | UUID FK → `auth.users` | nullable, ON DELETE SET NULL |
+| `recorrente` | BOOLEAN | default `false` |
+| `created_by` | UUID FK → `auth.users` | nullable |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | atualizado via trigger |
+
+> ⚠️ **Exceção de soft delete documentada:** `financeiro_lancamentos` usa **hard delete** (`DELETE` real). A tabela não possui `deleted_at` por decisão de design — lançamentos deletados não precisam ser auditados individualmente (dados agregados são suficientes). A RLS policy `financeiro_delete_org_admin` restringe exclusão a `org_admin`. Não adicionar `deleted_at` sem revistar esta decisão.
+
+---
+
+### RLS Policies
+
+| Policy | Operação | Condição |
+|--------|----------|----------|
+| `financeiro_select_org_member` | SELECT | `is_org_member(org_id)` |
+| `financeiro_insert_org_member` | INSERT | `is_org_member(org_id)` |
+| `financeiro_update_org_member` | UPDATE | `is_org_member(org_id)` |
+| `financeiro_delete_org_admin` | DELETE | `is_org_admin_for_org(org_id)` |
+
+---
+
+### Tipos TypeScript
+
+**`src/types/financeiro.ts`** — fonte canônica dos tipos do módulo
+
+```typescript
+// Tipos primitivos
+type FinanceTransactionType   = 'receita' | 'despesa'
+type FinanceTransactionStatus = 'previsto' | 'pago' | 'atrasado'
+
+// Domínio (camelCase EN) ← mapper converte de snake_case PT
+interface FinanceTransaction {
+  id, type, status, category, description, amount
+  dueDate, paidDate?, cliente?, casoId?
+  responsavelUserId?, responsavelNome?, responsavelRole?
+  recurring?, createdAt, updatedAt
+}
+
+// Snapshot do mês atual
+interface FinanceSnapshot {
+  receitaRealizadaMes, despesaRealizadaMes, resultadoMes
+  margemOperacional, contasReceber, contasPagar
+  inadimplencia, receitasAtrasadas   // ← todos obrigatórios
+}
+
+// Ponto do gráfico de fluxo de caixa
+interface CashflowPoint { month, receita, despesa, saldo }
+```
+
+---
+
+### Mapper (DB → Domínio)
+
+Em `financeiroService.ts`, a função `mapDbToFinance` converte:
+
+| DB (snake_case PT) | Domínio (camelCase EN) |
+|--------------------|------------------------|
+| `tipo` | `type` |
+| `categoria` | `category` |
+| `descricao` | `description` |
+| `valor` | `amount` |
+| `vencimento` | `dueDate` |
+| `pago_em` | `paidDate` |
+| `caso_id` | `casoId` |
+| `responsavel_user_id` | `responsavelUserId` |
+| `recorrente` | `recurring` |
+| `created_at` | `createdAt` |
+| `updated_at` | `updatedAt` |
+
+O nome e role do responsável são resolvidos via `resolveResponsavelInfo()` — JOIN separado em `usuarios` + `org_members`.
+
+---
+
+### Hook: `useFinanceiro(leads, caso)`
+
+```typescript
+// src/hooks/useFinanceiro.ts
+export function useFinanceiro(leads: Lead[] = [], casos: Caso[] = []) {
+  // Retorna:
+  return {
+    loading, error,
+    transactions,          // FinanceTransaction[] — todos, sem filtro
+    responsaveis,          // FinanceResponsavel[] — advogados/gestores da org
+    snapshot,              // FinanceSnapshot — calculado do mês atual, sem filtro
+    cashflowSeries,        // CashflowPoint[6] — últimos 6 meses, sem filtro
+    carteiraMetrics,       // { carteiraAtiva, pipeline, ticketMedio, contratosFechados }
+    contasReceber,         // FinanceTransaction[] — receitas não pagas, sem filtro
+    contasPagar,           // FinanceTransaction[] — despesas não pagas, sem filtro
+    carteiraPorResponsavel,// Saldo por advogado/gestor, sem filtro
+    fetchTransactions,
+    createTransaction,     // suporta recorrência (recurrenceCount × lançamentos)
+    updateTransaction,
+    deleteTransaction,     // hard delete — veja exceção de soft delete acima
+  }
+}
+```
+
+**Padrão de filtros na página:**
+O hook fornece dados **sem filtros de UI** (roleFilter, responsavelFilter). A `FinanceiroPage` aplica estes filtros localmente via `filteredTransactions = useMemo(...)` e recalcula snapshot/contas derivadas. Este padrão é **intencional** — não mover filtros de UI para o hook.
+
+**`normalizeStatus`** — executado no carregamento e após cada mutação: se `paidDate` existe → `'pago'`; se `dueDate < hoje` → `'atrasado'`; senão → `'previsto'`. O status no banco pode ficar desatualizado entre sessões; a normalização no frontend é a fonte de verdade para exibição.
+
+---
+
+### Service: `financeiroService`
+
+```typescript
+// src/services/financeiroService.ts
+export const financeiroService = {
+  listResponsaveis(),     // org_members WHERE role IN ('advogado','gestor','admin')
+  listTransactions(),     // financeiro_lancamentos WHERE org_id = ? ORDER BY vencimento DESC
+  createTransaction(),    // INSERT (n lançamentos para recorrência)
+  updateTransaction(),    // UPDATE + re-resolve responsavelInfo
+  deleteTransaction(),    // DELETE — hard delete (exceção documentada)
+}
+```
+
+`resolveOrgScope()` é chamado em cada método para obter `orgId` e `isFartechAdmin`. Toda query inclui `.eq('org_id', orgId)` explicitamente (além da RLS).
+
+Recorrência no `createTransaction`: gera `recurrenceCount` linhas com `vencimento` incrementado `recurrenceIntervalMonths` meses, sufixando " - Parcela N/Total" na descrição.
+
+---
+
+### Estrutura da Página
+
+```
+FinanceiroPage
+├── <header>
+│   ├── Título + subtítulo
+│   └── <Button onClick={() => setShowForm(true)}>Novo Lançamento</Button>
+├── Grid 4 col — KPI Mês (Resultado | Receita | Despesa | Inadimplência)
+├── Card — Índices Financeiros (Margem Bruta | Dias de Caixa | ROIC | Lucratividade | Inadimplência)
+├── Card — Fluxo de Caixa ComposedChart (Bar receita/despesa yAxisId="left", Line saldo yAxisId="right")
+├── Grid 2 col — Pie charts (Receitas por Categoria | Despesas por Categoria)
+├── Card — Projeção de Fluxo de Caixa (BarChart 6 meses)
+├── Grid 2 col — Contas a Receber | Contas a Pagar
+├── Card — Carteira por Advogado/Gestor (filtros roleFilter + responsavelFilter)
+├── Card — Demonstrativo Mensal (seletor de mês + exportar CSV/PDF)
+└── <Modal open={showForm}>
+    └── Formulário de novo lançamento (tipo, categoria, descrição, valor, vencimento,
+        cliente, responsável, recorrência)
+```
+
+---
+
+### Recharts: Padrão ComposedChart com Dual YAxis
+
+O gráfico de fluxo de caixa usa `<ComposedChart>` com dois eixos Y. Padrão **obrigatório** para evitar warning no console:
+
+```tsx
+<ComposedChart data={...}>
+  <YAxis yAxisId="left"  tickLine={false} axisLine={false} />
+  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} />
+  <Bar  yAxisId="left"  dataKey="receita" ... />
+  <Bar  yAxisId="left"  dataKey="despesa" ... />
+  <Line yAxisId="right" dataKey="saldo"   stroke="#5B4FCF" dot={false} />
+</ComposedChart>
+```
+
+> ⚠️ Toda `<Line>` ou `<Bar>` em `ComposedChart` com múltiplos YAxis DEVE declarar `yAxisId`. Omitir causa warning "No YAxisId found" no console.
+
+---
+
+### Cores nos Gráficos Financeiros
+
+| Elemento | Cor | Justificativa |
+|----------|-----|---------------|
+| Barra receita | `#2E7D32` | verde semântico (sucesso financeiro) |
+| Barra despesa | `#721011` | brand-primary (custo da operação) |
+| Linha saldo | `#5B4FCF` | roxo neutro — não é azul, não conflita com marca |
+| Barra saldo (projeção) | `#5B4FCF` | consistência com linha de saldo |
+
+> ❌ `#1f3c88` (azul marinho) é PROIBIDO — viola a regra de zero azul em contexto de marca.
+
+---
+
 ## 📞 REFERÊNCIAS
 
 - [React Best Practices](https://react.dev)
@@ -3154,9 +3363,9 @@ COMMIT;
 
 ---
 
-**Mantido por:** Equipe SDR Jurídico  
-**Última atualização:** 10 de fevereiro de 2026  
-**Versão:** 2.1.0 (Google Calendar Integration)
+**Mantido por:** Equipe SDR Jurídico
+**Última atualização:** 26 de fevereiro de 2026
+**Versão:** 2.6.0 (Módulo Financeiro)
 
 ---
 
