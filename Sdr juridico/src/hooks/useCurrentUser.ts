@@ -10,6 +10,14 @@ const roleLabels: Record<UserRole, string> = {
   user: 'Usuario',
 }
 
+const roleLabelMap: Record<string, string> = {
+  admin:      'Administrador',
+  gestor:     'Gestor',
+  advogado:   'Advogado',
+  secretaria: 'Secretaria',
+  leitura:    'Leitura',
+}
+
 const resolveRoleFromPermissoes = (permissoes: string[], memberRole?: string | null): UserRole => {
   // APENAS usa permissoes para detectar fartech_admin
   if (permissoes.includes('fartech_admin')) {
@@ -55,6 +63,7 @@ export function useCurrentUser() {
   const { user, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState<UsuarioRow | null>(null)
   const [role, setRole] = useState<UserRole>('user')
+  const [memberRole, setMemberRole] = useState<string | null>(null)
   const [orgId, setOrgId] = useState<string | null>(null)
   const [orgName, setOrgName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -70,6 +79,7 @@ export function useCurrentUser() {
     if (!user) {
       setProfile(null)
       setRole('user')
+      setMemberRole(null)
       setOrgId(null)
       setOrgName(null)
       setError(null)
@@ -104,6 +114,7 @@ export function useCurrentUser() {
         .maybeSingle()
 
       const membershipRole = memberData?.role || seed?.role || null
+      setMemberRole(membershipRole)
       setRole(resolveRoleFromPermissoes(permissoes, membershipRole))
       const resolvedOrgId = memberData?.org_id || seed?.org_id || null
       setOrgId(resolvedOrgId)
@@ -141,7 +152,9 @@ export function useCurrentUser() {
   const displayName = useMemo(() => deriveDisplayName(profile, user), [profile, user])
   const shortName = useMemo(() => displayName.split(' ').filter(Boolean)[0] || displayName, [displayName])
   const initials = useMemo(() => deriveInitials(displayName), [displayName])
-  const roleLabel = roleLabels[role]
+  const roleLabel = memberRole
+    ? (roleLabelMap[memberRole] ?? roleLabels[role])
+    : roleLabels[role]
 
   return {
     loading,
@@ -152,6 +165,7 @@ export function useCurrentUser() {
     orgName: orgName || 'SDR Juridico Online',
     role,
     roleLabel,
+    memberRole,
     displayName,
     shortName,
     initials,

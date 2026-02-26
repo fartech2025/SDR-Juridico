@@ -1,12 +1,14 @@
 import * as React from 'react'
 import {
   AlertTriangle,
+  BarChart3,
   Briefcase,
   Calendar,
   CheckCircle2,
   ChevronRight,
   Circle,
   Clock,
+  Eye,
   FileText,
   Flame,
   ListChecks,
@@ -29,15 +31,25 @@ import {
 } from 'recharts'
 
 import { PageState } from '@/components/PageState'
+import { useOrganizationContext } from '@/contexts/OrganizationContext'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useCasos } from '@/hooks/useCasos'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useDocumentos } from '@/hooks/useDocumentos'
+import { useFinanceiro } from '@/hooks/useFinanceiro'
 import { useLeads } from '@/hooks/useLeads'
 import { useNotas } from '@/hooks/useNotas'
+import { usePlan } from '@/hooks/usePlan'
 import { useTarefas } from '@/hooks/useTarefas'
 import type { KPI, Tarefa } from '@/types/domain'
 import { cn } from '@/utils/cn'
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(value)
 
 const resolveStatus = (
   value: string | null,
@@ -208,7 +220,15 @@ export const DashboardPage = () => {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const status = resolveStatus(params.get('state'))
-  const { shortName, roleLabel, role } = useCurrentUser()
+  const { shortName, roleLabel, role, memberRole, user } = useCurrentUser()
+  const { stats: orgStats } = useOrganizationContext()
+  const { canUseFinanceiro, canUseAnalytics } = usePlan()
+
+  const isLeitura    = memberRole === 'leitura'
+  const isAdvogado   = memberRole === 'advogado'
+  const isGestorDash = role === 'org_admin'
+  const isSolo = isGestorDash && (orgStats?.total_users ?? 2) <= 1
+
   const { leads, loading: leadsLoading, error: leadsError, fetchLeads } = useLeads()
   const { casos, loading: casosLoading, error: casosError, fetchCasos } = useCasos()
   const { documentos, loading: docsLoading, error: docsError, fetchDocumentos } = useDocumentos()
@@ -220,6 +240,7 @@ export const DashboardPage = () => {
     fetchEventos,
   } = useAgenda()
   const { notas, loading: notasLoading, error: notasError, fetchNotas } = useNotas()
+  const { snapshot: finSnapshot, loading: finLoading } = useFinanceiro(leads, casos)
   const [loadTimeoutReached, setLoadTimeoutReached] = React.useState(false)
   const [planTab, setPlanTab] = React.useState<'pendentes' | 'concluidas'>('pendentes')
 
@@ -328,15 +349,32 @@ export const DashboardPage = () => {
     [documentos],
   )
 
+  // Filtered views for advogado role
+  const meusCasos = React.useMemo(
+    () =>
+      isAdvogado
+        ? casos.filter((c) => c.responsavel === shortName || c.responsavel === user?.id)
+        : casos,
+    [casos, isAdvogado, shortName, user?.id],
+  )
+
+  const meusLeads = React.useMemo(
+    () =>
+      isAdvogado
+        ? leads.filter((l) => l.owner === user?.id || l.owner === shortName)
+        : leads,
+    [leads, isAdvogado, user?.id, shortName],
+  )
+
   const criticalCasesCount = React.useMemo(
     () =>
-      casos.filter((caso) => caso.slaRisk === 'critico' || caso.prioridade === 'critica').length,
-    [casos],
+      meusCasos.filter((caso) => caso.slaRisk === 'critico' || caso.prioridade === 'critica').length,
+    [meusCasos],
   )
 
   const hotLeadsCount = React.useMemo(
-    () => leads.filter((lead) => lead.heat === 'quente' && lead.status !== 'ganho').length,
-    [leads],
+    () => meusLeads.filter((lead) => lead.heat === 'quente' && lead.status !== 'ganho').length,
+    [meusLeads],
   )
 
   const kpis = React.useMemo(() => {
@@ -575,10 +613,15 @@ export const DashboardPage = () => {
     return Math.round((onTime / completed.length) * 100)
   }, [tarefas])
 
-  const roleContextText =
-    role === 'org_admin' || role === 'fartech_admin'
-      ? 'Visao gerencial com foco em prioridades da operacao.'
-      : 'Visao operacional com foco em suas entregas do dia.'
+  const dashTitle = isSolo
+    ? `${shortName}, seu escritório`
+    : isGestorDash
+      ? `${shortName}, visão gerencial`
+      : isAdvogado
+        ? `${shortName}, seu dia`
+        : isLeitura
+          ? `${shortName}, visão geral`
+          : `${shortName}, painel administrativo`
 
   return (
     <div className="min-h-screen bg-surface-alt" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -588,12 +631,38 @@ export const DashboardPage = () => {
         onRetry={showRetry ? handleRetry : undefined}
       >
         <div className="p-6">
+          {/* Banner modo leitura */}
+          {isLeitura && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+              <Eye className="h-4 w-4 shrink-0" />
+              Você está em <strong className="ml-1">modo leitura</strong> — nenhuma ação pode ser realizada neste perfil.
+            </div>
+          )}
+
           <div className="mb-6 rounded-2xl border border-border bg-surface p-6">
             <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">Painel do perfil</p>
-            <h1 className="mt-2 text-2xl font-semibold text-text">{shortName}, foco do seu dia</h1>
-            <p className="mt-1 text-sm text-text-muted">
-              {roleLabel} - {roleContextText}
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-semibold text-text">{dashTitle}</h1>
+              {isSolo ? (
+                <span
+                  className="rounded-full px-2.5 py-1 text-xs font-semibold"
+                  style={{ backgroundColor: 'rgba(114,16,17,0.12)', color: '#721011' }}
+                >
+                  Solo
+                </span>
+              ) : (
+                <span
+                  className="rounded-full px-3 py-1.5 text-xs font-medium"
+                  style={
+                    isGestorDash
+                      ? { backgroundColor: 'rgba(114,16,17,0.1)', color: '#721011' }
+                      : { backgroundColor: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }
+                  }
+                >
+                  {roleLabel}
+                </span>
+              )}
+            </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full bg-surface-alt px-3 py-1.5 text-text-muted">
                 {todayStart.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}
@@ -643,6 +712,47 @@ export const DashboardPage = () => {
               color="#2E7D32"
             />
           </div>
+
+          {/* ── MINI-CARD FINANCEIRO (org_admin only) ───────────────────────── */}
+          {isGestorDash && canUseFinanceiro && !finLoading && (
+            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="rounded-xl border border-border bg-surface p-4">
+                <p className="text-xs text-text-subtle">Receita realizada (mês)</p>
+                <p className="text-xl font-bold text-green-700">{formatCurrency(finSnapshot.receitaRealizadaMes)}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-surface p-4">
+                <p className="text-xs text-text-subtle">Resultado operacional</p>
+                <p className={cn('text-xl font-bold', finSnapshot.resultadoMes >= 0 ? 'text-green-700' : 'text-red-700')}>
+                  {formatCurrency(finSnapshot.resultadoMes)}
+                </p>
+                <p className="text-xs text-text-subtle">Margem {finSnapshot.margemOperacional}%</p>
+              </div>
+              {canUseAnalytics && (
+                <button
+                  onClick={() => navigate('/app/analytics')}
+                  className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 text-left hover:shadow-md transition-shadow"
+                >
+                  <div>
+                    <p className="text-xs text-text-subtle">Painel executivo</p>
+                    <p className="text-sm font-semibold text-text">Ver Analytics completo</p>
+                  </div>
+                  <BarChart3 className="h-5 w-5" style={{ color: '#721011' }} />
+                </button>
+              )}
+            </div>
+          )}
+          {isGestorDash && !canUseFinanceiro && (
+            <div className="mb-6 rounded-xl border border-dashed border-border bg-surface/60 p-4 text-center text-sm text-text-muted">
+              Módulo financeiro disponível no plano <strong>Profissional</strong>.{' '}
+              <button
+                className="font-medium underline"
+                style={{ color: '#721011' }}
+                onClick={() => navigate('/app/config')}
+              >
+                Ver planos
+              </button>
+            </div>
+          )}
 
           {/* ── PLANO DO DIA ─────────────────────────────────────────────────── */}
           <div className="mb-6 rounded-xl border border-border bg-surface p-5">

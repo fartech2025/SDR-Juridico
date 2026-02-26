@@ -1,12 +1,24 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.6.0
+**Versão:** 2.7.0
 **Data:** 26 de fevereiro de 2026
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.7.0 (26 de fevereiro de 2026)
+- ✅ **Views por Role de Acesso**: Dashboard e sidebar agora respondem ao perfil real do usuário (`memberRole` do `org_members`)
+- ✅ **`useCurrentUser` — `memberRole`**: Hook expõe `memberRole: string | null` com o role real (`admin`, `gestor`, `advogado`, `secretaria`, `leitura`) além do `UserRole` resolvido; `roleLabel` usa mapa de labels reais
+- ✅ **`usePlan` (novo hook)**: Feature gates por plano (`trial | basic | professional | enterprise`) — `canUseFinanceiro`, `canUseAnalytics`, `canUseDOU`, `canUsePJe`, `canUseIA`, `canUseAuditoria`; lê `currentOrg.plan` via `useOrganizationContext`
+- ✅ **`UpgradeWall` (novo componente)**: Tela de bloqueio reutilizável para módulos pagos com botão de upgrade para `/app/config`
+- ✅ **AppShell — sidebar condicional**: `appNavGroups` convertido de constante para `useMemo` dinâmico; grupo **Governança** visível somente para `org_admin`; itens condicionais ao plano (`canUseDOU`, `canUseAuditoria`, `canUseAnalytics`, `canUseFinanceiro`)
+- ✅ **DashboardPage — header por perfil**: Título e badge adaptativos por role; banner âmbar para `leitura`; mini-card financeiro (receita + resultado + link analytics) para `org_admin`
+- ✅ **DashboardPage — KPIs filtrados para advogado**: `meusCasos` e `meusLeads` filtrados por responsável; `criticalCasesCount` e `hotLeadsCount` derivados do subset filtrado
+- ✅ **Perfil Solo (advogado solo)**: Detectado por `isGestorDash && total_users <= 1`; header "seu escritório" + badge "Solo"; sem filtro de KPIs (é o único usuário)
+- ✅ **AnalyticsPage — guard de plano**: Retorna `<UpgradeWall>` se `!canUseAnalytics` (antes do conteúdo)
+- ✅ **AnalyticsPage — sem seção de equipe para solo**: Seções "Desempenho por colaborador" e "Ranking do time" ocultas quando `total_users <= 1`
 
 ### v2.6.0 (26 de fevereiro de 2026)
 - ✅ **Módulo Financeiro**: Nova seção `## 💰 MÓDULO FINANCEIRO` documentando schema, tipos, hooks, service, fluxo de dados e exceção de soft delete
@@ -3354,6 +3366,150 @@ O gráfico de fluxo de caixa usa `<ComposedChart>` com dois eixos Y. Padrão **o
 
 ---
 
+## 👥 CONTROLE DE ACESSO POR PERFIL (v2.7.0)
+
+> **Introduzido em:** v2.7.0 (26/02/2026)
+> **Arquivos:** `src/hooks/useCurrentUser.ts` · `src/hooks/usePlan.ts` · `src/components/UpgradeWall.tsx` · `src/layouts/AppShell.tsx` · `src/pages/DashboardPage.tsx` · `src/pages/AnalyticsPage.tsx`
+
+---
+
+### Modelo de papéis
+
+O sistema tem dois níveis de role que coexistem e têm responsabilidades distintas:
+
+| Campo | Tipo | Valores | Onde fica |
+|-------|------|---------|-----------|
+| `UserRole` (resolvido) | `'fartech_admin' \| 'org_admin' \| 'user'` | Usado para guards de rota e permissões canônicas | `useCurrentUser().role` |
+| `memberRole` (real) | `string \| null` | `admin`, `gestor`, `advogado`, `secretaria`, `leitura` | `useCurrentUser().memberRole` · DB: `org_members.role` |
+
+**Mapeamento `memberRole` → `UserRole`:**
+
+| memberRole | UserRole resolvido |
+|------------|--------------------|
+| `admin` | `org_admin` |
+| `gestor` | `org_admin` |
+| `advogado` | `user` |
+| `secretaria` | `user` |
+| `leitura` | `user` |
+
+---
+
+### `useCurrentUser` — campos adicionados
+
+```ts
+// Retorno do hook — campos novos em v2.7.0
+memberRole: string | null   // role real do org_members (advogado, secretaria, leitura…)
+roleLabel:  string          // agora usa mapa real: "Advogado", "Secretaria", "Leitura"…
+```
+
+O `roleLabel` usa `roleLabelMap` (mapa interno) com prioridade sobre `roleLabels[role]`. Se `memberRole` for `null` (fartech_admin sem membership), cai de volta para o mapa de `UserRole`.
+
+---
+
+### `usePlan` — feature gates por plano
+
+**Arquivo:** `src/hooks/usePlan.ts`
+
+Lê `currentOrg.plan` via `useOrganizationContext`. A coluna `plan` já existe na tabela `orgs` com valores `trial | basic | professional | enterprise`.
+
+```ts
+const {
+  plan,                // 'trial' | 'basic' | 'professional' | 'enterprise'
+  canUseFinanceiro,   // professional+
+  canUseAnalytics,    // professional+
+  canUseDOU,          // professional+
+  canUsePJe,          // professional+
+  canUseIA,           // enterprise only
+  canUseAuditoria,    // professional+
+  maxUsers,           // currentOrg.max_users ?? 1
+  hasFeature,         // (minPlan: Plan) => boolean
+} = usePlan()
+```
+
+**Faixas de plano:**
+
+| Plano | Rank | Módulos liberados |
+|-------|------|-------------------|
+| `trial` | 0 | Dashboard, Leads (20), Casos (10), Agenda, Tarefas, Clientes, Documentos, DataJud |
+| `basic` | 1 | trial + limites maiores (Leads 100, Casos 50), Relatórios básicos |
+| `professional` | 2 | basic + Financeiro, Analytics, DOU, PJe/eProc, Auditoria |
+| `enterprise` | 3 | professional + Waze Jurídico (IA), SLA de suporte |
+
+---
+
+### `UpgradeWall` — componente de bloqueio
+
+**Arquivo:** `src/components/UpgradeWall.tsx`
+
+Reutilizável para qualquer módulo bloqueado por plano. Uso padrão:
+
+```tsx
+const { canUseAnalytics } = usePlan()
+if (!canUseAnalytics) return <UpgradeWall feature="Analytics Executivo" minPlan="Profissional" />
+```
+
+---
+
+### AppShell — sidebar condicional
+
+`appNavGroups` é calculado via `useMemo` dinâmico dentro do componente (não mais constante estática):
+
+```
+Operacao       → sempre visível (Dashboard, Agenda, Tarefas)
+Relacionamento → sempre visível (Leads, Clientes, Casos)
+Conteudo       → Documentos + DataJud sempre; Diário Oficial somente se canUseDOU
+Governanca     → somente se isOrgAdmin; itens individuais condicionais ao plano:
+                   Auditoria  → canUseAuditoria
+                   Analytics  → canUseAnalytics
+                   Financeiro → canUseFinanceiro
+Administracao  → sempre visível (Configurações + itens de org_admin)
+```
+
+---
+
+### Dashboard — comportamento por perfil
+
+| Perfil | Detecção | Título | Badge | KPIs | Mini-card financeiro | Banner |
+|--------|----------|--------|-------|------|----------------------|--------|
+| **Gestor/Admin** (equipe) | `role === 'org_admin'` + `total_users > 1` | "[nome], visão gerencial" | Vermelho marca | Org-wide | ✅ (se canUseFinanceiro) | — |
+| **Advogado Solo** | `role === 'org_admin'` + `total_users <= 1` | "[nome], seu escritório" | "Solo" vermelho | Org-wide (= seus) | ✅ | — |
+| **Advogado** | `memberRole === 'advogado'` | "[nome], seu dia" | Cinza | Filtrado (meusCasos + meusLeads) | ❌ | — |
+| **Secretaria** | `memberRole === 'secretaria'` | "[nome], painel administrativo" | Cinza | Org-wide | ❌ | — |
+| **Leitura** | `memberRole === 'leitura'` | "[nome], visão geral" | Cinza | Org-wide | ❌ | Âmbar "modo leitura" |
+
+**Filtros para advogado:**
+- `meusCasos`: filtra `casos` onde `caso.responsavel === shortName || caso.responsavel === user.id`
+- `meusLeads`: filtra `leads` onde `lead.owner === user.id || lead.owner === shortName`
+- `criticalCasesCount` e `hotLeadsCount` derivados dos arrays filtrados (sem nova query ao banco)
+
+**Detecção de solo:** `isGestorDash && (orgStats?.total_users ?? 2) <= 1` — usa `stats.total_users` do `OrganizationContext` que conta `org_members` ativos.
+
+---
+
+### AnalyticsPage — guards e filtros
+
+```
+1. canViewExecutive (!isOrgAdmin && !isFartechAdmin) → Card "Acesso restrito"
+2. !canUseAnalytics                                  → <UpgradeWall>
+3. isSolo (total_users <= 1)                        → oculta seções de equipe
+```
+
+Seções ocultadas para solo:
+- "Desempenho por colaborador" (BarChart por membro)
+- "Ranking do time" (tabela com leads convertidos, taxa, casos, saldo)
+
+---
+
+### Regras de implementação (NON-NEGOTIABLE)
+
+1. **Nunca usar `memberRole` para guards de rota** — apenas `role` (`UserRole`) para isso. `memberRole` é exclusivamente para personalização de UI/UX.
+2. **Nunca fazer nova query ao banco para filtrar KPIs do advogado** — filtrar no array já carregado pelo hook.
+3. **`usePlan` deve ser usado somente para feature gates de módulos** — não para lógica de negócio ou queries.
+4. **`UpgradeWall` sempre redireciona para `/app/config`** — não abrir modal inline de upgrade.
+5. **Sidebar do solo é igual ao org_admin** — acesso completo (ele é admin da própria org).
+
+---
+
 ## 📞 REFERÊNCIAS
 
 - [React Best Practices](https://react.dev)
@@ -3365,7 +3521,7 @@ O gráfico de fluxo de caixa usa `<ComposedChart>` com dois eixos Y. Padrão **o
 
 **Mantido por:** Equipe SDR Jurídico
 **Última atualização:** 26 de fevereiro de 2026
-**Versão:** 2.6.0 (Módulo Financeiro)
+**Versão:** 2.7.0 (Controle de Acesso por Perfil)
 
 ---
 

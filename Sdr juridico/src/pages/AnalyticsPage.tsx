@@ -26,15 +26,18 @@ import {
   YAxis,
 } from 'recharts'
 
+import { UpgradeWall } from '@/components/UpgradeWall'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useOrganizationContext } from '@/contexts/OrganizationContext'
 import { useClientes } from '@/hooks/useClientes'
 import { useCasos } from '@/hooks/useCasos'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
 import { useLeads } from '@/hooks/useLeads'
 import { useIsFartechAdmin, useIsOrgAdmin } from '@/hooks/usePermissions'
+import { usePlan } from '@/hooks/usePlan'
 import { supabase } from '@/lib/supabaseClient'
 import { resolveOrgScope } from '@/services/orgScope'
 import { cn } from '@/utils/cn'
@@ -56,6 +59,9 @@ export default function AnalyticsPage() {
   const navigate = useNavigate()
   const isOrgAdmin = useIsOrgAdmin()
   const isFartechAdmin = useIsFartechAdmin()
+  const { canUseAnalytics } = usePlan()
+  const { stats: orgStats } = useOrganizationContext()
+  const isSolo = (orgStats?.total_users ?? 2) <= 1
   const [orgMembers, setOrgMembers] = React.useState<OrgMemberAnalytics[]>([])
   const [membersLoading, setMembersLoading] = React.useState(true)
 
@@ -298,6 +304,10 @@ export default function AnalyticsPage() {
         </Card>
       </div>
     )
+  }
+
+  if (!canUseAnalytics) {
+    return <UpgradeWall feature="Analytics Executivo" minPlan="Profissional" />
   }
 
   return (
@@ -681,94 +691,96 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* ── DESEMPENHO DA EQUIPE ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
-        <Card className="border-border bg-surface/90">
-          <CardHeader>
-            <CardTitle className="text-base">Desempenho por colaborador</CardTitle>
-            <p className="text-xs text-text-subtle">Leads convertidos e casos ativos por membro da equipe</p>
-          </CardHeader>
-          <CardContent className="h-80 pt-0">
-            {performanceEquipe.length === 0 ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-text-muted">Sem dados de desempenho.</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={performanceEquipe} margin={{ left: 12, bottom: 32 }}>
-                  <CartesianGrid stroke="var(--color-border-soft)" strokeDasharray="4 6" />
-                  <XAxis
-                    dataKey="nome"
-                    tickLine={false}
-                    axisLine={false}
-                    stroke="var(--color-text-subtle)"
-                    tick={{ fontSize: 11 }}
-                    angle={-30}
-                    textAnchor="end"
-                    interval={0}
-                  />
-                  <YAxis tickLine={false} axisLine={false} stroke="var(--color-text-subtle)" />
-                  <Tooltip />
-                  <Legend iconType="circle" />
-                  <Bar dataKey="convertidos" name="Leads convertidos" fill="#2E7D32" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="casosAtivos" name="Casos ativos" fill="#5B4FCF" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+      {/* ── DESEMPENHO DA EQUIPE (oculto para advogado solo) ────────────────── */}
+      {!isSolo && (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
+          <Card className="border-border bg-surface/90">
+            <CardHeader>
+              <CardTitle className="text-base">Desempenho por colaborador</CardTitle>
+              <p className="text-xs text-text-subtle">Leads convertidos e casos ativos por membro da equipe</p>
+            </CardHeader>
+            <CardContent className="h-80 pt-0">
+              {performanceEquipe.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-sm text-text-muted">Sem dados de desempenho.</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={performanceEquipe} margin={{ left: 12, bottom: 32 }}>
+                    <CartesianGrid stroke="var(--color-border-soft)" strokeDasharray="4 6" />
+                    <XAxis
+                      dataKey="nome"
+                      tickLine={false}
+                      axisLine={false}
+                      stroke="var(--color-text-subtle)"
+                      tick={{ fontSize: 11 }}
+                      angle={-30}
+                      textAnchor="end"
+                      interval={0}
+                    />
+                    <YAxis tickLine={false} axisLine={false} stroke="var(--color-text-subtle)" />
+                    <Tooltip />
+                    <Legend iconType="circle" />
+                    <Bar dataKey="convertidos" name="Leads convertidos" fill="#2E7D32" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="casosAtivos" name="Casos ativos" fill="#5B4FCF" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card className="border-border bg-surface/90">
-          <CardHeader>
-            <CardTitle className="text-base">Ranking do time</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {performanceEquipe.length === 0 ? (
-              <p className="text-sm text-text-muted">Sem dados de desempenho por usuário.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="pb-2 text-left font-medium text-text-subtle">Nome</th>
-                      <th className="pb-2 text-right font-medium text-text-subtle">Conv.</th>
-                      <th className="pb-2 text-right font-medium text-text-subtle">Taxa</th>
-                      <th className="pb-2 text-right font-medium text-text-subtle">Casos</th>
-                      <th className="pb-2 text-right font-medium text-text-subtle">Saldo</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {performanceEquipe.map((item, index) => (
-                      <tr key={item.nome} className="group">
-                        <td className="py-2 pr-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-text-subtle">{index + 1}.</span>
-                            <div>
-                              <p className="font-medium text-text leading-tight">{item.nome}</p>
-                              <Badge
-                                variant={item.role === 'gestor' ? 'warning' : 'info'}
-                                className="text-[10px]"
-                              >
-                                {item.role}
-                              </Badge>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-2 text-right font-semibold text-text">{item.convertidos}</td>
-                        <td className="py-2 text-right text-text-subtle">{item.taxaConv}%</td>
-                        <td className="py-2 text-right text-text-subtle">{item.casosAtivos}</td>
-                        <td className={cn('py-2 text-right font-medium', item.saldoFinanceiro >= 0 ? 'text-green-700' : 'text-red-700')}>
-                          {formatCurrency(item.saldoFinanceiro)}
-                        </td>
+          <Card className="border-border bg-surface/90">
+            <CardHeader>
+              <CardTitle className="text-base">Ranking do time</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {performanceEquipe.length === 0 ? (
+                <p className="text-sm text-text-muted">Sem dados de desempenho por usuário.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="pb-2 text-left font-medium text-text-subtle">Nome</th>
+                        <th className="pb-2 text-right font-medium text-text-subtle">Conv.</th>
+                        <th className="pb-2 text-right font-medium text-text-subtle">Taxa</th>
+                        <th className="pb-2 text-right font-medium text-text-subtle">Casos</th>
+                        <th className="pb-2 text-right font-medium text-text-subtle">Saldo</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {performanceEquipe.map((item, index) => (
+                        <tr key={item.nome} className="group">
+                          <td className="py-2 pr-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-text-subtle">{index + 1}.</span>
+                              <div>
+                                <p className="font-medium text-text leading-tight">{item.nome}</p>
+                                <Badge
+                                  variant={item.role === 'gestor' ? 'warning' : 'info'}
+                                  className="text-[10px]"
+                                >
+                                  {item.role}
+                                </Badge>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-2 text-right font-semibold text-text">{item.convertidos}</td>
+                          <td className="py-2 text-right text-text-subtle">{item.taxaConv}%</td>
+                          <td className="py-2 text-right text-text-subtle">{item.casosAtivos}</td>
+                          <td className={cn('py-2 text-right font-medium', item.saldoFinanceiro >= 0 ? 'text-green-700' : 'text-red-700')}>
+                            {formatCurrency(item.saldoFinanceiro)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
     </div>
   )

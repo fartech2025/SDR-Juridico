@@ -32,6 +32,7 @@ import { useIsFartechAdmin, useIsOrgAdmin } from '@/hooks/usePermissions'
 import { useAlertas } from '@/hooks/useAlertas'
 import { useApiHealth } from '@/hooks/useApiHealth'
 import { usePageTracking } from '@/hooks/usePageTracking'
+import { usePlan } from '@/hooks/usePlan'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/ui/Logo'
 import { cn } from '@/utils/cn'
@@ -44,41 +45,6 @@ type NavItem = {
   to: string
   icon: React.ComponentType<{ className?: string }>
 }
-
-const appNavGroups: { label: string; items: NavItem[] }[] = [
-  {
-    label: 'Operacao',
-    items: [
-      { label: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
-      { label: 'Agenda', to: '/app/agenda', icon: CalendarClock },
-      { label: 'Tarefas', to: '/app/tarefas', icon: ListTodo },
-    ],
-  },
-  {
-    label: 'Relacionamento',
-    items: [
-      { label: 'Leads', to: '/app/leads', icon: Flame },
-      { label: 'Clientes', to: '/app/clientes', icon: UserRound },
-      { label: 'Casos', to: '/app/casos', icon: Briefcase },
-    ],
-  },
-  {
-    label: 'Conteudo',
-    items: [
-      { label: 'Documentos', to: '/app/documentos', icon: FileText },
-      { label: 'DataJud', to: '/app/datajud', icon: Database },
-      { label: 'Diário Oficial', to: '/app/diario-oficial', icon: Newspaper },
-    ],
-  },
-  {
-    label: 'Governanca',
-    items: [
-      { label: 'Auditoria', to: '/app/auditoria', icon: ShieldCheck },
-      { label: 'Analytics', to: '/app/analytics', icon: BarChart3 },
-      { label: 'Financeiro', to: '/app/financeiro', icon: CircleDollarSign },
-    ],
-  },
-]
 
 const adminNavItems = [
   { label: 'Organizacoes', to: '/admin/organizations', icon: Building2 },
@@ -99,8 +65,49 @@ export const AppShell = () => {
   const { displayName, shortName, initials } = useCurrentUser()
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin = useIsOrgAdmin()
+  const { canUseFinanceiro, canUseAnalytics, canUseAuditoria, canUseDOU } = usePlan()
   const apiHealth = useApiHealth()
   const { alertas, naoLidas: alertasNaoLidas, marcarLida, marcarTodasLidas } = useAlertas()
+
+  const appNavGroups = React.useMemo(() => {
+    const groups: { label: string; items: NavItem[] }[] = [
+      {
+        label: 'Operacao',
+        items: [
+          { label: 'Dashboard',     to: '/app/dashboard',      icon: LayoutDashboard },
+          { label: 'Agenda',        to: '/app/agenda',         icon: CalendarClock },
+          { label: 'Tarefas',       to: '/app/tarefas',        icon: ListTodo },
+        ],
+      },
+      {
+        label: 'Relacionamento',
+        items: [
+          { label: 'Leads',    to: '/app/leads',    icon: Flame },
+          { label: 'Clientes', to: '/app/clientes', icon: UserRound },
+          { label: 'Casos',    to: '/app/casos',    icon: Briefcase },
+        ],
+      },
+      {
+        label: 'Conteudo',
+        items: [
+          { label: 'Documentos',     to: '/app/documentos',     icon: FileText },
+          { label: 'DataJud',        to: '/app/datajud',        icon: Database },
+          ...(canUseDOU ? [{ label: 'Diário Oficial', to: '/app/diario-oficial', icon: Newspaper }] : []),
+        ],
+      },
+    ]
+    if (isOrgAdmin) {
+      const governancaItems: NavItem[] = [
+        ...(canUseAuditoria  ? [{ label: 'Auditoria',  to: '/app/auditoria',  icon: ShieldCheck }]     : []),
+        ...(canUseAnalytics  ? [{ label: 'Analytics',  to: '/app/analytics',  icon: BarChart3 }]       : []),
+        ...(canUseFinanceiro ? [{ label: 'Financeiro', to: '/app/financeiro', icon: CircleDollarSign }] : []),
+      ]
+      if (governancaItems.length > 0) {
+        groups.push({ label: 'Governanca', items: governancaItems })
+      }
+    }
+    return groups
+  }, [isOrgAdmin, canUseDOU, canUseAuditoria, canUseAnalytics, canUseFinanceiro])
 
   const apiStatusMap: Record<string, 'checking' | 'online' | 'offline'> = {
     '/app/datajud': apiHealth.datajud,
@@ -162,7 +169,7 @@ export const AppShell = () => {
       ...appNavGroups,
       { label: 'Administracao', items: administrationItems },
     ]
-  }, [administrationItems, location.pathname])
+  }, [appNavGroups, administrationItems, location.pathname])
 
   usePageTracking()
 
