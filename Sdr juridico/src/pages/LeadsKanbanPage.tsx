@@ -152,28 +152,34 @@ const DraggableLeadCard = ({
   }
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging ? 'opacity-60 scale-105' : '')}>
+    // listeners no container raiz → card inteiro é arrastável
+    // activationConstraint: { distance: 5 } distingue clique de arraste
+    // touch-none impede scroll conflitando com drag no mobile
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'touch-none',
+        isDragging ? 'opacity-60 scale-105' : '',
+      )}
+      {...listeners}
+      {...attributes}
+    >
       <button
         type="button"
         onClick={onOpen}
         className={cn(
           'w-full text-left rounded-lg border bg-white p-2 sm:p-3 shadow-sm hover:shadow-md transition-all group',
           'border-border hover:border-border-strong',
+          isDragging ? 'cursor-grabbing' : 'cursor-grab',
         )}
       >
-        {/* Header com nome e drag handle */}
+        {/* Header com nome e ícone visual de drag */}
         <div className="flex items-start gap-1 sm:gap-2">
-          {/* Drag handle */}
+          {/* Drag handle — visual apenas, listeners estão no container pai */}
           <span
-            className="shrink-0 inline-flex cursor-grab items-center rounded border border-border bg-surface-alt p-0.5 sm:p-1 text-text-subtle active:cursor-grabbing hover:bg-surface-alt sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-            }}
-            {...listeners}
-            {...attributes}
-            aria-label="Arrastar lead"
-            title="Arrastar"
+            className="shrink-0 inline-flex items-center rounded border border-border bg-surface-alt p-0.5 sm:p-1 text-text-subtle sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+            aria-hidden="true"
           >
             <MoreVertical className="h-3 w-3" />
           </span>
@@ -1105,8 +1111,8 @@ export const LeadsKanbanPage = () => {
 
       {/* Modal de Conversão Lead → Caso */}
       {conversionModalOpen && conversionLead && (
-        <Modal open={conversionModalOpen} onClose={() => setConversionModalOpen(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+        <Modal open={conversionModalOpen} onClose={() => setConversionModalOpen(false)} maxWidth="32rem" noPadding>
+          <div className="bg-white rounded-xl overflow-hidden w-full">
             {/* Header */}
             <div className="px-6 py-4 border-b border-border" style={{ background: 'linear-gradient(135deg, #721011, #8b1415)' }}>
               <div className="flex items-center gap-3">

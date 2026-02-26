@@ -1,5 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 
+import AuthCallback from '@/pages/auth/AuthCallback'
 import { AppShell } from '@/layouts/AppShell'
 import { AgendaPage } from '@/pages/AgendaPage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
   {
     path: '/reset-password',
     element: <ResetPasswordPage />,
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallback />,
   },
   {
     path: '/app',
