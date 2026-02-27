@@ -13,6 +13,8 @@ import { DataJudPage } from '@/pages/DataJudPage'
 import { DatabasePage } from '@/pages/DatabasePage'
 import { DocumentosPage } from '@/pages/DocumentosPage'
 import { FinanceiroPage } from '@/pages/FinanceiroPage'
+import { TimesheetPage } from '@/pages/TimesheetPage'
+import { DocumentoTemplatesPage } from '@/pages/DocumentoTemplatesPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { LeadsPage } from '@/pages/LeadsPage'
 import { LeadsKanbanPage } from '@/pages/LeadsKanbanPage'
@@ -102,6 +104,10 @@ export const router = createBrowserRouter([
         element: <DocumentosPage />,
       },
       {
+        path: 'documentos/templates',
+        element: <DocumentoTemplatesPage />,
+      },
+      {
         path: 'indicadores',
         element: <Navigate to="/app/analytics" replace />,
       },
@@ -124,6 +130,10 @@ export const router = createBrowserRouter([
       {
         path: 'financeiro',
         element: <FinanceiroPage />,
+      },
+      {
+        path: 'timesheet',
+        element: <TimesheetPage />,
       },
       {
         path: 'auditoria',

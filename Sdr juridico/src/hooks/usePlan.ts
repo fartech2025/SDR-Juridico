@@ -27,6 +27,10 @@ export function usePlan() {
     canUsePJe:         hasFeature('professional'),
     canUseIA:          hasFeature('enterprise'),
     canUseAuditoria:   hasFeature('professional'),
+    // v2.8.0 — novos módulos
+    canUseTimesheet:   hasFeature('professional'),
+    canUseTemplates:   hasFeature('professional'),
+    canUseBranding:    hasFeature('basic'),
     maxUsers:          currentOrg?.max_users ?? 1,
     hasFeature,
   }

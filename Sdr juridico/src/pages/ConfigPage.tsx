@@ -2,8 +2,9 @@ import * as React from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Database } from 'lucide-react'
 import { toast } from 'sonner'
-import { PjeConfigCard }   from '@/components/PjeConfigCard'
-import { EprocConfigCard } from '@/components/EprocConfigCard'
+import { PjeConfigCard }       from '@/components/PjeConfigCard'
+import { EprocConfigCard }     from '@/components/EprocConfigCard'
+import { BrandingConfigCard }  from '@/components/config/BrandingConfigCard'
 
 import heroLight from '@/assets/hero-light.svg'
 import { PageState } from '@/components/PageState'
@@ -353,6 +354,8 @@ export const ConfigPage = () => {
 
       <PageState status={pageState} emptyTitle="Nenhuma integracao cadastrada">
           <div className="grid gap-4 lg:grid-cols-2">
+            {/* Branding — visível na aba Essencial */}
+            {activeTab === 'Essencial' && <BrandingConfigCard />}
             {/* Cards avançados — visíveis apenas na aba Avançado */}
             {activeTab === 'Avancado' && <PjeConfigCard />}
             {activeTab === 'Avancado' && <EprocConfigCard />}

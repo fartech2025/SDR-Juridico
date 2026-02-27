@@ -1,12 +1,38 @@
 # 🏗️ ARQUITETURA CANÔNICA - SDR JURÍDICO
 
-**Versão:** 2.7.0
-**Data:** 26 de fevereiro de 2026
+**Versão:** 2.8.0
+**Data:** 27 de fevereiro de 2026
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v2.8.0 (27 de fevereiro de 2026)
+- ✅ **Módulo Templates de Documentos**: Nova página `/app/documentos/templates` com grid de cards, filtro por categoria e ações de criar/editar/excluir/usar templates
+- ✅ **TipTap Rich-Text Editor**: `TemplateEditorModal` com toolbar completa (negrito, itálico, sublinhado, alinhamento, listas, H1/H2/H3), detecção automática de variáveis `{nome_var}` e painel lateral de edição de labels
+- ✅ **`TemplateGerarModal`**: Formulário dinâmico por variável, preview HTML em tempo real, botões "Baixar PDF" e "Salvar como Documento"
+- ✅ **`documentoTemplateService`**: CRUD completo (`listTemplates`, `getTemplate`, `createTemplate`, `updateTemplate`, `deleteTemplate`), `interpolateTemplate()`, `extractVariables()`, `buildHtmlWithBranding()`, `downloadPdf()`, `generatePdfBlob()`, `generateFromTemplate()`
+- ✅ **`useDocumentoTemplates`**: Hook de estado com todas as actions do service; `fetchTemplates`, `createTemplate`, `updateTemplate`, `deleteTemplate`
+- ✅ **`html2pdf.js`**: Geração de PDF client-side a partir do HTML renderizado do TipTap; wrapper `htmlToPdfBlob()` com lazy import
+- ✅ **Módulo Drive Integration**: `driveService.ts` — wrapper unificado Google Drive + OneDrive (`isConnected`, `listFiles`, `exportAsHtml`, `uploadPdf`, `ensureFolder`); reutiliza tokens do `integrationsService` (`google_calendar` → Drive, `teams` → OneDrive)
+- ✅ **`driveImportService.ts`**: `importFileAsHtml()` — exporta arquivo do Drive como HTML e sanitiza (remove `<style>`, class/style attrs, tags meta/link/script, IDs)
+- ✅ **`DrivePickerModal`**: Modal de seleção de arquivos do Drive (Google Drive + OneDrive) com lista de provedores, busca de arquivos e importação para o TipTap
+- ✅ **"Importar do Drive" em TemplateEditorModal**: Botão no cabeçalho do editor abre `DrivePickerModal`; HTML importado é carregado diretamente no TipTap
+- ✅ **`generateFromTemplate` — Drive como storage primário**: PDF gerado client-side → upload para pasta "SDR Jurídico/Caso-X" no Drive → fallback para Supabase Storage → `INSERT` em `documentos` com `drive_file_id/drive_url`
+- ✅ **Branding por Escritório**: `orgBrandingService.ts` — `getBranding()`, `upsertBranding()`, `uploadLogo()` (bucket `org-logos`); single record por org via ON CONFLICT
+- ✅ **`useOrgBranding`**: Hook de estado com `saveBranding`, `uploadLogo`, `fetchBranding`
+- ✅ **`BrandingConfigCard`**: UI completa em `ConfigPage` (aba Essencial) — upload de logo (drag&drop, max 2MB), color pickers hex, campos nomeDisplay/oabRegistro/endereco/telefone/rodapeTexto, preview ao vivo do cabeçalho do documento
+- ✅ **`buildHtmlWithBranding()`**: Injeta `<header>` (logo + nome + OAB) e `<footer>` (endereço + telefone + texto) ao redor do conteúdo antes de gerar PDF
+- ✅ **Timesheet + Honorários**: `types/timesheet.ts`, `services/timesheetService.ts`, `hooks/useTimesheet.ts`, `pages/TimesheetPage.tsx` — controle de horas por caso, aprovação e faturamento integrado ao Financeiro
+- ✅ **`timesheetService`**: `listEntries`, `createEntry`, `updateEntry`, `deleteEntry`, `aprovarEntradas`, `faturarPeriodo` (cria lançamentos em `financeiro_lancamentos` e atualiza status para `'faturado'`)
+- ✅ **`TimesheetPage`**: KPIs (horas/mês, valor billable, horas a faturar, entradas pendentes), painel do gestor com checkboxes + botões "Aprovar" e "Faturar", tabela pessoal por usuário, modal "Registrar Horas"
+- ✅ **`usePlan` — novos gates**: `canUseTemplates` (professional+), `canUseTimesheet` (professional+), `canUseBranding` (basic+)
+- ✅ **AppShell — novos itens de sidebar**: "Templates" (grupo Conteúdo, ícone `LayoutTemplate`, gate `canUseTemplates`) e "Timesheet" (grupo Operação, ícone `Clock`, gate `canUseTimesheet`)
+- ✅ **4 migrations criadas**: `20260227_documento_templates.sql`, `20260227_timesheet_entries.sql`, `20260227_org_branding.sql`, `20260227_drive_integration.sql`
+- ✅ **Fix `logAuditChange`**: Corrigidas 3 chamadas em `documentoTemplateService` que passavam 4 args posicionais — convertidas para objeto único `{ orgId, action, entity, entityId, details }`
+- ✅ **Fix `AnalyticsPage` TS2451**: `orgStats` local renomeado para `teamStats` (evita conflito com `orgStats` do `useOrganizationContext`)
+- ✅ **Fix `vite.config.ts` TS1185**: Conflict markers de merge resolvidos, versão HEAD do `scraperServerPlugin` preservada
 
 ### v2.7.0 (26 de fevereiro de 2026)
 - ✅ **Views por Role de Acesso**: Dashboard e sidebar agora respondem ao perfil real do usuário (`memberRole` do `org_members`)
@@ -3621,3 +3647,286 @@ Seções ocultadas para solo:
 - Setup inicial multi-tenant
 - RLS em todas as tabelas
 - Sistema de permissões base
+
+---
+
+## 📄 MÓDULO TEMPLATES DE DOCUMENTOS (v2.8.0)
+
+### Visão Geral
+Permite criar, editar e reutilizar modelos jurídicos (contratos, petições, procurações, declarações, notificações) com editor rich-text, variáveis dinâmicas e geração de PDF client-side.
+
+### Stack Técnica
+- **Editor**: TipTap (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-text-align`, `@tiptap/extension-underline`) — headless, React
+- **PDF**: `html2pdf.js` — converte HTML renderizado em PDF via Canvas (jsPDF) no browser; lazy import para não inflar o bundle principal
+- **Variáveis**: sintaxe `{nome_var}` detectada por regex `/\{(\w+)\}/g`; substituídas antes de gerar PDF ou salvar documento
+- **Storage**: Drive como primário (zero Supabase Storage); fallback para bucket `documentos`
+
+### Estrutura de Arquivos
+```
+src/
+├── types/documentoTemplate.ts               ← tipos domínio
+├── services/documentoTemplateService.ts      ← CRUD + geração de PDF + Drive upload
+├── hooks/useDocumentoTemplates.ts            ← estado + actions
+├── pages/DocumentoTemplatesPage.tsx          ← lista com grid, filtro, ações
+└── components/documentos/
+    ├── TemplateEditorModal.tsx               ← TipTap + DetecçãoVariáveis + Drive import
+    └── TemplateGerarModal.tsx                ← formulário de variáveis + preview + PDF
+```
+
+### Schema DB — `documento_templates`
+```sql
+CREATE TABLE public.documento_templates (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id      UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
+  titulo      TEXT NOT NULL,
+  categoria   TEXT NOT NULL,  -- 'contrato'|'peticao'|'procuracao'|'declaracao'|'notificacao'|'outro'
+  conteudo    TEXT NOT NULL,  -- HTML gerado pelo TipTap
+  variaveis   JSONB NOT NULL DEFAULT '[]',  -- [{ key, label, required, placeholder?, hint? }]
+  criado_por  UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at  TIMESTAMPTZ,   -- soft delete (templates são patrimônio da org)
+  deleted_by  UUID REFERENCES auth.users(id) ON DELETE SET NULL
+);
+```
+RLS: `templates_select` (is_org_member), `templates_insert` (is_org_member), `templates_update/delete` (is_org_admin_for_org — soft delete via UPDATE).
+
+### Tipos Principais
+```typescript
+export type TemplateCategoria = 'contrato'|'peticao'|'procuracao'|'declaracao'|'notificacao'|'outro'
+
+export interface TemplateVariavel {
+  key: string; label: string; required: boolean; placeholder?: string; hint?: string
+}
+
+export interface DocumentoTemplate {
+  id, orgId, titulo, categoria: TemplateCategoria, conteudo: string,
+  variaveis: TemplateVariavel[], criadoPor?, createdAt, updatedAt, deletedAt?
+}
+```
+
+### Fluxo de Geração (`generateFromTemplate`)
+1. `generatePdfBlob()` → html2pdf.js → `Blob`
+2. `driveService.isConnected()` → se sim, `ensureFolder("SDR Jurídico")` + subpasta por caso → `uploadPdf()` → `driveFileId + webViewLink`
+3. Se Drive falhar ou não estiver conectado → `supabase.storage.from('documentos').upload()` → `storagePath`
+4. `supabase.from('documentos').insert({ drive_file_id?, drive_url?, storage_path? })` → retorna `{ documentoId, url }`
+
+### Gate de Plano
+`canUseTemplates` (professional+) — `UpgradeWall` retornado antes do conteúdo em Trial e Basic.
+
+---
+
+## ⏱️ MÓDULO TIMESHEET + HONORÁRIOS (v2.8.0)
+
+### Visão Geral
+Controle de horas trabalhadas por advogado/caso, com aprovação pelo gestor e faturamento direto para o Módulo Financeiro (`financeiro_lancamentos`).
+
+### Estrutura de Arquivos
+```
+src/
+├── types/timesheet.ts
+├── services/timesheetService.ts
+├── hooks/useTimesheet.ts
+└── pages/TimesheetPage.tsx
+```
+
+### Schema DB — `timesheet_entries`
+```sql
+CREATE TABLE public.timesheet_entries (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id              UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
+  responsavel_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  caso_id             UUID REFERENCES public.casos(id) ON DELETE SET NULL,
+  data                DATE NOT NULL,
+  horas               NUMERIC(5,2) NOT NULL CHECK (horas > 0 AND horas <= 24),
+  descricao           TEXT NOT NULL,
+  taxa_horaria        NUMERIC(10,2) NOT NULL CHECK (taxa_horaria >= 0),
+  valor_total         NUMERIC(14,2) GENERATED ALWAYS AS (horas * taxa_horaria) STORED,
+  tipo                TEXT NOT NULL DEFAULT 'billable' CHECK (tipo IN ('billable','non_billable')),
+  status              TEXT NOT NULL DEFAULT 'rascunho' CHECK (status IN ('rascunho','aprovado','faturado')),
+  lancamento_id       UUID REFERENCES public.financeiro_lancamentos(id) ON DELETE SET NULL,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+RLS: SELECT (is_org_member), INSERT (is_org_member), UPDATE (dono OU is_org_admin), DELETE (is_org_admin — somente rascunhos).
+
+### Tipos Principais
+```typescript
+export type TimesheetTipo   = 'billable' | 'non_billable'
+export type TimesheetStatus = 'rascunho' | 'aprovado' | 'faturado'
+
+export interface TimesheetEntry {
+  id, orgId, responsavelUserId, responsavelNome?, casoId?, casoTitulo?,
+  data, horas, descricao, taxaHoraria, valorTotal,
+  tipo: TimesheetTipo, status: TimesheetStatus, lancamentoId?
+}
+```
+
+### Fluxo de Faturamento (`faturarPeriodo`)
+1. Recebe lista de entradas com `status='aprovado'`
+2. Agrupa por `caso_id` (ou "Geral" se sem caso)
+3. Para cada grupo: `financeiroService.createTransaction({ type:'receita', category:'Honorários', ... })`
+4. `UPDATE timesheet_entries SET status='faturado', lancamento_id=<novo_id>`
+5. As receitas aparecem imediatamente em `FinanceiroPage`
+
+### Layout da Página (`TimesheetPage`)
+- **Seção 1 — Header + 4 KPIs**: Horas no Mês · Valor Billable · Horas a Faturar · Entradas Pendentes
+- **Seção 2 — Painel do Gestor** (só `isOrgAdmin`): tabela com checkboxes, filtros, botões "Aprovar Selecionados" e "Faturar Aprovados" (com modal de confirmação)
+- **Seção 3 — Minhas Horas**: tabela pessoal filtrada por `user.id`; editar/excluir somente em rascunhos próprios
+- **Modal "Registrar Horas"**: Data · Caso (select) · Horas · Taxa Horária · Descrição · Tipo; preview calculado `= R$ XXX`
+
+### Gate de Plano
+`canUseTimesheet` (professional+) — `UpgradeWall` retornado antes do conteúdo em Trial e Basic.
+
+---
+
+## ☁️ MÓDULO DRIVE INTEGRATION (v2.8.0)
+
+### Visão Geral
+Drive (Google Drive ou OneDrive) como backend primário de armazenamento de documentos gerados. **Zero bytes em Supabase Storage** para escritórios com Drive conectado.
+
+### Premissa de Custo
+| Armazenado no Supabase | Custo |
+|---|---|
+| `documento_templates.conteudo` (HTML TEXT, ~30KB/template) | ~R$0 |
+| `documentos` (metadados: IDs, URLs, status, ~1KB/registro) | ~R$0 |
+| Arquivos binários | **Nenhum** — ficam no Drive |
+
+### Estrutura de Arquivos
+```
+src/
+├── services/driveService.ts          ← wrapper Google Drive + OneDrive
+└── services/driveImportService.ts    ← HTML sanitization + importação
+src/components/documentos/
+└── DrivePickerModal.tsx              ← seletor de arquivos do Drive
+```
+
+### `driveService.ts` — API
+```typescript
+export type DriveProvider = 'google_drive' | 'onedrive'
+
+export const driveService = {
+  isConnected(provider: DriveProvider): Promise<boolean>,
+  listFiles(provider, query?): Promise<DriveFile[]>,
+  exportAsHtml(provider, fileId): Promise<string>,
+  uploadPdf(provider, blob, fileName, folderId?): Promise<{ fileId, webViewLink }>,
+  ensureFolder(provider, folderName, parentId?): Promise<string>,
+}
+```
+
+### Reutilização de Tokens
+Os tokens OAuth já existentes são reutilizados — **sem novo fluxo OAuth**:
+| Provedor | Chave no `integrationsService` | Escopos necessários |
+|---|---|---|
+| Google Drive | `google_calendar` → campo `access_token` | `drive.readonly` + `drive.file` |
+| OneDrive | `teams` → campo `access_token` | `Files.ReadWrite` |
+
+### `driveImportService.ts` — Sanitização HTML
+- Importa arquivo do Drive via `driveService.exportAsHtml()`
+- Remove: `<style>`, atributos `class`/`style`/`id`, tags `<meta>/<link>/<script>`, tags vazias
+- Mantém: `<h1-h6>`, `<p>`, `<strong>`, `<em>`, `<ul>`, `<ol>`, `<li>`, `<table>`, `<br>`
+- Resultado é injetado diretamente no TipTap via `editor.commands.setContent(html)`
+
+### Campos Drive em `documentos`
+```sql
+ALTER TABLE public.documentos
+  ADD COLUMN IF NOT EXISTS drive_file_id   TEXT,
+  ADD COLUMN IF NOT EXISTS drive_provider  TEXT CHECK (drive_provider IN ('google_drive','onedrive')),
+  ADD COLUMN IF NOT EXISTS drive_url       TEXT;
+```
+Quando `drive_file_id IS NOT NULL`, `obterUrlDocumento()` retorna `drive_url` diretamente (já suportado na `documentosService`).
+
+### Estrutura de Pastas no Drive
+```
+Drive do escritório/
+└── SDR Jurídico/
+    ├── Caso - João Silva x Empresa X/
+    │   └── Contrato de Honorários - 27-02-2026.pdf
+    └── Caso - Maria Souza - Trabalhista/
+        └── Contestação - 01-03-2026.pdf
+```
+
+---
+
+## 🎨 MÓDULO BRANDING DE DOCUMENTOS (v2.8.0)
+
+### Visão Geral
+Cada organização personaliza o layout dos PDFs gerados: logo, cores, nome do escritório, OAB, endereço, telefone e rodapé. Configurado em `ConfigPage → aba Essencial`.
+
+### Estrutura de Arquivos
+```
+src/
+├── types/documentoTemplate.ts           ← OrgBranding + DEFAULT_BRANDING
+├── services/orgBrandingService.ts        ← getBranding, upsertBranding, uploadLogo
+├── hooks/useOrgBranding.ts               ← estado + actions
+└── components/config/BrandingConfigCard.tsx  ← UI completa com preview ao vivo
+```
+
+### Schema DB — `org_branding`
+```sql
+CREATE TABLE public.org_branding (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id          UUID NOT NULL UNIQUE REFERENCES public.orgs(id) ON DELETE CASCADE,
+  logo_url        TEXT,
+  cor_primaria    TEXT NOT NULL DEFAULT '#721011',
+  cor_secundaria  TEXT NOT NULL DEFAULT '#BF6F32',
+  nome_display    TEXT,       -- nome no cabeçalho do documento
+  oab_registro    TEXT,       -- "OAB/MG 123.456"
+  endereco        TEXT,
+  telefone        TEXT,
+  rodape_texto    TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+RLS: SELECT (is_org_member), ALL (is_org_admin_for_org). UPSERT via `ON CONFLICT (org_id) DO UPDATE`.
+
+Storage bucket: `org-logos` — path `{orgId}/logo.{ext}`, max 2MB, tipos PNG/JPG/WebP/SVG.
+
+### Tipos
+```typescript
+export interface OrgBranding {
+  id: string; orgId: string; logoUrl?: string
+  corPrimaria: string; corSecundaria: string
+  nomeDisplay?: string; oabRegistro?: string
+  endereco?: string; telefone?: string; rodapeTexto?: string
+}
+
+export const DEFAULT_BRANDING: OrgBranding = {
+  id: '', orgId: '', corPrimaria: '#721011', corSecundaria: '#BF6F32'
+}
+```
+
+### `buildHtmlWithBranding(content, branding)` — Template HTML
+Injeta cabeçalho e rodapé ao redor do conteúdo do template antes de gerar o PDF:
+```
+┌────────────────────────────────────────────────────────┐
+│  [Logo]                          Nome do Escritório    │
+│                                  OAB/MG 123.456        │
+│  ── borda corPrimaria ──────────────────────────────── │
+│                                                        │
+│  [Conteúdo do Template com variáveis substituídas]     │
+│                                                        │
+│  ── borda cinza ──────────────────────────────────── ─ │
+│  Endereço · Telefone           Texto do rodapé         │
+└────────────────────────────────────────────────────────┘
+```
+
+### Gate de Plano
+`canUseBranding` (basic+) — `UpgradeWall` retornado em Trial.
+
+---
+
+## 📊 TABELA DE FEATURE GATES (estado v2.8.0)
+
+| Feature | Trial | Basic | Professional | Enterprise |
+|---------|:-----:|:-----:|:------------:|:----------:|
+| Templates de documentos | UpgradeWall | UpgradeWall | ✅ | ✅ |
+| Timesheet + Honorários | UpgradeWall | UpgradeWall | ✅ | ✅ |
+| Branding do escritório | UpgradeWall | ✅ | ✅ | ✅ |
+| Financeiro | UpgradeWall | ✅ | ✅ | ✅ |
+| PJe/MNI + eProc | ❌ | ❌ | ✅ | ✅ |
+| Diário Oficial (DOU) | ❌ | ❌ | ✅ | ✅ |
+| Analytics Executivo | ❌ | ❌ | ✅ | ✅ |
+| Waze Jurídico (IA) | ❌ | ❌ | ❌ | ✅ |

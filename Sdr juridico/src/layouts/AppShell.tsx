@@ -5,6 +5,7 @@ import {
   Bell,
   Building2,
   CalendarClock,
+  Clock,
   Database,
   FileText,
   LayoutDashboard,
@@ -24,6 +25,7 @@ import {
   X,
   Flame,
   CircleDollarSign,
+  LayoutTemplate,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -65,7 +67,7 @@ export const AppShell = () => {
   const { displayName, shortName, initials } = useCurrentUser()
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin = useIsOrgAdmin()
-  const { canUseFinanceiro, canUseAnalytics, canUseAuditoria, canUseDOU } = usePlan()
+  const { canUseFinanceiro, canUseAnalytics, canUseAuditoria, canUseDOU, canUseTimesheet, canUseTemplates } = usePlan()
   const apiHealth = useApiHealth()
   const { alertas, naoLidas: alertasNaoLidas, marcarLida, marcarTodasLidas } = useAlertas()
 
@@ -77,6 +79,7 @@ export const AppShell = () => {
           { label: 'Dashboard',     to: '/app/dashboard',      icon: LayoutDashboard },
           { label: 'Agenda',        to: '/app/agenda',         icon: CalendarClock },
           { label: 'Tarefas',       to: '/app/tarefas',        icon: ListTodo },
+          ...(canUseTimesheet ? [{ label: 'Timesheet', to: '/app/timesheet', icon: Clock }] : []),
         ],
       },
       {
@@ -91,6 +94,7 @@ export const AppShell = () => {
         label: 'Conteudo',
         items: [
           { label: 'Documentos',     to: '/app/documentos',     icon: FileText },
+          ...(canUseTemplates ? [{ label: 'Templates', to: '/app/documentos/templates', icon: LayoutTemplate }] : []),
           { label: 'DataJud',        to: '/app/datajud',        icon: Database },
           ...(canUseDOU ? [{ label: 'Diário Oficial', to: '/app/diario-oficial', icon: Newspaper }] : []),
         ],
@@ -107,7 +111,7 @@ export const AppShell = () => {
       }
     }
     return groups
-  }, [isOrgAdmin, canUseDOU, canUseAuditoria, canUseAnalytics, canUseFinanceiro])
+  }, [isOrgAdmin, canUseDOU, canUseAuditoria, canUseAnalytics, canUseFinanceiro, canUseTimesheet, canUseTemplates])
 
   const apiStatusMap: Record<string, 'checking' | 'online' | 'offline'> = {
     '/app/datajud': apiHealth.datajud,

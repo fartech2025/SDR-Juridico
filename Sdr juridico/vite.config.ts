@@ -7,7 +7,6 @@ import path from 'node:path'
 import net from 'node:net'
 
 /** Inicia o scraper-server automaticamente junto com o dev server do Vite */
-<<<<<<< HEAD
 function scraperServerPlugin(): Plugin {
   const isPortListening = (port: number, host = '127.0.0.1') =>
     new Promise<boolean>((resolve) => {
@@ -28,9 +27,6 @@ function scraperServerPlugin(): Plugin {
       socket.once('error', () => finish(false))
     })
 
-=======
-function _scraperServerPlugin(): Plugin {
->>>>>>> 54e31208731c1098c6b16e964491717aa712d92e
   return {
     name: 'scraper-server-auto',
     apply: 'serve', // apenas em dev, nao no build
@@ -76,11 +72,7 @@ function _scraperServerPlugin(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-<<<<<<< HEAD
   plugins: [tailwindcss(), react(), scraperServerPlugin()],
-=======
-  plugins: [tailwindcss(), react(), _scraperServerPlugin()], // _scraperServerPlugin tem apply:'serve' — só inicia em dev
->>>>>>> 54e31208731c1098c6b16e964491717aa712d92e
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

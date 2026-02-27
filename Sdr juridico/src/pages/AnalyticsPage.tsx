@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
   }, [casos])
 
   // ── Equipe ─────────────────────────────────────────────────────────────────
-  const orgStats = React.useMemo(() => ({
+  const teamStats = React.useMemo(() => ({
     usuariosAtivos: orgMembers.length,
     gestores:  orgMembers.filter((m) => m.role === 'gestor').length,
     advogados: orgMembers.filter((m) => m.role === 'advogado').length,
@@ -682,9 +682,9 @@ export default function AnalyticsPage() {
             </div>
             <div className="rounded-lg border border-border px-3 py-3">
               <p className="text-xs text-text-subtle">Equipe</p>
-              <p className="text-lg font-semibold text-text">{orgStats.usuariosAtivos} usuários</p>
+              <p className="text-lg font-semibold text-text">{teamStats.usuariosAtivos} usuários</p>
               <p className="text-xs text-text-muted">
-                {orgStats.gestores} gestores · {orgStats.advogados} advogados
+                {teamStats.gestores} gestores · {teamStats.advogados} advogados
               </p>
             </div>
           </CardContent>
