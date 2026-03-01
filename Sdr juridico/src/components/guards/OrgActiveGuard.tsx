@@ -7,7 +7,6 @@ import { useIsOrgActive } from '@/hooks/useOrganization'
 import { useIsFartechAdmin, useIsOrgAdmin } from '@/hooks/usePermissions'
 import { useOrganization } from '@/hooks/useOrganization'
 import { useAuth } from '@/contexts/AuthContext'
-import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 interface OrgActiveGuardProps {
   children: ReactNode
@@ -55,7 +54,6 @@ export function OrgActiveGuard({
   const isFartechAdmin = useIsFartechAdmin()
   const isOrgAdmin     = useIsOrgAdmin()
   const { currentOrg, loading, isLoading, error } = useOrganization()
-  const { onboardingVersion, loading: userLoading } = useCurrentUser()
   const { pathname } = useLocation()
 
   // Auth ainda carregando - aguardar
@@ -68,8 +66,8 @@ export function OrgActiveGuard({
     return <Navigate to="/login" replace />
   }
 
-  // Still loading org data ou dados do usuário (com usuário autenticado)
-  if (loading || isLoading || userLoading) {
+  // Still loading org data (com usuário autenticado)
+  if (loading || isLoading) {
     return <>{loadingComponent}</>
   }
 
@@ -84,9 +82,9 @@ export function OrgActiveGuard({
     console.error('Erro ao carregar organização:', error)
   }
 
-  // No org assigned - redirect to no-organization page
+  // No org assigned - redirect to login (user needs re-authentication or admin assignment)
   if (!currentOrg) {
-    return <Navigate to="/no-organization" replace />
+    return <Navigate to="/login" replace />
   }
 
   // Org is not active
@@ -97,11 +95,13 @@ export function OrgActiveGuard({
     return <Navigate to={redirectTo} replace />
   }
 
-  // Onboarding por usuário: TODOS os perfis são redirecionados na primeira vez.
-  // - org_admin: vê o wizard completo (empresa/equipe/integrações/pronto)
-  //   e também verifica se a org precisa de setup
-  // - outros perfis: veem uma tela de boas-vindas adaptada ao seu role
-  if (onboardingVersion === null && !pathname.startsWith('/app/onboarding')) {
+  // Onboarding: apenas org_admin é redirecionado ao wizard se a org nunca completou
+  // onboarding. Lemos de currentOrg.onboarding_version (tabela orgs) — não de useCurrentUser.
+  if (
+    isOrgAdmin &&
+    !currentOrg.onboarding_version &&
+    !pathname.startsWith('/app/onboarding')
+  ) {
     return <Navigate to="/app/onboarding" replace />
   }
 

@@ -1,10 +1,11 @@
 import * as React from 'react'
-import { Search, Plus, Pencil, Trash2, UserPlus, Users, AlertTriangle, CheckCircle, CheckCircle2, XCircle, Loader2, Building2, Mail } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { ClienteDrawer } from '@/components/ClienteDrawer'
+import { Modal } from '@/components/ui/modal'
 import type { Cliente } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
@@ -15,14 +16,16 @@ import type { ClienteRow } from '@/lib/supabaseClient'
 import { clientesService } from '@/services/clientesService'
 import { buscarEmpresaPorCnpj, formatarCnpj } from '@/services/queridoDiarioService'
 
+// suppress unused warning
+void formatarCnpj
+
 // ========== UTILITÁRIOS DE CPF/CNPJ ==========
 
-// Valida CPF usando algoritmo oficial
 function validarCPF(cpf: string): boolean {
   const numeros = cpf.replace(/\D/g, '')
   if (numeros.length !== 11) return false
-  if (/^(\d)\1{10}$/.test(numeros)) return false // Todos dígitos iguais
-  
+  if (/^(\d)\1{10}$/.test(numeros)) return false
+
   let soma = 0
   for (let i = 0; i < 9; i++) {
     soma += parseInt(numeros[i]) * (10 - i)
@@ -30,7 +33,7 @@ function validarCPF(cpf: string): boolean {
   let resto = (soma * 10) % 11
   if (resto === 10 || resto === 11) resto = 0
   if (resto !== parseInt(numeros[9])) return false
-  
+
   soma = 0
   for (let i = 0; i < 10; i++) {
     soma += parseInt(numeros[i]) * (11 - i)
@@ -40,15 +43,14 @@ function validarCPF(cpf: string): boolean {
   return resto === parseInt(numeros[10])
 }
 
-// Valida CNPJ usando algoritmo oficial
 function validarCNPJ(cnpj: string): boolean {
   const numeros = cnpj.replace(/\D/g, '')
   if (numeros.length !== 14) return false
-  if (/^(\d)\1{13}$/.test(numeros)) return false // Todos dígitos iguais
-  
+  if (/^(\d)\1{13}$/.test(numeros)) return false
+
   const pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
   const pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-  
+
   let soma = 0
   for (let i = 0; i < 12; i++) {
     soma += parseInt(numeros[i]) * pesos1[i]
@@ -56,7 +58,7 @@ function validarCNPJ(cnpj: string): boolean {
   let resto = soma % 11
   const digito1 = resto < 2 ? 0 : 11 - resto
   if (digito1 !== parseInt(numeros[12])) return false
-  
+
   soma = 0
   for (let i = 0; i < 13; i++) {
     soma += parseInt(numeros[i]) * pesos2[i]
@@ -66,7 +68,6 @@ function validarCNPJ(cnpj: string): boolean {
   return digito2 === parseInt(numeros[13])
 }
 
-// Formata CPF: 000.000.000-00
 function formatarCPF(cpf: string): string {
   const numeros = cpf.replace(/\D/g, '')
   if (numeros.length <= 3) return numeros
@@ -75,7 +76,6 @@ function formatarCPF(cpf: string): string {
   return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9, 11)}`
 }
 
-// Formata CNPJ: 00.000.000/0000-00
 function formatarCNPJInput(cnpj: string): string {
   const numeros = cnpj.replace(/\D/g, '')
   if (numeros.length <= 2) return numeros
@@ -154,18 +154,15 @@ export const ClientesPage = () => {
 
   const [formData, setFormData] = React.useState(initialFormData)
   const isEditing = Boolean(editingClienteId)
-  
-  // Estado para busca de CEP
+
   const [buscandoCep, setBuscandoCep] = React.useState(false)
 
-  // Formatar CEP: 00000-000
   const formatCep = (value: string) => {
     const nums = value.replace(/\D/g, '').slice(0, 8)
     if (nums.length <= 5) return nums
     return `${nums.slice(0, 5)}-${nums.slice(5)}`
   }
 
-  // Buscar endereço pelo CEP via ViaCEP
   const buscarCep = React.useCallback(async (cep: string) => {
     const nums = cep.replace(/\D/g, '')
     if (nums.length !== 8) return
@@ -192,7 +189,6 @@ export const ClientesPage = () => {
     }
   }, [])
 
-  // Estado para validação de email
   const [emailValido, setEmailValido] = React.useState<boolean | null>(null)
   const [validandoEmail, setValidandoEmail] = React.useState(false)
   const [emailInfo, setEmailInfo] = React.useState<string | null>(null)
@@ -228,7 +224,6 @@ export const ClientesPage = () => {
     }
   }, [])
 
-  // Estado para enriquecimento de dados
   const [buscandoDados, setBuscandoDados] = React.useState(false)
   const [documentoValido, setDocumentoValido] = React.useState<boolean | null>(null)
   const [dadosEnriquecidos, setDadosEnriquecidos] = React.useState(false)
@@ -278,14 +273,13 @@ export const ClientesPage = () => {
   const emptyAction = canManageClientes ? (
     <button
       type="button"
-      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+      className="rounded-lg px-4 py-2 text-sm font-medium text-white"
       style={{ backgroundColor: 'var(--brand-primary)' }}
       onClick={() => {
         resetClienteForm()
         setShowForm(true)
       }}
     >
-      <Plus className="h-4 w-4" />
       Novo cliente
     </button>
   ) : null
@@ -305,17 +299,13 @@ export const ClientesPage = () => {
     setDadosEnriquecidos(false)
   }
 
-  // Função para tratar mudança de documento (CPF/CNPJ)
   const handleDocumentoChange = async (valor: string) => {
     const numeros = valor.replace(/\D/g, '')
-    
-    // Detectar automaticamente o tipo e formatar
+
     if (numeros.length <= 11) {
-      // CPF
       const formatado = formatarCPF(numeros)
       setFormData(prev => ({ ...prev, documento: formatado, tipo: 'pf' }))
-      
-      // Validar quando completo
+
       if (numeros.length === 11) {
         const valido = validarCPF(numeros)
         setDocumentoValido(valido)
@@ -328,19 +318,16 @@ export const ClientesPage = () => {
         setDocumentoValido(null)
       }
     } else {
-      // CNPJ
       const formatado = formatarCNPJInput(numeros)
       setFormData(prev => ({ ...prev, documento: formatado, tipo: 'pj' }))
-      
-      // Validar quando completo
+
       if (numeros.length === 14) {
         const valido = validarCNPJ(numeros)
         setDocumentoValido(valido)
-        
+
         if (!valido) {
           toast.error('CNPJ inválido. Verifique os dígitos.')
         } else {
-          // CNPJ válido - buscar dados automaticamente
           toast.success('CNPJ válido! Buscando dados...')
           await enriquecerDadosCNPJ(numeros)
         }
@@ -350,22 +337,19 @@ export const ClientesPage = () => {
     }
   }
 
-  // Função para enriquecer dados via CNPJ
   const enriquecerDadosCNPJ = async (cnpj: string) => {
     setBuscandoDados(true)
     try {
       const empresa = await buscarEmpresaPorCnpj(cnpj)
-      
+
       if (empresa) {
-        // Montar endereço completo
         const enderecoCompleto = [
           empresa.logradouro,
           empresa.numero,
           empresa.complemento,
           empresa.bairro
         ].filter(Boolean).join(', ')
-        
-        // Atualizar formulário com dados da empresa
+
         setFormData(prev => ({
           ...prev,
           nome: prev.nome || empresa.razao_social || empresa.nome_fantasia || '',
@@ -377,7 +361,7 @@ export const ClientesPage = () => {
           cep: prev.cep || empresa.cep || '',
           area_atuacao: prev.area_atuacao || empresa.cnae?.split(' - ')[1] || '',
         }))
-        
+
         setDadosEnriquecidos(true)
         toast.success(`✨ Dados carregados: ${empresa.razao_social || empresa.nome_fantasia}`)
       } else {
@@ -477,7 +461,6 @@ export const ClientesPage = () => {
 
     setSaving(true)
     try {
-      // Combinar endereço: logradouro + número + bairro
       const partes = [formData.endereco, formData.numero, formData.bairro].filter(Boolean)
       const enderecoCompleto = partes.join(', ') || null
 
@@ -511,334 +494,11 @@ export const ClientesPage = () => {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro ao salvar cliente'
       toast.error(message)
-  } finally {
+    } finally {
       setSaving(false)
     }
   }
 
-  // Form view
-  if (showForm) {
-    return (
-      <div className="bg-surface-alt" style={{ fontFamily: "'DM Sans', sans-serif", padding: '20px' }}>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
-                {isEditing ? 'Editar cliente' : 'Novo cliente'}
-              </p>
-              <h1 className="mt-1 text-2xl font-bold text-text">
-                {isEditing ? 'Atualizar cadastro' : 'Cadastrar cliente'}
-              </h1>
-              <p className="mt-1 text-sm text-text-muted">
-                {isEditing ? 'Atualize os dados e salve as alterações.' : 'Preencha os dados para criar um novo cliente.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                resetClienteForm()
-                setShowForm(false)
-              }}
-              className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt"
-            >
-              Voltar
-            </button>
-          </div>
-
-          {/* Form Card */}
-          <div className="rounded-xl border border-border bg-white p-8 shadow-sm">
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Nome *</label>
-                <input
-                  value={formData.nome}
-                  onChange={(event) => setFormData({ ...formData, nome: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Nome do cliente"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-text">Email</label>
-                  {emailValido === true && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 border border-green-200">
-                      <CheckCircle className="h-3 w-3" /> Verificado
-                    </span>
-                  )}
-                  {emailValido === false && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 border border-red-200">
-                      <XCircle className="h-3 w-3" /> Inválido
-                    </span>
-                  )}
-                  {validandoEmail && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 border border-blue-200">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Validando...
-                    </span>
-                  )}
-                </div>
-                <div className="relative">
-                  <Mail className={cn(
-                    'absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors',
-                    emailValido === true ? 'text-green-500' :
-                    emailValido === false ? 'text-red-500' :
-                    validandoEmail ? 'text-blue-500 animate-pulse' :
-                    'text-text-subtle'
-                  )} />
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(event) => {
-                      setFormData({ ...formData, email: event.target.value })
-                      setEmailValido(null)
-                      setEmailInfo(null)
-                    }}
-                    onBlur={() => validarEmail(formData.email)}
-                    className={cn(
-                      'h-11 w-full rounded-lg border bg-white pl-10 pr-10 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2',
-                      emailValido === true ? 'border-green-400 focus:border-green-500 focus:ring-green-500/20' :
-                      emailValido === false ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' :
-                      'border-border focus:border-brand-primary focus:ring-brand-primary/20'
-                    )}
-                    placeholder="email@exemplo.com"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {validandoEmail && <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />}
-                    {!validandoEmail && emailValido === true && <CheckCircle className="h-4 w-4 text-green-500" />}
-                    {!validandoEmail && emailValido === false && <XCircle className="h-4 w-4 text-red-500" />}
-                  </div>
-                </div>
-                {emailInfo && (
-                  <p className={cn('text-xs mt-1', emailValido ? 'text-green-600' : 'text-red-500')}>
-                    {emailInfo}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Telefone</label>
-                <input
-                  value={formData.telefone}
-                  onChange={(event) => setFormData({ ...formData, telefone: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Tipo</label>
-                <select
-                  value={formData.tipo}
-                  onChange={(event) => setFormData({ ...formData, tipo: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                >
-                  <option value="pf">Pessoa física</option>
-                  <option value="pj">Pessoa jurídica</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text flex items-center gap-2">
-                  {formData.tipo === 'pj' ? 'CNPJ' : 'CPF'}
-                  {buscandoDados && (
-                    <span className="flex items-center gap-1 text-xs text-blue-600">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Buscando dados...
-                    </span>
-                  )}
-                  {dadosEnriquecidos && (
-                    <span className="flex items-center gap-1 text-xs text-green-600">
-                      <Building2 className="h-3 w-3" />
-                      Dados carregados
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <input
-                    value={formData.documento}
-                    onChange={(event) => handleDocumentoChange(event.target.value)}
-                    disabled={buscandoDados}
-                    className={`h-11 w-full rounded-lg border bg-white px-4 pr-10 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 ${
-                      documentoValido === true
-                        ? 'border-green-400 focus:border-green-500 focus:ring-green-200'
-                        : documentoValido === false
-                        ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                        : 'border-border focus:border-brand-primary focus:ring-brand-primary/20'
-                    } ${buscandoDados ? 'bg-surface-alt' : ''}`}
-                    placeholder={formData.tipo === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
-                    maxLength={18}
-                  />
-                  {/* Indicador de validação */}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {buscandoDados ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                    ) : documentoValido === true ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : documentoValido === false ? (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    ) : null}
-                  </div>
-                </div>
-                <p className="text-xs text-text-muted">
-                  {formData.tipo === 'pj' 
-                    ? 'Digite o CNPJ para buscar dados automaticamente da Receita Federal'
-                    : 'Digite o CPF para validação automática'}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Área de atuação</label>
-                <input
-                  value={formData.area_atuacao}
-                  onChange={(event) => setFormData({ ...formData, area_atuacao: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Ex: Empresarial, Trabalhista"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(event) => setFormData({ ...formData, status: event.target.value as ClienteRow['status'] })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                >
-                  <option value="ativo">Ativo</option>
-                  <option value="em_risco">Em risco</option>
-                  <option value="inativo">Inativo</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Saúde</label>
-                <select
-                  value={formData.health || 'ok'}
-                  onChange={(event) => setFormData({ ...formData, health: event.target.value as ClienteRow['health'] })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                >
-                  <option value="ok">Ok</option>
-                  <option value="atencao">Atenção</option>
-                  <option value="critico">Crítico</option>
-                </select>
-              </div>
-              {/* CEP — primeiro campo de endereço */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">CEP</label>
-                <div className="flex gap-2">
-                  <input
-                    value={formData.cep}
-                    onChange={(event) => {
-                      const formatted = formatCep(event.target.value)
-                      setFormData({ ...formData, cep: formatted })
-                      // Auto-busca ao completar 9 chars (00000-000)
-                      if (formatted.replace(/\D/g, '').length === 8) {
-                        buscarCep(formatted)
-                      }
-                    }}
-                    className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                    placeholder="00000-000"
-                    maxLength={9}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => buscarCep(formData.cep)}
-                    disabled={buscandoCep || formData.cep.replace(/\D/g, '').length !== 8}
-                    className="h-11 px-4 rounded-lg border border-border bg-white text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
-                  >
-                    {buscandoCep ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                    Buscar
-                  </button>
-                </div>
-              </div>
-              {/* Logradouro */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Logradouro</label>
-                <input
-                  value={formData.endereco}
-                  onChange={(event) => setFormData({ ...formData, endereco: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Rua, Avenida..."
-                />
-              </div>
-              {/* Número */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Número</label>
-                <input
-                  value={formData.numero}
-                  onChange={(event) => setFormData({ ...formData, numero: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Nº"
-                />
-              </div>
-              {/* Bairro */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Bairro</label>
-                <input
-                  value={formData.bairro}
-                  onChange={(event) => setFormData({ ...formData, bairro: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Bairro"
-                />
-              </div>
-              {/* Cidade */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Cidade</label>
-                <input
-                  value={formData.cidade}
-                  onChange={(event) => setFormData({ ...formData, cidade: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Cidade"
-                />
-              </div>
-              {/* Estado */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-text">Estado</label>
-                <input
-                  value={formData.estado}
-                  onChange={(event) => setFormData({ ...formData, estado: event.target.value })}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="UF"
-                  maxLength={2}
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-text">Observações</label>
-                <textarea
-                  value={formData.observacoes}
-                  onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })}
-                  rows={4}
-                  className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  placeholder="Observações adicionais"
-                />
-              </div>
-            </div>
-
-            <div className="mt-8 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  resetClienteForm()
-                  setShowForm(false)
-                }}
-                className="rounded-lg border border-border bg-white px-6 py-2.5 text-sm font-medium text-text hover:bg-surface-alt"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveCliente}
-                disabled={saving}
-                className="rounded-lg px-6 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: 'var(--brand-primary)' }}
-              >
-                {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar cliente'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // List view
   return (
     <div className="bg-surface-alt" style={{ fontFamily: "'DM Sans', sans-serif", padding: '20px' }}>
       <div className="space-y-6">
@@ -846,17 +506,7 @@ export const ClientesPage = () => {
         <div className="bg-white rounded-xl border border-border p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: 'var(--brand-primary)' }}
-                >
-                  <Users className="h-5 w-5" />
-                </div>
-                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
-                  Gestao de Clientes
-                </span>
-              </div>
+              <p className="text-xs font-medium uppercase tracking-widest text-text-muted mb-1">CRM · Gestão de Clientes</p>
               <h1 className="text-2xl font-bold text-text">Clientes</h1>
               <p className="mt-1 text-sm text-text-muted">
                 Gerencie sua carteira de clientes com indicadores de risco e status.
@@ -878,10 +528,9 @@ export const ClientesPage = () => {
                     resetClienteForm()
                     setShowForm(true)
                   }}
-                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-white"
                   style={{ backgroundColor: 'var(--brand-primary)' }}
                 >
-                  <Plus className="h-4 w-4" />
                   Novo cliente
                 </button>
               )}
@@ -892,47 +541,28 @@ export const ClientesPage = () => {
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
-                <Users className="h-5 w-5" style={{ color: 'var(--brand-primary)' }} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text">{stats.total}</p>
-                <p className="text-sm text-text-muted">Total de Clientes</p>
-              </div>
-            </div>
+            <p className="text-xs uppercase tracking-wide text-text-muted mb-3">Total</p>
+            <p className="text-3xl font-bold text-text">{stats.total}</p>
+            <p className="text-sm text-text-muted mt-1">Total de Clientes</p>
           </div>
           <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text">{stats.ativos}</p>
-                <p className="text-sm text-text-muted">Ativos</p>
-              </div>
-            </div>
+            <p className="text-xs uppercase tracking-wide text-text-muted mb-3">Ativos</p>
+            <p className="text-3xl font-bold text-text">{stats.ativos}</p>
+            <p className="text-sm text-text-muted mt-1">Clientes Ativos</p>
           </div>
           <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text">{stats.emRisco}</p>
-                <p className="text-sm text-text-muted">Em Risco</p>
-              </div>
-            </div>
+            <p className="text-xs uppercase tracking-wide text-text-muted mb-3">Risco</p>
+            <p className="text-3xl font-bold text-text">{stats.emRisco}</p>
+            <p className="text-sm text-text-muted mt-1">Em Risco</p>
           </div>
         </div>
 
         {/* Filters */}
         <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-50">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
+            <div className="flex-1 min-w-50">
               <input
-                className="h-10 w-full rounded-lg border border-border bg-white pl-10 pr-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                className="h-10 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 placeholder="Buscar cliente..."
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -945,9 +575,7 @@ export const ClientesPage = () => {
             >
               <option value="todos">Status</option>
               {filters.status.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
+                <option key={status} value={status}>{status}</option>
               ))}
             </select>
             <select
@@ -957,9 +585,7 @@ export const ClientesPage = () => {
             >
               <option value="todos">Saúde</option>
               {filters.health.map((health) => (
-                <option key={health} value={health}>
-                  {health}
-                </option>
+                <option key={health} value={health}>{health}</option>
               ))}
             </select>
             <select
@@ -969,9 +595,7 @@ export const ClientesPage = () => {
             >
               <option value="todos">Área</option>
               {filters.area.map((area) => (
-                <option key={area} value={area}>
-                  {area}
-                </option>
+                <option key={area} value={area}>{area}</option>
               ))}
             </select>
             <select
@@ -981,9 +605,7 @@ export const ClientesPage = () => {
             >
               <option value="todos">Responsável</option>
               {filters.owner.map((owner) => (
-                <option key={owner} value={owner}>
-                  {owner}
-                </option>
+                <option key={owner} value={owner}>{owner}</option>
               ))}
             </select>
             <button
@@ -1052,80 +674,59 @@ export const ClientesPage = () => {
                               {initials}
                             </div>
                             <div>
-                              <div className="font-medium text-text">
-                                {cliente.name}
-                              </div>
-                              <div className="text-xs text-text-muted">
-                                {cliente.area}
-                              </div>
+                              <div className="font-medium text-text">{cliente.name}</div>
+                              <div className="text-xs text-text-muted">{cliente.area}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize',
-                              statusBadge(cliente.status),
-                            )}
-                          >
+                          <span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize', statusBadge(cliente.status))}>
                             {cliente.status}
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize',
-                              healthBadge(cliente.health),
-                            )}
-                          >
+                          <span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize', healthBadge(cliente.health))}>
                             {cliente.health}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-text">
-                          {cliente.caseCount}
-                        </td>
-                        <td className="px-4 py-3 text-text">
-                          {cliente.owner}
-                        </td>
+                        <td className="px-4 py-3 text-text">{cliente.caseCount}</td>
+                        <td className="px-4 py-3 text-text">{cliente.owner}</td>
                         <td className="px-4 py-3 text-right text-xs text-text-muted">
                           {formatDateTime(cliente.lastUpdate)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {canManageClientes ? (
-                            <div className="flex items-center justify-end gap-1">
+                            <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
-                                title="Encaminhar"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-subtle hover:bg-surface-alt hover:text-text-muted"
+                                className="px-2 py-1 rounded text-xs font-medium text-text-muted hover:text-text hover:bg-surface-alt"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   setAssigningClienteId((current) => (current === cliente.id ? null : cliente.id))
                                   setSelectedClienteAdvogadoId('')
                                 }}
                               >
-                                <UserPlus className="h-4 w-4" />
+                                Encaminhar
                               </button>
                               <button
                                 type="button"
-                                title="Editar"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-subtle hover:bg-surface-alt hover:text-text-muted"
+                                className="h-8 w-8 flex items-center justify-center rounded-lg border border-border text-text-muted hover:text-text hover:bg-surface-alt transition-colors"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   handleEditCliente(cliente.id)
                                 }}
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Pencil className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 type="button"
-                                title="Excluir"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-subtle hover:bg-surface-alt hover:text-red-600"
+                                className="h-8 w-8 flex items-center justify-center rounded-lg border border-border text-text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   handleDeleteCliente(cliente.id, cliente.name)
                                 }}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           ) : (
@@ -1154,9 +755,7 @@ export const ClientesPage = () => {
                                 type="button"
                                 className="rounded-lg px-4 py-2 text-sm font-medium text-white"
                                 style={{ backgroundColor: 'var(--brand-primary)' }}
-                                onClick={() => {
-                                  void handleEncaminharCliente(cliente.id)
-                                }}
+                                onClick={() => { void handleEncaminharCliente(cliente.id) }}
                               >
                                 Encaminhar
                               </button>
@@ -1185,11 +784,260 @@ export const ClientesPage = () => {
           </div>
         </PageState>
       </div>
+
       <ClienteDrawer
         open={Boolean(selectedCliente)}
         cliente={selectedCliente}
         onClose={() => setSelectedCliente(null)}
       />
+
+      {/* ── Modal Novo/Editar Cliente ──────────────────────────────────────────── */}
+      <Modal
+        open={showForm}
+        title={isEditing ? 'Editar Cliente' : 'Novo Cliente'}
+        description={isEditing ? 'Atualize os dados e salve as alterações.' : 'Preencha os dados para criar um novo cliente.'}
+        onClose={() => { resetClienteForm(); setShowForm(false) }}
+        maxWidth="48rem"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => { resetClienteForm(); setShowForm(false) }}
+              className="rounded-lg border border-border bg-white px-6 py-2.5 text-sm font-medium text-text hover:bg-surface-alt"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveCliente}
+              disabled={saving}
+              className="rounded-lg px-6 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              style={{ backgroundColor: 'var(--brand-primary)' }}
+            >
+              {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar cliente'}
+            </button>
+          </>
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Nome *</label>
+            <input
+              value={formData.nome}
+              onChange={(event) => setFormData({ ...formData, nome: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="Nome do cliente"
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-text">Email</label>
+              {emailValido === true && (
+                <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 border border-green-200">Verificado</span>
+              )}
+              {emailValido === false && (
+                <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 border border-red-200">Inválido</span>
+              )}
+              {validandoEmail && (
+                <span className="rounded-full bg-surface-alt px-2 py-0.5 text-xs font-medium text-text-muted border border-border">Validando...</span>
+              )}
+            </div>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(event) => {
+                setFormData({ ...formData, email: event.target.value })
+                setEmailValido(null)
+                setEmailInfo(null)
+              }}
+              onBlur={() => validarEmail(formData.email)}
+              className={cn(
+                'h-11 w-full rounded-lg border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2',
+                emailValido === true ? 'border-green-400 focus:border-green-500 focus:ring-green-500/20' :
+                emailValido === false ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' :
+                'border-border focus:border-brand-primary focus:ring-brand-primary/20'
+              )}
+              placeholder="email@exemplo.com"
+            />
+            {emailInfo && (
+              <p className={cn('text-xs mt-1', emailValido ? 'text-green-600' : 'text-red-500')}>
+                {emailInfo}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Telefone</label>
+            <input
+              value={formData.telefone}
+              onChange={(event) => setFormData({ ...formData, telefone: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Tipo</label>
+            <select
+              value={formData.tipo}
+              onChange={(event) => setFormData({ ...formData, tipo: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+            >
+              <option value="pf">Pessoa física</option>
+              <option value="pj">Pessoa jurídica</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text flex items-center gap-2">
+              {formData.tipo === 'pj' ? 'CNPJ' : 'CPF'}
+              {buscandoDados && (
+                <span className="flex items-center gap-1 text-xs text-text-muted">
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-text-muted border-t-transparent" />
+                  Buscando dados...
+                </span>
+              )}
+              {dadosEnriquecidos && (
+                <span className="text-xs text-green-600">Dados carregados</span>
+              )}
+            </label>
+            <input
+              value={formData.documento}
+              onChange={(event) => handleDocumentoChange(event.target.value)}
+              disabled={buscandoDados}
+              className={`h-11 w-full rounded-lg border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 ${
+                documentoValido === true
+                  ? 'border-green-400 focus:border-green-500 focus:ring-green-200'
+                  : documentoValido === false
+                  ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                  : 'border-border focus:border-brand-primary focus:ring-brand-primary/20'
+              } ${buscandoDados ? 'bg-surface-alt' : ''}`}
+              placeholder={formData.tipo === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
+              maxLength={18}
+            />
+            <p className="text-xs text-text-muted">
+              {formData.tipo === 'pj'
+                ? 'Digite o CNPJ para buscar dados automaticamente da Receita Federal'
+                : 'Digite o CPF para validação automática'}
+            </p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Área de atuação</label>
+            <input
+              value={formData.area_atuacao}
+              onChange={(event) => setFormData({ ...formData, area_atuacao: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="Ex: Empresarial, Trabalhista"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Status</label>
+            <select
+              value={formData.status}
+              onChange={(event) => setFormData({ ...formData, status: event.target.value as ClienteRow['status'] })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+            >
+              <option value="ativo">Ativo</option>
+              <option value="em_risco">Em risco</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Saúde</label>
+            <select
+              value={formData.health || 'ok'}
+              onChange={(event) => setFormData({ ...formData, health: event.target.value as ClienteRow['health'] })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+            >
+              <option value="ok">Ok</option>
+              <option value="atencao">Atenção</option>
+              <option value="critico">Crítico</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">CEP</label>
+            <div className="flex gap-2">
+              <input
+                value={formData.cep}
+                onChange={(event) => {
+                  const formatted = formatCep(event.target.value)
+                  setFormData({ ...formData, cep: formatted })
+                  if (formatted.replace(/\D/g, '').length === 8) {
+                    buscarCep(formatted)
+                  }
+                }}
+                className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                placeholder="00000-000"
+                maxLength={9}
+              />
+              <button
+                type="button"
+                onClick={() => buscarCep(formData.cep)}
+                disabled={buscandoCep || formData.cep.replace(/\D/g, '').length !== 8}
+                className="h-11 px-4 rounded-lg border border-border bg-white text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
+              >
+                {buscandoCep && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />
+                )}
+                Buscar
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Logradouro</label>
+            <input
+              value={formData.endereco}
+              onChange={(event) => setFormData({ ...formData, endereco: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="Rua, Avenida..."
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Número</label>
+            <input
+              value={formData.numero}
+              onChange={(event) => setFormData({ ...formData, numero: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="Nº"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Bairro</label>
+            <input
+              value={formData.bairro}
+              onChange={(event) => setFormData({ ...formData, bairro: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="Bairro"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Cidade</label>
+            <input
+              value={formData.cidade}
+              onChange={(event) => setFormData({ ...formData, cidade: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="Cidade"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Estado</label>
+            <input
+              value={formData.estado}
+              onChange={(event) => setFormData({ ...formData, estado: event.target.value })}
+              className="h-11 w-full rounded-lg border border-border bg-white px-4 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="UF"
+              maxLength={2}
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-medium text-text">Observações</label>
+            <textarea
+              value={formData.observacoes}
+              onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })}
+              rows={3}
+              className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              placeholder="Observações adicionais"
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

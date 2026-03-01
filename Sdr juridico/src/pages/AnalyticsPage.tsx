@@ -299,7 +299,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-text-muted">
             <p>Este painel é destinado a administradores e gestores para leitura executiva do escritório.</p>
-            <Button onClick={() => navigate('/app/dashboard')}>Voltar para o dashboard</Button>
+            <Button variant="primary" onClick={() => navigate('/app/dashboard')}>Voltar para o dashboard</Button>
           </CardContent>
         </Card>
       </div>
@@ -632,7 +632,7 @@ export default function AnalyticsPage() {
                 {snapshot.margemOperacional >= 25 ? 'Saudável' : snapshot.margemOperacional >= 10 ? 'Atenção' : 'Crítico'}
               </Badge>
             </div>
-            <Button className="w-full" onClick={() => navigate('/app/financeiro')}>
+            <Button variant="primary" className="w-full" onClick={() => navigate('/app/financeiro')}>
               Abrir módulo financeiro
             </Button>
           </CardContent>

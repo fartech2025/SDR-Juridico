@@ -1,10 +1,10 @@
 import * as React from 'react'
-import { ChevronLeft, Search, Plus, Pencil, Trash2, Briefcase, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
-import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
 import type { Caso } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useCasos } from '@/hooks/useCasos'
@@ -75,6 +75,9 @@ export const CasosPage = () => {
   const [saving, setSaving] = React.useState(false)
   const [assigningCasoId, setAssigningCasoId] = React.useState<string | null>(null)
   const [selectedCasoAdvogadoId, setSelectedCasoAdvogadoId] = React.useState('')
+
+  // suppress unused warning
+  void displayName
 
   const initialFormData = React.useMemo(() => ({
     titulo: '',
@@ -240,164 +243,18 @@ export const CasosPage = () => {
         : 'empty'
   const pageState = status !== 'ready' ? status : baseState
   const emptyAction = canManageCasos ? (
-    <Button
-      variant="primary"
-      size="sm"
+    <button
+      type="button"
       onClick={() => {
         resetCasoForm()
         setShowForm(true)
       }}
+      className="rounded-lg px-4 py-2 text-sm font-medium text-white"
+      style={{ backgroundColor: 'var(--brand-primary)' }}
     >
-      <Plus className="mr-2 h-4 w-4" />
       Novo caso
-    </Button>
+    </button>
   ) : null
-
-  if (showForm) {
-    return (
-      <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-text">
-                {isEditing ? 'Editar Caso' : 'Novo Caso'}
-              </h1>
-              <p className="text-sm text-text-muted mt-1">
-                {isEditing ? 'Atualize os dados do caso' : 'Preencha os dados do novo caso'}
-              </p>
-            </div>
-            <Button onClick={() => { resetCasoForm(); setShowForm(false) }} variant="outline">
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-          </div>
-
-          <div className="bg-surface rounded-xl border border-border p-6">
-            <form className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-text">Titulo *</label>
-                  <input
-                    value={formData.titulo}
-                    onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-                    placeholder="Titulo do caso"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-text">Cliente</label>
-                  <select
-                    value={formData.clienteId}
-                    onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-                  >
-                    <option value="">Sem cliente</option>
-                    {clientes.map((cliente) => (
-                      <option key={cliente.id} value={cliente.id}>{cliente.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-text">Area</label>
-                  <input
-                    value={formData.area}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-                    placeholder="Ex: Trabalhista"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-text">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as CasoRow['status'] })}
-                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-                  >
-                    <option value="ativo">Ativo</option>
-                    <option value="suspenso">Suspenso</option>
-                    <option value="encerrado">Encerrado</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-text">Prioridade</label>
-                  <select
-                    value={formData.prioridade}
-                    onChange={(e) => setFormData({ ...formData, prioridade: e.target.value as CasoRow['prioridade'] })}
-                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-                  >
-                    <option value="baixa">Baixa</option>
-                    <option value="media">Media</option>
-                    <option value="alta">Alta</option>
-                    <option value="critica">Critica</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-text">Etapa</label>
-                  <select
-                    value={formData.stage || ''}
-                    onChange={(e) => setFormData({ ...formData, stage: e.target.value as CasoRow['stage'] })}
-                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-                  >
-                    <option value="triagem">Triagem</option>
-                    <option value="negociacao">Negociacao</option>
-                    <option value="em_andamento">Em andamento</option>
-                    <option value="conclusao">Conclusao</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-text">Valor estimado</label>
-                  <input
-                    type="number"
-                    value={formData.valor}
-                    onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                    className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-text">Descricao</label>
-                  <textarea
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    rows={4}
-                    className="w-full rounded-lg border border-border p-4 text-sm focus:outline-none focus:ring-2"
-                    placeholder="Descricao do caso"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleSaveCaso}
-                  disabled={saving}
-                  className="flex-1 h-10 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: 'var(--brand-primary)' }}
-                >
-                  {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar Caso'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { resetCasoForm(); setShowForm(false) }}
-                  className="px-6 h-10 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-          input:focus, select:focus, textarea:focus {
-            --tw-ring-color: 'var(--brand-primary)';
-            border-color: 'var(--brand-primary)';
-          }
-        `}</style>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -405,17 +262,7 @@ export const CasosPage = () => {
         <div className="bg-surface rounded-xl border border-border p-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: 'var(--brand-primary)' }}
-                >
-                  <Briefcase className="h-5 w-5" />
-                </div>
-                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
-                  Gestão de Casos
-                </span>
-              </div>
+              <p className="text-xs font-medium uppercase tracking-widest text-text-muted mb-1">Jurídico · Gestão de Casos</p>
               <h1 className="text-2xl font-bold text-text">Casos</h1>
               <p className="text-sm text-text-muted mt-1">Gerencie todos os casos jurídicos</p>
             </div>
@@ -440,7 +287,6 @@ export const CasosPage = () => {
                 className="px-6 py-2 rounded-lg font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50"
                 style={{ backgroundColor: 'var(--brand-primary)' }}
               >
-                <Plus className="inline mr-2 h-4 w-4" />
                 Novo Caso
               </button>
             </div>
@@ -450,37 +296,19 @@ export const CasosPage = () => {
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)' }}>
-                <Briefcase className="h-5 w-5" style={{ color: 'var(--brand-primary)' }} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text">{stats.total}</p>
-                <p className="text-sm text-text-muted">Total de Casos</p>
-              </div>
-            </div>
+            <p className="text-xs uppercase tracking-wide text-text-muted mb-3">Total</p>
+            <p className="text-3xl font-bold text-text">{stats.total}</p>
+            <p className="text-sm text-text-muted mt-1">Total de Casos</p>
           </div>
           <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text">{stats.ativos}</p>
-                <p className="text-sm text-text-muted">Em Andamento</p>
-              </div>
-            </div>
+            <p className="text-xs uppercase tracking-wide text-text-muted mb-3">Andamento</p>
+            <p className="text-3xl font-bold text-text">{stats.ativos}</p>
+            <p className="text-sm text-text-muted mt-1">Em Andamento</p>
           </div>
           <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text">{stats.criticos}</p>
-                <p className="text-sm text-text-muted">Alta Prioridade</p>
-              </div>
-            </div>
+            <p className="text-xs uppercase tracking-wide text-text-muted mb-3">Prioridade</p>
+            <p className="text-3xl font-bold text-text">{stats.criticos}</p>
+            <p className="text-sm text-text-muted mt-1">Alta Prioridade</p>
           </div>
         </div>
 
@@ -488,13 +316,12 @@ export const CasosPage = () => {
         <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
           <div className="p-6 space-y-4">
             <div className="flex flex-wrap gap-3">
-              <div className="relative flex-1 min-w-[300px]">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle" />
+              <div className="flex-1 min-w-[300px]">
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar por titulo, cliente, processo..."
-                  className="h-10 w-full rounded-lg border border-border pl-10 pr-4 text-sm focus:outline-none focus:ring-2"
+                  className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
                   style={{ '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
                 />
               </div>
@@ -615,17 +442,24 @@ export const CasosPage = () => {
                                   <>
                                     <button
                                       type="button"
-                                      onClick={(e) => { e.stopPropagation(); void handleEditCaso(caso.id) }}
-                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-surface-alt"
+                                      onClick={(e) => { e.stopPropagation(); setAssigningCasoId(current => current === caso.id ? null : caso.id); setSelectedCasoAdvogadoId('') }}
+                                      className="px-2 py-1 rounded text-xs font-medium text-text-muted hover:text-text hover:bg-surface-alt"
                                     >
-                                      <Pencil className="h-4 w-4 text-text-muted" />
+                                      Encaminhar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); void handleEditCaso(caso.id) }}
+                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-border text-text-muted hover:text-text hover:bg-surface-alt transition-colors"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
                                     </button>
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); void handleDeleteCaso(caso.id, caso.title) }}
-                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-red-50"
+                                      className="h-8 w-8 flex items-center justify-center rounded-lg border border-border text-text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
                                     >
-                                      <Trash2 className="h-4 w-4 text-red-600" />
+                                      <Trash2 className="h-3.5 w-3.5" />
                                     </button>
                                   </>
                                 )}
@@ -675,10 +509,126 @@ export const CasosPage = () => {
         </div>
       </div>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-        input:focus, select:focus { --tw-ring-color: 'var(--brand-primary)'; border-color: 'var(--brand-primary)'; }
-      `}</style>
+      {/* ── Modal Novo/Editar Caso ─────────────────────────────────────────────── */}
+      <Modal
+        open={showForm}
+        title={isEditing ? 'Editar Caso' : 'Novo Caso'}
+        description={isEditing ? 'Atualize os dados do caso' : 'Preencha os dados do novo caso'}
+        onClose={() => { resetCasoForm(); setShowForm(false) }}
+        maxWidth="44rem"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => { resetCasoForm(); setShowForm(false) }}
+              className="px-6 h-10 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveCaso}
+              disabled={saving}
+              className="px-6 h-10 rounded-lg font-medium text-white transition-colors disabled:opacity-50 text-sm"
+              style={{ backgroundColor: 'var(--brand-primary)' }}
+            >
+              {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar Caso'}
+            </button>
+          </>
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-medium text-text">Titulo *</label>
+            <input
+              value={formData.titulo}
+              onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
+              placeholder="Titulo do caso"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Cliente</label>
+            <select
+              value={formData.clienteId}
+              onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
+            >
+              <option value="">Sem cliente</option>
+              {clientes.map((cliente) => (
+                <option key={cliente.id} value={cliente.id}>{cliente.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Area</label>
+            <input
+              value={formData.area}
+              onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
+              placeholder="Ex: Trabalhista"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Status</label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as CasoRow['status'] })}
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
+            >
+              <option value="ativo">Ativo</option>
+              <option value="suspenso">Suspenso</option>
+              <option value="encerrado">Encerrado</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Prioridade</label>
+            <select
+              value={formData.prioridade}
+              onChange={(e) => setFormData({ ...formData, prioridade: e.target.value as CasoRow['prioridade'] })}
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
+            >
+              <option value="baixa">Baixa</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="critica">Critica</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Etapa</label>
+            <select
+              value={formData.stage || ''}
+              onChange={(e) => setFormData({ ...formData, stage: e.target.value as CasoRow['stage'] })}
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
+            >
+              <option value="triagem">Triagem</option>
+              <option value="negociacao">Negociacao</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="conclusao">Conclusao</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text">Valor estimado</label>
+            <input
+              type="number"
+              value={formData.valor}
+              onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+              className="h-10 w-full rounded-lg border border-border px-4 text-sm focus:outline-none focus:ring-2"
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-medium text-text">Descricao</label>
+            <textarea
+              value={formData.descricao}
+              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              rows={3}
+              className="w-full rounded-lg border border-border p-4 text-sm focus:outline-none focus:ring-2"
+              placeholder="Descricao do caso"
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

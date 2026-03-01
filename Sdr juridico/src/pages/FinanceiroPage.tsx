@@ -548,7 +548,7 @@ export function FinanceiroPage() {
               Análise completa de receitas, despesas, fluxo de caixa, projeções e indicadores financeiros avançados para decisões estratégicas.
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="shrink-0">
+          <Button variant="primary" onClick={() => setShowForm(true)} className="shrink-0">
             <Plus className="mr-2 h-4 w-4" />
             Novo Lançamento
           </Button>
@@ -769,7 +769,7 @@ export function FinanceiroPage() {
             <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button variant="primary" type="submit" disabled={saving}>
               <Plus className="mr-2 h-4 w-4" />
               {saving ? 'Salvando...' : 'Adicionar'}
             </Button>
@@ -991,7 +991,7 @@ export function FinanceiroPage() {
                   Saldo: {formatCurrency(item.saldo)}
                 </p>
                 <p className="text-xs text-text-subtle">
-                  📈 {formatCurrency(item.receita)} | 📉 {formatCurrency(item.despesa)}
+                  Rec. {formatCurrency(item.receita)} | Desp. {formatCurrency(item.despesa)}
                 </p>
               </div>
             </div>
@@ -1021,7 +1021,7 @@ export function FinanceiroPage() {
             <Button type="button" variant="outline" size="sm" onClick={exportExtratoCsv}>
               <Download className="h-4 w-4" />
             </Button>
-            <Button type="button" size="sm" onClick={exportExtratoPdf} disabled={exportingPdf}>
+            <Button variant="primary" type="button" size="sm" onClick={exportExtratoPdf} disabled={exportingPdf}>
               <Download className="mr-1 h-4 w-4" />
               {exportingPdf ? 'PDF...' : 'PDF'}
             </Button>

@@ -1,10 +1,8 @@
 import * as React from 'react'
-import { createPortal } from 'react-dom'
-import { Briefcase, ShieldCheck, UserRound } from 'lucide-react'
+import { Briefcase, ShieldCheck, UserRound, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-import heroLight from '@/assets/hero-light.svg'
-import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
 import type { Cliente } from '@/types/domain'
 import { formatDate, formatDateTime } from '@/utils/format'
 import { stripChecklistPrefix } from '@/utils/checklist'
@@ -34,47 +32,25 @@ export const ClienteDrawer = ({ open, cliente, onClose }: ClienteDrawerProps) =>
   const { tarefas, loading: tarefasLoading, fetchTarefasByEntidade } = useTarefas()
 
   React.useEffect(() => {
-    if (!open) return
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
-
-  React.useEffect(() => {
     if (!open || !cliente?.id) return
     fetchTarefasByEntidade('cliente', cliente.id).catch(() => null)
   }, [open, cliente?.id, fetchTarefasByEntidade])
 
-  if (!open || !cliente) return null
+  return (
+    <Modal noPadding open={open && !!cliente} onClose={onClose} maxWidth="34rem">
+      {cliente && (
+        <div style={{ display: 'flex', flexDirection: 'column', borderRadius: 16, overflow: 'hidden', maxHeight: '82vh' }}>
 
-  return createPortal(
-    <div className="fixed inset-0 z-50">
-      <div
-        className="absolute inset-0 bg-[rgba(17,24,39,0.35)]"
-        style={{ backdropFilter: 'blur(6px)' }}
-        onClick={onClose}
-      />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-[480px] flex-col rounded-l-2xl border-l border-border bg-white shadow-[0_18px_50px_rgba(18,38,63,0.18)]">
-        <div
-          className="relative overflow-hidden border-b border-border px-6 py-6"
-          style={{
-            backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.96) 70%, rgba(215,236,255,0.3) 100%), url(${heroLight})`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right top',
-            backgroundSize: '320px',
-          }}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.32em] text-text-subtle">
+          {/* Header */}
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div>
+              <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.32em', color: '#9ca3af', margin: 0, marginBottom: 6 }}>
                 Cliente
               </p>
-              <h3 className="font-display text-2xl text-text">{cliente.name}</h3>
-              <div className="flex flex-wrap gap-2">
+              <h3 style={{ fontSize: 22, fontWeight: 600, color: '#111827', margin: 0, lineHeight: 1.3 }}>
+                {cliente.name}
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
                 <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusPill(cliente.status)}`}>
                   {cliente.status}
                 </span>
@@ -84,90 +60,100 @@ export const ClienteDrawer = ({ open, cliente, onClose }: ClienteDrawerProps) =>
               </div>
             </div>
             <button
-              type="button"
-              className="text-sm text-text-subtle hover:text-text"
               onClick={onClose}
-              aria-label="Fechar"
+              className="hover:bg-gray-100 transition-colors"
+              style={{ padding: 8, borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', color: '#6b7280', flexShrink: 0, marginTop: -4 }}
+            >
+              <X style={{ width: 20, height: 20 }} />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', minHeight: 0 }} className="space-y-6 text-sm">
+
+            {/* Resumo */}
+            <section className="space-y-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">Resumo</p>
+              <div className="rounded-xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+                <div className="flex items-center gap-2 text-text-muted">
+                  <Briefcase className="h-4 w-4 text-text-subtle" />
+                  <span>{cliente.area}</span>
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-text-muted">
+                  <UserRound className="h-4 w-4 text-text-subtle" />
+                  <span>{cliente.owner}</span>
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-text-muted">
+                  <ShieldCheck className="h-4 w-4 text-text-subtle" />
+                  <span>{cliente.caseCount} casos vinculados</span>
+                </div>
+              </div>
+              <p className="text-xs text-text-subtle">
+                Atualizado em {formatDateTime(cliente.lastUpdate)}
+              </p>
+            </section>
+
+            {/* Inteligência Preditiva — só para pessoa física com CPF */}
+            {cliente.cpf && (
+              <section className="space-y-3">
+                <CaseIntelligencePanel
+                  cpf={cliente.cpf}
+                  clienteId={cliente.id}
+                  colapsado={true}
+                  onConfigureClick={() => { onClose(); navigate('/app/config') }}
+                />
+              </section>
+            )}
+
+            {/* Tarefas */}
+            <section className="space-y-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">Tarefas</p>
+              <div className="space-y-2">
+                {tarefasLoading && (
+                  <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 text-xs text-text-subtle shadow-sm">
+                    Carregando tarefas...
+                  </div>
+                )}
+                {!tarefasLoading && tarefas.length === 0 && (
+                  <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 text-xs text-text-subtle shadow-sm">
+                    Nenhuma tarefa vinculada a este cliente.
+                  </div>
+                )}
+                {tarefas.map((tarefa) => (
+                  <div
+                    key={tarefa.id}
+                    className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm transition hover:bg-gray-50"
+                  >
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase text-gray-600">
+                        {tarefa.status.replace('_', ' ')}
+                      </span>
+                      {tarefa.dueDate && <span>Vence em {formatDate(tarefa.dueDate)}</span>}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-900">{stripChecklistPrefix(tarefa.title)}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Footer */}
+          <div style={{ borderTop: '1px solid #e5e7eb', padding: '16px 24px', display: 'flex', gap: 12, flexShrink: 0, backgroundColor: '#ffffff' }}>
+            <button
+              onClick={onClose}
+              className="hover:bg-gray-50 transition-colors"
+              style={{
+                padding: '8px 20px', borderRadius: 8,
+                border: '1px solid #e5e7eb', backgroundColor: '#ffffff',
+                color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              }}
             >
               Fechar
             </button>
           </div>
+
         </div>
-
-        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5 text-sm text-text-muted">
-          <section className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">Resumo</p>
-            <div className="rounded-2xl border border-border bg-white px-4 py-4 shadow-soft">
-              <div className="flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-text-subtle" />
-                <span>{cliente.area}</span>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <UserRound className="h-4 w-4 text-text-subtle" />
-                <span>{cliente.owner}</span>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-text-subtle" />
-                <span>{cliente.caseCount} casos vinculados</span>
-              </div>
-            </div>
-            <p className="text-xs text-text-subtle">
-              Atualizado em {formatDateTime(cliente.lastUpdate)}
-            </p>
-          </section>
-
-          {/* Inteligência Preditiva — só para pessoa física com CPF */}
-          {cliente.cpf && (
-            <section className="space-y-3">
-              <CaseIntelligencePanel
-                cpf={cliente.cpf}
-                clienteId={cliente.id}
-                colapsado={true}
-                onConfigureClick={() => { onClose(); navigate('/app/config') }}
-              />
-            </section>
-          )}
-
-          <section className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">
-              Tarefas
-            </p>
-            <div className="space-y-2">
-              {tarefasLoading && (
-                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
-                  Carregando tarefas...
-                </div>
-              )}
-              {!tarefasLoading && tarefas.length === 0 && (
-                <div className="rounded-2xl border border-border bg-white px-4 py-3 text-xs text-text-subtle shadow-soft">
-                  Nenhuma tarefa vinculada a este cliente.
-                </div>
-              )}
-              {tarefas.map((tarefa) => (
-                <div
-                  key={tarefa.id}
-                  className="rounded-2xl border border-border bg-white px-4 py-3 shadow-soft transition hover:bg-surface-2"
-                >
-                  <div className="flex items-center justify-between text-xs text-text-subtle">
-                    <span className="inline-flex rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-[11px] font-semibold uppercase text-text-muted">
-                      {tarefa.status.replace('_', ' ')}
-                    </span>
-                    {tarefa.dueDate && <span>Vence em {formatDate(tarefa.dueDate)}</span>}
-                  </div>
-                  <p className="mt-2 text-sm text-text">{stripChecklistPrefix(tarefa.title)}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <div className="border-t border-border bg-white/95 px-6 py-4">
-          <Button variant="outline" size="sm" onClick={onClose} className="rounded-full">
-            Fechar
-          </Button>
-        </div>
-      </aside>
-    </div>,
-    document.body,
+      )}
+    </Modal>
   )
 }

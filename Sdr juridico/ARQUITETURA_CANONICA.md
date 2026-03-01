@@ -8,6 +8,14 @@
 
 ## 📋 CHANGELOG RECENTE
 
+### v2.9.1 (1 de março de 2026)
+- ✅ **`LeadDrawer` → Modal canônico**: convertido de `createPortal+<aside>` para `<Modal noPadding maxWidth="36rem">`. Layout interno: flex-column `(borderRadius:16, overflow:hidden, maxHeight:82vh)` com header/footer `flexShrink:0` e conteúdo `flex:1, minHeight:0, overflowY:auto`. Tabs com `borderBottom: '2px solid var(--brand-primary)'` inline. Footer: WhatsApp outline + Converter/Dossiê brand-primary inline style. Fix de cores: `frio` badge `text-blue-700` → `bg-sky-100 text-sky-700`; `em_andamento` task badge → `bg-amber-100 text-amber-700`.
+- ✅ **`ClienteDrawer` → Modal canônico**: mesma conversão — `<Modal noPadding maxWidth="34rem">`. Removidos: `createPortal`, `Button` import, gradiente/SVG no header. Card style → `rounded-xl border border-gray-100 shadow-sm` (padrão canônico).
+- ✅ **`OrgActiveGuard` — fix loop redirect**: removida dependência `useCurrentUser` (`onboardingVersion` não existe em `usuarios`). Guard agora lê `currentOrg.onboarding_version` (OrganizationContext). Adicionado check `isOrgAdmin` antes do redirect para `/app/onboarding` — não-admins entram direto. `!currentOrg` redireciona para `/login` (não `/no-organization`, rota inexistente).
+- ✅ **Correções visuais — `Button` variant**: adicionado `variant="primary"` em todos os botões de ação principal que estavam omitindo o variant (AnalyticsPage: "Voltar para o dashboard", "Abrir módulo financeiro"; FinanceiroPage: "Novo Lançamento", "Adicionar", botão PDF).
+- ✅ **Correções visuais — sem emojis**: removidos 📈/📉 da seção carteira por responsável em `FinanceiroPage` → substituídos por `Rec.` / `Desp.` em texto.
+- ✅ **Correções visuais — sem blue**: `CATEGORIA_COLORS.contrato` em `DocumentoTemplatesPage` era `bg-blue-50 text-blue-700` → corrigido para `bg-violet-50 text-violet-700`.
+
 ### v2.9.0 (28 de fevereiro de 2026)
 - ✅ **Onboarding Wizard** (`OnboardingPage.tsx`): 4 steps — Empresa → Equipe → Integrações → Pronto! Full-screen sem sidebar, animações de slide direcional, `Voltar` em todos os passos, OAuth inline no step 3; sem emojis — ícones Lucide com `style={{ color: '#721011' }}`
 - ✅ **"O que há de novo" (`WhatsNewModal.tsx`)**: Modal canônico exibido no AppShell para orgs com `onboarding_version` desatualizada; somente `org_admin` persiste a versão no banco

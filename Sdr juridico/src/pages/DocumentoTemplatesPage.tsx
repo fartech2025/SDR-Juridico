@@ -12,7 +12,7 @@ import { TEMPLATE_CATEGORIA_LABELS } from '@/types/documentoTemplate'
 import type { DocumentoTemplate, TemplateCategoria } from '@/types/documentoTemplate'
 
 const CATEGORIA_COLORS: Record<TemplateCategoria, string> = {
-  contrato:    'bg-blue-50 text-blue-700',
+  contrato:    'bg-violet-50 text-violet-700',
   peticao:     'bg-purple-50 text-purple-700',
   procuracao:  'bg-amber-50 text-amber-700',
   declaracao:  'bg-green-50 text-green-700',

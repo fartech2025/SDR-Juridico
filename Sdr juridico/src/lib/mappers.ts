@@ -113,7 +113,7 @@ export const mapLeadRowToLead = (row: LeadRow): Lead => {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastContactAt: row.last_contact_at || row.ultimo_contato || undefined,
-    owner: row.assigned_user_id || row.responsavel || 'Nao atribuido',
+    owner: row.responsavel || row.assigned_user_id || 'Nao atribuido',
     company: row.empresa || undefined,
     notes: row.observacoes || undefined,
     estimatedValue: typeof q.estimatedValue === 'number' ? q.estimatedValue : undefined,
