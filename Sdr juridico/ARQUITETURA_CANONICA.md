@@ -9,18 +9,24 @@
 ## 📋 CHANGELOG RECENTE
 
 ### v2.9.0 (28 de fevereiro de 2026)
-- ✅ **Onboarding Wizard** (`OnboardingPage.tsx`): 4 steps — Empresa → Equipe → Integrações → Pronto! Full-screen sem sidebar, animações de slide direcional, `Voltar` em todos os passos, OAuth inline no step 3
+- ✅ **Onboarding Wizard** (`OnboardingPage.tsx`): 4 steps — Empresa → Equipe → Integrações → Pronto! Full-screen sem sidebar, animações de slide direcional, `Voltar` em todos os passos, OAuth inline no step 3; sem emojis — ícones Lucide com `style={{ color: '#721011' }}`
 - ✅ **"O que há de novo" (`WhatsNewModal.tsx`)**: Modal canônico exibido no AppShell para orgs com `onboarding_version` desatualizada; somente `org_admin` persiste a versão no banco
-- ✅ **`onboardingService.ts`**: `updateStep(orgId, step)` e `complete(orgId, version)` — persiste progresso e conclusão na tabela `orgs`
+- ✅ **`onboardingService.ts`**: `updateStep(orgId, step)`, `complete(orgId, version)` (tabela `orgs`), `completeUser(userId, version)` (tabela `usuarios`) — `completeUser` é o registro crítico que desbloqueia o guard
+- ✅ **Rastreamento por usuário** (`usuarios.onboarding_version`): wizard é liberado por usuário (não só por org); `usuariosService` SELECT corrigido para incluir `onboarding_version` em ambas as queries
+- ✅ **`useCurrentUser.reloadProfile()`**: incrementa `reloadKey` → dispara re-fetch do `useEffect` → evita loop de redirect após completar wizard; chamado antes de `navigate()`
+- ✅ **`OrgActiveGuard` dentro do `AppShell`**: guard não vive mais no router; `AppShell` tem early return para `/app/onboarding` (full-screen sem sidebar) e envolve o layout principal com `<OrgActiveGuard>`
+- ✅ **`TourModal.tsx`** — Central de Ajuda Contextual: ativado por `?tour=1` na URL; cobre 14 páginas; exporta `hasTour(pathname)` e `getTourForPath(pathname)`; fecha com ESC ou botão Entendido
+- ✅ **Botão de ajuda no header** (`HelpCircle`): visível somente em páginas com tour disponível (`hasTour(pathname)`); adiciona `?tour=1` à URL sem reload
 - ✅ **`src/lib/version.ts`**: `APP_VERSION = '2.9.0'` + `VERSION_HIGHLIGHTS` para o modal de novidades
-- ✅ **Guard de Onboarding no `OrgActiveGuard`**: redireciona para `/app/onboarding` somente se `onboarding_version === null && isOrgAdmin`; usuários convidados entram direto
 - ✅ **Guard interno no `OnboardingPage`**: `if (!isOrgAdmin) return <Navigate to="/app/dashboard" replace />` — impede acesso direto por não-admins
 - ✅ **Step 1 — Empresa**: `nome`, `cnpj` (mask), `oab`, `telefone`, `email`, `áreas de atuação` (chips — 8 opções)
 - ✅ **Step 2 — Equipe**: `nome` + `email` + role (gestor/advogado/secretaria/leitura); convites reais via `supabase.functions.invoke('invite-org-member')`; `Promise.allSettled` para envio em paralelo com status por item
 - ✅ **Step 3 — Integrações**: Google Calendar via OAuth real (`return_to=/app/onboarding`), Teams marcado "Em breve", detecta `?google_calendar=connected` ao retornar
-- ✅ **Step 4 — Pronto!**: próximos passos como botões que chamam `completeOnboarding` + navegam
+- ✅ **Step 4 — Pronto!**: próximos passos como botões que chamam `completeUser()` + `reloadProfile()` + navegam com `?tour=1`
 - ✅ **Fix UserManagement** (`roleToPermissoes`): `gestor` não recebe mais `['org_admin']` — apenas `admin` recebe; todos os outros roles → `['user']`
-- ✅ **Migration `20260228_onboarding.sql`**: `ALTER TABLE orgs ADD COLUMN onboarding_version TEXT DEFAULT NULL, onboarding_step TEXT DEFAULT 'empresa'`
+- ✅ **Migration `20260228010000_onboarding.sql`**: `ALTER TABLE orgs ADD COLUMN onboarding_version TEXT DEFAULT NULL, onboarding_step TEXT DEFAULT 'empresa'`
+- ✅ **Migration `20260228030000_usuarios_onboarding.sql`**: `ALTER TABLE usuarios ADD COLUMN onboarding_version TEXT DEFAULT NULL`
+- ✅ **Migration `20260228020000_org_branding.sql`**: `CREATE TABLE org_branding` com todas as colunas de branding
 - ✅ **Migration `20260228_fix_watermark_column.sql`**: idempotente para bancos criados antes da v2.9.0
 - ✅ **TipTap extras**: `@tiptap/extension-color`, `text-style`, `highlight`, `image`, `table` (Row/Header/Cell), `font-family`; `FontSize` como Extension custom com `addGlobalAttributes`
 - ✅ **Branding — marca d'água**: `buildHtmlWithBranding()` injeta watermark diagonal com `opacity: 0.07`; `orgBrandingService` mapeia `marca_dagua ↔ marcaDagua`
@@ -97,7 +103,7 @@ Sistema de gestão jurídica SaaS multi-tenant com planos (trial → basic → p
 | 7 | **Nomenclatura**: colunas DB em `snake_case` português; types TS em `camelCase` inglês; mappers convertem |
 | 8 | **Card padrão**: `bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm` |
 | 9 | **Guards**: seguir SEMPRE a ordem obrigatória de verificações (ver seção GUARDS) |
-| 10 | **Onboarding**: somente `org_admin` é redirecionado para wizard; não-admins entram direto no app |
+| 10 | **Onboarding**: guard vive dentro do `AppShell` (não no router); redireciona para wizard somente se `usuarios.onboarding_version === null && isOrgAdmin`; não-admins entram direto; `reloadProfile()` obrigatório após `completeUser()` antes de `navigate()` |
 
 ---
 
@@ -154,7 +160,10 @@ Sdr juridico/
 │   ├── layouts/
 │   │   └── AppShell.tsx                  # Layout principal: sidebar + header + outlet
 │   │                                     # Sidebar dinâmico por role/plano (useMemo)
-│   │                                     # Sino de notificações + WhatsNewModal
+│   │                                     # Sino de notificações + WhatsNewModal + TourModal
+│   │                                     # OrgActiveGuard envolve todo o layout
+│   │                                     # Early return para /app/onboarding (full-screen sem sidebar)
+│   │                                     # Botão HelpCircle no header (visível quando hasTour())
 │   │
 │   ├── contexts/
 │   │   ├── AuthContext.tsx               # useAuth() — user, session, loading
@@ -216,12 +225,14 @@ Sdr juridico/
 │   │   ├── config/
 │   │   │   └── BrandingConfigCard.tsx    # Logo + cores + rodapé + marca d'água
 │   │   ├── WhatsNewModal.tsx             # Modal "O que há de novo" (AppShell)
+│   │   ├── TourModal.tsx                 # Central de ajuda contextual — ativado por ?tour=1
+│   │   │                                 # Cobre 14 páginas; exports: hasTour(), getTourForPath()
 │   │   ├── UpgradeWall.tsx               # Bloqueio de feature por plano
 │   │   └── CaseIntelligence/
 │   │       └── CaseIntelligencePanel.tsx # Waze Jurídico
 │   │
 │   ├── hooks/
-│   │   ├── useCurrentUser.ts             # user, role, memberRole, roleLabel
+│   │   ├── useCurrentUser.ts             # user, role, memberRole, roleLabel, reloadProfile()
 │   │   ├── usePermissions.ts             # useIsOrgAdmin, useIsFartechAdmin, useIsOrgActive
 │   │   ├── usePlan.ts                    # Feature gates por plano
 │   │   ├── useOrganization.ts            # useOrganization, useIsOrgActive
@@ -238,7 +249,7 @@ Sdr juridico/
 │   │   └── usePageTracking.ts
 │   │
 │   ├── services/
-│   │   ├── onboardingService.ts          # updateStep, complete
+│   │   ├── onboardingService.ts          # updateStep, complete (orgs), completeUser (usuarios)
 │   │   ├── organizationsService.ts       # CRUD orgs + mapDbToOrg
 │   │   ├── leadsService.ts / casosService.ts / clientesService.ts
 │   │   ├── tarefasService.ts / tarefaDocumentosService.ts
@@ -304,9 +315,10 @@ Sdr juridico/
 │       ├── 20260223_fix_audit_log_fk.sql
 │       ├── 20260225_financeiro_lancamentos.sql
 │       ├── 20260227_documento_templates.sql
-│       ├── 20260228_fix_watermark_column.sql
-│       ├── 20260228_onboarding.sql
-│       └── 20260228_org_branding.sql
+│       ├── 20260228_fix_watermark_column.sql  ← idempotente; sem timestamp único
+│       ├── 20260228010000_onboarding.sql       ← orgs.onboarding_version + onboarding_step
+│       ├── 20260228020000_org_branding.sql     ← CREATE TABLE org_branding
+│       └── 20260228030000_usuarios_onboarding.sql ← usuarios.onboarding_version
 │
 └── scraper-server/                       # Node.js — iniciado automaticamente pelo Vite plugin
     ├── index.ts                          # Express + endpoints /scraper-api/*
@@ -416,11 +428,15 @@ const roleToPermissoes = (role: OrgMemberRole) => {
 
 ## 🚀 SISTEMA DE ONBOARDING (v2.9.0)
 
-### Regra Central
+### Dois Níveis de Rastreamento
 
-A tabela `orgs` armazena:
-- `onboarding_version TEXT DEFAULT NULL` — NULL = wizard nunca feito; `'x.y.z'` = última versão aceita
-- `onboarding_step TEXT DEFAULT 'empresa'` — persiste o passo atual para retomada
+| Tabela | Coluna | Controlado por | Usado para |
+|--------|--------|----------------|------------|
+| `usuarios` | `onboarding_version TEXT DEFAULT NULL` | `onboardingService.completeUser(userId, version)` | Guard de redirect (por usuário) |
+| `orgs` | `onboarding_version TEXT DEFAULT NULL` | `onboardingService.complete(orgId, version)` | WhatsNewModal (por org) |
+| `orgs` | `onboarding_step TEXT DEFAULT 'empresa'` | `onboardingService.updateStep(orgId, step)` | Retomada do wizard |
+
+**Regra crítica**: o guard verifica `usuarios.onboarding_version` (via `useCurrentUser.onboardingVersion`), não `orgs.onboarding_version`. Isso permite que cada usuário faça seu onboarding independentemente.
 
 ### Fluxo de decisão
 
@@ -428,27 +444,56 @@ A tabela `orgs` armazena:
 Usuário acessa /app/*
     │
     ▼
-OrgActiveGuard
-    ├─ onboarding_version === null && isOrgAdmin && path ≠ /app/onboarding
+AppShell — early return para /app/onboarding:
+    └─ renderiza full-screen (sem sidebar) envolvido em <OrgActiveGuard>
+
+AppShell — layout principal envolvido em <OrgActiveGuard>:
+    │
+    ▼
+OrgActiveGuard — passo 7:
+    ├─ useCurrentUser.onboardingVersion === null && isOrgAdmin && path ≠ /app/onboarding
     │       └──→ Navigate to /app/onboarding
     │
-    └─ onboarding_version !== null && !== APP_VERSION && !isFartechAdmin
+    └─ orgs.onboarding_version !== null && !== APP_VERSION && !isFartechAdmin
             └──→ AppShell mostra WhatsNewModal (estado local, não redirect)
 
 OnboardingPage — guard interno:
     if (!isOrgAdmin) return <Navigate to="/app/dashboard" replace />
 
 WhatsNewModal — handleAcknowledge:
-    if (!isOrgAdmin) { onClose(); return }   ← não salva no banco
+    if (!isOrgAdmin) { setDismissed(true); return }  ← não salva no banco
     await onboardingService.complete(orgId, APP_VERSION)  ← só org_admin persiste
 ```
 
 ### `onboardingService` (`src/services/onboardingService.ts`)
 
 ```typescript
-onboardingService.updateStep(orgId, step)      // salva passo atual — não bloqueia se falhar
-onboardingService.complete(orgId, version)     // seta onboarding_version = version + step = 'pronto'
+onboardingService.updateStep(orgId, step)           // salva passo atual em orgs — não bloqueia
+onboardingService.complete(orgId, version)          // seta orgs.onboarding_version (para WhatsNew)
+onboardingService.completeUser(userId, version)     // seta usuarios.onboarding_version (para guard)
 ```
+
+### Padrão obrigatório na conclusão do wizard
+
+```typescript
+// OnboardingPage — handleConcluirEIr
+const handleConcluirEIr = async (to: string) => {
+  setSaving(true)
+  // 1. Registrar por usuário (crítico — é o que o guard verifica)
+  if (user) await onboardingService.completeUser(user.id, APP_VERSION)
+  // 2. Forçar re-fetch do useCurrentUser para destravar o guard
+  reloadProfile()
+  // 3. Registrar por org (melhor esforço — alimenta o WhatsNewModal)
+  try {
+    await onboardingService.complete(currentOrg.id, APP_VERSION)
+    await reloadOrg()
+  } catch { /* não bloqueia navegação */ }
+  setSaving(false)
+  navigate(to, { replace: true })
+}
+```
+
+**Por que `reloadProfile()` é obrigatório?** Sem ele, `useCurrentUser.onboardingVersion` permanece `null` em memória após `completeUser()`, e o `OrgActiveGuard` redireciona de volta para `/app/onboarding`, criando um loop infinito.
 
 ### Steps do Wizard
 
@@ -457,14 +502,14 @@ onboardingService.complete(orgId, version)     // seta onboarding_version = vers
 | empresa | nome, cnpj, oab, telefone, email, áreas de atuação | ✅ (nome) | `organizationsService.update()` |
 | equipe | nome, email, role por convite | ❌ | `supabase.functions.invoke('invite-org-member')` |
 | integracoes | Google Calendar OAuth, Teams | ❌ | OAuth com `return_to=/app/onboarding` |
-| pronto | próximos passos clicáveis | — | `onboardingService.complete()` → navigate |
+| pronto | próximos passos clicáveis | — | `completeUser()` + `reloadProfile()` → navigate com `?tour=1` |
 
 ### `WhatsNewModal` — exibição no AppShell
 
 ```typescript
 // AppShell.tsx
 const showWhatsNew = !!currentOrg
-  && currentOrg.onboarding_version !== null
+  && currentOrg.onboarding_version !== null   // ← lê de orgs (não usuarios)
   && currentOrg.onboarding_version !== APP_VERSION
   && !isFartechAdmin
   && !whatsNewDismissed
@@ -480,6 +525,72 @@ export const VERSION_HIGHLIGHTS: Record<string, { title: string; items: string[]
   '2.8.0': { title: 'Financeiro & Analytics Executivo', items: [...] },
 }
 ```
+
+---
+
+## ❓ CENTRAL DE AJUDA — TourModal (v2.9.0)
+
+### Conceito
+
+`TourModal.tsx` é um modal contextual de ajuda ativado por parâmetro de URL (`?tour=1`). Cada página do app pode ter um tour próprio com título, descrição e lista de dicas. O modal fecha removendo o parâmetro da URL (sem reload).
+
+### Ativação
+
+Dois pontos de entrada:
+1. **Botão `HelpCircle` no header** (`AppShell.tsx`) — visível somente se `hasTour(pathname)` retornar `true`; adiciona `?tour=1` via `navigate(..., { replace: true })`
+2. **Links no Step 4 do onboarding** — `PROXIMOS_PASSOS` inclui `?tour=1` nas URLs dos botões de ação
+
+### API do TourModal
+
+```typescript
+// src/components/TourModal.tsx
+
+export interface PageTour {
+  title: string
+  description: string
+  tips: { icon: LucideIcon; label: string; detail: string }[]
+}
+
+export const PAGE_TOURS: Record<string, PageTour>  // 14 páginas mapeadas
+
+// Busca tour pela pathname exata; fallback por prefixo mais longo
+export function getTourForPath(pathname: string): PageTour | null
+
+// Verdadeiro se existir algum tour para a pathname
+export function hasTour(pathname: string): boolean
+
+// Componente — lê ?tour=1 da URL, fecha sem reload
+export function TourModal(): JSX.Element | null
+```
+
+### Páginas com Tour
+
+`/app/dashboard`, `/app/leads`, `/app/clientes`, `/app/casos`, `/app/agenda`, `/app/tarefas`, `/app/documentos`, `/app/documentos/templates`, `/app/datajud`, `/app/diario-oficial`, `/app/financeiro`, `/app/timesheet`, `/app/analytics`, `/app/config`
+
+### Padrão de implementação
+
+```typescript
+// AppShell.tsx — botão de ajuda no header
+{hasTour(location.pathname) && (
+  <button
+    onClick={() => navigate({ pathname: location.pathname, search: '?tour=1' }, { replace: true })}
+    title="Ajuda desta página"
+  >
+    <HelpCircle className="h-5 w-5 text-gray-500" />
+  </button>
+)}
+
+// AppShell.tsx — renderização
+<TourModal />
+<WhatsNewModal />
+```
+
+### Regras de design
+
+- Header do modal: `background: #721011`, texto branco
+- Ícones de dica: caixa `background: #fef2f2`, ícone com `style={{ color: '#721011' }}`
+- Fecha com ESC, clique no backdrop ou botão "Entendido"
+- Fechar remove `?tour=1` da URL com `navigate(..., { replace: true })` — não cria entrada no histórico
 
 ---
 
@@ -619,8 +730,10 @@ if (!isOrgActive) {
 }
 
 // 7. Onboarding pendente → /app/onboarding (SOMENTE org_admin)
+// Verifica usuarios.onboarding_version via useCurrentUser (não orgs.onboarding_version)
+// Isso permite rastreamento por usuário; reloadProfile() no wizard evita loop
 if (
-  currentOrg.onboarding_version === null &&
+  onboardingVersion === null &&   // ← useCurrentUser.onboardingVersion (usuarios table)
   isOrgAdmin &&
   !pathname.startsWith('/app/onboarding')
 ) {
@@ -633,15 +746,17 @@ return <>{children}</>
 
 **Fluxo:**
 ```
-authLoading? → Loading
-user?        → /login
-orgLoading?  → Loading
-fartech?     → ✅ children
-currentOrg?  → /no-organization
-isOrgActive? → /org-suspended ou fallback
-onboarding_version===null && isOrgAdmin? → /app/onboarding
+authLoading?  → Loading
+user?         → /login
+orgLoading?   → Loading
+fartech?      → ✅ children
+currentOrg?   → /no-organization
+isOrgActive?  → /org-suspended ou fallback
+usuarios.onboarding_version===null && isOrgAdmin? → /app/onboarding
 ✅ children
 ```
+
+**IMPORTANTE**: `OrgActiveGuard` vive dentro de `AppShell`, não no router. O `AppShell` tem um early return para `/app/onboarding` que renderiza full-screen sem sidebar, também envolvido em `<OrgActiveGuard>` para garantir as verificações 1-6.
 
 ### Auditoria
 
@@ -766,7 +881,10 @@ nome_completo, email UK, telefone
 permissoes TEXT[] 'fartech_admin|org_admin|user'
 status 'ativo|inativo|suspenso'
 preferencias JSONB, ultimo_acesso TIMESTAMP
+onboarding_version TEXT DEFAULT NULL  ← NULL = wizard nunca feito por este usuário
 ```
+
+**IMPORTANTE**: `usuariosService` deve incluir `onboarding_version` explicitamente em todas as queries `.select()` — o campo não é retornado por `select('*')` em alguns contextos de RLS.
 
 ### Tabela `org_branding`
 
