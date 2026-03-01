@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { tarefasService } from '@/services/tarefasService'
+import { alertasService } from '@/services/alertasService'
 import type { Tarefa } from '@/types/domain'
 import { mapTarefaRowToTarefa } from '@/lib/mappers'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { supabase } from '@/lib/supabaseClient'
 
 interface UseTarefasState {
   tarefas: Tarefa[]
@@ -102,6 +104,21 @@ export function useTarefas() {
       })
       const mapped = mapTarefaRowToTarefa(tarefa)
       setState((prev) => ({ ...prev, tarefas: [mapped, ...prev.tarefas] }))
+
+      // Cria notificação para o responsável (se for diferente de quem criou)
+      if (ownerId !== user?.id) {
+        void alertasService.createAlerta({
+          userId: ownerId,
+          tipo: 'tarefa_atribuida',
+          prioridade: payload.priority === 'alta' ? 'P1' : 'P2',
+          titulo: `Nova tarefa: ${payload.title}`,
+          descricao: payload.description ?? null,
+          entidade: 'tarefa',
+          entidadeId: tarefa.id,
+          actionHref: '/app/tarefas',
+        })
+      }
+
       return mapped
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Erro desconhecido')
@@ -161,6 +178,17 @@ export function useTarefas() {
 
   useEffect(() => {
     fetchTarefas()
+  }, [fetchTarefas])
+
+  // Realtime: atualiza o Kanban automaticamente quando qualquer tarefa muda
+  useEffect(() => {
+    const channel = supabase
+      .channel('tarefas-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tarefas' }, () => {
+        void fetchTarefas()
+      })
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
   }, [fetchTarefas])
 
   const submitForConfirmation = useCallback(async (id: string) => {

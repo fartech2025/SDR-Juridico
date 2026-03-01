@@ -206,6 +206,8 @@ function mapDbToOrg(dbOrg: any): Organization {
     cancelled_at: settings.cancelled_at || null,
     provisioned_by: settings.provisioned_by || null,
     managed_by: settings.managed_by || null,
+    onboarding_version: dbOrg.onboarding_version ?? null,
+    onboarding_step: dbOrg.onboarding_step ?? 'empresa',
   }
 }
 

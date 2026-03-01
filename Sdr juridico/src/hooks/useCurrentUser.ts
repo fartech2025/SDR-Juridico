@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { UsuarioRow, UserRole } from '@/lib/supabaseClient'
 import { useAuth } from '@/contexts/AuthContext'
@@ -68,7 +68,10 @@ export function useCurrentUser() {
   const [orgName, setOrgName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const missingTableRef = useRef(false)
+
+  const reloadProfile = useCallback(() => setReloadKey(k => k + 1), [])
 
   useEffect(() => {
     if (authLoading) {
@@ -147,7 +150,7 @@ export function useCurrentUser() {
     return () => {
       active = false
     }
-  }, [authLoading, user?.id])
+  }, [authLoading, user?.id, reloadKey])
 
   const displayName = useMemo(() => deriveDisplayName(profile, user), [profile, user])
   const shortName = useMemo(() => displayName.split(' ').filter(Boolean)[0] || displayName, [displayName])
@@ -155,6 +158,10 @@ export function useCurrentUser() {
   const roleLabel = memberRole
     ? (roleLabelMap[memberRole] ?? roleLabels[role])
     : roleLabels[role]
+
+  // onboarding_version pode não estar no tipo gerado; lemos com cast duplo seguro
+  const onboardingVersion =
+    (profile as unknown as Record<string, unknown> | null)?.['onboarding_version'] as string | null ?? null
 
   return {
     loading,
@@ -169,5 +176,7 @@ export function useCurrentUser() {
     displayName,
     shortName,
     initials,
+    onboardingVersion,
+    reloadProfile,
   }
 }

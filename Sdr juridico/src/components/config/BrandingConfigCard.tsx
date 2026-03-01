@@ -33,6 +33,7 @@ function BrandingForm() {
     endereco:      branding.endereco      ?? '',
     telefone:      branding.telefone      ?? '',
     rodapeTexto:   branding.rodapeTexto   ?? '',
+    marcaDagua:    branding.marcaDagua    ?? '',
   })
 
   // Sincroniza form quando branding é carregado do banco
@@ -46,6 +47,7 @@ function BrandingForm() {
       endereco:      branding.endereco      ?? '',
       telefone:      branding.telefone      ?? '',
       rodapeTexto:   branding.rodapeTexto   ?? '',
+      marcaDagua:    branding.marcaDagua    ?? '',
     })
   }, [loading, branding])
 
@@ -79,6 +81,7 @@ function BrandingForm() {
         endereco:      form.endereco      || undefined,
         telefone:      form.telefone      || undefined,
         rodapeTexto:   form.rodapeTexto   || undefined,
+        marcaDagua:    form.marcaDagua    || undefined,
       })
       toast.success('Aparência salva com sucesso')
     } catch {
@@ -233,6 +236,19 @@ function BrandingForm() {
                   placeholder="Mensagem personalizada"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="text-xs uppercase tracking-wide text-gray-500 block mb-1">Marca d'água nos documentos</label>
+              <Input
+                value={form.marcaDagua}
+                onChange={(e) => setForm((f) => ({ ...f, marcaDagua: e.target.value }))}
+                placeholder="Ex: RASCUNHO, CONFIDENCIAL (vazio = desativado)"
+                maxLength={30}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Aparece diagonal no fundo de todos os PDFs gerados pelo escritório.
+              </p>
             </div>
 
             <Button

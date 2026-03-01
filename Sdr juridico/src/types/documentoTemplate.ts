@@ -19,10 +19,24 @@ export const TEMPLATE_CATEGORIA_LABELS: Record<TemplateCategoria, string> = {
   outro:        'Outro',
 }
 
+export type VariavelTipo = 'texto' | 'data' | 'cpf' | 'cnpj' | 'moeda' | 'select'
+
+export const VARIAVEL_TIPO_LABELS: Record<VariavelTipo, string> = {
+  texto:  'Texto',
+  data:   'Data',
+  cpf:    'CPF',
+  cnpj:   'CNPJ',
+  moeda:  'Moeda',
+  select: 'Lista',
+}
+
 export interface TemplateVariavel {
   key: string           // ex: 'nome_cliente'  — usado em {nome_cliente} no conteúdo
   label: string         // ex: 'Nome do Cliente' — exibido no formulário de geração
   required: boolean
+  tipo?: VariavelTipo   // default 'texto' quando ausente
+  defaultValue?: string // tokens: '$hoje', '$responsavel', '$org', '$advogado'
+  options?: string[]    // opções quando tipo='select'
   placeholder?: string
   hint?: string
 }
@@ -66,6 +80,7 @@ export interface OrgBranding {
   endereco?: string
   telefone?: string
   rodapeTexto?: string
+  marcaDagua?: string   // ex: 'RASCUNHO', 'CONFIDENCIAL'; vazio = desativado
 }
 
 export const DEFAULT_BRANDING: OrgBranding = {

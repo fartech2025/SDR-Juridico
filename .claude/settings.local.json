@@ -38,7 +38,12 @@
       "Bash(npx playwright:*)",
       "Bash(npx tsx:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebFetch(domain:www.aurum.com.br)",
+      "WebFetch(domain:advbox.com.br)",
+      "Bash(npm run:*)",
+      "Bash(supabase:*)",
+      "Bash(echo:*)"
     ]
   }
 }

@@ -62,8 +62,9 @@ export default function UserManagement() {
     : currentOrg?.id || null
 
   const roleToPermissoes = (role: OrgMemberRole) => {
-    // Admin e gestor ambos recebem apenas 'org_admin' (não existe permissão 'gestor' separada)
-    if (role === 'admin' || role === 'gestor') return ['org_admin']
+    // Somente admin recebe permissão org_admin. Gestor tem acesso operacional mas não acessa
+    // configurações de organização, faturamento ou gerenciamento de membros.
+    if (role === 'admin') return ['org_admin']
     return ['user']
   }
 

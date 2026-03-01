@@ -79,15 +79,32 @@ async function htmlToPdfBlob(html: string): Promise<Blob> {
   return blob
 }
 
-// ── Monta HTML com branding (cabeçalho + rodapé) ──────────────────────────────
+// ── Monta HTML com branding (cabeçalho + rodapé + marca d'água) ───────────────
 export function buildHtmlWithBranding(content: string, branding: OrgBranding): string {
   const b = { ...DEFAULT_BRANDING, ...branding }
   const logoHtml = b.logoUrl
     ? `<img src="${b.logoUrl}" style="height:56px;object-fit:contain;" />`
     : `<div style="width:56px;height:56px;border-radius:8px;background:${b.corPrimaria};"></div>`
 
+  const watermarkHtml = b.marcaDagua?.trim()
+    ? `<div style="
+        position:fixed;top:0;left:0;right:0;bottom:0;
+        display:flex;align-items:center;justify-content:center;
+        pointer-events:none;z-index:9999;overflow:hidden;
+      ">
+        <span style="
+          font-size:80px;font-weight:900;
+          color:${b.corPrimaria};opacity:0.07;
+          transform:rotate(-45deg);white-space:nowrap;
+          font-family:'DM Sans',system-ui,sans-serif;
+          letter-spacing:0.1em;text-transform:uppercase;
+        ">${b.marcaDagua}</span>
+      </div>`
+    : ''
+
   return `
-    <div style="font-family:'DM Sans',system-ui,sans-serif;padding:40px;color:#111;max-width:800px;margin:0 auto;">
+    <div style="font-family:'DM Sans',system-ui,sans-serif;padding:40px;color:#111;max-width:800px;margin:0 auto;position:relative;">
+      ${watermarkHtml}
       <header style="display:flex;justify-content:space-between;align-items:center;
                      border-bottom:2px solid ${b.corPrimaria};padding-bottom:16px;margin-bottom:32px;">
         ${logoHtml}

@@ -16,6 +16,7 @@ type DbBrandingRow = {
   endereco: string | null
   telefone: string | null
   rodape_texto: string | null
+  marca_dagua: string | null
 }
 
 function mapRow(row: DbBrandingRow): OrgBranding {
@@ -30,6 +31,7 @@ function mapRow(row: DbBrandingRow): OrgBranding {
     endereco:     row.endereco      ?? undefined,
     telefone:     row.telefone      ?? undefined,
     rodapeTexto:  row.rodape_texto  ?? undefined,
+    marcaDagua:   row.marca_dagua   ?? undefined,
   }
 }
 
@@ -72,6 +74,7 @@ export const orgBrandingService = {
     if (input.endereco      !== undefined) payload.endereco       = input.endereco      ?? null
     if (input.telefone      !== undefined) payload.telefone       = input.telefone      ?? null
     if (input.rodapeTexto   !== undefined) payload.rodape_texto   = input.rodapeTexto   ?? null
+    if (input.marcaDagua    !== undefined) payload.marca_dagua    = input.marcaDagua    || null
 
     const { data, error } = await supabase
       .from('org_branding')

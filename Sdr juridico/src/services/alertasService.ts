@@ -90,6 +90,40 @@ export const alertasService = {
     }
   },
 
+  /** Cria um novo alerta (notificação) para um usuário */
+  async createAlerta(input: {
+    userId?: string | null
+    tipo: string
+    prioridade?: 'P0' | 'P1' | 'P2'
+    titulo: string
+    descricao?: string | null
+    entidade?: string | null
+    entidadeId?: string | null
+    actionHref?: string | null
+  }): Promise<void> {
+    try {
+      const { orgId } = await resolveOrgScope()
+      if (!orgId) return
+
+      const { error } = await supabase.from('alertas').insert({
+        org_id: orgId,
+        user_id: input.userId ?? null,
+        tipo: input.tipo,
+        prioridade: input.prioridade ?? 'P2',
+        titulo: input.titulo,
+        descricao: input.descricao ?? null,
+        entidade: input.entidade ?? null,
+        entidade_id: input.entidadeId ?? null,
+        action_href: input.actionHref ?? null,
+        lida: false,
+      })
+      if (error) throw new AppError(error.message, 'database_error')
+    } catch (error) {
+      // Silencia — não bloquear a operação principal se o alerta falhar
+      console.warn('[alertasService] createAlerta falhou silenciosamente:', error)
+    }
+  },
+
   /** Marca todos os alertas da org como lidos */
   async marcarTodasComoLidas(): Promise<void> {
     try {

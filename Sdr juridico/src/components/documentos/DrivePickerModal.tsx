@@ -3,7 +3,7 @@ import { Search, FileText, Loader2, MonitorDot, Chrome, AlertCircle } from 'luci
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { driveService } from '@/services/driveService'
+import { driveService, DriveError } from '@/services/driveService'
 import { driveImportService } from '@/services/driveImportService'
 import type { DriveProvider, DriveFile } from '@/services/driveService'
 
@@ -33,6 +33,12 @@ export function DrivePickerModal({ open, onClose, onImport }: Props) {
   const [importing, setImporting] = useState<string | null>(null) // fileId being imported
   const [error,    setError]    = useState<string | null>(null)
 
+  // Status de conexão detalhado por provedor (null = não testado, string = mensagem de erro)
+  const [connectionErrors, setConnectionErrors] = useState<Record<DriveProvider, string | null>>({
+    google_drive: null,
+    onedrive: null,
+  })
+
   // Verifica quais provedores estão conectados ao abrir
   useEffect(() => {
     if (!open) return
@@ -40,12 +46,34 @@ export function DrivePickerModal({ open, onClose, onImport }: Props) {
     setFiles([])
     setSearch('')
     setError(null)
+    setConnectionErrors({ google_drive: null, onedrive: null })
+
     void (async () => {
-      const [google, onedrive] = await Promise.all([
+      const results = await Promise.allSettled([
         driveService.isConnected('google_drive'),
         driveService.isConnected('onedrive'),
       ])
-      setConnectedMap({ google_drive: google, onedrive: onedrive })
+
+      const errs: Record<DriveProvider, string | null> = { google_drive: null, onedrive: null }
+      const connected: Record<DriveProvider, boolean>  = { google_drive: false, onedrive: false }
+
+      if (results[0].status === 'fulfilled') {
+        connected.google_drive = results[0].value
+      } else {
+        errs.google_drive = results[0].reason instanceof DriveError
+          ? results[0].reason.message
+          : null
+      }
+      if (results[1].status === 'fulfilled') {
+        connected.onedrive = results[1].value
+      } else {
+        errs.onedrive = results[1].reason instanceof DriveError
+          ? results[1].reason.message
+          : null
+      }
+
+      setConnectedMap(connected)
+      setConnectionErrors(errs)
     })()
   }, [open])
 
@@ -92,26 +120,39 @@ export function DrivePickerModal({ open, onClose, onImport }: Props) {
         <div className="grid grid-cols-2 gap-3">
           {PROVIDERS.map((p) => {
             const connected  = connectedMap[p.key]
+            const connErr    = connectionErrors[p.key]
             const isSelected = selectedProvider === p.key
+            // Há erro específico de escopo?
+            const needsReconnect = connErr?.toLowerCase().includes('reconecte') ?? false
             return (
               <button
                 key={p.key}
                 onClick={() => connected && setSelectedProvider(p.key)}
                 disabled={!connected}
-                className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
                   isSelected
                     ? ''
                     : connected
                     ? 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    : 'cursor-not-allowed border-gray-100 opacity-40'
+                    : 'cursor-not-allowed border-gray-100 opacity-50'
                 }`}
                 style={isSelected ? { border: '2px solid #721011', backgroundColor: 'rgba(114,16,17,0.05)' } : {}}
               >
-                {p.icon}
+                <span className="mt-0.5 shrink-0">{p.icon}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900">{p.label}</p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {connected ? 'Conectado' : 'Configure em Configurações → Integrações'}
+                  <p className={`text-xs truncate whitespace-normal leading-tight mt-0.5 ${
+                    connected
+                      ? 'text-green-600'
+                      : needsReconnect
+                      ? 'text-amber-600'
+                      : 'text-gray-400'
+                  }`}>
+                    {connected
+                      ? 'Conectado'
+                      : connErr
+                      ? connErr
+                      : 'Configure em Configurações → Integrações'}
                   </p>
                 </div>
               </button>

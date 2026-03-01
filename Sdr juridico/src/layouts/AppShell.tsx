@@ -26,6 +26,7 @@ import {
   Flame,
   CircleDollarSign,
   LayoutTemplate,
+  HelpCircle,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -35,12 +36,17 @@ import { useAlertas } from '@/hooks/useAlertas'
 import { useApiHealth } from '@/hooks/useApiHealth'
 import { usePageTracking } from '@/hooks/usePageTracking'
 import { usePlan } from '@/hooks/usePlan'
+import { useOrganizationContext } from '@/contexts/OrganizationContext'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/ui/Logo'
 import { cn } from '@/utils/cn'
 import { logLogout } from '@/services/auditLogService'
 import { supabase } from '@/lib/supabaseClient'
 import { resolveOrgScope } from '@/services/orgScope'
+import { WhatsNewModal } from '@/components/WhatsNewModal'
+import { TourModal, hasTour } from '@/components/TourModal'
+import { OrgActiveGuard } from '@/components/guards/OrgActiveGuard'
+import { APP_VERSION } from '@/lib/version'
 
 type NavItem = {
   label: string
@@ -70,6 +76,16 @@ export const AppShell = () => {
   const { canUseFinanceiro, canUseAnalytics, canUseAuditoria, canUseDOU, canUseTimesheet, canUseTemplates } = usePlan()
   const apiHealth = useApiHealth()
   const { alertas, naoLidas: alertasNaoLidas, marcarLida, marcarTodasLidas } = useAlertas()
+  const { currentOrg } = useOrganizationContext()
+
+  // "O que há de novo" — exibir para orgs com versão desatualizada (não para fartech admins)
+  const needsWhatsNew =
+    !!currentOrg &&
+    currentOrg.onboarding_version !== null &&
+    currentOrg.onboarding_version !== APP_VERSION &&
+    !isFartechAdmin
+  const [whatsNewDismissed, setWhatsNewDismissed] = React.useState(false)
+  const showWhatsNew = needsWhatsNew && !whatsNewDismissed
 
   const appNavGroups = React.useMemo(() => {
     const groups: { label: string; items: NavItem[] }[] = [
@@ -245,7 +261,19 @@ export const AppShell = () => {
     navigate('/login', { replace: true })
   }
 
+  // Onboarding: tela full-screen sem sidebar
+  if (location.pathname.startsWith('/app/onboarding')) {
+    return (
+      <OrgActiveGuard>
+        <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          <Outlet />
+        </div>
+      </OrgActiveGuard>
+    )
+  }
+
   return (
+    <OrgActiveGuard>
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {/* Sidebar - Desktop */}
       <aside
@@ -494,6 +522,23 @@ export const AppShell = () => {
               <Search className="h-5 w-5" />
             </div>
           </div>
+
+          {/* Help */}
+          {hasTour(location.pathname) && (
+            <button
+              className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+              title="Ajuda desta página"
+              onClick={() => {
+                const params = new URLSearchParams(location.search)
+                if (params.get('tour') !== '1') {
+                  params.set('tour', '1')
+                  navigate({ pathname: location.pathname, search: `?${params.toString()}` }, { replace: true })
+                }
+              }}
+            >
+              <HelpCircle className="h-5 w-5 text-gray-500" />
+            </button>
+          )}
 
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
@@ -768,6 +813,15 @@ export const AppShell = () => {
         </div>
       )}
 
+      {/* Modal "O que há de novo" — orgs com versão desatualizada */}
+      <WhatsNewModal
+        open={showWhatsNew}
+        onClose={() => setWhatsNewDismissed(true)}
+      />
+
+      {/* Tour de onboarding — aparece quando URL contém ?tour=1 */}
+      <TourModal />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
@@ -803,5 +857,6 @@ export const AppShell = () => {
         }
       `}</style>
     </div>
+    </OrgActiveGuard>
   )
 }

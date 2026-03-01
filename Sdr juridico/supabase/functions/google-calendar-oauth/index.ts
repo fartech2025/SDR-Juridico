@@ -14,6 +14,8 @@ const APP_URL = Deno.env.get('APP_URL') ?? ''
 const oauthScopes = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/drive.file',     // criar/ler arquivos criados pelo app
+  'https://www.googleapis.com/auth/drive.readonly',  // listar e exportar arquivos do Drive
 ].join(' ')
 
 const encodeState = (value: string) =>

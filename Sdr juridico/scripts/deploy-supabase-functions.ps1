@@ -3,7 +3,8 @@
   [string[]]$Functions = @(
     'google-calendar-oauth',
     'google-calendar-sync',
-    'google-calendar-sync-cron'
+    'google-calendar-sync-cron',
+    'google-drive-token'
   )
 )
 

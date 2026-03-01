@@ -48,10 +48,14 @@ export interface Organization {
   address_postal_code?: string
   address_country?: string
   
+  // Onboarding
+  onboarding_version: string | null  // NULL = wizard nunca finalizado; 'x.y.z' = versão aceita
+  onboarding_step: string | null     // 'empresa' | 'equipe' | 'integracoes' | 'pronto'
+
   // Metadata
   settings: OrganizationSettings
   metadata: Record<string, any>
-  
+
   // Timestamps
   created_at: string
   updated_at: string

@@ -4,6 +4,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { alertasService, type AlertaRow } from '@/services/alertasService'
+import { supabase } from '@/lib/supabaseClient'
 
 interface UseAlertasState {
   alertas: AlertaRow[]
@@ -62,11 +63,19 @@ export function useAlertas() {
     }
   }, [])
 
-  // Auto-fetch on mount + poll every 60 seconds
+  // Auto-fetch on mount + Realtime para receber novos alertas instantaneamente
   useEffect(() => {
     fetchAlertas()
-    const interval = setInterval(fetchAlertas, 60_000)
-    return () => clearInterval(interval)
+    const channel = supabase
+      .channel('alertas-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, () => {
+        void fetchAlertas()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alertas' }, () => {
+        void fetchAlertas()
+      })
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
   }, [fetchAlertas])
 
   return {

@@ -23,6 +23,7 @@ import { DiarioOficialPage } from '@/pages/DiarioOficialPage'
 import { TarefasRootPage } from '@/pages/TarefasRootPage'
 import { TarefasKanbanPage } from '@/pages/TarefasKanbanPage'
 import TarefasArquivadasPage from '@/pages/TarefasArquivadasPage'
+import { OnboardingPage } from '@/pages/OnboardingPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -70,6 +71,11 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Navigate to="dashboard" replace />,
+      },
+      {
+        // Rota de onboarding — DEVE vir antes das outras para o guard não entrar em loop
+        path: 'onboarding',
+        element: <OnboardingPage />,
       },
       {
         path: 'dashboard',

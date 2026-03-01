@@ -30,6 +30,7 @@ interface OrganizationContextValue {
   
   // Actions
   refreshOrg: () => Promise<void>
+  reloadOrg: () => Promise<void>   // alias para refreshOrg — força reload completo da org
   refreshStats: () => Promise<void>
   switchOrg: (orgId: string) => Promise<void>
   
@@ -87,6 +88,8 @@ const createFallbackOrganization = (orgId: string | null): Organization => ({
   cancelled_at: null,
   provisioned_by: null,
   managed_by: null,
+  onboarding_version: null,
+  onboarding_step: 'empresa',
 })
 
 export function OrganizationProvider({ children }: { children: React.ReactNode }) {
@@ -285,6 +288,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
     currentRole,
     isLoading,
     refreshOrg,
+    reloadOrg: loadCurrentOrg,
     refreshStats,
     switchOrg,
     allOrgs,
@@ -311,6 +315,7 @@ export function useOrganizationContext() {
       currentRole: null,
       isLoading: false,
       refreshOrg: async () => undefined,
+      reloadOrg: async () => undefined,
       refreshStats: async () => undefined,
       switchOrg: async () => undefined,
       allOrgs: [],

@@ -55,7 +55,7 @@ const upsertUsuarioFromSeed = async (userId: string, seed: UsuarioSeed) => {
       },
       { onConflict: 'id' },
     )
-    .select('id, nome_completo, email, permissoes, created_at, updated_at')
+    .select('id, nome_completo, email, permissoes, created_at, updated_at, onboarding_version')
     .maybeSingle()
 
   if (error) {
@@ -115,7 +115,7 @@ export async function ensureUsuario(user: User): Promise<EnsureUsuarioResult> {
 
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id, nome_completo, email, permissoes, created_at, updated_at')
+    .select('id, nome_completo, email, permissoes, created_at, updated_at, onboarding_version')
     .eq('id', user.id)
     .maybeSingle()
 
