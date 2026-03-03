@@ -1,12 +1,22 @@
 # 🏗️ ARQUITETURA CANÔNICA — SDR JURÍDICO
 
-**Versão:** 3.0.0
+**Versão:** 3.0.1
 **Data:** 3 de março de 2026
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v3.0.1 (3 de março de 2026)
+- ✅ **`AgendaPage` — botão "Gerar Google Meet" restaurado**: condição `formState.title &&` removida — botão sempre visível na seção Local. Fallback `formState.title || 'Reunião'` garante título válido mesmo sem título preenchido.
+- ✅ **`AgendaPage` — auto-sync Google Calendar removido do `handleSave`**: a sincronização automática causava `alert()` bloqueante em todo save. Google Calendar agora é acionado apenas pelo botão manual "Gerar Google Meet".
+- ✅ **`AgendaPage` — `alert()`/`window.confirm()` eliminados**: padrão proibido pela arquitetura canônica. Substituídos por:
+  - `lunchFeedback` state: banner success/error inline auto-dismiss (3-4s) após "Bloquear Almoço"
+  - `confirmingDelete` state: footer do modal muda para confirmação inline com "Cancelar" / "Confirmar exclusão"
+- ✅ **`AgendaPage` — descrição do modal dinâmica**: `description` agora é `'Preencha os detalhes do novo compromisso.'` (create) ou `'Atualize os detalhes do compromisso.'` (edit).
+- ✅ **`AgendaPage` — botão Excluir estilizado**: substituído `bg-red-600 text-white` por `border-red-200 bg-red-50 text-red-700` — botão destrutivo discreto, sem ação imediata. Ação real no footer de confirmação.
+- ✅ **`AgendaPage` — emojis removidos**: erro Google Meet usava `⚠️ / 🚀 / ✨` → substituídos por ícone `AlertCircle` da Lucide.
 
 ### v3.0.0 (3 de março de 2026)
 - ✅ **Sidebar com cadeado (`AppShell.tsx`)**: tipo `NavItem` estendido com `locked?: boolean` e `minPlan?: string`. Itens bloqueados renderizam como `<button>` com `opacity-50`, ícone `<Lock>` no canto inferior direito do ícone principal, e clique redireciona para `/app/plano` (nunca navega para a rota bloqueada). Itens desbloqueados continuam como `<NavLink>`. Aplicado para Timesheet, Templates, Diário Oficial, Auditoria, Analytics e Financeiro. Menu mobile também trata itens locked com branch separado.

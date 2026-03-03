@@ -16,7 +16,8 @@ import {
   Filter,
   Plus,
   ClipboardList,
-  ListTodo
+  ListTodo,
+  ClipboardCheck,
 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -28,6 +29,11 @@ import { useAgenda } from '@/hooks/useAgenda'
 import { useTarefas } from '@/hooks/useTarefas'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useGoogleCalendarCreate } from '@/hooks/useGoogleCalendarCreate'
+import { useLeads } from '@/hooks/useLeads'
+import { useClientes } from '@/hooks/useClientes'
+import { useCasos } from '@/hooks/useCasos'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { supabase } from '@/lib/supabaseClient'
 
 // Unified calendar item type
 type CalendarItemType = 'evento' | 'tarefa'
@@ -150,24 +156,38 @@ const statusStyles: Record<AgendaStatus, { container: string; badge: string }> =
   },
 }
 
+type LinkType = 'none' | 'lead' | 'cliente' | 'caso'
+
 type EditorFormState = {
   title: string
+  tipo: string
   date: string
   time: string
   durationMinutes: number
   location: string
   status: AgendaStatus
+  descricao: string
+  linkType: LinkType
+  linkId: string
+  ownerUserId: string
+  criarTarefa: boolean
 }
 
 const buildFormState = (overrides: Partial<EditorFormState> = {}): EditorFormState => {
   const now = new Date()
   return {
     title: overrides.title ?? '',
+    tipo: overrides.tipo ?? 'reuniao',
     date: overrides.date ?? toIsoDate(now),
     time: overrides.time ?? '09:00',
     durationMinutes: overrides.durationMinutes ?? 30,
     location: overrides.location ?? '',
     status: overrides.status ?? 'pendente',
+    descricao: overrides.descricao ?? '',
+    linkType: overrides.linkType ?? 'none',
+    linkId: overrides.linkId ?? '',
+    ownerUserId: overrides.ownerUserId ?? '',
+    criarTarefa: false,
   }
 }
 
@@ -184,8 +204,39 @@ export const AgendaPage = () => {
     tarefas,
     loading: loadingTarefas,
     error: errorTarefas,
+    createTarefa,
   } = useTarefas()
   const { displayName, user } = useCurrentUser()
+  const { leads }    = useLeads()
+  const { clientes } = useClientes()
+  const { casos }    = useCasos()
+  const { currentOrg } = useOrganization()
+
+  const [orgUsers, setOrgUsers] = React.useState<Array<{ id: string; nome_completo: string }>>([])
+
+  React.useEffect(() => {
+    if (!currentOrg?.id) return
+    const orgId = currentOrg.id
+    ;(async () => {
+      try {
+        const { data: members } = await supabase
+          .from('org_members')
+          .select('user_id')
+          .eq('org_id', orgId)
+          .eq('ativo', true)
+        const userIds = (members ?? []).map((m: any) => m.user_id)
+        if (userIds.length === 0) return
+        const { data: users } = await supabase
+          .from('usuarios')
+          .select('id, nome_completo')
+          .in('id', userIds)
+          .order('nome_completo')
+        if (users) setOrgUsers(users as Array<{ id: string; nome_completo: string }>)
+      } catch (err) {
+        console.error('[AgendaPage] orgUsers fetch:', err)
+      }
+    })()
+  }, [currentOrg?.id])
 
   const loading = loadingAgenda || loadingTarefas
   const error = errorAgenda || errorTarefas
@@ -265,6 +316,8 @@ export const AgendaPage = () => {
   const [formState, setFormState] = React.useState<EditorFormState>(() => buildFormState())
   const { createMeeting, error: meetError } = useGoogleCalendarCreate()
   const [isCreatingGoogleMeet, setIsCreatingGoogleMeet] = React.useState(false)
+  const [lunchFeedback, setLunchFeedback] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = React.useState(false)
 
   const state = resolveStatus(params.get('state'))
   const baseState = loading ? 'loading' : error ? 'error' : 'ready'
@@ -389,15 +442,22 @@ export const AgendaPage = () => {
 
   const openEditor = (mode: 'create' | 'edit', item?: AgendaItem | null) => {
     if (mode === 'edit' && item) {
+      const linkType: LinkType = item.casoId ? 'caso' : item.leadId ? 'lead' : item.clienteId ? 'cliente' : 'none'
+      const linkId = item.casoId || item.leadId || item.clienteId || ''
       setEditorMode('edit')
       setEditingItem(item)
       setFormState(buildFormState({
         title: item.title,
+        tipo: item.tipo || 'reuniao',
         date: item.date,
         time: item.time,
         durationMinutes: item.durationMinutes || 30,
         location: item.location === 'Indefinido' ? '' : item.location,
         status: item.status,
+        descricao: item.descricao || '',
+        linkType,
+        linkId,
+        ownerUserId: item.ownerUserId || '',
       }))
     } else {
       setEditorMode('create')
@@ -412,13 +472,11 @@ export const AgendaPage = () => {
     if (editorBusy) return
     setEditorOpen(false)
     setEditingItem(null)
+    setConfirmingDelete(false)
   }
 
   const handleSlotCreate = (date: string, time?: string) => {
-    if (!agendaAberta) {
-      alert('A agenda está fechada para novos agendamentos.')
-      return
-    }
+    if (!agendaAberta) return
     setEditorMode('create')
     setEditingItem(null)
     setFormState(buildFormState({ date, time: time ?? '09:00' }))
@@ -450,9 +508,11 @@ export const AgendaPage = () => {
         duracao_minutos: 60,
         observacoes: null,
       })
-      alert('Horário de almoço bloqueado com sucesso!')
+      setLunchFeedback({ type: 'success', message: 'Horário de almoço bloqueado!' })
+      setTimeout(() => setLunchFeedback(null), 3000)
     } catch (err) {
-      alert('Erro ao bloquear horário de almoço.')
+      setLunchFeedback({ type: 'error', message: 'Erro ao bloquear horário de almoço.' })
+      setTimeout(() => setLunchFeedback(null), 4000)
     }
   }
 
@@ -466,15 +526,30 @@ export const AgendaPage = () => {
       const endAt = new Date(startAt)
       endAt.setMinutes(endAt.getMinutes() + duration)
 
+      const clienteId  = formState.linkType === 'cliente' ? formState.linkId || null : null
+      const casoId     = formState.linkType === 'caso'    ? formState.linkId || null : null
+      const leadId     = formState.linkType === 'lead'    ? formState.linkId || null : null
+      const ownerUserId = formState.ownerUserId || null
+      // Resolve nome do cliente para exibição
+      const clienteNome = clienteId
+        ? (clientes.find(c => c.id === clienteId)?.name ?? null)
+        : null
+
       if (editorMode === 'edit' && editingItem) {
         await updateEvento(editingItem.id, {
           titulo: title,
           data_inicio: startAt.toISOString(),
           data_fim: endAt.toISOString(),
           local: formState.location.trim() || null,
-          tipo: editingItem.type || 'reuniao',
+          tipo: formState.tipo || 'reuniao',
           status: formState.status,
           duracao_minutos: duration,
+          descricao: formState.descricao.trim() || null,
+          cliente_id: clienteId,
+          caso_id: casoId,
+          lead_id: leadId,
+          owner_user_id: ownerUserId,
+          cliente_nome: clienteNome,
         })
       } else {
         await createEvento({
@@ -482,36 +557,36 @@ export const AgendaPage = () => {
           data_inicio: startAt.toISOString(),
           data_fim: endAt.toISOString(),
           local: formState.location.trim() || null,
-          descricao: null,
-          cliente_id: null,
-          caso_id: null,
-          lead_id: null,
+          descricao: formState.descricao.trim() || null,
+          cliente_id: clienteId,
+          caso_id: casoId,
+          lead_id: leadId,
           responsavel: displayName || 'Sistema',
-          tipo: editingItem?.type || 'reuniao',
+          owner_user_id: ownerUserId,
+          tipo: formState.tipo || 'reuniao',
           status: formState.status,
-          cliente_nome: null,
+          cliente_nome: clienteNome,
           duracao_minutos: duration,
           observacoes: null,
         })
-      }
 
-      // Sincronizar com Google Calendar (best-effort, não bloqueia o save)
-      try {
-        console.log('📅 Tentando sync com Google Calendar...')
-        const gcResult = await createMeeting({
-          title,
-          startTime: startAt,
-          endTime: endAt,
-          location: formState.location.trim() || undefined,
-          videoConference: false,
-        })
-        console.log('✅ Google Calendar sync OK:', gcResult)
-        alert('✅ Compromisso sincronizado com Google Calendar!')
-      } catch (gcErr) {
-        // Google Calendar sync é opcional — não falha o save
-        const gcMsg = gcErr instanceof Error ? gcErr.message : String(gcErr)
-        console.warn('⚠️ Google Calendar sync falhou:', gcMsg)
-        alert('⚠️ Compromisso salvo localmente, mas NÃO sincronizou com Google Calendar:\n' + gcMsg)
+        // Criar tarefa vinculada (best-effort — falha silenciosa)
+        if (formState.criarTarefa) {
+          try {
+            await createTarefa({
+              title,
+              description: formState.descricao.trim() || null,
+              priority: 'normal',
+              dueDate: startAt.toISOString(),
+              leadId: leadId || null,
+              clienteId: clienteId || null,
+              casoId: casoId || null,
+              ownerId: ownerUserId || undefined,
+            })
+          } catch (tarefaErr) {
+            console.error('[AgendaPage] createTarefa vinculada falhou:', tarefaErr)
+          }
+        }
       }
 
       setEditorOpen(false)
@@ -525,13 +600,13 @@ export const AgendaPage = () => {
 
   const handleDelete = async () => {
     if (!editingItem) return
-    if (!window.confirm('Deseja excluir este compromisso?')) return
     setEditorBusy(true)
     setEditorError(null)
     try {
       await deleteEvento(editingItem.id)
       setEditorOpen(false)
       setEditingItem(null)
+      setConfirmingDelete(false)
     } catch (err) {
       setEditorError(err instanceof Error ? err.message : 'Erro ao excluir evento')
     } finally {
@@ -731,6 +806,19 @@ export const AgendaPage = () => {
                 </button>
               </div>
             </div>
+            {lunchFeedback && (
+              <div className={cn(
+                'flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium mb-2',
+                lunchFeedback.type === 'success'
+                  ? 'border border-success-border bg-success-bg text-success'
+                  : 'border border-danger-border bg-danger-bg text-danger'
+              )}>
+                {lunchFeedback.type === 'success'
+                  ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+                {lunchFeedback.message}
+              </div>
+            )}
 
             {/* Navigation */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -1199,37 +1287,61 @@ export const AgendaPage = () => {
           open={editorOpen}
           onClose={closeEditor}
           title={editorMode === 'edit' ? 'Editar compromisso' : 'Novo compromisso'}
-          description="Atualize os detalhes do compromisso."
+          description={editorMode === 'create' ? 'Preencha os detalhes do novo compromisso.' : 'Atualize os detalhes do compromisso.'}
           footer={
-            <>
-              <button
-                type="button"
-                onClick={closeEditor}
-                disabled={editorBusy}
-                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50"
-              >
-                Fechar
-              </button>
-              {editorMode === 'edit' && (
+            confirmingDelete ? (
+              <div className="flex w-full items-center justify-between gap-3">
+                <span className="text-sm text-text-muted">Excluir este compromisso permanentemente?</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(false)}
+                    disabled={editorBusy}
+                    className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={editorBusy}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {editorBusy ? 'Excluindo...' : 'Confirmar exclusão'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
                 <button
                   type="button"
-                  onClick={handleDelete}
+                  onClick={closeEditor}
                   disabled={editorBusy}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-alt disabled:opacity-50"
                 >
-                  Excluir
+                  Fechar
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={editorBusy}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: 'var(--brand-primary)' }}
-              >
-                {editorMode === 'edit' ? 'Salvar' : 'Criar'}
-              </button>
-            </>
+                {editorMode === 'edit' && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(true)}
+                    disabled={editorBusy}
+                    className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    Excluir
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={editorBusy}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--brand-primary)' }}
+                >
+                  {editorBusy ? 'Salvando...' : editorMode === 'edit' ? 'Salvar' : 'Criar'}
+                </button>
+              </>
+            )
           }
         >
           <div className="space-y-4">
@@ -1239,15 +1351,49 @@ export const AgendaPage = () => {
               </div>
             )}
             <div className="grid gap-3 sm:grid-cols-2">
+              {/* Título */}
               <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-text">Título</label>
+                <label className="text-xs font-semibold text-text">Título *</label>
                 <input
                   value={formState.title}
                   onChange={(e) => setFormState((prev) => ({ ...prev, title: e.target.value }))}
                   className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                   placeholder="Nome do compromisso"
+                  autoFocus
                 />
               </div>
+
+              {/* Tipo */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-text">Tipo</label>
+                <select
+                  value={formState.tipo}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, tipo: e.target.value }))}
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="reuniao">Reunião</option>
+                  <option value="ligacao">Ligação</option>
+                  <option value="videochamada">Videochamada</option>
+                  <option value="audiencia">Audiência</option>
+                  <option value="prazo">Prazo</option>
+                </select>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-text">Status</label>
+                <select
+                  value={formState.status}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, status: e.target.value as AgendaStatus }))}
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="confirmado">Confirmada</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="cancelado">Cancelada</option>
+                </select>
+              </div>
+
+              {/* Data + Hora */}
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-text">Data</label>
                 <input
@@ -1266,6 +1412,8 @@ export const AgendaPage = () => {
                   className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 />
               </div>
+
+              {/* Duração */}
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-text">Duração (min)</label>
                 <input
@@ -1277,65 +1425,141 @@ export const AgendaPage = () => {
                   className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 />
               </div>
+
+              {/* Descrição */}
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-text">Descrição</label>
+                <textarea
+                  value={formState.descricao}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, descricao: e.target.value }))}
+                  rows={2}
+                  placeholder="Detalhes do compromisso"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 resize-none"
+                />
+              </div>
+
+              {/* Vínculo — tipo + seleção */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-text">Status</label>
+                <label className="text-xs font-semibold text-text">Vínculo</label>
                 <select
-                  value={formState.status}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, status: e.target.value as AgendaStatus }))}
+                  value={formState.linkType}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, linkType: e.target.value as LinkType, linkId: '' }))}
                   className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                 >
-                  <option value="confirmado">Confirmada</option>
-                  <option value="pendente">Pendente</option>
-                  <option value="cancelado">Cancelada</option>
+                  <option value="none">Sem vínculo</option>
+                  <option value="lead">Lead</option>
+                  <option value="cliente">Cliente</option>
+                  <option value="caso">Caso</option>
                 </select>
               </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-text">Selecionar</label>
+                <select
+                  value={formState.linkId}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, linkId: e.target.value }))}
+                  disabled={formState.linkType === 'none'}
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">{formState.linkType === 'none' ? 'Sem vínculo' : 'Selecione...'}</option>
+                  {formState.linkType === 'lead' && leads.map(l => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                  ))}
+                  {formState.linkType === 'cliente' && clientes.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                  {formState.linkType === 'caso' && casos.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.numero_processo ? `${c.numero_processo} — ${c.title}` : `${c.title} — ${c.cliente}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Responsável */}
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-text">Responsável</label>
+                <select
+                  value={formState.ownerUserId}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, ownerUserId: e.target.value }))}
+                  className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="">Não atribuído</option>
+                  {orgUsers.map(u => (
+                    <option key={u.id} value={u.id}>{u.nome_completo}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Criar tarefa vinculada — somente no modo criar */}
+              {editorMode === 'create' && (
+                <div
+                  className={`sm:col-span-2 rounded-xl border p-3 transition-colors ${formState.criarTarefa ? 'border-[#721011]/30 bg-[rgba(114,16,17,0.04)]' : 'border-border'}`}
+                >
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={formState.criarTarefa}
+                      onChange={(e) => setFormState((prev) => ({ ...prev, criarTarefa: e.target.checked }))}
+                      className="h-4 w-4 rounded"
+                      style={{ accentColor: '#721011' }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <ClipboardCheck className="h-4 w-4 shrink-0" style={{ color: '#721011' }} />
+                      <div>
+                        <p className="text-sm font-medium text-text">Criar tarefa vinculada</p>
+                        <p className="text-xs text-text-muted">Cria uma tarefa com o mesmo título, prazo = início do evento e mesmo vínculo.</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {/* Local */}
               <div className="space-y-1 sm:col-span-2">
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-semibold text-text">Local</label>
-                  {formState.title && formState.date && formState.time && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setIsCreatingGoogleMeet(true)
-                        try {
-                          const startTime = new Date(`${formState.date}T${formState.time}`)
-                          const endTime = new Date(startTime.getTime() + formState.durationMinutes * 60 * 1000)
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsCreatingGoogleMeet(true)
+                      try {
+                        const startTime = new Date(`${formState.date}T${formState.time}`)
+                        const endTime = new Date(startTime.getTime() + formState.durationMinutes * 60 * 1000)
 
-                          const result = await createMeeting({
-                            title: formState.title,
-                            startTime,
-                            endTime,
-                            videoConference: true,
-                          })
+                        const result = await createMeeting({
+                          title: formState.title || 'Reunião',
+                          startTime,
+                          endTime,
+                          videoConference: true,
+                        })
 
-                          const meetLink = result.conferenceData?.entryPoints?.find((ep: any) => ep.entryPointType === 'video')?.uri || ''
+                        const meetLink = result.conferenceData?.entryPoints?.find((ep: any) => ep.entryPointType === 'video')?.uri || ''
 
-                          if (meetLink) {
-                            setFormState((prev) => ({ ...prev, location: meetLink }))
-                            navigator.clipboard.writeText(meetLink).catch(() => {})
-                          }
-                        } catch (err) {
-                          console.error('Erro ao criar Google Meet:', err)
-                        } finally {
-                          setIsCreatingGoogleMeet(false)
+                        if (meetLink) {
+                          setFormState((prev) => ({ ...prev, location: meetLink }))
+                          navigator.clipboard.writeText(meetLink).catch(() => {})
                         }
-                      }}
-                      disabled={isCreatingGoogleMeet}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-alt disabled:opacity-50"
-                    >
-                      {isCreatingGoogleMeet ? (
-                        <>
-                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" />
-                          Gerando...
-                        </>
-                      ) : (
-                        <>
-                          <Video className="h-3.5 w-3.5" />
-                          Gerar Google Meet
-                        </>
-                      )}
-                    </button>
-                  )}
+                      } catch (err) {
+                        console.error('Erro ao criar Google Meet:', err)
+                      } finally {
+                        setIsCreatingGoogleMeet(false)
+                      }
+                    }}
+                    disabled={isCreatingGoogleMeet}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-alt disabled:opacity-50"
+                  >
+                    {isCreatingGoogleMeet ? (
+                      <>
+                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                        Gerando...
+                      </>
+                    ) : (
+                      <>
+                        <Video className="h-3.5 w-3.5" />
+                        Gerar Google Meet
+                      </>
+                    )}
+                  </button>
                 </div>
                 <input
                   value={formState.location}
@@ -1345,14 +1569,17 @@ export const AgendaPage = () => {
                 />
                 {meetError && (
                   <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs space-y-2">
-                    <p className="font-semibold">⚠️ Erro ao gerar Google Meet</p>
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      Erro ao gerar Google Meet
+                    </div>
                     <p>{meetError.message}</p>
                     {meetError.message.includes('não está conectado') && (
-                      <div className="bg-red-100 p-2 rounded mt-2 space-y-2">
-                        <p className="font-medium">🚀 Conectar Google Calendar:</p>
+                      <div className="bg-red-100 p-2 rounded mt-2 space-y-1">
+                        <p className="font-medium">Conectar Google Calendar:</p>
                         <p className="text-xs text-red-600">Execute no terminal:</p>
                         <code className="block bg-red-900/20 p-1 rounded font-mono text-red-900 break-all">npm run connect:google</code>
-                        <p className="text-xs text-red-600 mt-1">Depois autorize no Google e está pronto! ✨</p>
+                        <p className="text-xs text-red-600 mt-1">Depois autorize no Google e estará pronto.</p>
                       </div>
                     )}
                   </div>

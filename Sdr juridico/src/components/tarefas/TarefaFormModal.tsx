@@ -2,7 +2,7 @@
 // Used by TarefasPage (lista) and TarefasKanbanPage (kanban) for a unified UX.
 import * as React from 'react'
 import type { CSSProperties } from 'react'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, CalendarPlus } from 'lucide-react'
 
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,8 @@ import { useLeads } from '@/hooks/useLeads'
 import { useClientes } from '@/hooks/useClientes'
 import { useCasos } from '@/hooks/useCasos'
 import { useOrganization } from '@/contexts/OrganizationContext'
+import { useAgenda } from '@/hooks/useAgenda'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { supabase } from '@/lib/supabaseClient'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -26,6 +28,9 @@ export interface TarefaFormValues {
   linkType: LinkType
   linkId: string
   ownerId: string
+  criarEvento: boolean
+  eventoHora: string
+  eventoDuracao: number
 }
 
 export const buildDefaultValues = (): TarefaFormValues => ({
@@ -37,6 +42,9 @@ export const buildDefaultValues = (): TarefaFormValues => ({
   linkType: 'none',
   linkId: '',
   ownerId: '',
+  criarEvento: false,
+  eventoHora: '09:00',
+  eventoDuracao: 60,
 })
 
 interface TarefaFormModalProps {
@@ -77,6 +85,8 @@ export function TarefaFormModal({
   const { clientes } = useClientes()
   const { casos }    = useCasos()
   const { currentOrg } = useOrganization()
+  const { createEvento } = useAgenda()
+  const { displayName } = useCurrentUser()
 
   const [orgUsers, setOrgUsers] = React.useState<Array<{ id: string; nome_completo: string }>>([])
   const [form, setForm]         = React.useState<TarefaFormValues>(() => ({
@@ -137,6 +147,38 @@ export function TarefaFormModal({
     setError(null)
     try {
       await onSave(form)
+
+      // Criar evento na agenda vinculado à tarefa (best-effort)
+      if (form.criarEvento && form.dueDate) {
+        try {
+          const startAt = new Date(`${form.dueDate}T${form.eventoHora}:00`)
+          const endAt   = new Date(startAt.getTime() + form.eventoDuracao * 60_000)
+          const clienteId = form.linkType === 'cliente' ? form.linkId || null : null
+          const casoId    = form.linkType === 'caso'    ? form.linkId || null : null
+          const leadId    = form.linkType === 'lead'    ? form.linkId || null : null
+          await createEvento({
+            titulo: form.title,
+            tipo: 'reuniao',
+            data_inicio: startAt.toISOString(),
+            data_fim: endAt.toISOString(),
+            status: 'pendente',
+            descricao: form.description || null,
+            cliente_id: clienteId,
+            caso_id: casoId,
+            lead_id: leadId,
+            responsavel: displayName || 'Sistema',
+            owner_user_id: form.ownerId || null,
+            duracao_minutos: form.eventoDuracao,
+            cliente_nome: null,
+            local: null,
+            observacoes: null,
+          })
+        } catch (evtErr) {
+          console.error('[TarefaFormModal] createEvento falhou:', evtErr)
+          // Tarefa já foi criada — não falha o fluxo
+        }
+      }
+
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar tarefa.')
@@ -264,6 +306,59 @@ export function TarefaFormModal({
               <option key={u.id} value={u.id}>{u.nome_completo}</option>
             ))}
           </select>
+        </div>
+
+        {/* Criar evento na agenda */}
+        <div
+          className={`rounded-xl border p-3 transition-colors ${form.criarEvento ? 'border-[#721011]/30 bg-[rgba(114,16,17,0.04)]' : 'border-gray-200'}`}
+        >
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={form.criarEvento}
+              onChange={(e) => setForm((prev) => ({ ...prev, criarEvento: e.target.checked }))}
+              className="h-4 w-4 rounded"
+              style={{ accentColor: '#721011' }}
+            />
+            <div className="flex items-center gap-2">
+              <CalendarPlus className="h-4 w-4 shrink-0" style={{ color: '#721011' }} />
+              <div>
+                <p className="text-sm font-medium text-gray-800">Criar evento na agenda</p>
+                <p className="text-xs text-gray-500">
+                  {form.dueDate
+                    ? 'Um compromisso será criado com o mesmo título e vínculo.'
+                    : 'Defina um prazo acima para habilitar.'}
+                </p>
+              </div>
+            </div>
+          </label>
+
+          {form.criarEvento && form.dueDate && (
+            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3">
+              <div className="space-y-1.5">
+                <label className={LABEL_CLS}>Hora do evento</label>
+                <input
+                  type="time"
+                  value={form.eventoHora}
+                  onChange={(e) => set('eventoHora', e.target.value)}
+                  className={INPUT_CLS}
+                  style={RING_STYLE}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className={LABEL_CLS}>Duração (min)</label>
+                <input
+                  type="number"
+                  min={15}
+                  step={15}
+                  value={form.eventoDuracao}
+                  onChange={(e) => setForm((prev) => ({ ...prev, eventoDuracao: Number(e.target.value) || 60 }))}
+                  className={INPUT_CLS}
+                  style={RING_STYLE}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Vínculo */}

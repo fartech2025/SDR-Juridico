@@ -109,9 +109,12 @@ export interface AgendaItem {
   time: string
   durationMinutes: number
   cliente: string
+  clienteId?: string
   casoId?: string
   leadId?: string
   owner: string
+  ownerUserId?: string
+  descricao?: string | null
   location: string
   status: AgendaStatus
   // Campos de integração externa
