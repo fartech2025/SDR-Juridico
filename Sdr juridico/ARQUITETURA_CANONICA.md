@@ -8,6 +8,11 @@
 
 ## 📋 CHANGELOG RECENTE
 
+### v3.0.1 (3 de março de 2026)
+- ✅ **Pipeline CI corrigido**: workflows antigos que apontavam para `app/` foram removidos e scripts atualizados para trabalhar com a pasta raiz `Sdr juridico/`. Apenas `ci.yml` e `deploy-vercel.yml` permanecem (faltas de push histórico foram limpas). Manual style-lint e pages também foram ajustados.
+- ✅ **Dependências TipTap pré-instalação**: build falhava em Vite quando pacotes TipTap e html2pdf.js não estavam em `node_modules`; instrução adicionada em README e doc para rodar `npm install` após pull.
+- ✅ **Limpeza de tokens git**: instrução para remover credenciais erradas no Keychain (usuário `frpdias`) para evitar 403s durante push.
+
 ### v3.0.0 (3 de março de 2026)
 - ✅ **Sidebar com cadeado (`AppShell.tsx`)**: tipo `NavItem` estendido com `locked?: boolean` e `minPlan?: string`. Itens bloqueados renderizam como `<button>` com `opacity-50`, ícone `<Lock>` no canto inferior direito do ícone principal, e clique redireciona para `/app/plano` (nunca navega para a rota bloqueada). Itens desbloqueados continuam como `<NavLink>`. Aplicado para Timesheet, Templates, Diário Oficial, Auditoria, Analytics e Financeiro. Menu mobile também trata itens locked com branch separado.
 - ✅ **Grupo Governança sempre visível para `org_admin`**: removida condição `if (governancaItems.length > 0)`. Grupo sempre aparece com itens individualmente locked quando plano insuficiente.
@@ -547,7 +552,7 @@ const showWhatsNew = !!currentOrg
 ### `src/lib/version.ts`
 
 ```typescript
-export const APP_VERSION = '2.9.0'
+export const APP_VERSION = '3.0.0'
 
 export const VERSION_HIGHLIGHTS: Record<string, { title: string; items: string[] }> = {
   '2.9.0': { title: 'Templates de Documentos + Branding', items: [...] },
@@ -704,7 +709,7 @@ rgba(114, 16, 17, 0.2)
 if (!canUseAnalytics) return <UpgradeWall feature="Analytics Executivo" minPlan="Profissional" />
 ```
 
-Mostra cadeado + feature + plano mínimo + botão que navega para `/app/config`.
+Mostra cadeado + feature + plano mínimo + botão que navega para `/app/plano`.
 
 ---
 
