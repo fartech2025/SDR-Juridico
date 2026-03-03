@@ -11,7 +11,7 @@ export function UpgradeWall({ feature, minPlan }: { feature: string; minPlan: st
       <p className="mt-2 text-sm text-gray-500">
         Disponível a partir do plano <strong>{minPlan}</strong>.
       </p>
-      <Button className="mt-6" onClick={() => navigate('/app/config')}>
+      <Button className="mt-6" onClick={() => navigate('/app/plano')}>
         Ver planos e fazer upgrade
       </Button>
     </div>
