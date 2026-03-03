@@ -118,7 +118,7 @@ export const LoginPage = () => {
       display: 'flex',
       flexDirection: 'column' as const,
       justifyContent: 'space-between',
-      width: '55%',
+      /* width is controlled by tailwind via lg:w-[55%] */
       minHeight: '100vh',
       background: 'linear-gradient(145deg, #721011 0%, #4A0B0C 55%, #2D0707 100%)',
       padding: '48px 56px',
@@ -131,10 +131,9 @@ export const LoginPage = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: '45%',
+      /* width & padding now handled by responsive classes */
       minHeight: '100vh',
       background: '#ffffff',
-      padding: '48px 56px',
     } as React.CSSProperties,
 
     formWrap: {
@@ -144,9 +143,9 @@ export const LoginPage = () => {
   }
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="flex flex-col lg:flex-row">
       {/* ════════════════ LEFT PANEL — Branding ════════════════ */}
-      <div style={s.left} className="hidden lg:flex">
+      <div style={s.left} className="hidden lg:flex lg:w-[55%]">
         {/* Grid texture */}
         <div
           style={{
@@ -228,7 +227,7 @@ export const LoginPage = () => {
       </div>
 
       {/* ════════════════ RIGHT PANEL — Login Form ════════════════ */}
-      <div style={s.right}>
+      <div style={s.right} className="w-full lg:w-[45%] py-12 px-12 lg:px-14">
         <div style={s.formWrap}>
           {/* Mobile logo */}
           <div className="lg:hidden" style={{ textAlign: 'center', marginBottom: 32 }}>
