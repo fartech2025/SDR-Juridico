@@ -11,6 +11,7 @@ import { usePermissions } from '@/hooks/usePermissions'
 const LOGO_URL = 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/talent%20jud%2003.png'
 
 export const LoginPage = () => {
+  console.log('LoginPage rendered')
   const navigate = useNavigate()
   const location = useLocation()
   const { signIn, signInWithGoogle } = useAuth()
@@ -227,7 +228,7 @@ export const LoginPage = () => {
       </div>
 
       {/* ════════════════ RIGHT PANEL — Login Form ════════════════ */}
-      <div style={s.right} className="w-full lg:w-[45%] py-12 px-12 lg:px-14">
+      <div style={s.right} className="w-full lg:w-[45%] py-12 px-12 lg:px-14 border border-red-500">
         <div style={s.formWrap}>
           {/* Mobile logo */}
           <div className="lg:hidden" style={{ textAlign: 'center', marginBottom: 32 }}>
