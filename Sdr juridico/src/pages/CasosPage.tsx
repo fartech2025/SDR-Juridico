@@ -65,11 +65,15 @@ export const CasosPage = () => {
   const canManageCasos = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const { advogados } = useAdvogados(currentOrg?.id || null, canManageCasos)
   const navigate = useNavigate()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const status = resolveStatus(params.get('state'))
-  const [query, setQuery] = React.useState('')
-  const [areaFilter, setAreaFilter] = React.useState('todos')
-  const [statusFilter, setStatusFilter] = React.useState('todos')
+  const query        = params.get('q')      ?? ''
+  const areaFilter   = params.get('area')   ?? 'todos'
+  const statusFilter = params.get('status') ?? 'todos'
+
+  const setQuery        = (v: string) => setParams(p => { v ? p.set('q', v) : p.delete('q'); return p })
+  const setAreaFilter   = (v: string) => setParams(p => { v !== 'todos' ? p.set('area', v) : p.delete('area'); return p })
+  const setStatusFilter = (v: string) => setParams(p => { v !== 'todos' ? p.set('status', v) : p.delete('status'); return p })
   const [showForm, setShowForm] = React.useState(false)
   const [editingCasoId, setEditingCasoId] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -114,6 +118,8 @@ export const CasosPage = () => {
       return matchesQuery && matchesArea && matchesStatus
     })
   }, [query, areaFilter, statusFilter, casos])
+
+  const resetFilters = () => setParams(p => { p.delete('q'); p.delete('area'); p.delete('status'); return p })
 
   const resetCasoForm = () => {
     setFormData(initialFormData)
@@ -345,6 +351,14 @@ export const CasosPage = () => {
                 <option value="suspenso">Suspenso</option>
                 <option value="encerrado">Encerrado</option>
               </select>
+              {(query || areaFilter !== 'todos' || statusFilter !== 'todos') && (
+                <button
+                  onClick={resetFilters}
+                  className="h-10 rounded-lg border border-border px-3 text-sm text-text-muted hover:bg-surface-alt transition-colors"
+                >
+                  Limpar filtros
+                </button>
+              )}
             </div>
 
             <PageState

@@ -27,6 +27,8 @@ import {
   CircleDollarSign,
   LayoutTemplate,
   HelpCircle,
+  Lock,
+  CreditCard,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -52,6 +54,8 @@ type NavItem = {
   label: string
   to: string
   icon: React.ComponentType<{ className?: string }>
+  locked?: boolean
+  minPlan?: string
 }
 
 const adminNavItems = [
@@ -62,8 +66,8 @@ const adminNavItems = [
 ]
 
 const orgAdminNavItems = [
-  { label: 'Configuracoes Org', to: '/org/settings', icon: Settings },
-  { label: 'Usuarios da Org', to: '/org/users', icon: Users },
+  { label: 'Configuracoes Org', to: '/app/org-settings', icon: Settings },
+  { label: 'Membros',           to: '/app/membros',      icon: Users },
 ]
 
 export const AppShell = () => {
@@ -92,10 +96,11 @@ export const AppShell = () => {
       {
         label: 'Operacao',
         items: [
-          { label: 'Dashboard',     to: '/app/dashboard',      icon: LayoutDashboard },
-          { label: 'Agenda',        to: '/app/agenda',         icon: CalendarClock },
-          { label: 'Tarefas',       to: '/app/tarefas',        icon: ListTodo },
-          ...(canUseTimesheet ? [{ label: 'Timesheet', to: '/app/timesheet', icon: Clock }] : []),
+          { label: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
+          { label: 'Agenda',    to: '/app/agenda',    icon: CalendarClock },
+          { label: 'Tarefas',   to: '/app/tarefas',   icon: ListTodo },
+          { label: 'Timesheet', to: '/app/timesheet',  icon: Clock,
+            locked: !canUseTimesheet, minPlan: 'Profissional' },
         ],
       },
       {
@@ -109,22 +114,24 @@ export const AppShell = () => {
       {
         label: 'Conteudo',
         items: [
-          { label: 'Documentos',     to: '/app/documentos',     icon: FileText },
-          ...(canUseTemplates ? [{ label: 'Templates', to: '/app/documentos/templates', icon: LayoutTemplate }] : []),
-          { label: 'DataJud',        to: '/app/datajud',        icon: Database },
-          ...(canUseDOU ? [{ label: 'Diário Oficial', to: '/app/diario-oficial', icon: Newspaper }] : []),
+          { label: 'Documentos',     to: '/app/documentos',            icon: FileText },
+          { label: 'Templates',      to: '/app/documentos/templates',  icon: LayoutTemplate,
+            locked: !canUseTemplates, minPlan: 'Profissional' },
+          { label: 'DataJud',        to: '/app/datajud',               icon: Database },
+          { label: 'Diário Oficial', to: '/app/diario-oficial',        icon: Newspaper,
+            locked: !canUseDOU, minPlan: 'Profissional' },
         ],
       },
     ]
     if (isOrgAdmin) {
-      const governancaItems: NavItem[] = [
-        ...(canUseAuditoria  ? [{ label: 'Auditoria',  to: '/app/auditoria',  icon: ShieldCheck }]     : []),
-        ...(canUseAnalytics  ? [{ label: 'Analytics',  to: '/app/analytics',  icon: BarChart3 }]       : []),
-        ...(canUseFinanceiro ? [{ label: 'Financeiro', to: '/app/financeiro', icon: CircleDollarSign }] : []),
-      ]
-      if (governancaItems.length > 0) {
-        groups.push({ label: 'Governanca', items: governancaItems })
-      }
+      groups.push({
+        label: 'Governanca',
+        items: [
+          { label: 'Auditoria',  to: '/app/auditoria',  icon: ShieldCheck,       locked: !canUseAuditoria,  minPlan: 'Profissional' },
+          { label: 'Analytics',  to: '/app/analytics',  icon: BarChart3,          locked: !canUseAnalytics,  minPlan: 'Profissional' },
+          { label: 'Financeiro', to: '/app/financeiro', icon: CircleDollarSign,   locked: !canUseFinanceiro, minPlan: 'Profissional' },
+        ],
+      })
     }
     return groups
   }, [isOrgAdmin, canUseDOU, canUseAuditoria, canUseAnalytics, canUseFinanceiro, canUseTimesheet, canUseTemplates])
@@ -167,13 +174,13 @@ export const AppShell = () => {
 
   const profilePath = React.useMemo(() => {
     if (location.pathname.startsWith('/admin')) return '/admin/perfil'
-    if (location.pathname.startsWith('/org')) return '/org/perfil'
     return '/app/perfil'
   }, [location.pathname])
 
   const administrationItems = React.useMemo(() => {
     const items: NavItem[] = [
-      { label: 'Configuracoes', to: '/app/config', icon: Settings },
+      { label: 'Meu Plano',     to: '/app/plano',  icon: CreditCard },
+      { label: 'Configuracoes', to: '/app/config',  icon: Settings },
     ]
     if (isOrgAdmin) {
       items.push(...orgAdminNavItems)
@@ -314,11 +321,11 @@ export const AppShell = () => {
               : location.pathname
             return (
               <div key={group.label} className="space-y-1">
-                {index > 0 && <div className="my-4" />}
+                {index > 0 && <div className="my-2" />}
 
                 {/* Section Title */}
                 {!sidebarCollapsed && (
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <div className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     {group.label}
                   </div>
                 )}
@@ -330,6 +337,34 @@ export const AppShell = () => {
                 <div className="space-y-1 relative">
                   {group.items.map((item) => {
                     const isActive = normalizedPath.startsWith(item.to)
+
+                    if (item.locked) {
+                      return (
+                        <button
+                          key={item.to}
+                          type="button"
+                          title={sidebarCollapsed ? `${item.label} — ${item.minPlan}` : undefined}
+                          onClick={() => navigate('/app/plano')}
+                          className={cn(
+                            'w-full flex items-center rounded-lg text-sm font-medium cursor-pointer opacity-50',
+                            sidebarCollapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-2',
+                            'text-gray-400 hover:bg-gray-50 hover:opacity-70 transition-all duration-200'
+                          )}
+                        >
+                          <div className="shrink-0 relative">
+                            <item.icon className="h-5 w-5" />
+                            <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-400" />
+                          </div>
+                          {!sidebarCollapsed && (
+                            <>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              <span className="text-[10px] text-gray-400 font-normal">{item.minPlan}</span>
+                            </>
+                          )}
+                        </button>
+                      )
+                    }
+
                     return (
                       <NavLink
                         key={item.to}
@@ -337,7 +372,7 @@ export const AppShell = () => {
                         title={sidebarCollapsed ? item.label : undefined}
                         className={cn(
                           'w-full flex items-center rounded-lg text-sm font-medium transition-all duration-200',
-                          sidebarCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5',
+                          sidebarCollapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-2',
                           isActive
                             ? 'text-gray-900'
                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -445,7 +480,7 @@ export const AppShell = () => {
                   : location.pathname
                 return (
                   <div key={group.label} className="space-y-1">
-                    {index > 0 && <div className="my-4" />}
+                    {index > 0 && <div className="my-2" />}
 
                     <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                       {group.label}
@@ -454,6 +489,25 @@ export const AppShell = () => {
                     <div className="space-y-1">
                       {group.items.map((item) => {
                         const isActive = normalizedPath.startsWith(item.to)
+
+                        if (item.locked) {
+                          return (
+                            <button
+                              key={item.to}
+                              type="button"
+                              onClick={() => { setMobileMenuOpen(false); navigate('/app/plano') }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-50 opacity-50 transition-all duration-200"
+                            >
+                              <div className="relative shrink-0">
+                                <item.icon className="h-5 w-5" />
+                                <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-400" />
+                              </div>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              <span className="text-[10px] text-gray-400 font-normal">{item.minPlan}</span>
+                            </button>
+                          )
+                        }
+
                         return (
                           <NavLink
                             key={item.to}
@@ -486,7 +540,10 @@ export const AppShell = () => {
 
       {/* Header */}
       <header
-        className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 right-0 z-20 left-0 lg:left-64"
+        className={cn(
+          "h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 right-0 z-20 left-0 transition-all duration-300",
+          sidebarCollapsed ? "lg:left-20" : "lg:left-64"
+        )}
       >
         <div className="flex items-center gap-3">
           {/* Mobile Menu Toggle */}

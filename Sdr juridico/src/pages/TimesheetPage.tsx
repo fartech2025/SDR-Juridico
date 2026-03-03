@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Clock, Plus, CheckCheck, DollarSign, FileText, AlertCircle, Pencil, Trash2 } from 'lucide-react'
+import { Clock, Plus, CheckCheck, DollarSign, FileText, AlertCircle, Pencil, Trash2, X } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -81,6 +81,10 @@ function TimesheetContent() {
   const { user } = useCurrentUser()
   const { isOrgAdmin, isFartechAdmin } = usePermissionsContext()
   const isGestor = isOrgAdmin || isFartechAdmin
+  const { canUseFinanceiro } = usePlan()
+  const [showFinanceiroBanner, setShowFinanceiroBanner] = React.useState(
+    !canUseFinanceiro && !sessionStorage.getItem('sdr_timesheet_fin_banner_dismissed'),
+  )
 
   const {
     entries,
@@ -277,6 +281,27 @@ function TimesheetContent() {
           </Button>
         </div>
       </div>
+
+      {/* ── Banner: Financeiro necessário para Faturar ────────────────────────── */}
+      {showFinanceiroBanner && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <div className="flex-1 text-sm text-amber-800">
+            O botão <strong>"Faturar Período"</strong> requer o módulo Financeiro (Plano Profissional).{' '}
+            <a href="/app/config" className="underline font-medium">Configure seu plano em Configurações.</a>
+          </div>
+          <button
+            onClick={() => {
+              sessionStorage.setItem('sdr_timesheet_fin_banner_dismissed', '1')
+              setShowFinanceiroBanner(false)
+            }}
+            className="shrink-0 text-amber-500 hover:text-amber-700"
+            aria-label="Fechar aviso"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* ── KPIs ──────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react'
-import { Download, Save } from 'lucide-react'
+import { Download, Save, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
@@ -297,6 +297,19 @@ export function TemplateGerarModal({ open, onClose, template, branding, caso, on
           {tab === 'form' ? (
             /* ── Form ─────────────────────────────────────────────────────────── */
             <div className="space-y-4 p-5">
+              {/* Hint: variáveis de caso sem caso selecionado */}
+              {!caso && template.variaveis.some((v) =>
+                ['responsavel', 'advogado', 'nome_cliente', 'numero_processo', 'tribunal'].includes(v.key) ||
+                (v.defaultValue ?? '').match(/\$(responsavel|advogado)/)
+              ) && (
+                <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+                  <p className="text-xs text-blue-700">
+                    Selecione um caso vinculado para resolver variáveis como <strong>responsável</strong> e <strong>advogado</strong> automaticamente.
+                  </p>
+                </div>
+              )}
+
               {template.variaveis.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">
                   Este template não tem variáveis. Clique em "Baixar PDF" para gerar o documento.

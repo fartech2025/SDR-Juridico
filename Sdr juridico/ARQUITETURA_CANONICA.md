@@ -1,12 +1,34 @@
 # 🏗️ ARQUITETURA CANÔNICA — SDR JURÍDICO
 
-**Versão:** 2.9.0
-**Data:** 28 de fevereiro de 2026
+**Versão:** 3.0.0
+**Data:** 3 de março de 2026
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v3.0.0 (3 de março de 2026)
+- ✅ **Sidebar com cadeado (`AppShell.tsx`)**: tipo `NavItem` estendido com `locked?: boolean` e `minPlan?: string`. Itens bloqueados renderizam como `<button>` com `opacity-50`, ícone `<Lock>` no canto inferior direito do ícone principal, e clique redireciona para `/app/plano` (nunca navega para a rota bloqueada). Itens desbloqueados continuam como `<NavLink>`. Aplicado para Timesheet, Templates, Diário Oficial, Auditoria, Analytics e Financeiro. Menu mobile também trata itens locked com branch separado.
+- ✅ **Grupo Governança sempre visível para `org_admin`**: removida condição `if (governancaItems.length > 0)`. Grupo sempre aparece com itens individualmente locked quando plano insuficiente.
+- ✅ **Sidebar compactado**: itens reduzidos de `py-2.5` para `py-2`; labels de grupos de `py-2` para `py-1`; separadores de `my-4` para `my-2`. Total ~248px economizados — grupo Administração visível sem scroll em telas de 900px+.
+- ✅ **`PlanPage` (`src/pages/PlanPage.tsx`)**: página nova em `/app/plano`. Layout canônico: header `rounded-3xl border-border bg-linear-to-br shadow-soft` (= UserProfilePage), Card do plano com descrição e CTA WhatsApp, Card de módulos com `divide-border` e badges coloridos por tier (Trial=cinza, Básico=azul, Profissional=roxo, Enterprise=vermelho). Não requer role especial — visível para todos.
+- ✅ **Rota `/app/plano`**: adicionada em `router.tsx`. Entrada "Meu Plano" (ícone `CreditCard`) no grupo Administração do sidebar, sempre visível (sem feature gate).
+- ✅ **Rotas faltantes adicionadas em `router.tsx`**: `/app/perfil` (`UserProfilePage`), `/app/org-settings` (`OrgSettings`), `/app/membros` (`UserManagement`), `/app/dou-logs` (`DOUSyncLogsPage`), `/admin/perfil` (`UserProfilePage`).
+- ✅ **`orgAdminNavItems` corrigido**: links ajustados de `/org/settings` → `/app/org-settings` e `/org/users` → `/app/membros`.
+- ✅ **Header offset dinâmico (`AppShell.tsx`)**: header usa `sidebarCollapsed ? 'lg:left-20' : 'lg:left-64'` em vez de `lg:left-64` hardcoded. Agora acompanha o estado do sidebar.
+
+### v2.9.3 (3 de março de 2026)
+- ✅ **Filtros persistentes via URL (`useSearchParams`) — `LeadsPage`**: substituídos 4 `useState` (`query`, `statusFilter`, `heatFilter`, `activeTab`) por `useSearchParams` com params `q`, `status`, `heat`, `tab`. Setters usam padrão funcional `setParams(p => { p.set(...); return p })` para preservar outros params. `resetFilters` usa `p.delete()`.
+- ✅ **Filtros persistentes via URL — `CasosPage`**: params `q`, `area`, `status`. Adicionado `resetFilters` (ausente antes) e botão "Limpar filtros" visível quando algum filtro está ativo.
+- ✅ **Filtros persistentes via URL — `ClientesPage`**: params `q`, `status`, `health`, `area`, `owner`. `resetFilters` atualizado para `p.delete()`.
+- **Padrão de implementação**: `params.get('key') ?? 'valor_default'` para leitura; `setParams(p => { v ? p.set('k', v) : p.delete('k'); return p })` para escrita; nunca usar `setParams({})` puro pois apaga o param `?state` usado pelo `PageState`.
+
+### v2.9.2 (3 de março de 2026)
+- ✅ **`RolePicker` em `UserManagement.tsx`**: componente de seleção de papel substituiu o `<select>` em `InviteUserModal` e `EditUserModal`. Cards clicáveis (radio-style): nome + ícone Lucide + descrição curta. Card selecionado: `border: 2px solid #721011` + `background: rgba(114,16,17,0.06)`. Constantes `ORG_ROLE_DESCRIPTIONS` e `ORG_ROLE_ICONS` definidas localmente no arquivo (não em `enums.ts` — os 5 `OrgMemberRole` são diferentes dos `UserRole` canônicos).
+- ✅ **Banner Timesheet → Financeiro (`TimesheetPage.tsx`)**: banner âmbar dismissível via `sessionStorage` (key `sdr_timesheet_fin_banner_dismissed`). Visível somente quando `!canUseFinanceiro`. Informa que "Faturar Período" requer o módulo Financeiro com link para Configurações.
+- ✅ **Hint DOU (`DiarioOficialPage.tsx`)**: card informativo azul (`bg-blue-50 border-blue-100`) quando busca está vazia (`!publicacoes && !textoBusca && !cnpj && !numeroProcesso`). Cor azul é exceção ao padrão brand-red por ser dica neutra, não ação de marca.
+- ✅ **Hint `TemplateGerarModal`**: aviso inline quando template tem variáveis de caso (`responsavel`, `advogado`, `nome_cliente`, `numero_processo`, `tribunal`) mas nenhum caso foi selecionado. Usa ícone `Info` da Lucide.
 
 ### v2.9.1 (1 de março de 2026)
 - ✅ **`LeadDrawer` → Modal canônico**: convertido de `createPortal+<aside>` para `<Modal noPadding maxWidth="36rem">`. Layout interno: flex-column `(borderRadius:16, overflow:hidden, maxHeight:82vh)` com header/footer `flexShrink:0` e conteúdo `flex:1, minHeight:0, overflowY:auto`. Tabs com `borderBottom: '2px solid var(--brand-primary)'` inline. Footer: WhatsApp outline + Converter/Dossiê brand-primary inline style. Fix de cores: `frio` badge `text-blue-700` → `bg-sky-100 text-sky-700`; `em_andamento` task badge → `bg-amber-100 text-amber-700`.
@@ -111,7 +133,7 @@ Sistema de gestão jurídica SaaS multi-tenant com planos (trial → basic → p
 | 7 | **Nomenclatura**: colunas DB em `snake_case` português; types TS em `camelCase` inglês; mappers convertem |
 | 8 | **Card padrão**: `bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm` |
 | 9 | **Guards**: seguir SEMPRE a ordem obrigatória de verificações (ver seção GUARDS) |
-| 10 | **Onboarding**: guard vive dentro do `AppShell` (não no router); redireciona para wizard somente se `usuarios.onboarding_version === null && isOrgAdmin`; não-admins entram direto; `reloadProfile()` obrigatório após `completeUser()` antes de `navigate()` |
+| 10 | **Onboarding**: guard vive dentro do `AppShell` (não no router); redireciona para wizard somente se `currentOrg.onboarding_version === null && isOrgAdmin` (lê da tabela `orgs`); não-admins entram direto; sem dependência de `useCurrentUser` no guard |
 
 ---
 
@@ -436,15 +458,15 @@ const roleToPermissoes = (role: OrgMemberRole) => {
 
 ## 🚀 SISTEMA DE ONBOARDING (v2.9.0)
 
-### Dois Níveis de Rastreamento
+### Rastreamento de Onboarding
 
 | Tabela | Coluna | Controlado por | Usado para |
 |--------|--------|----------------|------------|
-| `usuarios` | `onboarding_version TEXT DEFAULT NULL` | `onboardingService.completeUser(userId, version)` | Guard de redirect (por usuário) |
-| `orgs` | `onboarding_version TEXT DEFAULT NULL` | `onboardingService.complete(orgId, version)` | WhatsNewModal (por org) |
+| `orgs` | `onboarding_version TEXT DEFAULT NULL` | `onboardingService.complete(orgId, version)` | Guard de redirect **e** WhatsNewModal |
 | `orgs` | `onboarding_step TEXT DEFAULT 'empresa'` | `onboardingService.updateStep(orgId, step)` | Retomada do wizard |
+| `usuarios` | `onboarding_version TEXT DEFAULT NULL` | `onboardingService.completeUser(userId, version)` | Registro auxiliar por usuário (não é lido pelo guard) |
 
-**Regra crítica**: o guard verifica `usuarios.onboarding_version` (via `useCurrentUser.onboardingVersion`), não `orgs.onboarding_version`. Isso permite que cada usuário faça seu onboarding independentemente.
+**Regra crítica**: o `OrgActiveGuard` verifica **`currentOrg.onboarding_version`** (tabela `orgs`, via `OrganizationContext`). **Não** lê `usuarios.onboarding_version`. `completeUser()` pode ser chamado para fins de auditoria/analytics, mas não desbloqueia o guard.
 
 ### Fluxo de decisão
 
@@ -459,7 +481,7 @@ AppShell — layout principal envolvido em <OrgActiveGuard>:
     │
     ▼
 OrgActiveGuard — passo 7:
-    ├─ useCurrentUser.onboardingVersion === null && isOrgAdmin && path ≠ /app/onboarding
+    ├─ isOrgAdmin && !currentOrg.onboarding_version && path ≠ /app/onboarding
     │       └──→ Navigate to /app/onboarding
     │
     └─ orgs.onboarding_version !== null && !== APP_VERSION && !isFartechAdmin
@@ -478,7 +500,7 @@ WhatsNewModal — handleAcknowledge:
 ```typescript
 onboardingService.updateStep(orgId, step)           // salva passo atual em orgs — não bloqueia
 onboardingService.complete(orgId, version)          // seta orgs.onboarding_version (para WhatsNew)
-onboardingService.completeUser(userId, version)     // seta usuarios.onboarding_version (para guard)
+onboardingService.completeUser(userId, version)     // seta usuarios.onboarding_version (auditoria — NÃO lido pelo guard)
 ```
 
 ### Padrão obrigatório na conclusão do wizard
@@ -487,21 +509,20 @@ onboardingService.completeUser(userId, version)     // seta usuarios.onboarding_
 // OnboardingPage — handleConcluirEIr
 const handleConcluirEIr = async (to: string) => {
   setSaving(true)
-  // 1. Registrar por usuário (crítico — é o que o guard verifica)
-  if (user) await onboardingService.completeUser(user.id, APP_VERSION)
-  // 2. Forçar re-fetch do useCurrentUser para destravar o guard
-  reloadProfile()
-  // 3. Registrar por org (melhor esforço — alimenta o WhatsNewModal)
+  // 1. Registrar na org (crítico — é o que o OrgActiveGuard verifica)
+  await onboardingService.complete(currentOrg.id, APP_VERSION)
+  // 2. Forçar re-fetch do OrganizationContext para destravar o guard
+  await reloadOrg()
+  // 3. Registrar por usuário (auxiliar — auditoria/analytics)
   try {
-    await onboardingService.complete(currentOrg.id, APP_VERSION)
-    await reloadOrg()
+    if (user) await onboardingService.completeUser(user.id, APP_VERSION)
   } catch { /* não bloqueia navegação */ }
   setSaving(false)
   navigate(to, { replace: true })
 }
 ```
 
-**Por que `reloadProfile()` é obrigatório?** Sem ele, `useCurrentUser.onboardingVersion` permanece `null` em memória após `completeUser()`, e o `OrgActiveGuard` redireciona de volta para `/app/onboarding`, criando um loop infinito.
+**Por que `reloadOrg()` é obrigatório?** Sem ele, `currentOrg.onboarding_version` permanece `null` em memória após `complete()`, e o `OrgActiveGuard` redireciona de volta para `/app/onboarding`, criando um loop infinito.
 
 ### Steps do Wizard
 
@@ -510,7 +531,7 @@ const handleConcluirEIr = async (to: string) => {
 | empresa | nome, cnpj, oab, telefone, email, áreas de atuação | ✅ (nome) | `organizationsService.update()` |
 | equipe | nome, email, role por convite | ❌ | `supabase.functions.invoke('invite-org-member')` |
 | integracoes | Google Calendar OAuth, Teams | ❌ | OAuth com `return_to=/app/onboarding` |
-| pronto | próximos passos clicáveis | — | `completeUser()` + `reloadProfile()` → navigate com `?tour=1` |
+| pronto | próximos passos clicáveis | — | `complete(orgId)` + `reloadOrg()` → navigate com `?tour=1` |
 
 ### `WhatsNewModal` — exibição no AppShell
 
@@ -626,6 +647,39 @@ import { Modal } from '@/components/ui/modal'
 **Props:** `open`, `onClose`, `title`, `description`, `footer`, `maxWidth`, `noPadding`, `className`
 **Implementação:** `createPortal` para `document.body`, z-index 9999, ESC para fechar, backdrop blur, body scroll lock.
 
+#### `noPadding` — layout de drawer dentro de modal
+
+Use `noPadding` para drawers de detalhe (LeadDrawer, ClienteDrawer) com layout totalmente customizado:
+
+```tsx
+<Modal noPadding open={open && !!item} onClose={onClose} maxWidth="36rem">
+  <div style={{ display: 'flex', flexDirection: 'column', borderRadius: 16, overflow: 'hidden', maxHeight: '82vh' }}>
+    {/* Header — flexShrink: 0 */}
+    <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>...</div>
+
+    {/* Content — scrollável */}
+    <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '20px 24px' }}>...</div>
+
+    {/* Footer — flexShrink: 0 */}
+    <div style={{ borderTop: '1px solid #e5e7eb', padding: '16px 24px', flexShrink: 0 }}>...</div>
+  </div>
+</Modal>
+```
+
+> `LeadDrawer` usa `maxWidth="36rem"`, `ClienteDrawer` usa `maxWidth="34rem"`. Ambos usam este padrão. **Nunca** `createPortal+<aside>` para drawers.
+
+#### `Button` — variant obrigatória para ações de marca
+
+```tsx
+// CORRETO — botão brand-primary (vermelho)
+<Button variant="primary">Novo Lançamento</Button>
+
+// ERRADO — renderiza como secondary (branco/cinza)
+<Button>Novo Lançamento</Button>
+```
+
+O `variant` padrão do `Button` é `'secondary'` (fundo branco). Toda ação principal DEVE especificar `variant="primary"` explicitamente.
+
 ### Card Padrão
 
 ```
@@ -728,8 +782,8 @@ if (loading || isLoading) return <>{loadingComponent}</>
 // 4. Fartech admin → bypassa tudo
 if (allowFartechAdmin && isFartechAdmin) return <>{children}</>
 
-// 5. Sem org → /no-organization
-if (!currentOrg) return <Navigate to="/no-organization" replace />
+// 5. Sem org → /login (usuário não tem org atribuída; re-autenticar ou contatar admin)
+if (!currentOrg) return <Navigate to="/login" replace />
 
 // 6. Org inativa → /org-suspended
 if (!isOrgActive) {
@@ -738,11 +792,11 @@ if (!isOrgActive) {
 }
 
 // 7. Onboarding pendente → /app/onboarding (SOMENTE org_admin)
-// Verifica usuarios.onboarding_version via useCurrentUser (não orgs.onboarding_version)
-// Isso permite rastreamento por usuário; reloadProfile() no wizard evita loop
+// Lê currentOrg.onboarding_version (tabela orgs) — NÃO useCurrentUser/usuarios
+// Não-admins entram direto sem redirect
 if (
-  onboardingVersion === null &&   // ← useCurrentUser.onboardingVersion (usuarios table)
   isOrgAdmin &&
+  !currentOrg.onboarding_version &&   // ← orgs.onboarding_version (OrganizationContext)
   !pathname.startsWith('/app/onboarding')
 ) {
   return <Navigate to="/app/onboarding" replace />
@@ -758,13 +812,13 @@ authLoading?  → Loading
 user?         → /login
 orgLoading?   → Loading
 fartech?      → ✅ children
-currentOrg?   → /no-organization
+currentOrg?   → /login
 isOrgActive?  → /org-suspended ou fallback
-usuarios.onboarding_version===null && isOrgAdmin? → /app/onboarding
+orgs.onboarding_version===null && isOrgAdmin? → /app/onboarding
 ✅ children
 ```
 
-**IMPORTANTE**: `OrgActiveGuard` vive dentro de `AppShell`, não no router. O `AppShell` tem um early return para `/app/onboarding` que renderiza full-screen sem sidebar, também envolvido em `<OrgActiveGuard>` para garantir as verificações 1-6.
+**IMPORTANTE**: `OrgActiveGuard` vive dentro de `AppShell`, não no router. O `AppShell` tem um early return para `/app/onboarding` que renderiza full-screen sem sidebar, também envolvido em `<OrgActiveGuard>` para garantir as verificações 1-6. O guard **não importa `useCurrentUser`** — toda verificação de onboarding usa `currentOrg` (OrganizationContext).
 
 ### Auditoria
 
@@ -889,10 +943,10 @@ nome_completo, email UK, telefone
 permissoes TEXT[] 'fartech_admin|org_admin|user'
 status 'ativo|inativo|suspenso'
 preferencias JSONB, ultimo_acesso TIMESTAMP
-onboarding_version TEXT DEFAULT NULL  ← NULL = wizard nunca feito por este usuário
+onboarding_version TEXT DEFAULT NULL  ← registro auxiliar por usuário (não lido pelo guard)
 ```
 
-**IMPORTANTE**: `usuariosService` deve incluir `onboarding_version` explicitamente em todas as queries `.select()` — o campo não é retornado por `select('*')` em alguns contextos de RLS.
+> O guard usa `orgs.onboarding_version`, não este campo. `completeUser()` pode ser chamado para auditoria, mas não é crítico para o fluxo de redirect.
 
 ### Tabela `org_branding`
 

@@ -1,7 +1,7 @@
 // UserManagement - Manage organization users (Org Admin+)
 // Date: 2026-01-13
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Modal } from '@/components/ui/modal'
 import {
@@ -16,6 +16,9 @@ import {
   User as UserIcon,
   Building2,
   Loader2,
+  Briefcase,
+  CalendarClock,
+  Eye,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrgAdminGuard } from '@/components/guards'
@@ -41,6 +44,22 @@ const ORG_ROLE_LABELS: Record<OrgMemberRole, string> = {
   advogado: 'Advogado',
   secretaria: 'Secretaria',
   leitura: 'Somente Leitura',
+}
+
+const ORG_ROLE_DESCRIPTIONS: Record<OrgMemberRole, string> = {
+  admin:      'Acesso total: configurações, faturamento e gestão de membros',
+  gestor:     'Gerencia equipe, casos e relatórios operacionais',
+  advogado:   'Cria e gerencia seus próprios casos, clientes e documentos',
+  secretaria: 'Gerencia agenda, tarefas e atendimento administrativo',
+  leitura:    'Somente visualização — não pode criar nem editar dados',
+}
+
+const ORG_ROLE_ICONS: Record<OrgMemberRole, React.ComponentType<{ style?: React.CSSProperties }>> = {
+  admin:      Shield,
+  gestor:     Users,
+  advogado:   Briefcase,
+  secretaria: CalendarClock,
+  leitura:    Eye,
 }
 
 export default function UserManagement() {
@@ -703,8 +722,10 @@ function InviteUserModal({
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '480px',
+          maxWidth: '520px',
           minWidth: '380px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
           boxSizing: 'border-box',
           background: '#fff',
           borderRadius: '16px',
@@ -828,39 +849,7 @@ function InviteUserModal({
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
               Função
             </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as OrgMemberRole)}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '12px 16px',
-                fontSize: 14,
-                color: 'var(--color-text, #000)',
-                background: 'var(--color-gray-50, #F8F7F6)',
-                border: '2px solid var(--color-gray-300, #C3BFB9)',
-                borderRadius: 10,
-                outline: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114, 16, 17, 0.08)'
-                e.currentTarget.style.background = '#fff'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
-                e.currentTarget.style.boxShadow = 'none'
-                e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
-              }}
-            >
-              {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+            <RolePicker value={role} onChange={setRole} />
           </div>
 
           {/* Actions */}
@@ -1009,8 +998,10 @@ function EditUserModal({
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '480px',
+          maxWidth: '520px',
           minWidth: '380px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
           boxSizing: 'border-box',
           background: '#fff',
           borderRadius: '16px',
@@ -1092,39 +1083,7 @@ function EditUserModal({
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #000)', letterSpacing: 0.3 }}>
               Função
             </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as OrgMemberRole)}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '12px 16px',
-                fontSize: 14,
-                color: 'var(--color-text, #000)',
-                background: 'var(--color-gray-50, #F8F7F6)',
-                border: '2px solid var(--color-gray-300, #C3BFB9)',
-                borderRadius: 10,
-                outline: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--brand-primary, #721011)'
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(114, 16, 17, 0.08)'
-                e.currentTarget.style.background = '#fff'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--color-gray-300, #C3BFB9)'
-                e.currentTarget.style.boxShadow = 'none'
-                e.currentTarget.style.background = 'var(--color-gray-50, #F8F7F6)'
-              }}
-            >
-              {(Object.entries(ORG_ROLE_LABELS) as [OrgMemberRole, string][]).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+            <RolePicker value={role} onChange={setRole} />
           </div>
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 500, color: 'var(--color-text, #000)', cursor: 'pointer', marginTop: 4 }}>
@@ -1293,6 +1252,79 @@ function RemoveUserModal({
         </div>
       </div>
     </Modal>
+  )
+}
+
+function RolePicker({ value, onChange }: { value: OrgMemberRole; onChange: (r: OrgMemberRole) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {(Object.keys(ORG_ROLE_LABELS) as OrgMemberRole[]).map((r) => {
+        const selected = value === r
+        const Icon = ORG_ROLE_ICONS[r]
+        return (
+          <button
+            key={r}
+            type="button"
+            onClick={() => onChange(r)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 14px',
+              borderRadius: 10,
+              border: selected ? '2px solid #721011' : '2px solid #E8E5E3',
+              background: selected ? 'rgba(114,16,17,0.06)' : '#fff',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!selected) e.currentTarget.style.background = '#F8F7F6'
+            }}
+            onMouseLeave={(e) => {
+              if (!selected) e.currentTarget.style.background = '#fff'
+            }}
+          >
+            <div style={{
+              flexShrink: 0,
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              background: selected ? 'rgba(114,16,17,0.1)' : '#F1F0EE',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Icon style={{ width: 16, height: 16, color: selected ? '#721011' : '#6B5E58' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: selected ? '#721011' : '#1a1a1a', lineHeight: 1.3 }}>
+                {ORG_ROLE_LABELS[r]}
+              </div>
+              <div style={{ fontSize: 12, color: '#6B5E58', lineHeight: 1.4, marginTop: 1 }}>
+                {ORG_ROLE_DESCRIPTIONS[r]}
+              </div>
+            </div>
+            {selected && (
+              <div style={{
+                flexShrink: 0,
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                background: '#721011',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            )}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 

@@ -70,12 +70,18 @@ export const LeadsPage = () => {
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
   const canManageLeads = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const { advogados } = useAdvogados(currentOrg?.id || null, canManageLeads)
-  const [params] = useSearchParams()
-  const [query, setQuery] = React.useState('')
-  const [statusFilter, setStatusFilter] = React.useState('todos')
-  const [heatFilter, setHeatFilter] = React.useState('todos')
+  const [params, setParams] = useSearchParams()
+  const query        = params.get('q')      ?? ''
+  const statusFilter = params.get('status') ?? 'todos'
+  const heatFilter   = params.get('heat')   ?? 'todos'
+  const activeTab    = params.get('tab')    ?? 'Todos'
+
+  const setQuery        = (v: string) => setParams(p => { v ? p.set('q', v) : p.delete('q'); return p })
+  const setStatusFilter = (v: string) => setParams(p => { v !== 'todos' ? p.set('status', v) : p.delete('status'); return p })
+  const setHeatFilter   = (v: string) => setParams(p => { v !== 'todos' ? p.set('heat', v) : p.delete('heat'); return p })
+  const setActiveTab    = (v: string) => setParams(p => { v !== 'Todos' ? p.set('tab', v) : p.delete('tab'); return p })
+
   const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null)
-  const [activeTab, setActiveTab] = React.useState('Todos')
   const [showNewLeadForm, setShowNewLeadForm] = React.useState(false)
   const [editingLeadId, setEditingLeadId] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -180,7 +186,7 @@ export const LeadsPage = () => {
 
   const relatedCase = selectedLead ? casos.find(c => c.leadId === selectedLead.id) : undefined
 
-  const resetFilters = () => { setQuery(''); setStatusFilter('todos'); setHeatFilter('todos') }
+  const resetFilters = () => setParams(p => { p.delete('q'); p.delete('status'); p.delete('heat'); p.delete('tab'); return p })
   const resetLeadForm = () => { setFormData(initialFormData); setEditingLeadId(null) }
 
   const handleEditLead = async (leadId: string) => {

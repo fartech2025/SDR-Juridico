@@ -29,6 +29,10 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import UserManagement from '@/pages/UserManagement'
+import PlanPage from '@/pages/PlanPage'
+import { UserProfilePage } from '@/pages/UserProfilePage'
+import DOUSyncLogsPage from '@/pages/DOUSyncLogsPage'
+import OrgSettings from '@/pages/OrgSettings'
 import {
   FartechDashboard,
   OrganizationsList,
@@ -118,8 +122,28 @@ export const router = createBrowserRouter([
         element: <Navigate to="/app/analytics" replace />,
       },
       {
+        path: 'plano',
+        element: <PlanPage />,
+      },
+      {
+        path: 'perfil',
+        element: <UserProfilePage />,
+      },
+      {
         path: 'config',
         element: <ConfigPage />,
+      },
+      {
+        path: 'org-settings',
+        element: <OrgSettings />,
+      },
+      {
+        path: 'membros',
+        element: <UserManagement />,
+      },
+      {
+        path: 'dou-logs',
+        element: <DOUSyncLogsPage />,
       },
       {
         path: 'datajud',
@@ -206,6 +230,10 @@ export const router = createBrowserRouter([
       {
         path: 'security/report',
         element: <SecurityReportPage />,
+      },
+      {
+        path: 'perfil',
+        element: <UserProfilePage />,
       },
     ],
   },

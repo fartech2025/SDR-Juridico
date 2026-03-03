@@ -121,12 +121,18 @@ export const ClientesPage = () => {
   const { currentRole, isFartechAdmin, currentOrg } = useOrganization()
   const canManageClientes = isFartechAdmin || ['org_admin', 'gestor', 'admin'].includes(currentRole || '')
   const { advogados } = useAdvogados(currentOrg?.id || null, canManageClientes)
-  const [params] = useSearchParams()
-  const [query, setQuery] = React.useState('')
-  const [statusFilter, setStatusFilter] = React.useState('todos')
-  const [healthFilter, setHealthFilter] = React.useState('todos')
-  const [areaFilter, setAreaFilter] = React.useState('todos')
-  const [ownerFilter, setOwnerFilter] = React.useState('todos')
+  const [params, setParams] = useSearchParams()
+  const query        = params.get('q')      ?? ''
+  const statusFilter = params.get('status') ?? 'todos'
+  const healthFilter = params.get('health') ?? 'todos'
+  const areaFilter   = params.get('area')   ?? 'todos'
+  const ownerFilter  = params.get('owner')  ?? 'todos'
+
+  const setQuery        = (v: string) => setParams(p => { v ? p.set('q', v) : p.delete('q'); return p })
+  const setStatusFilter = (v: string) => setParams(p => { v !== 'todos' ? p.set('status', v) : p.delete('status'); return p })
+  const setHealthFilter = (v: string) => setParams(p => { v !== 'todos' ? p.set('health', v) : p.delete('health'); return p })
+  const setAreaFilter   = (v: string) => setParams(p => { v !== 'todos' ? p.set('area', v) : p.delete('area'); return p })
+  const setOwnerFilter  = (v: string) => setParams(p => { v !== 'todos' ? p.set('owner', v) : p.delete('owner'); return p })
   const [showForm, setShowForm] = React.useState(false)
   const [editingClienteId, setEditingClienteId] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -284,13 +290,7 @@ export const ClientesPage = () => {
     </button>
   ) : null
 
-  const resetFilters = () => {
-    setQuery('')
-    setStatusFilter('todos')
-    setHealthFilter('todos')
-    setAreaFilter('todos')
-    setOwnerFilter('todos')
-  }
+  const resetFilters = () => setParams(p => { p.delete('q'); p.delete('status'); p.delete('health'); p.delete('area'); p.delete('owner'); return p })
 
   const resetClienteForm = () => {
     setFormData(initialFormData)
