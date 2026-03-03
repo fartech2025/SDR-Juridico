@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: app
+        working-directory: 'Sdr juridico'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,13 +18,13 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: app/package-lock.json
+          cache-dependency-path: 'Sdr juridico/package-lock.json'
 
-      - name: Install deps (optional)
+      - name: Install deps
         run: npm ci
 
-      - name: Run style lint (no arbitrary colors)
-        run: npm run lint:style
+      - name: Run ESLint
+        run: npm run lint
 
       - name: Build (sanity)
         run: npm run build
