@@ -130,9 +130,7 @@ export const LoginPage = () => {
     /* RIGHT — form panel */
     right: {
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      /* width & padding now handled by responsive classes */
+      flexDirection: 'column' as const,
       minHeight: '100vh',
       background: '#ffffff',
     } as React.CSSProperties,
@@ -228,15 +226,27 @@ export const LoginPage = () => {
       </div>
 
       {/* ════════════════ RIGHT PANEL — Login Form ════════════════ */}
-      <div style={s.right} className="w-full lg:w-[45%] py-12 px-12 lg:px-14 border border-red-500">
+      <div style={s.right} className="w-full lg:w-[45%]">
+
+        {/* ── Mobile branding strip (hidden on desktop) ── */}
+        <div className="lg:hidden" style={{
+          background: 'linear-gradient(135deg, #721011 0%, #4A0B0C 100%)',
+          padding: '28px 24px 22px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+          flexShrink: 0,
+        }}>
+          <img src={LOGO_URL} alt="TalentJUD" style={{ height: 56, objectFit: 'contain', borderRadius: 6 }} />
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, margin: 0, letterSpacing: '0.02em' }}>
+            Plataforma de gestão jurídica
+          </p>
+        </div>
+
+        {/* ── Form area ── */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '28px 24px 32px' }} className="lg:py-12 lg:px-14">
         <div style={s.formWrap}>
-          {/* Mobile logo */}
-          <div className="lg:hidden" style={{ textAlign: 'center', marginBottom: 32 }}>
-            <img src={LOGO_URL} alt="TalentJUD" style={{ height: 72, margin: '0 auto', borderRadius: 6, transform: 'scale(3)', transformOrigin: 'top center' }}/>
-          </div>
 
           {/* Header */}
-          <div style={{ marginBottom: 36 }}>
+          <div className="login-header-gap" style={{ marginBottom: 36 }}>
             <h2 style={{ fontSize: 28, fontWeight: 700, color: '#0f172a', margin: '0 0 8px', lineHeight: 1.2 }}>
               Bem-vindo de volta
             </h2>
@@ -248,7 +258,7 @@ export const LoginPage = () => {
           {/* Form */}
           <form onSubmit={handleSubmit}>
             {/* Email */}
-            <div style={{ marginBottom: 20 }}>
+            <div className="login-field-gap" style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#475569', marginBottom: 6 }}>
                 E-mail
               </label>
@@ -277,7 +287,7 @@ export const LoginPage = () => {
             </div>
 
             {/* Password */}
-            <div style={{ marginBottom: 20 }}>
+            <div className="login-field-gap" style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#475569', marginBottom: 6 }}>
                 Senha
               </label>
@@ -325,7 +335,7 @@ export const LoginPage = () => {
             </div>
 
             {/* Remember + Forgot */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+            <div className="login-remember-gap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#64748b' }}>
                 <input type="checkbox" style={{ accentColor: 'var(--brand-primary)', width: 16, height: 16 }}/>
                 Lembrar-me
@@ -425,20 +435,20 @@ export const LoginPage = () => {
           </button>
 
           {/* Footer */}
-          <p style={{ marginTop: 32, textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>
+          <p style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>
             © 2026 TalentJUD. Todos os direitos reservados.
           </p>
         </div>
+        </div>{/* /form area */}
       </div>
 
-      {/* Mobile: full-width when left panel is hidden */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
         @keyframes spin { to { transform: rotate(360deg) } }
         @media (max-width: 1023px) {
-          /* on mobile hide left and make right full */
-          div[style] > div:first-child { display: none !important; }
-          div[style] > div:last-child  { width: 100% !important; padding: 32px 24px !important; }
+          .login-header-gap { margin-bottom: 20px !important; }
+          .login-field-gap  { margin-bottom: 14px !important; }
+          .login-remember-gap { margin-bottom: 18px !important; }
         }
       `}</style>
     </div>
