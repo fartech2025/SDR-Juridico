@@ -48,9 +48,23 @@ jobs:
         run: vercel build --prod --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (Prod)
+        id: deploy
         working-directory: 'Sdr juridico'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN")
+          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to: $DEPLOY_URL"
+
+      - name: Alias to production URL
+        working-directory: 'Sdr juridico'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          vercel alias set "${{ steps.deploy.outputs.deploy_url }}" sdr-juridico.vercel.app --token "$VERCEL_TOKEN"
+          echo "Aliased ${{ steps.deploy.outputs.deploy_url }} → sdr-juridico.vercel.app"
