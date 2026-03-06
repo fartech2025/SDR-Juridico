@@ -293,70 +293,50 @@ export const documentoTemplateService = {
     const today   = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
     const fileName = `${template.titulo} - ${today}.pdf`
 
-    // ── Tentativa de upload para Drive ─────────────────────────────────────
-    let driveFileId: string | null   = null
-    let driveProvider: string | null = null
-    let driveUrl: string | null      = null
-    let storagePath: string | null   = null
+    // ── Upload para Drive (obrigatório — sem fallback para Storage) ────────
+    const { driveService } = await import('./driveService')
+    const googleOk   = await driveService.isConnected('google_drive')
+    const onedriveOk = await driveService.isConnected('onedrive')
+    const provider   = googleOk ? 'google_drive' : onedriveOk ? 'onedrive' : null
 
-    try {
-      const { driveService } = await import('./driveService')
-      const googleOk    = await driveService.isConnected('google_drive')
-      const onedriveOk  = await driveService.isConnected('onedrive')
-      const provider    = googleOk ? 'google_drive' : onedriveOk ? 'onedrive' : null
+    if (!provider) {
+      throw new AppError(
+        'Conecte o Google Drive ou OneDrive em Configurações → Integrações para gerar documentos.',
+        'drive_not_connected',
+      )
+    }
 
-      if (provider) {
-        const rootId    = await driveService.ensureFolder(provider, 'SDR Jurídico')
-        let targetId    = rootId
+    const rootId   = await driveService.ensureFolder(provider, 'SDR Jurídico')
+    let targetId   = rootId
 
-        if (casoId) {
-          const { data: caso } = await supabase.from('casos').select('titulo').eq('id', casoId).maybeSingle()
-          if (caso?.titulo) {
-            targetId = await driveService.ensureFolder(provider, `Caso - ${(caso as { titulo: string }).titulo}`, rootId)
-          }
-        }
-
-        const uploaded  = await driveService.uploadPdf(provider, pdfBlob, fileName, targetId)
-        driveFileId     = uploaded.fileId
-        driveProvider   = provider
-        driveUrl        = uploaded.webViewLink
+    if (casoId) {
+      const { data: caso } = await supabase.from('casos').select('titulo').eq('id', casoId).maybeSingle()
+      if (caso?.titulo) {
+        targetId = await driveService.ensureFolder(provider, `Caso - ${(caso as { titulo: string }).titulo}`, rootId)
       }
-    } catch {
-      // Drive falhou — segue para fallback Storage
     }
 
-    // ── Fallback: Supabase Storage ─────────────────────────────────────────
-    if (!driveFileId) {
-      const ts  = Date.now()
-      const rnd = Math.random().toString(36).substring(2, 9)
-      const path = `${userId}/${orgId}/${ts}_${rnd}.pdf`
-      const { error: storErr } = await supabase.storage
-        .from('documentos')
-        .upload(path, pdfBlob, { contentType: 'application/pdf', upsert: false })
-      if (!storErr) storagePath = path
-    }
+    const uploaded = await driveService.uploadPdf(provider, pdfBlob, fileName, targetId)
 
     // ── Registra metadados na tabela documentos ────────────────────────────
     const docPayload: Record<string, unknown> = {
-      org_id:        orgId,
-      title:         template.titulo,
-      bucket:        'docs',
-      storage_path:  storagePath ?? '',
-      mime_type:     'application/pdf',
-      size_bytes:    pdfBlob.size,
-      caso_id:       casoId ?? null,
-      uploaded_by:   userId ?? null,
+      org_id:           orgId,
+      title:            template.titulo,
+      bucket:           'docs',
+      storage_path:     '',
+      mime_type:        'application/pdf',
+      size_bytes:       pdfBlob.size,
+      caso_id:          casoId ?? null,
+      uploaded_by:      userId ?? null,
+      drive_file_id:    uploaded.fileId,
+      drive_provider:   provider,
+      drive_url:        uploaded.webViewLink,
       meta: {
         status:              'pendente',
         tipo:                template.categoria,
         arquivo_nome:        fileName,
         gerado_de_template:  template.id,
       },
-    }
-    if (driveFileId) {
-      docPayload.drive_file_id  = driveFileId
-      docPayload.drive_provider = driveProvider
-      docPayload.drive_url      = driveUrl
     }
 
     const { data, error } = await supabase
@@ -367,7 +347,6 @@ export const documentoTemplateService = {
 
     if (error) throw new AppError(error.message, 'database_error')
 
-    const finalUrl = driveUrl ?? storagePath ?? ''
-    return { documentoId: (data as { id: string }).id, url: finalUrl }
+    return { documentoId: (data as { id: string }).id, url: uploaded.webViewLink }
   },
 }

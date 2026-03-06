@@ -192,6 +192,44 @@ export const driveService = {
     }
   },
 
+  // Upload genérico — aceita qualquer MIME type (PDF, DOCX, imagem, etc.)
+  async uploadFile(
+    provider: DriveProvider,
+    blob: Blob,
+    fileName: string,
+    mimeType: string,
+    folderId?: string,
+  ): Promise<DriveUploadResult> {
+    const token = await getAccessToken(provider)
+
+    if (provider === 'google_drive') {
+      const metadata: Record<string, unknown> = { name: fileName, mimeType }
+      if (folderId) metadata.parents = [folderId]
+      const form = new FormData()
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
+      form.append('file', blob, fileName)
+      const resp = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form },
+      )
+      if (!resp.ok) throw new Error(await extractGoogleError(resp, 'Erro ao fazer upload para o Google Drive'))
+      const json = (await resp.json()) as { id: string; webViewLink: string }
+      return { fileId: json.id, webViewLink: json.webViewLink }
+    } else {
+      const baseUrl = folderId
+        ? `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}:/${encodeURIComponent(fileName)}:/content`
+        : `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content`
+      const resp = await fetch(baseUrl, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': mimeType },
+        body: blob,
+      })
+      if (!resp.ok) throw new Error('Erro ao fazer upload para o OneDrive')
+      const json = (await resp.json()) as { id: string; webUrl: string }
+      return { fileId: json.id, webViewLink: json.webUrl }
+    }
+  },
+
   // Cria (ou recupera) uma pasta no Drive. Retorna o folderId.
   async ensureFolder(provider: DriveProvider, folderName: string, parentId?: string): Promise<string> {
     const token = await getAccessToken(provider)

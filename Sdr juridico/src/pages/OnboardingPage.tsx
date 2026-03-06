@@ -7,7 +7,7 @@ import {
   Building2, Users, Plug, CheckCircle2,
   ChevronRight, ChevronLeft, Loader2, Plus, X, Check, AlertCircle,
   ArrowRight, Scale, FolderKanban, ClipboardList, Eye,
-  Zap, FileText, Bell, CalendarDays, MessageSquare,
+  Zap, FileText, Bell, CalendarDays, MessageSquare, HardDrive,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useOrganizationContext } from '@/contexts/OrganizationContext'
@@ -262,7 +262,10 @@ export function OnboardingPage() {
   const [inviting,     setInviting]     = React.useState(false)
 
   // Step 3 — Integrações
-  const [gcConnected, setGcConnected] = React.useState(false)
+  const [gcConnected,    setGcConnected]    = React.useState(false)
+  const [driveConnected, setDriveConnected] = React.useState(false)
+  const [driveChecking,  setDriveChecking]  = React.useState(false)
+  const [driveError,     setDriveError]     = React.useState<string | null>(null)
 
   // Ensure default integrations exist on mount
   React.useEffect(() => {
@@ -277,13 +280,29 @@ export function OnboardingPage() {
     if (gcInt?.status === 'connected') setGcConnected(true)
   }, [integrations])
 
+  // Check Google Drive status (lazy import para não bloquear o bundle)
+  const checkDriveStatus = React.useCallback(async () => {
+    setDriveChecking(true)
+    setDriveError(null)
+    try {
+      const { driveService } = await import('@/services/driveService')
+      const ok = await driveService.isConnected('google_drive')
+      setDriveConnected(ok)
+      if (!ok) setDriveError('Google Drive não conectado')
+    } catch {
+      setDriveConnected(false)
+    } finally {
+      setDriveChecking(false)
+    }
+  }, [])
+
+  const gdQueryStatus = new URLSearchParams(location.search).get('google_drive')
+
   React.useEffect(() => {
     if (gcQueryStatus === 'connected') {
       setGcConnected(true)
       toast.success('Google Calendar conectado com sucesso!')
-      // Clear query param from URL without re-render
       window.history.replaceState({}, '', '/app/onboarding')
-      // Navigate back to integracoes step if returning from OAuth mid-wizard
       if (step !== 'integracoes') {
         setAnimDir('forward')
         setAnimKey(k => k + 1)
@@ -296,6 +315,29 @@ export function OnboardingPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcQueryStatus])
+
+  React.useEffect(() => {
+    if (gdQueryStatus === 'connected') {
+      toast.success('Google Drive conectado com sucesso!')
+      window.history.replaceState({}, '', '/app/onboarding')
+      void checkDriveStatus()
+      if (step !== 'integracoes') {
+        setAnimDir('forward')
+        setAnimKey(k => k + 1)
+        setStep('integracoes')
+      }
+    }
+    if (gdQueryStatus === 'error') {
+      toast.error('Falha ao conectar o Google Drive. Tente novamente.')
+      window.history.replaceState({}, '', '/app/onboarding')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gdQueryStatus])
+
+  // Verifica drive ao entrar na step de integrações
+  React.useEffect(() => {
+    if (step === 'integracoes') void checkDriveStatus()
+  }, [step, checkDriveStatus])
 
   // ── Navigation helpers ───────────────────────────────────────────────────
 
@@ -403,6 +445,21 @@ export function OnboardingPage() {
       toast.success(`${updated.length} convite${updated.length > 1 ? 's' : ''} enviado${updated.length > 1 ? 's' : ''}!`)
       setTimeout(() => goToStep('integracoes'), 1200)
     }
+  }
+
+  // ── Step 3 — Google Drive OAuth ─────────────────────────────────────────
+
+  const handleGoogleDriveConnect = () => {
+    if (!currentOrg) return
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    if (!supabaseUrl) { toast.error('Configuração incompleta.'); return }
+
+    const returnTo  = `${window.location.origin}/app/onboarding`
+    const oauthUrl  = new URL(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/google-drive-oauth`)
+    oauthUrl.searchParams.set('org_id',    currentOrg.id)
+    oauthUrl.searchParams.set('return_to', returnTo)
+
+    window.location.href = oauthUrl.toString()
   }
 
   // ── Step 3 — Google Calendar OAuth ──────────────────────────────────────
@@ -593,7 +650,11 @@ export function OnboardingPage() {
           {step === 'integracoes' && (
             <StepIntegracoes
               gcConnected={gcConnected}
+              driveConnected={driveConnected}
+              driveChecking={driveChecking}
+              driveError={driveError}
               onGoogleConnect={handleGoogleCalendarConnect}
+              onDriveConnect={handleGoogleDriveConnect}
               onContinue={() => goToStep('pronto')}
               onSkip={() => goToStep('pronto')}
               onBack={goBack}
@@ -844,14 +905,20 @@ function StepEquipe({
 // ---------------------------------------------------------------------------
 
 function StepIntegracoes({
-  gcConnected, onGoogleConnect, onContinue, onSkip, onBack,
+  gcConnected, driveConnected, driveChecking, driveError,
+  onGoogleConnect, onDriveConnect, onContinue, onSkip, onBack,
 }: {
   gcConnected: boolean
+  driveConnected: boolean
+  driveChecking: boolean
+  driveError: string | null
   onGoogleConnect: () => void
+  onDriveConnect: () => void
   onContinue: () => void
   onSkip: () => void
   onBack: () => void
 }) {
+  const allConnected = gcConnected && driveConnected
   return (
     <div style={{ padding: '28px 36px' }}>
       <StepHeader icon={<Plug className="h-5 w-5" style={{ color: '#ca8a04' }} />} bg="#fefce8"
@@ -894,6 +961,43 @@ function StepIntegracoes({
           )}
         </div>
 
+        {/* Google Drive */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 18px',
+          border: `1px solid ${driveConnected ? '#bbf7d0' : driveError ? '#fde68a' : '#e5e7eb'}`,
+          borderRadius: 12,
+          backgroundColor: driveConnected ? '#f0fdf4' : driveError ? '#fffbeb' : '#fff',
+          transition: 'all 0.25s',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 10, flexShrink: 0,
+              backgroundColor: '#fff', border: '1px solid #e5e7eb',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}><HardDrive className="h-5 w-5" style={{ color: driveConnected ? '#16a34a' : '#721011' }} /></div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0 }}>Google Drive</p>
+              <p style={{ fontSize: 12, color: driveConnected ? '#16a34a' : '#9ca3af', margin: 0 }}>
+                {driveConnected
+                  ? 'Conectado — documentos salvos na sua conta'
+                  : 'Obrigatório para gerar e armazenar documentos'}
+              </p>
+            </div>
+          </div>
+          {driveChecking ? (
+            <Loader2 className="h-4 w-4 animate-spin text-gray-400" style={{ flexShrink: 0 }} />
+          ) : driveConnected ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#16a34a', flexShrink: 0 }}>
+              <CheckCircle2 className="h-4 w-4" /> Conectado
+            </span>
+          ) : (
+            <button onClick={onDriveConnect} style={{ ...secondaryBtnStyle, backgroundColor: '#fef2f2', borderColor: '#fecaca', color: '#721011' }}>
+              Conectar
+            </button>
+          )}
+        </div>
+
         {/* Microsoft Teams — sem OAuth próprio ainda */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -906,19 +1010,29 @@ function StepIntegracoes({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}><MessageSquare className="h-5 w-5 text-gray-400" /></div>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: '#6b7280', margin: 0 }}>Microsoft Teams</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#6b7280', margin: 0 }}>Microsoft Teams / OneDrive</p>
               <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Disponível em Configurações → Integrações</p>
             </div>
           </div>
           <span style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic', flexShrink: 0 }}>Em breve</span>
         </div>
 
-        {/* Aviso pós-OAuth: se já conectado, mostrar CTA de continuar */}
-        {gcConnected && (
+        {/* Banner de sucesso quando ambos conectados */}
+        {allConnected && (
           <div style={{ padding: '12px 16px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10 }}>
             <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>
               <CheckCircle2 className="h-4 w-4 inline-block mr-1" style={{ color: '#16a34a', verticalAlign: 'text-bottom' }} />
-              Google Calendar conectado. Seus compromissos serão sincronizados automaticamente.
+              Tudo pronto! Calendar e Drive conectados.
+            </p>
+          </div>
+        )}
+
+        {/* Aviso: Drive obrigatório */}
+        {!driveConnected && !driveChecking && (
+          <div style={{ padding: '12px 16px', backgroundColor: '#fef3c7', border: '1px solid #fde68a', borderRadius: 10 }}>
+            <p style={{ fontSize: 13, color: '#92400e', margin: 0 }}>
+              <AlertCircle className="h-4 w-4 inline-block mr-1" style={{ verticalAlign: 'text-bottom' }} />
+              O Google Drive é necessário para gerar e salvar documentos no sistema.
             </p>
           </div>
         )}
@@ -927,16 +1041,15 @@ function StepIntegracoes({
       <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <GhostBtn onClick={onBack}><ChevronLeft className="h-4 w-4 mr-1" /> Voltar</GhostBtn>
-          {!gcConnected && <GhostBtn onClick={onSkip}>Pular</GhostBtn>}
+          {!driveConnected && <GhostBtn onClick={onSkip}>Pular</GhostBtn>}
         </div>
         <PrimaryBtn onClick={onContinue}>
-          Continuar <ChevronRight className="h-4 w-4 ml-1" />
+          {driveConnected ? 'Continuar' : 'Continuar assim mesmo'} <ChevronRight className="h-4 w-4 ml-1" />
         </PrimaryBtn>
       </div>
     </div>
   )
 }
-
 // ---------------------------------------------------------------------------
 // Step 4 — Pronto!
 // ---------------------------------------------------------------------------

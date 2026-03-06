@@ -21,6 +21,9 @@ type DbDocumentoRow = {
   uploaded_by?: string | null
   tags?: string[] | null
   meta?: Record<string, any> | null
+  drive_file_id?: string | null
+  drive_provider?: string | null
+  drive_url?: string | null
 }
 
 const ALLOWED_MIME_TYPES = [
@@ -50,7 +53,7 @@ const mapDbDocumentoToDocumentoRow = (row: DbDocumentoRow): DocumentoRow => {
     cliente_nome: meta.cliente_nome || null,
     tipo: meta.tipo || row.bucket || 'docs',
     status: meta.status || 'pendente',
-    url: row.storage_path,
+    url: row.drive_url || row.storage_path,
     arquivo_nome: meta.arquivo_nome || row.title,
     arquivo_tamanho: row.size_bytes || null,
     mime_type: row.mime_type || null,
@@ -619,7 +622,8 @@ export const documentosService = {
   },
 
   /**
-   * Faz upload de um documento para o Supabase Storage
+   * Faz upload de um documento para o Drive do cliente (Google Drive ou OneDrive).
+   * Não usa mais o Supabase Storage.
    */
   async uploadDocumento(params: {
     arquivo: File
@@ -632,23 +636,20 @@ export const documentosService = {
     try {
       const { arquivo, categoria = 'geral', casoId, tags, descricao, orgId } = params
 
-      // Validar arquivo
       if (!arquivo) {
         throw new AppError('Arquivo e obrigatorio', 'validation_error')
       }
 
-      // Validar tamanho (10MB)
-      const maxSize = 10 * 1024 * 1024
+      // Validar tamanho (100MB — limite do Drive)
+      const maxSize = 100 * 1024 * 1024
       if (arquivo.size > maxSize) {
-        throw new AppError('Arquivo muito grande. Tamanho maximo: 10MB', 'validation_error')
+        throw new AppError('Arquivo muito grande. Tamanho maximo: 100MB', 'validation_error')
       }
 
-      // Validar tipo de arquivo
       if (!ALLOWED_MIME_TYPES.includes(arquivo.type)) {
         throw new AppError('Tipo de arquivo nao permitido. Use PDF, imagens ou documentos Office', 'validation_error')
       }
 
-      // Obter usuario autenticado
       const { data: { session }, error: authError } = await supabase.auth.getSession()
       if (authError || !session?.user) {
         throw new AppError('Usuario nao autenticado. Faca login para fazer upload de documentos.', 'auth_error')
@@ -659,51 +660,61 @@ export const documentosService = {
       if (!resolvedOrgId) {
         throw new AppError('Nao foi possivel identificar a organizacao do usuario.', 'validation_error')
       }
-      const timestamp = Date.now()
-      const randomStr = Math.random().toString(36).substring(2, 9)
-      const extensao = arquivo.name.split('.').pop()
-      const nomeArquivo = `${timestamp}_${randomStr}.${extensao}`
-      const storagePath = `${user.id}/${resolvedOrgId}/${nomeArquivo}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('documentos')
-        .upload(storagePath, arquivo, {
-          cacheControl: '3600',
-          upsert: false,
-        })
+      // Detectar provedor Drive conectado
+      const { driveService } = await import('./driveService')
+      const googleOk   = await driveService.isConnected('google_drive')
+      const onedriveOk = await driveService.isConnected('onedrive')
+      const provider   = googleOk ? 'google_drive' : onedriveOk ? 'onedrive' : null
 
-      if (uploadError) {
-        throw new AppError(uploadError.message, 'storage_error')
+      if (!provider) {
+        throw new AppError(
+          'Conecte o Google Drive ou OneDrive em Configurações → Integrações para fazer upload de documentos.',
+          'drive_not_connected',
+        )
       }
 
-      const payload: Partial<DbDocumentoRow> = {
-        title: arquivo.name,
-        description: descricao || null,
-        bucket: 'docs',
-        storage_path: storagePath,
-        mime_type: arquivo.type,
-        size_bytes: arquivo.size,
-        caso_id: casoId || null,
-        uploaded_by: user.id,
-        tags: tags || [],
-        org_id: resolvedOrgId,
+      // Cria pasta SDR Jurídico (e subpasta do caso, se houver)
+      const rootId = await driveService.ensureFolder(provider, 'SDR Jurídico')
+      let targetId = rootId
+      if (casoId) {
+        const { data: caso } = await supabase.from('casos').select('titulo').eq('id', casoId).maybeSingle()
+        if (caso?.titulo) {
+          targetId = await driveService.ensureFolder(provider, `Caso - ${(caso as { titulo: string }).titulo}`, rootId)
+        }
+      }
+
+      const blob = new Blob([await arquivo.arrayBuffer()], { type: arquivo.type })
+      const uploaded = await driveService.uploadFile(provider, blob, arquivo.name, arquivo.type, targetId)
+
+      const payload: Record<string, unknown> = {
+        title:          arquivo.name,
+        description:    descricao || null,
+        bucket:         'docs',
+        storage_path:   '',
+        mime_type:      arquivo.type,
+        size_bytes:     arquivo.size,
+        caso_id:        casoId || null,
+        uploaded_by:    user.id,
+        tags:           tags || [],
+        org_id:         resolvedOrgId,
+        drive_file_id:  uploaded.fileId,
+        drive_provider: provider,
+        drive_url:      uploaded.webViewLink,
         meta: {
-          status: 'pendente',
-          tipo: categoria || 'geral',
+          status:       'pendente',
+          tipo:         categoria || 'geral',
           arquivo_nome: arquivo.name,
         },
       }
 
       const { data: documento, error: dbError } = await supabase
         .from('documentos')
-        .insert(payload)
+        .insert([payload])
         .select('*')
         .single()
 
-      if (dbError) {
-        await supabase.storage.from('documentos').remove([storagePath])
-        throw new AppError(dbError.message, 'database_error')
-      }
+      if (dbError) throw new AppError(dbError.message, 'database_error')
 
       return mapDbDocumentoToDocumentoRow(documento as DbDocumentoRow)
     } catch (error) {

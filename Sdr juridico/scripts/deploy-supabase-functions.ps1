@@ -4,6 +4,7 @@
     'google-calendar-oauth',
     'google-calendar-sync',
     'google-calendar-sync-cron',
+    'google-drive-oauth',
     'google-drive-token'
   )
 )

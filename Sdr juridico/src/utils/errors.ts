@@ -9,6 +9,7 @@ export type AppErrorCode =
   | 'storage_error'
   | 'unknown_error'
   | 'unknown'
+  | 'drive_not_connected'
 
 export class AppError extends Error {
   code: AppErrorCode
