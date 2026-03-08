@@ -1,12 +1,20 @@
 # 🏗️ ARQUITETURA CANÔNICA — SDR JURÍDICO
 
-**Versão:** 3.1.0
+**Versão:** 3.2.0
 **Data:** 8 de março de 2026
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v3.2.0 (8 de março de 2026)
+- ✅ **`PageHeader` (`src/components/ui/PageHeader.tsx`) — componente canônico de cabeçalho de página**: substituiu headers inline em todas as páginas principais (Dashboard, Casos, Clientes, Leads, Agenda, Financeiro, Analytics, DataJud, DiárioOficial, Templates, Timesheet). Props: `icon`, `eyebrow`, `title`, `subtitle?`, `actions?`. Ícone em gradiente borgonha (`#4A0B0C → #721011`) com dourado canônico (`#e8c97a`). Eyebrow em `#c9a84c`. Fundo `linear-gradient(135deg, #fdf8f8, #f9f0f0)`.
+- ✅ **Google Drive OAuth dedicado (`supabase/functions/google-drive-oauth`)**: edge function independente do Calendar — scope `drive.file + userinfo.email`, provider `'google_drive'` na tabela `integrations`. Redirect URI aponta para a própria função. State encode `org_id + return_to` em JSON.
+- ✅ **`google-drive-token` (edge function atualizada)**: busca token em ordem de prioridade — (1) provider `'google_drive'` (token dedicado); (2) provider `'google_calendar'` com scope contendo `'drive'` (legado). Renova refresh token automaticamente. Erros tipados: `NOT_CONNECTED | DRIVE_SCOPE_MISSING | NEEDS_RECONNECT | REFRESH_FAILED | DB_ERROR`.
+- ✅ **`driveService` — `checkGoogleStatus()`**: retorna `'connected' | 'scope_missing' | 'not_connected'`. Chamado na inicialização do `DocumentosPage` para detectar estado detalhado do Drive.
+- ✅ **`DocumentosPage` — integração Google Drive inline**: detecta estado do Drive ao montar (`checkGoogleStatus()`); exibe banner âmbar quando `scope_missing`; exibe card de conexão quando `not_connected`; detecta retorno do OAuth via `?google_drive=connected`; `handleConnectGoogleDrive` redireciona para `supabaseUrl/functions/v1/google-drive-oauth?org_id=...&return_to=...`.
+- ✅ **CI/CD — `vercel alias set` automático (`.github/workflows/deploy-vercel.yml`)**: step "Deploy to Vercel" captura a URL gerada com `DEPLOY_URL=$(vercel deploy --prebuilt --prod)` e step "Alias to production URL" executa `vercel alias set "$DEPLOY_URL" sdr-juridico.vercel.app`. Necessário pois `vercel.json alias` foi descontinuado no CLI v50+.
 
 ### v3.1.0 (8 de março de 2026)
 - ✅ **`LandingPage` (`src/pages/LandingPage.tsx`) — marketing público na rota `/`**: página sem AppShell/sidebar. Não usa CSS variables nem Tailwind — usa inline styles com objeto de paleta `C` (ver seção `## 🌐 LandingPage TalentJUD` abaixo).
@@ -264,6 +272,7 @@ Sdr juridico/
 │   ├── components/
 │   │   ├── ui/
 │   │   │   ├── modal.tsx                 # ← CANÔNICO para TODA modal
+│   │   │   ├── PageHeader.tsx            # ← CANÔNICO para cabeçalho de página
 │   │   │   ├── Logo.tsx
 │   │   │   └── ...
 │   │   ├── guards/
@@ -356,7 +365,9 @@ Sdr juridico/
 │   │   ├── google-calendar-sync-cron/
 │   │   ├── google-calendar-create-event/
 │   │   ├── store-google-tokens/
-│   │   ├── google-drive-token/
+│   │   ├── google-drive-oauth/
+│   │   ├── google-drive-oauth/           # OAuth Google Drive dedicado (scope: drive.file)
+│   │   ├── google-drive-token/           # Retorna access_token válido; fallback google_calendar
 │   │   ├── teams-oauth/
 │   │   ├── teams-create-event/
 │   │   ├── datajud-proxy/
@@ -648,6 +659,30 @@ export function TourModal(): JSX.Element | null
 
 ## 🎨 DESIGN SYSTEM
 
+### `PageHeader` Canônico (`@/components/ui/PageHeader.tsx`)
+
+**TODA página principal DEVE usar este componente para o cabeçalho.** Nunca criar headers inline com gradiente e ícone dourado.
+
+```tsx
+import { PageHeader } from '@/components/ui/PageHeader'
+import { FileText } from 'lucide-react'
+
+<PageHeader
+  icon={FileText}
+  eyebrow="MÓDULO"
+  title="Documentos"
+  subtitle="Gerencie os documentos do escritório"
+  actions={
+    <button>Novo</button>
+  }
+/>
+```
+
+**Props:** `icon` (LucideIcon), `eyebrow` (label uppercase), `title`, `subtitle?`, `actions?` (botões à direita)
+**Visual:** fundo `linear-gradient(135deg, #fdf8f8, #f9f0f0)`, borda `#f0e8e8`, ícone em gradiente `#4A0B0C → #721011`, ícone cor `#e8c97a`, eyebrow cor `#c9a84c`
+
+---
+
 ### Modal Canônico (`@/components/ui/modal.tsx`)
 
 **TODA modal nova DEVE usar este componente.** Nunca `createPortal` diretamente.
@@ -925,15 +960,87 @@ Injeta:
 3. Fallback: upload para Supabase Storage
 4. `INSERT` em `documentos` com `drive_file_id / drive_url`
 
-### Drive — reutilização de tokens
+### Drive — obtenção de tokens
 
-`driveService` reutiliza tokens já armazenados em `integrationsService`:
-- Google Drive → provider `'google_calendar'` (mesmo token do Calendar)
-- OneDrive → provider `'teams'`
+`driveService` obtém tokens via:
+- **Google Drive** → edge function `google-drive-token` (busca provider `'google_drive'` primeiro; fallback para `'google_calendar'` se tiver scope drive)
+- **OneDrive** → `integrationsService` local (provider `'teams'`)
+
+### `driveService.checkGoogleStatus()`
+
+Retorna `'connected' | 'scope_missing' | 'not_connected'`. Use antes de qualquer operação de upload para exibir UX adequada:
+
+```typescript
+const googleStatus = await driveService.checkGoogleStatus()
+if (googleStatus === 'connected')    { /* Drive OK */ }
+if (googleStatus === 'scope_missing') { /* Banner âmbar: reconectar */ }
+// not_connected: card de conexão
+```
+
+### `DriveError` — erros tipados
+
+```typescript
+type DriveErrorCode = 'NOT_CONNECTED' | 'DRIVE_SCOPE_MISSING' | 'NEEDS_RECONNECT' | 'REFRESH_FAILED' | 'DB_ERROR'
+class DriveError extends Error { code: DriveErrorCode }
+```
 
 ---
 
-## 🗄️ MODELO DE DADOS (tabelas principais)
+## � INTEGRAÇÃO GOOGLE DRIVE (v3.2.0)
+
+### OAuth Flow
+
+```
+DocumentosPage monta
+    → driveService.checkGoogleStatus()
+        → supabase.functions.invoke('google-drive-token', { body: { org_id } })
+
+Status 'not_connected':
+    → exibe card "Conectar Google Drive"
+    → handleConnectGoogleDrive()
+        → window.location.href = `${supabaseUrl}/functions/v1/google-drive-oauth?org_id=...&return_to=/app/documentos`
+
+google-drive-oauth (GET sem ?code):
+    → redireciona para Google OAuth com scope drive.file + userinfo.email
+
+google-drive-oauth (GET com ?code — callback):
+    → troca code por tokens → salva em integrations (provider='google_drive') → redireciona para return_to?google_drive=connected
+
+DocumentosPage detecta ?google_drive=connected:
+    → toast.success → recarrega status via checkGoogleStatus()
+
+Status 'scope_missing':
+    → exibe banner âmbar "Reconecte o Google Drive"
+    → mesmo handleConnectGoogleDrive() → OAuth com prompt=consent forçado
+```
+
+### Provider `'google_drive'` vs `'google_calendar'`
+
+| Provider | Origem | Scopes | Usado por |
+|----------|--------|--------|-----------|
+| `'google_calendar'` | `google-calendar-oauth` | calendar + (às vezes) drive | Calendar, legado Drive |
+| `'google_drive'` | `google-drive-oauth` | `drive.file + userinfo.email` | Drive dedicado (v3.2.0+) |
+
+`google-drive-token` prefere `'google_drive'`; cai em `'google_calendar'` se tiver scope `'drive'` (legado). **Novo fluxo usa sempre `'google_drive'`.**
+
+### Variáveis de ambiente (Supabase Edge Functions)
+
+```
+GOOGLE_CLIENT_ID      # mesmo client_id do google-calendar-oauth
+GOOGLE_CLIENT_SECRET  # mesmo secret
+```
+
+### UX em `DocumentosPage`
+
+| `checkGoogleStatus()` | UI exibida |
+|----------------------|------------|
+| `'connected'` | Listagem de documentos normal |
+| `'scope_missing'` | Banner âmbar com botão "Reconectar Google Drive" |
+| `'not_connected'` | Card central com botão "Conectar Google Drive" |
+
+---
+
+## �🗄️ MODELO DE DADOS (tabelas principais)
 
 ### Tabela `orgs`
 
@@ -1086,6 +1193,17 @@ vercel deploy --prebuilt --prod --yes
 # 7. Apontar alias (substituir URL gerada)
 # vercel alias set sdr-juridico-XXXX-fartechs-projects.vercel.app sdr-juridico.vercel.app
 ```
+
+### Fluxo do CI/CD (`.github/workflows/deploy-vercel.yml`)
+
+Push para `main` dispara automaticamente:
+1. `npm ci` — instala deps
+2. `vercel pull --yes --environment=production` — baixa env vars do projeto
+3. `vercel build --prod` — build prebuilt local
+4. `vercel deploy --prebuilt --prod` — envia artefato; captura URL gerada
+5. `vercel alias set <URL> sdr-juridico.vercel.app` — aponta domínio de produção
+
+> **Nota**: o campo `alias` em `vercel.json` foi descontinuado no CLI v50+ e é ignorado. O step 5 do workflow é obrigatório para manter `sdr-juridico.vercel.app` atualizado.
 
 ### Troubleshooting
 
