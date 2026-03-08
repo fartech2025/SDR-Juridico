@@ -30,6 +30,7 @@ import { UpgradeWall } from '@/components/UpgradeWall'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrganizationContext } from '@/contexts/OrganizationContext'
 import { useClientes } from '@/hooks/useClientes'
@@ -314,13 +315,12 @@ export default function AnalyticsPage() {
     <div className="space-y-6 p-6">
 
       {/* ── HEADER ───────────────────────────────────────────────────────────── */}
-      <header className="rounded-2xl border border-border bg-surface p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">Analytics Executivo</p>
-        <h1 className="mt-2 text-3xl font-bold text-text">Visão global do negócio</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          Panorama completo do escritório — operacional, financeiro e desempenho da equipe em uma leitura única.
-        </p>
-      </header>
+      <PageHeader
+        icon={BarChart3}
+        eyebrow="Analytics Executivo"
+        title="Visão global do negócio"
+        subtitle="Panorama completo do escritório — operacional, financeiro e desempenho da equipe."
+      />
 
       {/* ── ROW 1 — KPI OPERACIONAL ──────────────────────────────────────────── */}
       <div>

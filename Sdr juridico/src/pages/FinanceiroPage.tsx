@@ -37,6 +37,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { PageHeader } from '@/components/ui'
 import logoMark from '@/assets/logo-mark.png'
 import { useCasos } from '@/hooks/useCasos'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
@@ -539,21 +540,18 @@ export function FinanceiroPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <header className="rounded-2xl border border-border bg-surface p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">Financeiro</p>
-            <h1 className="mt-2 text-3xl font-bold text-text">Gestão Financeira Avançada</h1>
-            <p className="mt-2 text-sm text-text-muted">
-              Análise completa de receitas, despesas, fluxo de caixa, projeções e indicadores financeiros avançados para decisões estratégicas.
-            </p>
-          </div>
-          <Button variant="primary" onClick={() => setShowForm(true)} className="shrink-0">
+      <PageHeader
+        icon={Landmark}
+        eyebrow="Financeiro"
+        title="Gestão Financeira"
+        subtitle="Análise de receitas, despesas, fluxo de caixa e indicadores financeiros."
+        actions={
+          <Button variant="primary" onClick={() => setShowForm(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Novo Lançamento
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       {/* ─────────────────────────────── KPI PRINCIPAL ───────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

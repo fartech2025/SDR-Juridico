@@ -14,6 +14,7 @@ import { addPdfHeader, addPdfFooters, getTableTheme, MARGIN } from '@/services/p
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui'
 import {
   isDataJudConfigured,
   testarConexao,
@@ -782,27 +783,12 @@ export const DataJudPage = () => {
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
       <div className="space-y-6">
-        <div className="bg-surface rounded-xl border border-border p-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(114, 16, 17, 0.1)', color: '#721011' }}
-                >
-                  <Database className="h-5 w-5" />
-                </div>
-                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
-                  Integração CNJ
-                </span>
-              </div>
-              <h1 className="text-2xl font-bold text-text">API DataJud</h1>
-              <p className="text-sm text-text-muted mt-1">
-                Base Nacional de Dados do Poder Judiciário — Consulta de processos judiciais
-              </p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={Database}
+          eyebrow="Integração"
+          title="API DataJud"
+          subtitle="Base Nacional de Dados do Poder Judiciário — Consulta de processos judiciais"
+        />
 
       {/* Status da Conexão */}
       <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">

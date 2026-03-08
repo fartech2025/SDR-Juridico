@@ -1,10 +1,11 @@
 import * as React from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Target, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams, Link } from 'react-router-dom'
 
 import { LeadDrawer } from '@/components/LeadDrawer'
 import { Modal } from '@/components/ui/modal'
+import { PageHeader } from '@/components/ui'
 import { PageState } from '@/components/PageState'
 import type { Lead } from '@/types/domain'
 import { formatDateTime, formatPhone } from '@/utils/format'
@@ -277,14 +278,13 @@ export const LeadsPage = () => {
     <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-border p-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-text-muted mb-1">CRM · Pipeline de Vendas</p>
-              <h1 className="text-2xl font-bold text-text">Gestão de Leads</h1>
-              <p className="text-sm text-text-muted mt-1">Acompanhe oportunidades e gerencie conversões</p>
-            </div>
-            <div className="flex gap-3">
+        <PageHeader
+          icon={Target}
+          eyebrow="CRM · Prospecção"
+          title="Gestão de Leads"
+          subtitle="Acompanhe oportunidades e gerencie conversões"
+          actions={
+            <>
               <Link to="/app/leads/kanban"
                 className="px-4 py-2 rounded-lg border border-border font-medium text-text hover:bg-surface-alt transition-colors text-sm">
                 Kanban
@@ -304,9 +304,9 @@ export const LeadsPage = () => {
                 style={{ backgroundColor: 'var(--brand-primary)' }}>
                 Novo Lead
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {/* KPI stats */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

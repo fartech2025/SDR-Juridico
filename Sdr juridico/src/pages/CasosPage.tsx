@@ -1,10 +1,11 @@
 import * as React from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Scale, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { Modal } from '@/components/ui/modal'
+import { PageHeader } from '@/components/ui'
 import type { Caso } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useCasos } from '@/hooks/useCasos'
@@ -265,14 +266,13 @@ export const CasosPage = () => {
   return (
     <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
-        <div className="bg-surface rounded-xl border border-border p-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-text-muted mb-1">Jurídico · Gestão de Casos</p>
-              <h1 className="text-2xl font-bold text-text">Casos</h1>
-              <p className="text-sm text-text-muted mt-1">Gerencie todos os casos jurídicos</p>
-            </div>
-            <div className="flex gap-3">
+        <PageHeader
+          icon={Scale}
+          eyebrow="Jurídico"
+          title="Casos"
+          subtitle="Gerencie todos os casos jurídicos"
+          actions={
+            <>
               <button
                 onClick={() => void fetchCasos()}
                 disabled={loading}
@@ -295,9 +295,9 @@ export const CasosPage = () => {
               >
                 Novo Caso
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-3">

@@ -1,12 +1,22 @@
 # 🏗️ ARQUITETURA CANÔNICA — SDR JURÍDICO
 
-**Versão:** 3.0.1
-**Data:** 3 de março de 2026
+**Versão:** 3.1.0
+**Data:** 8 de março de 2026
 **Status:** ✅ Produção
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### v3.1.0 (8 de março de 2026)
+- ✅ **`LandingPage` (`src/pages/LandingPage.tsx`) — marketing público na rota `/`**: página sem AppShell/sidebar. Não usa CSS variables nem Tailwind — usa inline styles com objeto de paleta `C` (ver seção `## 🌐 LandingPage TalentJUD` abaixo).
+- ✅ **Paleta LandingPage — SEM preto**: `C.deep (#0f0303)` removido de todos os contextos. Fundos escuros usam borgonha `C.dark (#4A0B0C)` ou vermelho `C.brand (#721011)`. Fundos claros usam branco `C.white` ou rosé `C.warm (#FAF3F3)`.
+- ✅ **Logo TalentJUD**: `height: 56px` no navbar, `height: 48px` no footer. URL pública do Supabase Storage.
+- ✅ **Navbar branco**: `background: rgba(255,255,255,0.97)` + `backdropFilter: blur(16px)`. Links em `C.steel` com hover `C.brand`. Botão "Entrar": gradiente vermelho→borgonha com texto `C.warm`.
+- ✅ **Hero claro**: `linear-gradient(160deg, C.warm, C.ice, C.warm)` com orb decorativo vermelho. Título em `C.dark` + trecho em `C.brand`. Botões: dourado (CTA primário) e outline vermelho (secundário).
+- ✅ **Técnica de override do `force-light.css`**: `force-light.css` força `h1/h2/h3/p/li/a` com `!important`. A LandingPage usa `#sdr-landing h1 { color: inherit !important }` no `<style>` interno (especificidade maior, vence). Para garantir cor correta, cada seção define `color` no elemento pai (claro: `C.dark`, escuro: `C.warm`) e os filhos herdam. **Textos críticos em seções escuras usam `<span style={{ color: '#ffffff' }}>` — spans não têm regra `!important` no force-light.css, então inline vence.**
+- ✅ **Estrelas douradas preenchidas**: `<Star style={{ color: '#e8c97a', fill: '#e8c97a' }} />` — sem `fill` o ícone fica apenas contorno.
+- ✅ **PlanCard darkBg**: textos internos envolvidos em `<span>` com cores explícitas: tier e preço em dourado `#e8c97a`, itens da lista em `#ffffff`, check icons em `#e8c97a`.
 
 ### v3.0.1 (3 de março de 2026)
 - ✅ **`AgendaPage` — botão "Gerar Google Meet" restaurado**: condição `formState.title &&` removida — botão sempre visível na seção Local. Fallback `formState.title || 'Reunião'` garante título válido mesmo sem título preenchido.
@@ -1135,4 +1145,92 @@ Iniciado **automaticamente** pelo plugin `scraperServerPlugin` em `vite.config.t
 ```
 /scraper-api  →  http://localhost:3001
 /api-datajud  →  https://api-publica.datajud.cnj.jus.br
+```
+
+---
+
+## 🌐 LandingPage TalentJUD (`src/pages/LandingPage.tsx`)
+
+Página de marketing público na rota `/`. **Não usa AppShell, sidebar, CSS variables, nem classes Tailwind.** Todo o estilo é inline com o objeto de paleta `C` e um `<style>` interno.
+
+### Paleta `C` — regras obrigatórias
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `C.dark` | `#4A0B0C` | Fundos escuros premium (navbar escuro alternativo, footer, terminal mockup, card featured) |
+| `C.brand` | `#721011` | Vermelho principal — bordas, ícones, destaques |
+| `C.brandMid` | `#8B1415` | Fim do gradiente em seções vermelhas médias |
+| `C.gold` | `#A66029` | Dourado canônico (ícone pill hero, stars fill) |
+| `C.goldLight` | `#CC8652` | Âmbar claro (elementos em fundo escuro) |
+| `C.warm` | `#FAF3F3` | Branco rosé — fundos claros, herança de cor em dark sections |
+| `C.ice` | `#F5E6E6` | Rosa suave — bordas e separadores claros |
+| `C.steel` | `#6B5E58` | Texto secundário em fundos claros |
+| `C.silver` | `#C9A0A0` | Texto muted em fundos escuros |
+| `C.white` | `#ffffff` | Branco puro — cards, stats bar |
+
+> **PROIBIDO**: qualquer uso de preto puro (`#000`, `#0f0303`, `#111`). Substituir sempre por `C.dark`.
+
+### Estrutura de seções
+
+| Seção | Fundo | Cor herdada pai | Textos explícitos |
+|-------|-------|-----------------|-------------------|
+| Navbar | branco `rgba(255,255,255,0.97)` | `color: C.dark` | links `C.steel` → hover `C.brand` |
+| Hero | `linear-gradient(C.warm → C.ice → C.warm)` | `color: C.dark` | h1 borgonha + trecho em `C.brand` |
+| Stats | `C.white` | `color: C.dark` | valores `C.brand` |
+| Features | `C.warm` | `color: C.dark` | h3/p herdados |
+| Spotlight IA | `C.white` | `color: C.dark` | terminal usa `C.dark` bg |
+| Spotlight Docs | `linear-gradient(C.dark → C.brand)` | `color: C.warm` | **spans explícitos** (ver abaixo) |
+| Pricing | `C.warm` | `color: C.dark` | PlanCard lida internamente |
+| CTA Banner | `linear-gradient(C.dark → C.brandMid)` | `color: C.warm` | **spans explícitos** |
+| Footer | `C.dark` | `color: C.warm` | links `C.silver` |
+
+### Técnica de override do `force-light.css`
+
+`force-light.css` usa `!important` em `h1/h2/h3/p/li/a`, tornando inline styles ineficazes. Solução em duas camadas:
+
+**Camada 1 — CSS interno com especificidade maior:**
+```css
+#sdr-landing h1, h2, h3 { color: inherit !important; }  /* [1,0,1] > [0,0,1] */
+#sdr-landing p, li, a   { color: inherit !important; }
+```
+`color: inherit` herda do elemento pai da seção.
+
+**Camada 2 — Cor definida no elemento pai (section/nav/footer):**
+```jsx
+<section style={{ color: C.dark }}>   {/* seções claras */}
+<section style={{ color: C.warm }}>   {/* seções escuras */}
+```
+
+**Camada 3 — `<span>` para textos críticos em seções escuras:**
+```jsx
+{/* spans NÃO têm color: inherit !important no force-light.css → inline vence */}
+<span style={{ color: '#ffffff' }}>Texto visível</span>
+<span style={{ color: '#e8c97a' }}>Texto dourado</span>
+```
+
+**Regra geral**: em seções com fundo escuro (Spotlight Docs, CTA Banner, Footer, terminal IA, PlanCard darkBg), sempre envolver texto em `<span>` com cor explícita.
+
+### Estrelas douradas preenchidas
+
+```jsx
+<Star style={{ width: 16, height: 16, color: '#e8c97a', fill: '#e8c97a' }} />
+```
+Sem `fill`, a Star da Lucide renderiza apenas contorno (invisível em fundo escuro).
+
+### PlanCard `darkBg` — padrão de cor
+
+```jsx
+<span style={{ color: darkBg ? '#e8c97a' : C.brand }}>{tier}</span>       {/* tier */}
+<span style={{ color: darkBg ? '#e8c97a' : C.brand }}>{price}</span>      {/* preço */}
+<span style={{ color: darkBg ? 'rgba(255,255,255,0.7)' : mutedColor }}>{desc}</span>
+<span style={{ color: darkBg ? '#ffffff' : textColor }}>{feature}</span>   {/* itens */}
+<CheckCircle2 style={{ color: darkBg ? '#e8c97a' : C.brand }} />          {/* ícones */}
+```
+
+### Logo
+
+```
+Navbar: height: 56px
+Footer: height: 48px
+URL: LOGO_URL = Supabase Storage (constante no topo do arquivo)
 ```

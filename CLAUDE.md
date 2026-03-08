@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Antes de implementar qualquer coisa, verificar:
 
-1. **Cores**: Usar sempre CSS variables (`--brand-primary`, `--brand-accent`, etc.). Nunca hex hardcoded, nunca classes Tailwind blue/green/emerald para ações de marca.
+1. **Cores**: Usar sempre CSS variables (`--brand-primary`, `--brand-accent`, etc.). Nunca hex hardcoded, nunca classes Tailwind blue/green/emerald para ações de marca. **Exceção: `LandingPage.tsx`** usa paleta inline `C` (sem AppShell/CSS vars) — ver seção `## 🌐 LandingPage TalentJUD` na ARQUITETURA_CANONICA.md.
 2. **Componentes UI**: Modais usam `<Modal>` de `@/components/ui/modal.tsx`. Nunca `createPortal` inline.
 3. **Fluxo de dados**: Component → Hook → Service → Supabase → Mapper. Nunca chamada direta ao Supabase no componente.
 4. **Multi-tenancy**: Toda query Supabase deve ter `.eq('org_id', orgId)`. RLS existe mas não substitui o filtro explícito.
@@ -18,6 +18,7 @@ Antes de implementar qualquer coisa, verificar:
 8. **Padrão de card**: `bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm`
 9. **Guards de rota**: Seguir ordem obrigatória de verificações definida em OrgActiveGuard.
 10. **Integrações IA**: Seguir plano MCP documentado na seção `## 🤖 PLANO MCP` da arquitetura canônica.
+11. **LandingPage — fundos escuros**: nunca usar preto puro. Mínimo borgonha `#4A0B0C`. Textos em seções escuras SEMPRE em `<span style={{ color: '#ffffff' }}>` (spans não têm `!important` no force-light.css). Estrelas douradas preenchidas: `fill: '#e8c97a'`.
 
 > Se houver dúvida sobre qualquer padrão, **consultar a ARQUITETURA_CANONICA.md antes de agir**.
 

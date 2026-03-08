@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 
 import AuthCallback from '@/pages/auth/AuthCallback'
+import { LandingPage } from '@/pages/LandingPage'
 import { AppShell } from '@/layouts/AppShell'
 import { AgendaPage } from '@/pages/AgendaPage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
@@ -46,7 +47,11 @@ import {
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/app/dashboard" replace />,
+    element: <LandingPage />,
+  },
+  {
+    path: '/home',
+    element: <Navigate to="/" replace />,
   },
   {
     path: '/login',

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui'
 import {
   buscarDiariosOficiais,
   buscarPublicacoesProcesso,
@@ -172,23 +173,12 @@ export const DiarioOficialPage = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-text flex items-center gap-3">
-              <Newspaper className="h-5 w-5 text-info" />
-              Diário Oficial
-            </h1>
-            <p className="text-text-muted">
-              Busque publicações em diários oficiais municipais de todo o Brasil via{' '}
-              <a
-                href="https://queridodiario.ok.org.br"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Querido Diário
-              </a>
-            </p>
-          </div>
+          <PageHeader
+            icon={Newspaper}
+            eyebrow="Integração"
+            title="Diário Oficial"
+            subtitle="Busque publicações em diários oficiais municipais de todo o Brasil via Querido Diário."
+          />
           <Link
             to="/app/dou-logs"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-surface text-sm font-medium text-text hover:bg-surface-alt transition-colors"

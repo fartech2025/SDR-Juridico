@@ -11,6 +11,7 @@ import {
   Eye,
   FileText,
   Flame,
+  LayoutDashboard,
   ListChecks,
   Minus,
   TrendingDown,
@@ -30,6 +31,7 @@ import {
   YAxis,
 } from 'recharts'
 
+import { PageHeader } from '@/components/ui'
 import { PageState } from '@/components/PageState'
 import { useOrganizationContext } from '@/contexts/OrganizationContext'
 import { useAgenda } from '@/hooks/useAgenda'
@@ -639,35 +641,34 @@ export const DashboardPage = () => {
             </div>
           )}
 
-          <div className="mb-6 rounded-2xl border border-border bg-surface p-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-text-subtle">Painel do perfil</p>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold text-text">{dashTitle}</h1>
-              {isSolo ? (
-                <span
-                  className="rounded-full px-2.5 py-1 text-xs font-semibold"
-                  style={{ backgroundColor: 'rgba(114,16,17,0.12)', color: '#721011' }}
-                >
-                  Solo
-                </span>
-              ) : (
-                <span
-                  className="rounded-full px-3 py-1.5 text-xs font-medium"
-                  style={
-                    isGestorDash
-                      ? { backgroundColor: 'rgba(114,16,17,0.1)', color: '#721011' }
-                      : { backgroundColor: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }
-                  }
-                >
-                  {roleLabel}
-                </span>
-              )}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-surface-alt px-3 py-1.5 text-text-muted">
-                {todayStart.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}
-              </span>
-            </div>
+          <div className="mb-6">
+            <PageHeader
+              icon={LayoutDashboard}
+              eyebrow="Visão geral"
+              title={dashTitle}
+              subtitle={todayStart.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}
+              actions={
+                isSolo ? (
+                  <span
+                    className="rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={{ backgroundColor: 'rgba(114,16,17,0.12)', color: '#721011' }}
+                  >
+                    Solo
+                  </span>
+                ) : (
+                  <span
+                    className="rounded-full px-3 py-1.5 text-xs font-medium"
+                    style={
+                      isGestorDash
+                        ? { backgroundColor: 'rgba(114,16,17,0.1)', color: '#721011' }
+                        : { backgroundColor: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }
+                    }
+                  >
+                    {roleLabel}
+                  </span>
+                )
+              }
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2 xl:grid-cols-4">

@@ -1,11 +1,12 @@
 import * as React from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { ClienteDrawer } from '@/components/ClienteDrawer'
 import { Modal } from '@/components/ui/modal'
+import { PageHeader } from '@/components/ui'
 import type { Cliente } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { formatDateTime } from '@/utils/format'
@@ -503,16 +504,13 @@ export const ClientesPage = () => {
     <div className="bg-surface-alt" style={{ fontFamily: "'DM Sans', sans-serif", padding: '20px' }}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-border p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-text-muted mb-1">CRM · Gestão de Clientes</p>
-              <h1 className="text-2xl font-bold text-text">Clientes</h1>
-              <p className="mt-1 text-sm text-text-muted">
-                Gerencie sua carteira de clientes com indicadores de risco e status.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
+        <PageHeader
+          icon={Users}
+          eyebrow="CRM · Gestão de Clientes"
+          title="Clientes"
+          subtitle="Gerencie sua carteira de clientes com indicadores de risco e status."
+          actions={
+            <>
               <button
                 type="button"
                 onClick={() => void fetchClientes()}
@@ -534,9 +532,9 @@ export const ClientesPage = () => {
                   Novo cliente
                 </button>
               )}
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-3">

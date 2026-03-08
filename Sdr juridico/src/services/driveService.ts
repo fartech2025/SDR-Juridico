@@ -91,6 +91,7 @@ export const driveService = {
   /**
    * Verifica se o provedor está conectado E com escopos de Drive.
    * Para Google, chama a edge function; para OneDrive, verifica localStorage.
+   * Retorna false para qualquer erro — não propaga DriveError.
    */
   async isConnected(provider: DriveProvider): Promise<boolean> {
     try {
@@ -98,6 +99,21 @@ export const driveService = {
       return true
     } catch {
       return false
+    }
+  },
+
+  /**
+   * Verifica status detalhado do Google Drive.
+   * Retorna: 'connected' | 'scope_missing' | 'not_connected'
+   * Pode lançar DriveError com code 'DRIVE_SCOPE_MISSING' para scope_missing.
+   */
+  async checkGoogleStatus(): Promise<'connected' | 'scope_missing' | 'not_connected'> {
+    try {
+      await getGoogleToken()
+      return 'connected'
+    } catch (e) {
+      if (e instanceof DriveError && e.code === 'DRIVE_SCOPE_MISSING') return 'scope_missing'
+      return 'not_connected'
     }
   },
 

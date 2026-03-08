@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { Clock, Plus, CheckCheck, DollarSign, FileText, AlertCircle, Pencil, Trash2, X } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui'
 import { Input } from '@/components/ui/input'
 import { UpgradeWall } from '@/components/UpgradeWall'
 import { useTimesheet } from '@/hooks/useTimesheet'
@@ -262,25 +263,27 @@ function TimesheetContent() {
   return (
     <div className="space-y-6 p-5">
       {/* ── Header ────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Timesheet</h1>
-          <p className="text-sm text-gray-500">Controle de horas e geração de honorários</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="month"
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(e.target.value)}
-            className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none"
-            style={{ '--tw-ring-color': 'rgba(114,16,17,0.2)' } as React.CSSProperties}
-          />
-          <Button onClick={abrirFormNovo} style={{ backgroundColor: '#721011' }} className="text-white hover:opacity-90">
-            <Plus className="mr-2 h-4 w-4" />
-            Registrar Horas
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Clock}
+        eyebrow="Operação"
+        title="Timesheet"
+        subtitle="Controle de horas e geração de honorários"
+        actions={
+          <>
+            <input
+              type="month"
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none"
+              style={{ '--tw-ring-color': 'rgba(114,16,17,0.2)' } as React.CSSProperties}
+            />
+            <Button onClick={abrirFormNovo} style={{ backgroundColor: '#721011' }} className="text-white hover:opacity-90">
+              <Plus className="mr-2 h-4 w-4" />
+              Registrar Horas
+            </Button>
+          </>
+        }
+      />
 
       {/* ── Banner: Financeiro necessário para Faturar ────────────────────────── */}
       {showFinanceiroBanner && (

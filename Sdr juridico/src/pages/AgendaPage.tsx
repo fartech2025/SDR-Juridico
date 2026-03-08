@@ -23,6 +23,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { PageState } from '@/components/PageState'
 import { Modal } from '@/components/ui/modal'
+import { PageHeader } from '@/components/ui'
 import type { AgendaItem, AgendaStatus, Tarefa } from '@/types/domain'
 import { cn } from '@/utils/cn'
 import { useAgenda } from '@/hooks/useAgenda'
@@ -628,23 +629,23 @@ export const AgendaPage = () => {
     <div className="min-h-screen bg-surface-alt p-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-text">AGENDA</h1>
-            <p className="mt-1 text-sm text-text-muted">
-              Bom dia, {displayName}. Gerencie seus compromissos e eventos.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => openEditor('create')}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
-            style={{ backgroundColor: 'var(--brand-primary)' }}
-          >
-            <Plus className="h-4 w-4" />
-            Novo Evento
-          </button>
-        </div>
+        <PageHeader
+          icon={Calendar}
+          eyebrow="Operação"
+          title="Agenda"
+          subtitle={`Olá, ${displayName}. Gerencie seus compromissos e eventos.`}
+          actions={
+            <button
+              type="button"
+              onClick={() => openEditor('create')}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+              style={{ backgroundColor: 'var(--brand-primary)' }}
+            >
+              <Plus className="h-4 w-4" />
+              Novo Evento
+            </button>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-4">

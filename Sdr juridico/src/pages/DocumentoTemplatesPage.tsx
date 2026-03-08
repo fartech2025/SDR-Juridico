@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { FileText, Plus, Pencil, Trash2, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui'
 import { UpgradeWall } from '@/components/UpgradeWall'
 import { TemplateEditorModal } from '@/components/documentos/TemplateEditorModal'
 import { TemplateGerarModal } from '@/components/documentos/TemplateGerarModal'
@@ -84,18 +85,20 @@ function TemplatesContent() {
   return (
     <div className="space-y-6 p-5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Templates de Documentos</h1>
-          <p className="text-sm text-gray-500">Crie e reutilize modelos de peças jurídicas</p>
-        </div>
-        {canManage && (
-          <Button onClick={abrirNovo} style={{ backgroundColor: '#721011' }} className="text-white hover:opacity-90">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Template
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        icon={FileText}
+        eyebrow="Conteúdo"
+        title="Templates de Documentos"
+        subtitle="Crie e reutilize modelos de peças jurídicas"
+        actions={
+          canManage ? (
+            <Button onClick={abrirNovo} style={{ backgroundColor: '#721011' }} className="text-white hover:opacity-90">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Template
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Filtro por categoria */}
       <div className="flex flex-wrap gap-2">
