@@ -14,6 +14,9 @@ import {
   Briefcase,
   Users,
   Activity,
+  FolderOpen,
+  DollarSign,
+  CalendarDays,
 } from 'lucide-react'
 
 const LOGO_URL = 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/Imagens%20pagina/talent%20jud%2003.png'
@@ -195,19 +198,23 @@ function PlanCard({ tier, price, priceSub, desc, features, cta, ctaHref, feature
 // 4. Após o upload, as URLs já ficam ativas automaticamente — não é necessário
 //    alterar nenhuma linha de código, pois os paths já estão configurados abaixo.
 // ─────────────────────────────────────────────────────────────────────────────
+const BASE = 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots'
 const SCREENSHOTS = {
-  casos:      'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/casos.png',
-  leads:      'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/leads.png',
-  datajud:    'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/datajud.png',
-  templates:  'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/templates.png',
-  timesheet:  'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/timesheet.png',
-  diario:     'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/diario.png',
-  controle:   'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/controle-casos.png',
-  clientes:   'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/clientes.png',
-  monitoramento: 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/monitoramento.png',
+  casos:         `${BASE}/casos.gif`,
+  leads:         `${BASE}/leads.gif`,
+  datajud:       `${BASE}/datajud.gif`,
+  templates:     `${BASE}/templates.gif`,
+  timesheet:     `${BASE}/timesheet.gif`,
+  diario:        `${BASE}/diario.gif`,
+  controle:      `${BASE}/controle-casos.gif`,
+  clientes:      `${BASE}/clientes.gif`,
+  monitoramento: `${BASE}/monitoramento.gif`,
+  documentos:    `${BASE}/documentos.gif`,
+  financeiro:    `${BASE}/financeiro.gif`,
+  agenda:        `${BASE}/agenda.gif`,
   // Hero floating cards
-  hero_main:   'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/hero-dashboard.png',
-  hero_card_a: 'https://xocqcoebreoiaqxoutar.supabase.co/storage/v1/object/public/Imagens%20Page/screenshots/hero-casos.png',
+  hero_main:     `${BASE}/hero-dashboard.gif`,
+  hero_card_a:   `${BASE}/hero-casos.gif`,
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -215,12 +222,15 @@ export function LandingPage() {
   const [activeFeature, setActiveFeature] = React.useState(0)
 
   const features = [
-    { icon: Scale,     title: 'Gestão de Casos',      desc: 'Controle completo do ciclo de vida dos processos jurídicos com prioridades, prazos e histórico.' },
-    { icon: Target,    title: 'CRM de Leads',          desc: 'Pipeline visual de prospecção com qualificação automática, follow-up e conversão integrada.' },
-    { icon: Database,  title: 'DataJud CNJ',           desc: 'Consulta direta à Base Nacional de Dados do Poder Judiciário — 28 tribunais, busca por CPF, número e classe.' },
-    { icon: FileCode,  title: 'Templates Jurídicos',   desc: 'Editor de documentos com variáveis dinâmicas, branding do escritório e exportação para Drive.' },
-    { icon: Clock,     title: 'Timesheet',             desc: 'Controle de horas faturáveis por caso, geração automática de honorários e relatórios.' },
-    { icon: Newspaper, title: 'Diário Oficial',        desc: 'Monitoramento automático de publicações no Diário Oficial com alertas por CPF e CNPJ.' },
+    { icon: Scale,        title: 'Gestão de Casos',      desc: 'Controle completo do ciclo de vida dos processos jurídicos com prioridades, prazos e histórico.' },
+    { icon: Target,       title: 'CRM de Leads',          desc: 'Pipeline visual de prospecção com qualificação automática, follow-up e conversão integrada.' },
+    { icon: Database,     title: 'DataJud CNJ',           desc: 'Consulta direta à Base Nacional de Dados do Poder Judiciário — 28 tribunais, busca por CPF, número e classe.' },
+    { icon: FolderOpen,   title: 'Documentos',            desc: 'Gestão centralizada de documentos com upload, organização por caso e integração com Google Drive.' },
+    { icon: DollarSign,   title: 'Financeiro',            desc: 'Controle de honorários, lançamentos e fluxo de caixa do escritório com visão consolidada.' },
+    { icon: CalendarDays, title: 'Agenda',                desc: 'Calendário integrado com audiências, prazos e reuniões — sincronização com Google Calendar.' },
+    { icon: FileCode,     title: 'Templates Jurídicos',   desc: 'Editor de documentos com variáveis dinâmicas, branding do escritório e exportação para Drive.' },
+    { icon: Clock,        title: 'Timesheet',             desc: 'Controle de horas faturáveis por caso, geração automática de honorários e relatórios.' },
+    { icon: Newspaper,    title: 'Diário Oficial',        desc: 'Monitoramento automático de publicações no Diário Oficial com alertas por CPF e CNPJ.' },
   ]
 
   const stats = [
@@ -374,6 +384,54 @@ export function LandingPage() {
         'Analytics executivo de alertas por período',
       ],
       image: SCREENSHOTS.monitoramento,
+    },
+    {
+      id: 'documentos',
+      label: 'Documentos',
+      icon: FolderOpen,
+      eyebrow: 'Conteúdo & Arquivos',
+      title: 'Todos os documentos em um só lugar',
+      desc: 'Gestão centralizada de documentos vinculados a casos e clientes, com upload direto, organização automática e integração com Google Drive e OneDrive.',
+      bullets: [
+        'Upload e organização por caso e cliente',
+        'Integração com Google Drive e OneDrive',
+        'Visualização inline de PDF e imagens',
+        'Controle de versões e histórico de edições',
+        'Geração a partir de templates com variáveis dinâmicas',
+      ],
+      image: SCREENSHOTS.documentos,
+    },
+    {
+      id: 'financeiro',
+      label: 'Financeiro',
+      icon: DollarSign,
+      eyebrow: 'Honorários & Fluxo de Caixa',
+      title: 'Controle financeiro do escritório',
+      desc: 'Registre honorários, acompanhe pagamentos, gerencie recebíveis e visualize o fluxo de caixa — tudo vinculado aos seus casos e clientes.',
+      bullets: [
+        'Lançamentos de honorários vinculados a casos',
+        'Controle de recebíveis e pagamentos em aberto',
+        'Relatórios de fluxo de caixa por período',
+        'Integração com Timesheet para faturamento automático',
+        'Dashboard financeiro com visão consolidada',
+      ],
+      image: SCREENSHOTS.financeiro,
+    },
+    {
+      id: 'agenda',
+      label: 'Agenda',
+      icon: CalendarDays,
+      eyebrow: 'Calendário & Prazos',
+      title: 'Nunca perca um prazo ou audiência',
+      desc: 'Calendário completo com audiências, prazos processuais e reuniões — visualização mensal, semanal e diária com sincronização automática com Google Calendar.',
+      bullets: [
+        'Cadastro de audiências vinculadas a casos',
+        'Visualização mensal, semanal e diária',
+        'Sincronização bidirecional com Google Calendar',
+        'Geração de links Google Meet com um clique',
+        'Bloqueio de almoço e configuração de disponibilidade',
+      ],
+      image: SCREENSHOTS.agenda,
     },
   ]
 
